@@ -2,9 +2,11 @@
 // includes
 
 #include <crtdbg.h> // To check for memory leaks
-#include "AEEngine.h"
-
-
+#include <AEEngine.h>
+#include <AEMtx33.h>
+#include <math.h>
+#include "game.h"
+#include "utils.h"
 
 // ---------------------------------------------------------------------------
 // main
@@ -21,7 +23,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 
 
 	int gGameRunning = 1;
-
+	
 	// Initialization of your own variables go here
 
 	// Using custom window procedure
@@ -33,30 +35,24 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 	// reset the system modules
 	AESysReset();
 
-	printf("Hello World\n");
+	Game_Init();
 
 	// Game Loop
 	while (gGameRunning)
 	{
 		// Informing the system about the loop's start
 		AESysFrameStart();
-
-		// Basic way to trigger exiting the application
-		// when ESCAPE is hit or when the window is closed
 		if (AEInputCheckTriggered(AEVK_ESCAPE) || 0 == AESysDoesWindowExist())
 			gGameRunning = 0;
-
-		// Your own update logic goes here
-
-
-		// Your own rendering logic goes here
-
-
+		// Basic way to trigger exiting the application
+		// when ESCAPE is hit or when the window is closed
+		Game_Update();
 		// Informing the system about the loop's end
 		AESysFrameEnd();
 
 	}
 
+	Game_Exit();
 
 	// free the system
 	AESysExit();
