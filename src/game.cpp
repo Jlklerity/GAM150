@@ -1,7 +1,7 @@
 #include <AEEngine.h>
 #include <AEMtx33.h>
+#include "meshes.h"
 #include "utils.h"
-#include <stdio.h>
 
 
 AEGfxVertexList* playerMesh = NULL;
@@ -177,18 +177,11 @@ void Game_Update()
 		
 		if (i < activeSegments)
 		{
-			// 3. Calculate Position
-			// Container Width = 6.0f (mesh) * 200.0f (scale) = 1200.0f
-			// The container goes from X = -600 to X = +600.
-			// Each segment slot is 120.0f wide.
-			// Starting X (center of first segment) = Left Edge (-600) + Half Slot (60) = -540.
 
 			float segX = -540.0f + (i * 120.0f);
-			float segY = 250.0f; // Align with the layerHPBar Y position
+			float segY = 250.0f;  
 
-			// 4. Transform and Draw
-			// We use 200.0f scale to match the size of the layer/container
-			AEMtx33Scale(&scale, 200.0f, 200.0f); // Scale needs to be 200 to match container
+			 
 			AEMtx33Rot(&rot, 0.0f);
 			AEMtx33Trans(&trans, segX, segY);
 

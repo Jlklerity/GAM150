@@ -41,11 +41,11 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 	while (gGameRunning)
 	{
 		// Informing the system about the loop's start
+		// Basic way to trigger exiting the application
+		// when ESCAPE is hit or when the window is closed
 		AESysFrameStart();
 		if (AEInputCheckTriggered(AEVK_ESCAPE) || 0 == AESysDoesWindowExist())
 			gGameRunning = 0;
-		// Basic way to trigger exiting the application
-		// when ESCAPE is hit or when the window is closed
 		Game_Update();
 		// Informing the system about the loop's end
 		AESysFrameEnd();
