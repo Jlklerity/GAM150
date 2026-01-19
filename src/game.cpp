@@ -1,15 +1,16 @@
 #include <AEEngine.h>
 #include <AEMtx33.h>
 #include "MeshTemplates.h"
+#include "MeshRenderer.h"
 #include "utils.h"
 
 
-AEGfxVertexList* playerMesh = NULL;
-AEGfxVertexList* plusHPMesh = NULL;
-AEGfxVertexList* minusHPMesh = NULL;
-AEGfxVertexList* layerHPBarMesh = NULL;
-AEGfxVertexList* HPBarMesh = NULL;
-AEGfxVertexList* segmentMesh = NULL;
+AEGfxVertexList* playerMesh = nullptr;
+AEGfxVertexList* plusHPMesh = nullptr;
+AEGfxVertexList* minusHPMesh = nullptr;
+AEGfxVertexList* layerHPBarMesh = nullptr;
+AEGfxVertexList* HPBarMesh = nullptr;
+AEGfxVertexList* segmentMesh = nullptr;
 
 static float playerX;
 static float playerY;
@@ -115,90 +116,31 @@ void Game_Update()
 
 	AEGfxSetBackgroundColor(0.5f, 0.5f, 0.5f);
 
-	//transformation = scaling * rotation * translation 
-	AEMtx33 scale, rot, trans, player, plusHP, minusHP, layerHPBar, HPBar;
+	// Draw PlusHP
+	Mesh_Renderer(plusHPMesh, plusHPX, plusHPY, 1.0f, 1.0f, 0.0f);
 
+	// Draw MinusHP
+	Mesh_Renderer(minusHPMesh, minusHPX, minusHPY, 1.0f, 1.0f, 0.0f);
 
-	AEMtx33Scale(&scale, 1.0f, 1.0f); //scaling
-	AEMtx33Rot(&rot, 0.0f);  //rotation
-	AEMtx33Trans(&trans, plusHPX, plusHPY); //translation
-	AEMtx33Concat(&plusHP, &rot, &scale); //player = rot * scale
-	AEMtx33Concat(&plusHP, &trans, &plusHP); //player = (rot * scale) * translate
+	// Draw Player
+	Mesh_Renderer(playerMesh, playerX, playerY, 1.0f, 1.0f, 0.0f);
 
-	AEGfxSetRenderMode(AE_GFX_RM_COLOR);
-	AEGfxSetTransform(plusHP.m);
-	AEGfxMeshDraw(plusHPMesh, AE_GFX_MDM_TRIANGLES);
+	// Draw Layer HP Bar (Background)
+	Mesh_Renderer(layerHPBarMesh, layerHPBarX, layerHPBarY, 200.0f, 200.0f, 0.0f);
 
-
-	AEMtx33Scale(&scale, 1.0f, 1.0f); //scaling
-	AEMtx33Rot(&rot, 0.0f);  //rotation
-	AEMtx33Trans(&trans, minusHPX, minusHPY); //translation
-	AEMtx33Concat(&minusHP, &rot, &scale); //player = rot * scale
-	AEMtx33Concat(&minusHP, &trans, &minusHP); //player = (rot * scale) * translate
-
-	AEGfxSetRenderMode(AE_GFX_RM_COLOR);
-	AEGfxSetTransform(minusHP.m);
-	AEGfxMeshDraw(minusHPMesh, AE_GFX_MDM_TRIANGLES);
-
-
-	AEMtx33Scale(&scale, 1.0f, 1.0f); //scaling
-	AEMtx33Rot(&rot, 0.0f);  //rotation
-	AEMtx33Trans(&trans, playerX, playerY); //translation
-	AEMtx33Concat(&player, &rot, &scale); //player = rot * scale
-	AEMtx33Concat(&player, &trans, &player); //player = (rot * scale) * translate
-
-	AEGfxSetRenderMode(AE_GFX_RM_COLOR);
-	AEGfxSetTransform(player.m);
-	AEGfxMeshDraw(playerMesh, AE_GFX_MDM_TRIANGLES);
-
-
-	AEMtx33Scale(&scale, 200.0f, 200.0f); //scaling
-	AEMtx33Rot(&rot, 0.0f);  //rotation
-	AEMtx33Trans(&trans, 0.0f, 350.0f); //translation
-	AEMtx33Concat(&layerHPBar, &rot, &scale); //player = rot * scale
-	AEMtx33Concat(&layerHPBar, &trans, &layerHPBar); //player = (rot * scale) * translate
-
-	AEGfxSetRenderMode(AE_GFX_RM_COLOR);
-	AEGfxSetTransform(layerHPBar.m);
-	AEGfxMeshDraw(layerHPBarMesh, AE_GFX_MDM_TRIANGLES);
-
-	AEMtx33Scale(&scale, HPBarScaleX, HPBarScaleY); //scaling
-	AEMtx33Rot(&rot, 0.0f);  //rotation
-	AEMtx33Trans(&trans, HPBarX, HPBarY); //translation
-	AEMtx33Concat(&HPBar, &rot, &scale); //player = rot * scale
-	AEMtx33Concat(&HPBar, &trans, &HPBar); //player = (rot * scale) * translate
-
-	AEGfxSetRenderMode(AE_GFX_RM_COLOR);
-	AEGfxSetTransform(HPBar.m);
-	AEGfxMeshDraw(HPBarMesh, AE_GFX_MDM_TRIANGLES);
+	// Draw Active HP Bar
+	Mesh_Renderer(HPBarMesh, HPBarX, HPBarY, HPBarScaleX, HPBarScaleY, 0.0f);
 
 	for (int i = 0; i < 10; i++)
 	{
-		
 		if (i < activeSegments)
 		{
-
 			float segX = -540.0f + (i * 120.0f);
-			float segY = 250.0f;  
-
-			 
-			AEMtx33Rot(&rot, 0.0f);
-			AEMtx33Trans(&trans, segX, segY);
-
-			AEMtx33Concat(&HPBar, &rot, &scale);
-			AEMtx33Concat(&HPBar, &trans, &HPBar);
-
-			// 3. Set the transform and draw
-			AEGfxSetRenderMode(AE_GFX_RM_COLOR);
-			AEGfxSetTransform(HPBar.m);
-			if (i < activeSegments)
-			{
-				// Active segments (Red)
-				AEGfxMeshDraw(segmentMesh, AE_GFX_MDM_TRIANGLES);
-			}
+			float segY = 250.0f;  	 
+			Mesh_Renderer(segmentMesh, segX, segY, HPBarScaleX, HPBarScaleY, 0.0f);
+			
 		}
 	}
-
 }
 
 void Game_Exit()
@@ -209,5 +151,4 @@ void Game_Exit()
 	AEGfxMeshFree(layerHPBarMesh);
 	AEGfxMeshFree(HPBarMesh);
 	AEGfxMeshFree(segmentMesh);
-	AEGfxTextureUnload(pTex);
 }

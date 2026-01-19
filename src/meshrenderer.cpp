@@ -1,17 +1,20 @@
 #include "meshrenderer.h"
 
-void MeshRenderer(float objectX, float objectY, AEMtx33 objectScale, 
-				  AEMtx33 objectRot, AEMtx33 objectTrans, AEGfxVertexList objectMesh) {
+void Mesh_Renderer(AEGfxVertexList* pMesh, float x, float y, float scaleX, 
+					float scaleY, float rotation) {
 	
-	AEMtx33 scale, rot, trans;
-	AEMtx33Scale(&objectScale, 1.0f, 1.0f); //scaling
-	AEMtx33Rot(&objectRot, 0.0f);  //rotation
-	AEMtx33Trans(&objectTrans, objectX, objectY); //translation
-	AEMtx33Concat(&objectTrans, &objectRot, &objectScale); //player = rot * scale
-	AEMtx33Concat(&objectTrans, &trans, &plusHP); //player = (rot * scale) * translate
+    AEMtx33 scale, rot, trans, transform;
 
-	AEGfxSetRenderMode(AE_GFX_RM_COLOR);
-	AEGfxSetTransform(objectTrans.m);
-	AEGfxMeshDraw(&objectMesh, AE_GFX_MDM_TRIANGLES);
+    AEMtx33Scale(&scale, scaleX, scaleY);
+    AEMtx33Rot(&rot, rotation);
+    AEMtx33Trans(&trans, x, y);
+    AEMtx33Concat(&transform, &rot, &scale);     
+    AEMtx33Concat(&transform, &trans, &transform); 
+
+    AEGfxSetRenderMode(AE_GFX_RM_COLOR);
+    AEGfxSetTransform(transform.m);
+    AEGfxMeshDraw(pMesh, AE_GFX_MDM_TRIANGLES);
 }
+
+ 
  

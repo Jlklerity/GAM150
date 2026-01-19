@@ -19,15 +19,17 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\game.cpp" />
-    <ClCompile Include="src\main.cpp" />
-    <ClCompile Include="src\meshes.cpp" />
-    <ClCompile Include="src\meshrenderer.cpp" />
-    <ClCompile Include="src\utils.cpp" />
+    <ClCompile Include="src\Game.cpp" />
+    <ClCompile Include="src\Main.cpp" />
+    <ClCompile Include="src\MeshTemplates.cpp" />
+    <ClCompile Include="src\MeshRenderer.cpp" />
+    <ClCompile Include="src\pch.cpp" />
+    <ClCompile Include="src\Utils.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="src\meshes.h" />
-    <ClInclude Include="src\meshrenderer.h" />
+    <ClInclude Include="src\MeshTemplates.h" />
+    <ClInclude Include="src\MeshRenderer.h" />
+    <ClInclude Include="src\pch.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>
