@@ -1,5 +1,4 @@
 #pragma once
-#include "pch.h"
 #include "game.h"
 
 AEGfxVertexList* Circle_Mesh(int slices, float radius, float angleStep, u32 color);
