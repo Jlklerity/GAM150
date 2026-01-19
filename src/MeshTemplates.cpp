@@ -54,7 +54,7 @@ AEGfxVertexList* Rect_Mesh(float width, float height, u32 color) {
 		-halfWidth, halfHeight, color, 0.0f, 0.0f);
 	AEGfxVertexList* pMesh = AEGfxMeshEnd();
 
-	if (pMesh == NULL) {
+	if (!pMesh) {
 		printf("Error creating rectangle mesh!\n");
 		return 0;
 	}
@@ -80,13 +80,13 @@ AEGfxVertexList* Sprite_Mesh(const f32 sprite_uv_width, const f32 sprite_uv_heig
 
 
 	// Saving the mesh (list of triangles) in pMesh
-	 
+	AEGfxVertexList* pMesh = AEGfxMeshEnd();
 	//Load texture
 	AEGfxTexture* pTex = AEGfxTextureLoad("Assets/characterSheet.png");
-	if (pTex == NULL) {
+	if (!pTex || !pMesh) {
 		printf("Error creating sprite mesh!\n");
 		return 0;
 	}
-	return pTex;
+	return pMesh;
 }
  

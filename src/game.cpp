@@ -209,4 +209,5 @@ void Game_Exit()
 	AEGfxMeshFree(layerHPBarMesh);
 	AEGfxMeshFree(HPBarMesh);
 	AEGfxMeshFree(segmentMesh);
+	AEGfxTextureUnload(pTex);
 }
