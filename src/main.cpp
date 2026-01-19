@@ -2,9 +2,7 @@
 // includes
 
 #include <crtdbg.h> // To check for memory leaks
-#include <AEEngine.h>
-#include <AEMtx33.h>
-#include <math.h>
+#include "pch.h"
 #include "game.h"
 #include "utils.h"
 

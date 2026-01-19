@@ -1,6 +1,4 @@
-#include <math.h>
-#include <AEEngine.h>
-#include "game.h"
+#include "MeshTemplates.h"
 
 //Makes mesh of a circle
 AEGfxVertexList* Circle_Mesh(int slices, float radius, float angleStep, u32 color) {

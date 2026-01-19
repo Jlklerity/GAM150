@@ -1,6 +1,5 @@
 #pragma once
-#include <AEEngine.h>
-#include <math.h>
+#include "pch.h"
 
  
 void HPBarPlus(float *HPBar, float *HPBarScale);

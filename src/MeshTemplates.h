@@ -1,7 +1,6 @@
 #pragma once
-
-#include <math.h>
-#include <AEEngine.h>
+#include "pch.h"
+#include "game.h"
 
 AEGfxVertexList* Circle_Mesh(int slices, float radius, float angleStep, u32 color);
 AEGfxVertexList* Rect_Mesh(float width, float height, u32 color);

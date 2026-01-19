@@ -1,8 +1,4 @@
-#include <AEEngine.h>
-#include <AEMtx33.h>
-#include "MeshTemplates.h"
-#include "MeshRenderer.h"
-#include "utils.h"
+#include "Game.h"
 
 
 AEGfxVertexList* playerMesh = nullptr;
