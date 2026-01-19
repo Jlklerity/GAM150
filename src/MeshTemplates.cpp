@@ -77,10 +77,8 @@ AEGfxVertexList* Sprite_Mesh(const f32 sprite_uv_width, const f32 sprite_uv_heig
 		0.5f, 0.5f, 0xFFFFFFFF, sprite_uv_width, 0.0f,   // top right
 		-0.5f, 0.5f, 0xFFFFFFFF, 0.0f, 0.0f);  // bottom left
 
-
-	// Saving the mesh (list of triangles) in pMesh
 	AEGfxVertexList* pMesh = AEGfxMeshEnd();
-	//Load texture
+	
 	AEGfxTexture* pTex = AEGfxTextureLoad("Assets/characterSheet.png");
 	if (!pTex || !pMesh) {
 		printf("Error creating sprite mesh!\n");

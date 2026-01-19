@@ -12,7 +12,7 @@ void Mesh_Renderer(AEGfxVertexList* pMesh, float x, float y, float scaleX,
     AEMtx33Concat(&transform, &rot, &scale);     
     AEMtx33Concat(&transform, &trans, &transform); 
 
-    AEGfxSetRenderMode(AE_GFX_RM_COLOR);
+    /*AEGfxSetRenderMode(AE_GFX_RM_COLOR);*/
     AEGfxSetTransform(transform.m);
     AEGfxMeshDraw(pMesh, AE_GFX_MDM_TRIANGLES);
 }
