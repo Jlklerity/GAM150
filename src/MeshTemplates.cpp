@@ -2,7 +2,8 @@
 #include <AEEngine.h>
 #include "game.h"
 
-AEGfxVertexList* CircleMesh(int slices, float radius, float angleStep, u32 color) {
+//Makes mesh of a circle
+AEGfxVertexList* Circle_Mesh(int slices, float radius, float angleStep, u32 color) {
 
 	AEGfxMeshStart();
 	for (int i = 0; i < slices; i++) {
@@ -35,7 +36,8 @@ AEGfxVertexList* CircleMesh(int slices, float radius, float angleStep, u32 color
 	return pMesh;
 }
 
-AEGfxVertexList* RectMesh(float width, float height, u32 color) {
+//Makes mesh of a rectangle
+AEGfxVertexList* Rect_Mesh(float width, float height, u32 color) {
 	AEGfxMeshStart();
 
 	float halfWidth = width / 2.0f;
@@ -59,5 +61,32 @@ AEGfxVertexList* RectMesh(float width, float height, u32 color) {
 	return pMesh;
 }
 
- 
+//Makes mesh for sprites
+AEGfxVertexList* Sprite_Mesh(const f32 sprite_uv_width, const f32 sprite_uv_height) {
+	AEGfxMeshStart();
+
+	// This shape has 2 triangles that makes up a square
+	// Color parameters represent colours as ARGB
+	// UV coordinates to read from loaded textures
+	AEGfxTriAdd(
+		-0.5f, -0.5f, 0xFFFFFFFF, 0.0f, sprite_uv_height, // bottom left
+		0.5f, -0.5f, 0xFFFFFFFF, sprite_uv_width, sprite_uv_height, // bottom right 
+		-0.5f, 0.5f, 0xFFFFFFFF, 0.0f, 0.0f);  // top left
+
+	AEGfxTriAdd(
+		0.5f, -0.5f, 0xFFFFFFFF, sprite_uv_width, sprite_uv_height, // bottom right 
+		0.5f, 0.5f, 0xFFFFFFFF, sprite_uv_width, 0.0f,   // top right
+		-0.5f, 0.5f, 0xFFFFFFFF, 0.0f, 0.0f);  // bottom left
+
+
+	// Saving the mesh (list of triangles) in pMesh
+	 
+	//Load texture
+	AEGfxTexture* pTex = AEGfxTextureLoad("Assets/characterSheet.png");
+	if (pTex == NULL) {
+		printf("Error creating sprite mesh!\n");
+		return 0;
+	}
+	return pTex;
+}
  

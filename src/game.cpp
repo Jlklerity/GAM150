@@ -1,6 +1,6 @@
 #include <AEEngine.h>
 #include <AEMtx33.h>
-#include "meshes.h"
+#include "MeshTemplates.h"
 #include "utils.h"
 
 
@@ -34,7 +34,7 @@ void Game_Init()
 	float player_angleStep = (2.0f * PI) / player_slices;
 	u32 player_color = 0xFF0000FF;
 
-	playerMesh = CircleMesh(player_slices, player_radius, player_angleStep, player_color);
+	playerMesh = Circle_Mesh(player_slices, player_radius, player_angleStep, player_color);
 
 	//Mesh for PlusHP
 	int plusHP_slices = 32;
@@ -43,7 +43,7 @@ void Game_Init()
 	float plusHP_angleStep = (2.0f * PI) / plusHP_slices;
 	u32 plusHP_color = 0xFF00FF00;
 
-	plusHPMesh = CircleMesh(plusHP_slices, plusHP_radius, plusHP_angleStep, plusHP_color);
+	plusHPMesh = Circle_Mesh(plusHP_slices, plusHP_radius, plusHP_angleStep, plusHP_color);
 
 
 	//Mesh for MinusHP
@@ -53,7 +53,7 @@ void Game_Init()
 	minusHPX = 500.0f, minusHPY = -100.0f;
 	u32 minusHP_color = 0xFFFF0000;
 
-	minusHPMesh = CircleMesh(minusHP_slices, minusHP_radius, minusHP_angleStep, minusHP_color);
+	minusHPMesh = Circle_Mesh(minusHP_slices, minusHP_radius, minusHP_angleStep, minusHP_color);
 
 
 	//Mesh for LayerHPBar
@@ -62,7 +62,7 @@ void Game_Init()
 	layerHPBarX = 0.0f, layerHPBarY = 350.0f;
 	u32 layerHPBar_color = 0xFFA52A2A;
 
-	layerHPBarMesh = RectMesh(LayerHPBar_width, LayerHPBar_height, layerHPBar_color);
+	layerHPBarMesh = Rect_Mesh(LayerHPBar_width, LayerHPBar_height, layerHPBar_color);
 
 	//Mesh for HPBar
 	float HPBar_width = 6.0f;
@@ -71,13 +71,13 @@ void Game_Init()
 	HPBarX = 0.0f, HPBarY = 350.0f;
 	u32 HPBar_color = 0xFFFF0000;
 
-	HPBarMesh = RectMesh(HPBar_width, HPBar_height, HPBar_color);
+	HPBarMesh = Rect_Mesh(HPBar_width, HPBar_height, HPBar_color);
 
 	//Mesh for 10 HP bars
 	segment_width = HPBar_width / 10.0f - 0.05f;
 	segment_height = HPBar_height;
 	u32 segment_color = 0xFFFF0000;
-	segmentMesh = RectMesh(segment_width, segment_height, segment_color);
+	segmentMesh = Rect_Mesh(segment_width, segment_height, segment_color);
 }
 
 
