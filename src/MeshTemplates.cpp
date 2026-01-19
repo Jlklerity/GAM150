@@ -79,8 +79,8 @@ AEGfxVertexList* Sprite_Mesh(const f32 sprite_uv_width, const f32 sprite_uv_heig
 
 	AEGfxVertexList* pMesh = AEGfxMeshEnd();
 	
-	AEGfxTexture* pTex = AEGfxTextureLoad("Assets/characterSheet.png");
-	if (!pTex || !pMesh) {
+	
+	if (!pMesh) {
 		printf("Error creating sprite mesh!\n");
 		return 0;
 	}

@@ -1,5 +1,8 @@
 #include "pch.h"
 #include "Game.h"
+#include "MeshTemplates.h"
+#include "MeshRenderer.h"
+#include "Utils.h"
 
 namespace {
 	AEGfxTexture* avatarTexture = nullptr;
@@ -11,8 +14,8 @@ namespace {
 	AEGfxVertexList* HPBarMesh = nullptr;
 	AEGfxVertexList* segmentMesh = nullptr;
 
-	float playerX;
-	float playerY;
+	float spriteX, spriteY;
+	float playerX, playerY;
 	float player_radius;
 	float minusHP_radius;
 	float plusHP_radius;
@@ -149,7 +152,6 @@ void Game_Update()
 			currentFrameIndex = 0;
 
 		// Calculate UV Offset (Which "window" of the image to look at)
-		// Only have 1 row, we only need to care about x-axis.
 		int col = currentFrameIndex % SPRITE_COLS;
 		int row = currentFrameIndex / SPRITE_COLS;
 
@@ -158,30 +160,27 @@ void Game_Update()
 	}
 
 	AEGfxSetBackgroundColor(0.5f, 0.5f, 0.5f);
-	AEGfxSetBlendMode(AE_GFX_BM_BLEND); // Allow transparency
-	AEGfxSetTransparency(1.0f);
-
-	//Draw Sprite
 	AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
 	AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);
 	AEGfxSetColorToAdd(0.0f, 0.0f, 0.0f, 0.0f);
+	AEGfxSetBlendMode(AE_GFX_BM_BLEND); // Allow transparency
+	AEGfxSetTransparency(1.0f);
+
+
+	//Draw Sprite
 	AEGfxTextureSet(avatarTexture, uvOffsetX, uvOffsetY);
-	Mesh_Renderer(playerMesh, playerX, playerY, 100.0f, 100.0f, 0.0f);
+	Mesh_Renderer(avatarMesh, spriteX, spriteY, 100.0f, 100.0f, 0.0f);
 
 	AEGfxSetRenderMode(AE_GFX_RM_COLOR);//switch back for non-sprite meshes
 
 	// Draw PlusHP
 	Mesh_Renderer(plusHPMesh, plusHPX, plusHPY, 1.0f, 1.0f, 0.0f);
-
 	// Draw MinusHP
 	Mesh_Renderer(minusHPMesh, minusHPX, minusHPY, 1.0f, 1.0f, 0.0f);
-
 	// Draw Player
 	Mesh_Renderer(playerMesh, playerX, playerY, 1.0f, 1.0f, 0.0f);
-
 	// Draw Layer HP Bar (Background)
 	Mesh_Renderer(layerHPBarMesh, layerHPBarX, layerHPBarY, 200.0f, 200.0f, 0.0f);
-
 	// Draw Active HP Bar
 	Mesh_Renderer(HPBarMesh, HPBarX, HPBarY, HPBarScaleX, HPBarScaleY, 0.0f);
 
@@ -200,6 +199,7 @@ void Game_Update()
 void Game_Exit()
 {
 	AEGfxMeshFree(playerMesh);
+	AEGfxMeshFree(avatarMesh);
 	AEGfxMeshFree(plusHPMesh);
 	AEGfxMeshFree(minusHPMesh);
 	AEGfxMeshFree(layerHPBarMesh);
