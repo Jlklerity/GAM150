@@ -30,9 +30,14 @@
     <ClCompile Include="src\Utils.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\game.h" />
     <ClInclude Include="src\MeshTemplates.h" />
     <ClInclude Include="src\MeshRenderer.h" />
     <ClInclude Include="src\pch.h" />
+    <ClInclude Include="src\utils.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include=".gitignore" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>
