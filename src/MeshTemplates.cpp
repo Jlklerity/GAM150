@@ -1,4 +1,4 @@
-#include "pch.h"
+#include "game.h"
 #include "MeshTemplates.h"
 
 //Makes mesh of a circle
@@ -78,12 +78,11 @@ AEGfxVertexList* Sprite_Mesh(const f32 sprite_uv_width, const f32 sprite_uv_heig
 		-0.5f, 0.5f, 0xFFFFFFFF, 0.0f, 0.0f);  // bottom left
 
 	AEGfxVertexList* pMesh = AEGfxMeshEnd();
-	
-	
+
+
 	if (!pMesh) {
 		printf("Error creating sprite mesh!\n");
 		return 0;
 	}
 	return pMesh;
 }
- 

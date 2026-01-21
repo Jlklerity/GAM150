@@ -1,10 +1,9 @@
 // ---------------------------------------------------------------------------
 // includes
 
-#include "pch.h"
 #include <crtdbg.h> // To check for memory leaks
 #include "game.h"
-#include "utils.h"
+
 
 // ---------------------------------------------------------------------------
 // main

@@ -1,8 +1,8 @@
-#include "pch.h"
+
 #include "Game.h"
 #include "MeshTemplates.h"
 #include "MeshRenderer.h"
-#include "Utils.h"
+
 
 namespace {
 	AEGfxTexture* avatarTexture = nullptr;
