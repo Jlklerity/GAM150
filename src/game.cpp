@@ -7,25 +7,11 @@
 namespace {
 	AEGfxTexture* avatarTexture = nullptr;
 	AEGfxVertexList* avatarMesh = nullptr;
-	AEGfxVertexList* playerMesh = nullptr;
-	AEGfxVertexList* plusHPMesh = nullptr;
-	AEGfxVertexList* minusHPMesh = nullptr;
-	AEGfxVertexList* layerHPBarMesh = nullptr;
-	AEGfxVertexList* HPBarMesh = nullptr;
-	AEGfxVertexList* segmentMesh = nullptr;
 
-	float spriteX, spriteY;
-	float playerX, playerY;
-	float player_radius;
-	float minusHP_radius;
-	float plusHP_radius;
-	float minusHPX, minusHPY;
-	float plusHPX, plusHPY;
-	float HPBarX, HPBarY;
-	float layerHPBarX, layerHPBarY;
-	int TenHPBar[10];
-	float segment_width, segment_height, segmentY;
-	float HPBarScaleX, HPBarScaleY;
+	const float spriteX = -600.0f;
+	const float spriteY = -200.0f;
+
+	
 	// Animation State
 	float animTimer;
 	float animDuration; // Speed of animation
@@ -37,6 +23,11 @@ namespace {
 	const int SPRITE_ROWS = 1;
 	const float SPRITE_UV_WIDTH = 1.0f / SPRITE_COLS;
 	const float SPRITE_UV_HEIGHT = 1.0f / SPRITE_ROWS;
+
+	//background mesh and texture
+	AEGfxTexture* bgTexture = nullptr;
+	AEGfxVertexList* bgMesh = nullptr;
+
 }
 
 void Game_Init()
@@ -53,36 +44,28 @@ void Game_Init()
 	if (avatarMesh != nullptr) AEGfxMeshFree(avatarMesh); 
 	avatarMesh = Sprite_Mesh(SPRITE_UV_WIDTH, SPRITE_UV_HEIGHT);
 
+	// Background
+	bgTexture = AEGfxTextureLoad("Assets/background.png");
+	AE_ASSERT_MESG(bgTexture, "Failed to load background texture");
+	bgMesh = Rect_Mesh(1.0f, 1.0f, 0xFFFFFFFF);
+
 }
 
 
 void Game_Update()
 {
+	AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
+	AEGfxSetBlendMode(AE_GFX_BM_NONE);
+	AEGfxSetTransparency(1.0f);
+	AEGfxTextureSet(bgTexture, 0.0f, 0.0f);
 
-	if (AEInputCheckCurr(AEVK_W)) {
-		playerY += 10.0f;
-	}
-	if (AEInputCheckCurr(AEVK_S)) {
-		playerY -= 10.0f;
-	}
-	if (AEInputCheckCurr(AEVK_A)) {
-		playerX -= 10.0f;
-	}
-	if (AEInputCheckCurr(AEVK_D)) {
-		playerX += 10.0f;
-	}
-	
-	if (AreCirclesIntersecting(player_radius, minusHP_radius, playerX, playerY, minusHPX, minusHPY)) {
-		HPBarMinus(&HPBarX, &HPBarScaleX);
-	 
-	}
-	if (AreCirclesIntersecting(player_radius, plusHP_radius, playerX, playerY, plusHPX, plusHPY)) {
-		HPBarPlus(&HPBarX, &HPBarScaleX);
-		 
-	}
-
+	// Full screen (Alpha Engine uses scale, not size)
+	Mesh_Renderer(bgMesh, 0.0f, 0.0f, 1600.0f, 900.0f, 0.0f);
 	// Update timer
 	animTimer += (float)AEFrameRateControllerGetFrameTime();
+
+	AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
+	AEGfxSetBlendMode(AE_GFX_BM_BLEND);
 
 	if (animTimer >= animDuration)
 	{
@@ -111,20 +94,11 @@ void Game_Update()
 
 	//Draw Sprite
 	AEGfxTextureSet(avatarTexture, uvOffsetX, uvOffsetY);
-	Mesh_Renderer(avatarMesh, spriteX, spriteY, 100.0f, 100.0f, 0.0f);
+	Mesh_Renderer(avatarMesh, spriteX, spriteY, 150.0f, 150.0f, 0.0f);
 
 	AEGfxSetRenderMode(AE_GFX_RM_COLOR);//switch back for non-sprite meshes
 
-	//// Draw PlusHP
-	//Mesh_Renderer(plusHPMesh, plusHPX, plusHPY, 1.0f, 1.0f, 0.0f);
-	//// Draw MinusHP
-	//Mesh_Renderer(minusHPMesh, minusHPX, minusHPY, 1.0f, 1.0f, 0.0f);
-	//// Draw Player
-	//Mesh_Renderer(playerMesh, playerX, playerY, 1.0f, 1.0f, 0.0f);
-	//// Draw Layer HP Bar (Background)
-	//Mesh_Renderer(layerHPBarMesh, layerHPBarX, layerHPBarY, 200.0f, 200.0f, 0.0f);
-	//// Draw Active HP Bar
-	//Mesh_Renderer(HPBarMesh, HPBarX, HPBarY, HPBarScaleX, HPBarScaleY, 0.0f);
+	
 
 }
 
@@ -132,7 +106,16 @@ void Game_Exit()
 {
 	
 	AEGfxMeshFree(avatarMesh);
-	
+	AEGfxMeshFree(bgMesh);
+	bgMesh = nullptr;
+
+	if (bgTexture)
+	{
+		AEGfxTextureUnload(bgTexture);
+		bgTexture = nullptr;
+	}
+
+
 	if(avatarTexture)
 	{
 		AEGfxTextureUnload(avatarTexture);
