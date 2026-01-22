@@ -2,7 +2,7 @@
 #include "Game.h"
 #include "MeshTemplates.h"
 #include "MeshRenderer.h"
-
+#include "Typing.h"
 
 namespace {
 	AEGfxTexture* avatarTexture = nullptr;
@@ -49,6 +49,7 @@ void Game_Init()
 	AE_ASSERT_MESG(bgTexture, "Failed to load background texture");
 	bgMesh = Rect_Mesh(1.0f, 1.0f, 0xFFFFFFFF);
 
+	Typing_Init();
 }
 
 
@@ -61,6 +62,9 @@ void Game_Update()
 
 	// Full screen (Alpha Engine uses scale, not size)
 	Mesh_Renderer(bgMesh, 0.0f, 0.0f, 1600.0f, 900.0f, 0.0f);
+
+	Typing_Update();
+
 	// Update timer
 	animTimer += (float)AEFrameRateControllerGetFrameTime();
 
@@ -95,6 +99,8 @@ void Game_Update()
 	//Draw Sprite
 	AEGfxTextureSet(avatarTexture, uvOffsetX, uvOffsetY);
 	Mesh_Renderer(avatarMesh, spriteX, spriteY, 150.0f, 150.0f, 0.0f);
+	
+	Typing_Render();
 
 	AEGfxSetRenderMode(AE_GFX_RM_COLOR);//switch back for non-sprite meshes
 
@@ -104,7 +110,7 @@ void Game_Update()
 
 void Game_Exit()
 {
-	
+	Typing_Exit();
 	AEGfxMeshFree(avatarMesh);
 	AEGfxMeshFree(bgMesh);
 	bgMesh = nullptr;
