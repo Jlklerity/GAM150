@@ -3,6 +3,7 @@
 #include "MeshTemplates.h"
 #include "MeshRenderer.h"
 #include "Typing.h"
+#include "GameStateManager.h"
 
 namespace {
 	AEGfxTexture* avatarTexture = nullptr;
@@ -49,12 +50,17 @@ void Game_Init()
 	AE_ASSERT_MESG(bgTexture, "Failed to load background texture");
 	bgMesh = Rect_Mesh(1.0f, 1.0f, 0xFFFFFFFF);
 
+
 	Typing_Init();
 }
 
 
 void Game_Update()
 {
+	if (AEInputCheckTriggered(AEVK_ESCAPE)) {//press q to return to main menu
+		gGameStateNext = GS_MAIN_MENU;
+	}
+
 	AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
 	AEGfxSetBlendMode(AE_GFX_BM_NONE);
 	AEGfxSetTransparency(1.0f);
@@ -103,17 +109,20 @@ void Game_Update()
 	Typing_Render();
 
 	AEGfxSetRenderMode(AE_GFX_RM_COLOR);//switch back for non-sprite meshes
-
-	
-
 }
 
 void Game_Exit()
 {
 	Typing_Exit();
-	AEGfxMeshFree(avatarMesh);
-	AEGfxMeshFree(bgMesh);
-	bgMesh = nullptr;
+	if (avatarMesh) {
+		AEGfxMeshFree(avatarMesh);
+		avatarMesh = nullptr;  
+	}
+
+	if (bgMesh) {
+		AEGfxMeshFree(bgMesh);
+		bgMesh = nullptr;
+	}
 
 	if (bgTexture)
 	{

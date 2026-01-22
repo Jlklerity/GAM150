@@ -2,8 +2,9 @@
 // includes
 
 #include <crtdbg.h> // To check for memory leaks
+#include "GameStateManager.h"
 #include "game.h"
-
+#include "MainMenu.h"
 
 // ---------------------------------------------------------------------------
 // main
@@ -21,18 +22,13 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 
 	int gGameRunning = 1;
 	
-	// Initialization of your own variables go here
-
-	// Using custom window procedure
 	AESysInit(hInstance, nCmdShow, 1600, 900, 1, 60, false, nullptr);
 
-	// Changing the window title
 	AESysSetWindowTitle("My New Demo!");
 
 	// reset the system modules
 	AESysReset();
-
-	Game_Init();
+	GSM_Init(GS_MAIN_MENU);
 
 	// Game Loop
 	while (gGameRunning)
@@ -41,15 +37,25 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 		// Basic way to trigger exiting the application
 		// when ESCAPE is hit or when the window is closed
 		AESysFrameStart();
-		if (AEInputCheckTriggered(AEVK_ESCAPE) || 0 == AESysDoesWindowExist())
+		if (!AESysDoesWindowExist())
 			gGameRunning = 0;
-		Game_Update();
-		// Informing the system about the loop's end
+
+		GSM_Update();
+
+		// run the current state's Update function
+		if (gGameStateUpdate)
+			gGameStateUpdate();
+
+		// checks if the GSM set the state to quit
+		if (gGameStateCurr == GS_QUIT)
+			gGameRunning = 0;
+
 		AESysFrameEnd();
 
 	}
-
-	Game_Exit();
+	// clean up the last active state
+	if (gGameStateExit)
+		gGameStateExit();
 
 	// free the system
 	AESysExit();
