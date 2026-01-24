@@ -57,8 +57,8 @@ namespace {
 	float random_spawn_timer_seconds = 999.0f;                                                     // start high to spawn immediately
 
 	// Typing state (To be edited by Peng Fei)
-	std::string typed_buffer;                                                                            // typed letters buffer
-	int typed_target_index = -1;                                                                         // current target enemy index
+	std::string typed_buffer;                                                                      // typed letters buffer
+	int typed_target_index = -1;                                                                   // current target enemy index
 	/*_______________________________________________________________________________________________________________________________________________________________________________________________*/
 }
 
@@ -92,8 +92,8 @@ void Game_Init()
 	meshes = EnemyManage::EnemyManage_LoadMeshes(enemy_animation);                                 // load textures and meshes
 	enemy_area.area_spawn_y = AEGfxGetWinMaxY() + (EnemyConfig::ENEMY_SIZE_PX * 0.5f) + 400.0f;    // place spawn line above the screen
 	
-	enemy_pool.resize((size_t)EnemyConfig::MAX_ENEMIES);                                           // xx
-	free_slot_queue.clear();                                                                       // xx
+	enemy_pool.resize((size_t)EnemyConfig::MAX_ENEMIES);                                           // allocate enemy pool to the configured maximum size
+	free_slot_queue.clear();                                                                       // clear any previous free-slot indices before repopulating
 
 	for (int i = 0; i < EnemyConfig::MAX_ENEMIES; ++i)                                             // loop through pool slots
 	{
@@ -120,8 +120,21 @@ void Game_Update()
 	}
 
 	/*
-	@overview   Load enemy mesh and debug section
+	@overview   Debug section
 	@author     Wong Zi Yuan (w.ziyuan@digipen.edu)
+
+	@info       Control Key + "1" -> Toggle debug box
+				Control Key + "2" -> Add health (10.0)
+				Control Key + "3" -> Spawn 3-letter enemy
+				Control Key + "4" -> Spawn 4-letter enemy
+				Control Key + "5" -> Spawn 5-letter enemy
+				Control Key + "6" -> Spawn 6-letter enemy
+				Control Key + "7" -> Spawn 7-letter enemy
+				Control Key + "8" -> Spawn 8-letter enemy
+				Control Key + "9" -> Toggle on/off auto enemy spawn
+				Control Key + "0" -> Toggle difficulty display
+				Control Key + "-" -> Decrease difficulty
+				Control Key + "=" -> Increase difficulty
 	*//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
 	DebugSystem::Debug_HandleInputs(is_enemy_area_box_visible, is_random_spawning_enabled, is_difficulty_debug_visible, health, enemy_pool, free_slot_queue, enemy_area, word_bank);
 	/*_______________________________________________________________________________________________________________________________________________________________________________________________*/
