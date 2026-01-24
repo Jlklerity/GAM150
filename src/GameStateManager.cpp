@@ -27,7 +27,7 @@ void GSM_Init(int startingState)
 
 void GSM_Update()
 {
-	//  
+	
 	if (gGameStateCurr != gGameStateNext)
 	{
 		// exit the current state (if valid)

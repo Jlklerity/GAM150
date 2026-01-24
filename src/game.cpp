@@ -1,34 +1,39 @@
-
 #include "Game.h"
 #include "MeshTemplates.h"
 #include "MeshRenderer.h"
 #include "Typing.h"
+#include "Shop.h"
 #include "GameStateManager.h"
 
 namespace {
-	AEGfxTexture* avatarTexture = nullptr;
-	AEGfxVertexList* avatarMesh = nullptr;
+	//avatar mesh and texture
+	AEGfxTexture* playerTexture1 = nullptr; // Default Skin
+	AEGfxTexture* playerTexture2 = nullptr; // Alternate Skin
+	AEGfxVertexList* playerMesh = nullptr;
+
+	//background mesh and texture
+	AEGfxTexture* bgTexture1 = nullptr; // Default BG
+	AEGfxTexture* bgTexture2 = nullptr; // Alternate BG
+	AEGfxVertexList* bgMesh = nullptr;
 
 	const float spriteX = -600.0f;
 	const float spriteY = -200.0f;
 
-	
 	// Animation State
 	float animTimer;
 	float animDuration; // Speed of animation
 	int currentFrameIndex;
 	float uvOffsetX;
 	float uvOffsetY;
+
 	// Constants for the spritesheet
 	const int SPRITE_COLS = 8;
 	const int SPRITE_ROWS = 1;
 	const float SPRITE_UV_WIDTH = 1.0f / SPRITE_COLS;
 	const float SPRITE_UV_HEIGHT = 1.0f / SPRITE_ROWS;
-
-	//background mesh and texture
-	AEGfxTexture* bgTexture = nullptr;
-	AEGfxVertexList* bgMesh = nullptr;
-
+  
+	// Toggle for Shop state
+	bool isShopOpen = false;
 }
 
 void Game_Init()
@@ -38,85 +43,100 @@ void Game_Init()
 	currentFrameIndex = 0;
 	uvOffsetX = 0.0f;
 	uvOffsetY = 0.0f;
-	 
-	//Mesh for Sprite
-	avatarTexture = AEGfxTextureLoad("Assets/characterSheet.png");
-	AE_ASSERT_MESG(avatarTexture, "Failed to create characterSheet texture!!");
-	if (avatarMesh != nullptr) AEGfxMeshFree(avatarMesh); 
-	avatarMesh = Sprite_Mesh(SPRITE_UV_WIDTH, SPRITE_UV_HEIGHT);
+	
+	//player
+	playerTexture1 = AEGfxTextureLoad("Assets/characterSheet.png");
+	playerTexture2 = AEGfxTextureLoad("Assets/characterSheet.png");//for ltr when we have more player skins
+	AE_ASSERT_MESG(playerTexture1, "Failed to load characterSheet!");
+
+
+	if (playerMesh != nullptr) AEGfxMeshFree(playerMesh);
+	playerMesh = Sprite_Mesh(SPRITE_UV_WIDTH, SPRITE_UV_HEIGHT);
 
 	// Background
-	bgTexture = AEGfxTextureLoad("Assets/background.png");
-	AE_ASSERT_MESG(bgTexture, "Failed to load background texture");
+	bgTexture1 = AEGfxTextureLoad("Assets/background.png");
+	bgTexture2 = AEGfxTextureLoad("Assets/background.png"); //for ltr when we have more bg skins
+	AE_ASSERT_MESG(bgTexture1, "Failed to load background!");
+
+	
 	bgMesh = Rect_Mesh(1.0f, 1.0f, 0xFFFFFFFF);
 
-
 	Typing_Init();
+	Shop_Init();
 }
 
 
 void Game_Update()
 {
+	if (AEInputCheckTriggered(AEVK_TAB)) {
+		isShopOpen = !isShopOpen; //toggle shop menu and resume gameplay
+	}
+
 	if (AEInputCheckTriggered(AEVK_ESCAPE)) {//press q to return to main menu
 		gGameStateNext = GS_MAIN_MENU;
 	}
-
+	//background
 	AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
 	AEGfxSetBlendMode(AE_GFX_BM_NONE);
 	AEGfxSetTransparency(1.0f);
-	AEGfxTextureSet(bgTexture, 0.0f, 0.0f);
+	AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f); // Reset Color
 
-	// Full screen (Alpha Engine uses scale, not size)
+	AEGfxTexture* activeBg = (gShopBgID == 0) ? bgTexture1 : bgTexture2;
+	AEGfxTextureSet(activeBg, 0.0f, 0.0f);
+	// Optional tint for demo purposes if textures are identical
+	if (gShopBgID == 1) AEGfxSetColorToMultiply(0.5f, 0.5f, 0.7f, 1.0f); // change background color
 	Mesh_Renderer(bgMesh, 0.0f, 0.0f, 1600.0f, 900.0f, 0.0f);
 
-	Typing_Update();
-
-	// Update timer
-	animTimer += (float)AEFrameRateControllerGetFrameTime();
-
+	//player
 	AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
 	AEGfxSetBlendMode(AE_GFX_BM_BLEND);
-
-	if (animTimer >= animDuration)
-	{
-		animTimer = 0.0f;
-
-		// Move to next frame
-		currentFrameIndex++;
-		if (currentFrameIndex >= 8) // Max sprites
-			currentFrameIndex = 0;
-
-		// Calculate UV Offset (Which "window" of the image to look at)
-		int col = currentFrameIndex % SPRITE_COLS;
-		int row = currentFrameIndex / SPRITE_COLS;
-
-		uvOffsetX = col * SPRITE_UV_WIDTH;
-		uvOffsetY = row * SPRITE_UV_HEIGHT;
-	}
-
-	AEGfxSetBackgroundColor(0.5f, 0.5f, 0.5f);
-	AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
 	AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);
-	AEGfxSetColorToAdd(0.0f, 0.0f, 0.0f, 0.0f);
-	AEGfxSetBlendMode(AE_GFX_BM_BLEND); // Allow transparency
-	AEGfxSetTransparency(1.0f);
 
+	AEGfxTexture* activePlayer = (gShopSkinID == 0) ? playerTexture1 : playerTexture2;
+	AEGfxTextureSet(activePlayer, uvOffsetX, uvOffsetY);
 
-	//Draw Sprite
-	AEGfxTextureSet(avatarTexture, uvOffsetX, uvOffsetY);
-	Mesh_Renderer(avatarMesh, spriteX, spriteY, 150.0f, 150.0f, 0.0f);
-	
-	Typing_Render();
+	if (gShopSkinID == 1) AEGfxSetColorToMultiply(1.0f, 0.6f, 0.6f, 1.0f); // change player skin color
+	Mesh_Renderer(playerMesh, spriteX, spriteY, 150.0f, 150.0f, 0.0f);
 
-	AEGfxSetRenderMode(AE_GFX_RM_COLOR);//switch back for non-sprite meshes
+	if (isShopOpen)
+	{
+		// If shop is open, just run the Shop Module
+		Shop_Update();
+	}
+	else 
+	{
+		Typing_Update();
+		Typing_Render();
+
+		// Update timer
+		animTimer += (float)AEFrameRateControllerGetFrameTime();
+
+		if (animTimer >= animDuration)
+		{
+			animTimer = 0.0f;
+
+			// Move to next frame
+			currentFrameIndex++;
+			if (currentFrameIndex >= 8) // Max sprites
+				currentFrameIndex = 0;
+
+			// Calculate UV Offset (Which "window" of the image to look at)
+			int col = currentFrameIndex % SPRITE_COLS;
+			int row = currentFrameIndex / SPRITE_COLS;
+
+			uvOffsetX = col * SPRITE_UV_WIDTH;
+			uvOffsetY = row * SPRITE_UV_HEIGHT;
+		}
+	}
 }
 
 void Game_Exit()
 {
 	Typing_Exit();
-	if (avatarMesh) {
-		AEGfxMeshFree(avatarMesh);
-		avatarMesh = nullptr;  
+	Shop_Exit();
+	if (playerMesh) {
+		AEGfxMeshFree(playerMesh);
+		playerMesh = nullptr;
 	}
 
 	if (bgMesh) {
@@ -124,16 +144,25 @@ void Game_Exit()
 		bgMesh = nullptr;
 	}
 
-	if (bgTexture)
+	if (bgTexture1)
 	{
-		AEGfxTextureUnload(bgTexture);
-		bgTexture = nullptr;
+		AEGfxTextureUnload(bgTexture1);
+		bgTexture1 = nullptr;
+	}
+	if (bgTexture2)
+	{
+		AEGfxTextureUnload(bgTexture2);
+		bgTexture2 = nullptr;
 	}
 
-
-	if(avatarTexture)
+	if(playerTexture1)
 	{
-		AEGfxTextureUnload(avatarTexture);
-		avatarTexture = nullptr;
+		AEGfxTextureUnload(playerTexture1);
+		playerTexture1 = nullptr;
+	}
+	if (playerTexture2)
+	{
+		AEGfxTextureUnload(playerTexture2);
+		playerTexture2 = nullptr;
 	}
 }
