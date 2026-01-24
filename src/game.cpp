@@ -4,6 +4,7 @@
 #include "Typing.h"
 #include "Shop.h"
 #include "GameStateManager.h"
+#include "Enemy.h"
 
 namespace {
 	//avatar mesh and texture
@@ -16,7 +17,7 @@ namespace {
 	AEGfxTexture* bgTexture2 = nullptr; // Alternate BG
 	AEGfxVertexList* bgMesh = nullptr;
 
-	const float spriteX = -600.0f;
+	const float spriteX = -700.0f;
 	const float spriteY = -200.0f;
 
 	// Animation State
@@ -34,6 +35,31 @@ namespace {
   
 	// Toggle for Shop state
 	bool isShopOpen = false;
+
+	/*
+	@overview   Enemy
+	@author     Wong Zi Yuan (w.ziyuan@digipen.edu)
+	*//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
+	Data::WordBank      word_bank{};                                                               // create word bank container
+	Data::Health        health{};                                                                  // create health state
+	Data::Score         score{};                                                                   // create score state
+	Data::SpriteAnim    enemy_animation{};                                                         // create enemy animation state
+	Data::EnemyArea     enemy_area{};                                                              // create enemy area limits
+	Data::Meshes        meshes{};                                                                  // create meshes
+
+	std::vector<Data::Enemy> enemy_pool((size_t)EnemyConfig::MAX_ENEMIES);                         // create enemy pool
+	std::deque<int> free_slot_queue;                                                               // create free slot queue
+
+	bool is_enemy_area_box_visible = false;                                                        // toggle for debug box drawing
+	bool is_random_spawning_enabled = true;                                                        // toggle for auto spawning
+	bool is_difficulty_debug_visible = false;                                                      // toggle for difficulty text
+
+	float random_spawn_timer_seconds = 999.0f;                                                     // start high to spawn immediately
+
+	// Typing state (To be edited by Peng Fei)
+	std::string typed_buffer;                                                                            // typed letters buffer
+	int typed_target_index = -1;                                                                         // current target enemy index
+	/*_______________________________________________________________________________________________________________________________________________________________________________________________*/
 }
 
 void Game_Init()
@@ -58,6 +84,23 @@ void Game_Init()
 	bgTexture2 = AEGfxTextureLoad("Assets/background.png"); //for ltr when we have more bg skins
 	AE_ASSERT_MESG(bgTexture1, "Failed to load background!");
 
+	/*
+	@overview   Enemy
+	@author     Wong Zi Yuan (w.ziyuan@digipen.edu)
+	*//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
+	EnemyManage::EnemyManage_InitEngine(word_bank);                                                // start engine and load words
+	meshes = EnemyManage::EnemyManage_LoadMeshes(enemy_animation);                                 // load textures and meshes
+	enemy_area.area_spawn_y = AEGfxGetWinMaxY() + (EnemyConfig::ENEMY_SIZE_PX * 0.5f) + 400.0f;    // place spawn line above the screen
+	
+	enemy_pool.resize((size_t)EnemyConfig::MAX_ENEMIES);                                           // xx
+	free_slot_queue.clear();                                                                       // xx
+
+	for (int i = 0; i < EnemyConfig::MAX_ENEMIES; ++i)                                             // loop through pool slots
+	{
+		enemy_pool[(size_t)i].enemy_is_active = false;                                             // mark slot inactive
+		free_slot_queue.push_back(i);                                                              // push slot index into free queue
+	}
+	/*_______________________________________________________________________________________________________________________________________________________________________________________________*/
 	
 	bgMesh = Rect_Mesh(1.0f, 1.0f, 0xFFFFFFFF);
 
@@ -75,6 +118,121 @@ void Game_Update()
 	if (AEInputCheckTriggered(AEVK_ESCAPE)) {//press q to return to main menu
 		gGameStateNext = GS_MAIN_MENU;
 	}
+
+	/*
+	@overview   Load enemy mesh and debug section
+	@author     Wong Zi Yuan (w.ziyuan@digipen.edu)
+	*//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
+	DebugSystem::Debug_HandleInputs(is_enemy_area_box_visible, is_random_spawning_enabled, is_difficulty_debug_visible, health, enemy_pool, free_slot_queue, enemy_area, word_bank);
+	/*_______________________________________________________________________________________________________________________________________________________________________________________________*/
+
+	// Notes for Peng Fei
+	// To kill enemy use "EnemySystem::Enemy_Killed(target)", target being the specific enemy to kill
+	// To add score after killing enemy, "score.score_value += score", score being the specific points to give, can just do "+= 1"
+	/*_______________________________________________________________________________________________________________________________________________________________________________________________*/
+	/*XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX*/
+	/*_______________________________________________________________________________________________________________________________________________________________________________________________*/
+	if (AEInputCheckTriggered(AEVK_RETURN))                                                              // enter pressed check
+	{
+		typed_buffer.clear();                                                                            // clear typed letters
+		typed_target_index = -1;                                                                         // clear target lock
+	}
+
+	if (AEInputCheckTriggered(AEVK_BACK))                                                                // backspace pressed check
+	{
+		if (!typed_buffer.empty())                                                                       // check if there is something to delete
+			typed_buffer.pop_back();                                                                     // remove last letter
+
+		if (typed_buffer.empty())                                                                        // check if buffer is now empty
+			typed_target_index = -1;                                                                     // clear target lock
+	}
+
+	char typed_char = 0;                                                                                 // typed character storage
+	if (Utility::Input_GetTriggeredLetter(typed_char))                                                   // check for A-Z key press
+	{
+		typed_buffer.push_back(typed_char);                                                              // add letter to buffer
+
+		if (typed_target_index >= 0)                                                                     // check if a target is already locked
+		{
+			if (typed_target_index >= (int)enemy_pool.size()                                             // check bounds
+				|| !enemy_pool[(size_t)typed_target_index].enemy_is_active                               // check active
+				|| enemy_pool[(size_t)typed_target_index].enemy_is_dying                                 // check not dying
+				|| !Utility::String_StartsWith(enemy_pool[(size_t)typed_target_index].enemy_word_text,
+					typed_buffer))                                                                       // check prefix still matches
+			{
+				typed_target_index = -1;                                                                 // unlock invalid target
+			}
+		}
+
+		if (typed_target_index < 0)                                                                      // check if no target is locked
+			typed_target_index = EnemySystem::Enemy_FindBestTargetByPrefix(enemy_pool, typed_buffer);    // find best target by prefix
+
+		if (typed_target_index >= 0)                                                                     // check if target exists
+		{
+			Data::Enemy& target = enemy_pool[(size_t)typed_target_index];                                // reference target enemy
+			if (target.enemy_is_active && !target.enemy_is_dying
+				&& target.enemy_word_text == typed_buffer)                                               // check full word match
+			{
+				EnemySystem::Enemy_Killed(target);                                                       // start death drop
+
+				score.score_value += target.enemy_word_length * 10;                                      // add score based on word length
+
+				typed_buffer.clear();                                                                    // clear typed letters
+				typed_target_index = -1;                                                                 // clear target lock
+			}
+		}
+		else                                                                                             // handle no match case
+		{
+			typed_buffer.clear();                                                                        // clear typed letters on mismatch
+		}
+	}
+	/*_______________________________________________________________________________________________________________________________________________________________________________________________*/
+	/*XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX*/
+	/*_______________________________________________________________________________________________________________________________________________________________________________________________*/
+	float dt = (float)AEFrameRateControllerGetFrameTime();                                               // read delta time for this frame
+
+	DifficultySystem::Difficulty_UpdateOverTime(dt);                                                     // increase difficulty over time
+
+	if (is_random_spawning_enabled)                                                                      // check if auto spawning is on
+	{
+		random_spawn_timer_seconds += dt;                                                                // add dt to spawn timer
+		float interval = DifficultySystem::Difficulty_GetSpawnIntervalSeconds();                         // get current spawn interval
+
+		if (random_spawn_timer_seconds >= interval)                                                      // check if time to spawn
+		{
+			random_spawn_timer_seconds = 0.0f;                                                           // reset spawn timer
+			int len = DifficultySystem::Difficulty_GetRandomWordLength();                                // pick random word length
+			EnemySystem::Enemy_SpawnFromPool(enemy_pool, free_slot_queue, enemy_area, word_bank, len);   // spawn enemy
+		}
+	}
+
+	for (int i = 0; i < EnemyConfig::MAX_ENEMIES; ++i)                                                   // loop through all pool slots
+	{
+		Data::Enemy& e = enemy_pool[(size_t)i];                                                          // reference enemy slot
+		bool was_active = e.enemy_is_active;                                                             // remember active state before update
+
+		EnemySystem::Enemy_Update(e, enemy_area, dt, health);                                            // update enemy movement and state
+
+		if (was_active && !e.enemy_is_active)                                                            // check if enemy just became inactive
+		{
+			free_slot_queue.push_back(i);                                                                // return slot index to free queue
+
+			// Notes for Peng Fei
+			// Have to compare target index to i, then clear it by doing -1
+			/*_________________________________________________________________________________________________________________________________*/
+			/*XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX*/
+			/*_________________________________________________________________________________________________________________________________*/
+			if (typed_target_index == i)                                                                 // check if target index points to this slot
+				typed_target_index = -1;                                                                 // clear target lock
+			/*_________________________________________________________________________________________________________________________________*/
+			/*XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX*/
+			/*_________________________________________________________________________________________________________________________________*/
+		}
+	}
+
+	EnemySystem::Enemy_ResolveLaneStacking(enemy_pool, enemy_area);                                      // fix spacing in lanes
+	/*_________________________________________________________________________________________________________________________________________*/
+
 	//background
 	AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
 	AEGfxSetBlendMode(AE_GFX_BM_NONE);
@@ -128,10 +286,42 @@ void Game_Update()
 			uvOffsetY = row * SPRITE_UV_HEIGHT;
 		}
 	}
+
+	/*
+	@overview   Draw enemies and debug overlays
+	@author     Wong Zi Yuan (w.ziyuan@digipen.edu)
+	*//*_______________________________________________________________________________________________________________________________________*/
+
+	if (is_enemy_area_box_visible)                                                                       // check debug draw flag
+	{
+		UiSystem::Debug_DrawEnemyAreaBox(meshes, enemy_area);                                            // draw enemy area box
+		UiSystem::Debug_DrawEnemyLaneLines(meshes, enemy_area);                                          // draw lane lines
+	}
+
+	for (const auto& e : enemy_pool)                                                                     // loop through enemies for sprite draw
+		EnemySystem::Enemy_Draw(meshes, e);                                                              // draw enemy sprite
+
+	for (const auto& e : enemy_pool)                                                                     // loop through enemies for word draw
+		EnemySystem::Enemy_DrawWord(e);                                                                  // draw enemy word
+
+	UiSystem::Debug_DrawDifficultyTopRight(is_difficulty_debug_visible,
+		is_random_spawning_enabled, health);                                                             // draw debug difficulty ui with health
+	/*_________________________________________________________________________________________________________________________________________*/
+
+
+	/*_________________________________________________________________________________________________________________________________________*/
+	/*XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX*/
+	/*_________________________________________________________________________________________________________________________________________*/
+	UiSystem::Ui_DrawScoreAndTyped(score, typed_buffer);                                                 // draw score and typed buffer
+	/*_________________________________________________________________________________________________________________________________________*/
+	/*XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX*/
+	/*_________________________________________________________________________________________________________________________________________*/
 }
 
 void Game_Exit()
 {
+	EnemyManage::EnemyManage_FreeMeshes(meshes);
+
 	Typing_Exit();
 	Shop_Exit();
 	if (playerMesh) {
