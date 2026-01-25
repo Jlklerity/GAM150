@@ -56,13 +56,11 @@ namespace {
 	bool is_difficulty_debug_visible = false;                                                      // toggle for difficulty text
 
 	float random_spawn_timer_seconds = 999.0f;                                                     // start high to spawn immediately
+	/*_______________________________________________________________________________________________________________________________________________________________________________________________*/
 
-	// Typing state (To be edited by Peng Fei)
-	//std::string typed_buffer;                                                                      // typed letters buffer
-	//int typed_target_index = -1;                                                                   // current target enemy index
+	// Typing state
 	int typed_target_index = -1; 
 
-	/*_______________________________________________________________________________________________________________________________________________________________________________________________*/
 }
 
 void Game_Init()
@@ -142,8 +140,7 @@ void Game_Update()
 				Control Key + "=" -> Increase difficulty
 	*//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
 	DebugSystem::Debug_HandleInputs(is_enemy_area_box_visible, is_random_spawning_enabled, is_difficulty_debug_visible, health, enemy_pool, free_slot_queue, enemy_area, word_bank);
-	
-
+	/*_______________________________________________________________________________________________________________________________________________________________________________________________*/
 
 	float dt = (float)AEFrameRateControllerGetFrameTime();                                               // read delta time for this frame
 	dt *= PowerUpSystem::GetTimeScale(); // azfar code
@@ -188,8 +185,6 @@ void Game_Update()
 		float wy = 450.0f - (float)my;
 		PowerUpSystem::OnMouseClick(wx, wy, enemy_pool);
 	} // azfar code
-
-
 
 	EnemySystem::Enemy_ResolveLaneStacking(enemy_pool, enemy_area);                                      // fix spacing in lanes
 	/*_________________________________________________________________________________________________________________________________________*/
@@ -270,14 +265,7 @@ void Game_Update()
 		is_random_spawning_enabled, health);                                                             // draw debug difficulty ui with health
 	/*_________________________________________________________________________________________________________________________________________*/
 
-
-	/*_________________________________________________________________________________________________________________________________________*/
-	/*XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX*/
-	/*_________________________________________________________________________________________________________________________________________*/
-	UiSystem::Ui_DrawScoreAndTyped(score);                                                 // draw score and typed buffer
-	/*_________________________________________________________________________________________________________________________________________*/
-	/*XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX*/
-	/*_________________________________________________________________________________________________________________________________________*/
+	UiSystem::Ui_DrawScoreAndTyped(score);                                                               // draw score and typed buffer
 
 	PowerUpSystem::Draw(); // azfar code
 }
