@@ -11,21 +11,31 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\Enemy.cpp" />
     <ClCompile Include="src\Game.cpp" />
     <ClCompile Include="src\GameStateManager.cpp" />
     <ClCompile Include="src\Main.cpp" />
     <ClCompile Include="src\MainMenu.cpp" />
     <ClCompile Include="src\MeshRenderer.cpp" />
     <ClCompile Include="src\MeshTemplates.cpp" />
+<<<<<<< HEAD
+=======
+    <ClCompile Include="src\PowerUp.cpp" />
+>>>>>>> a0b735a28bffceb03ffbd6ab66ce5b642605ebc4
     <ClCompile Include="src\Shop.cpp" />
     <ClCompile Include="src\Typing.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\Enemy.h" />
     <ClInclude Include="src\game.h" />
     <ClInclude Include="src\GameStateManager.h" />
     <ClInclude Include="src\MainMenu.h" />
     <ClInclude Include="src\MeshRenderer.h" />
     <ClInclude Include="src\MeshTemplates.h" />
+<<<<<<< HEAD
+=======
+    <ClInclude Include="src\PowerUp.h" />
+>>>>>>> a0b735a28bffceb03ffbd6ab66ce5b642605ebc4
     <ClInclude Include="src\Shop.h" />
     <ClInclude Include="src\Typing.h" />
   </ItemGroup>

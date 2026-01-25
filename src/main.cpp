@@ -5,6 +5,7 @@
 #include "GameStateManager.h"
 #include "game.h"
 #include "MainMenu.h"
+#include "Enemy.h"
 
 // ---------------------------------------------------------------------------
 // main
@@ -24,7 +25,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 	
 	AESysInit(hInstance, nCmdShow, 1600, 900, 1, 60, false, nullptr);
 
-	AESysSetWindowTitle("My New Demo!");
+	AESysSetWindowTitle("Revenge of YK");
 
 	// reset the system modules
 	AESysReset();
