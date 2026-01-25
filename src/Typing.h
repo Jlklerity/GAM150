@@ -1,5 +1,6 @@
 #pragma once
 #include <vector>
+#include <string>
 
 void Typing_Init();
 void Typing_Update();
@@ -12,8 +13,12 @@ void Typing_Exit();
 namespace Data { struct Enemy; }
 namespace Data { struct Score; }
 
+namespace UiSystem
+{
+    void Ui_DrawScoreAndTyped(const Data::Score& score);
+}
+
 void Typing_UpdateAndApplyToEnemies(std::vector<Data::Enemy>& enemy_pool, Data::Score& score);
 
-// (optional but useful)
-const char* Typing_GetText();
-void Typing_Clear();
+
+

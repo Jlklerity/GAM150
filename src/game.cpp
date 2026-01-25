@@ -274,7 +274,7 @@ void Game_Update()
 	/*_________________________________________________________________________________________________________________________________________*/
 	/*XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX*/
 	/*_________________________________________________________________________________________________________________________________________*/
-	UiSystem::Ui_DrawScoreAndTyped(score, Typing_GetText());                                                 // draw score and typed buffer
+	UiSystem::Ui_DrawScoreAndTyped(score);                                                 // draw score and typed buffer
 	/*_________________________________________________________________________________________________________________________________________*/
 	/*XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX*/
 	/*_________________________________________________________________________________________________________________________________________*/

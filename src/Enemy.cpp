@@ -190,43 +190,7 @@
         }
 
         /*_______________________________________________________________________________________________________________________________________________________________________________________________*/
-        /*XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX*/
-        /*_______________________________________________________________________________________________________________________________________________________________________________________________*/
-        bool String_StartsWith(const std::string& text, const std::string& prefix)
-        {
-            if (prefix.size() > text.size()) return false;                                                                      // fail if prefix is longer than text
-            for (size_t i = 0; i < prefix.size(); ++i)                                                                          // loop over prefix letters
-            {
-                if (text[i] != prefix[i]) return false;                                                                         // fail on first mismatch
-            }
-            return true;                                                                                                        // all letters matched
-        }
-
-        bool Input_GetTriggeredLetter(char& out_char)
-        {
-            struct KeyMap { int vk; char c; };                                                                                  // map virtual key to character
-            const KeyMap keys[] =                                                                                               // fixed list of A-Z mappings
-            {
-                { AEVK_A, 'A' },{ AEVK_B, 'B' },{ AEVK_C, 'C' },{ AEVK_D, 'D' },{ AEVK_E, 'E' },                                // A to E
-                { AEVK_F, 'F' },{ AEVK_G, 'G' },{ AEVK_H, 'H' },{ AEVK_I, 'I' },{ AEVK_J, 'J' },                                // F to J
-                { AEVK_K, 'K' },{ AEVK_L, 'L' },{ AEVK_M, 'M' },{ AEVK_N, 'N' },{ AEVK_O, 'O' },                                // K to O
-                { AEVK_P, 'P' },{ AEVK_Q, 'Q' },{ AEVK_R, 'R' },{ AEVK_S, 'S' },{ AEVK_T, 'T' },                                // P to T
-                { AEVK_U, 'U' },{ AEVK_V, 'V' },{ AEVK_W, 'W' },{ AEVK_X, 'X' },{ AEVK_Y, 'Y' },                                // U to Y
-                { AEVK_Z, 'Z' }                                                                                                 // Z
-            };
-
-            for (const auto& k : keys)                                                                                          // loop through mappings
-            {
-                if (AEInputCheckTriggered(k.vk))                                                                                // check if that key was pressed this frame
-                {
-                    out_char = k.c;                                                                                             // write the letter to output
-                    return true;                                                                                                // report letter was found
-                }
-            }
-            return false;                                                                                                       // report no letter this frame
-        }
-        /*_______________________________________________________________________________________________________________________________________________________________________________________________*/
-        /*XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX*/
+       
         /*_______________________________________________________________________________________________________________________________________________________________________________________________*/
 
     } // Utility namespace end
@@ -1228,34 +1192,7 @@
         }
 
         /*_______________________________________________________________________________________________________________________________________________________________________________________________*/
-        /*XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX*/
-        /*_______________________________________________________________________________________________________________________________________________________________________________________________*/
-        int Enemy_FindBestTargetByPrefix(const std::vector<Data::Enemy>& pool, const std::string& typed_prefix)
-        {
-            if (typed_prefix.empty()) return -1;                                                                                // no target if nothing typed
-
-            int best_idx = -1;                                                                                                  // best index so far
-            float best_y = 9999999.0f;                                                                                          // best y so far, smaller is better
-
-            for (int i = 0; i < (int)pool.size(); ++i)                                                                          // loop through enemy pool
-            {
-                const auto& e = pool[(size_t)i];                                                                                // read enemy data
-                if (!e.enemy_is_active) continue;                                                                               // skip inactive enemies
-                if (e.enemy_is_dying) continue;                                                                                 // skip dying enemies
-
-                if (Utility::String_StartsWith(e.enemy_word_text, typed_prefix))                                                // check prefix match
-                {
-                    if (e.enemy_position_y < best_y)                                                                            // check if closer to landing
-                    {
-                        best_y = e.enemy_position_y;                                                                            // store new best y
-                        best_idx = i;                                                                                           // store new best index
-                    }
-                }
-            }
-            return best_idx;                                                                                                    // return best index or -1
-        }
-        /*_______________________________________________________________________________________________________________________________________________________________________________________________*/
-        /*XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX*/
+        
         /*_______________________________________________________________________________________________________________________________________________________________________________________________*/
 
     } // EnemySystem namespace end
@@ -1390,24 +1327,7 @@
         }
 
         /*_______________________________________________________________________________________________________________________________________________________________________________________________*/
-        /*XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX*/
-        /*_______________________________________________________________________________________________________________________________________________________________________________________________*/
-        void Ui_DrawScoreAndTyped(const Data::Score& score, const std::string& typed)
-        {
-            if (Graphics::font_id < 0) return;                                                                                  // skip if font missing
-
-            char s[128];                                                                                                        // text buffer for score
-            std::snprintf(s, sizeof(s), "SCORE: %d", score.score_value);                                                        // format score line
-
-            AEGfxSetBlendMode(AE_GFX_BM_BLEND);                                                                                 // enable blending for text
-            AEGfxPrint(Graphics::font_id, s, -0.95f, 0.90f, 0.55f, 1, 1, 1, 1);                                                 // draw score at top-left-ish
-
-            // typed buffer (bottom center-ish)                                                                                 // note about typed text location
-           // std::string typed_line = "TYPE: " + typed;                                                                          // build typed line
-           // AEGfxPrint(Graphics::font_id, typed_line.c_str(), -0.40f, -0.90f, 0.6f, 1, 1, 1, 1);                                // draw typed line near bottom
-        }
-        /*_______________________________________________________________________________________________________________________________________________________________________________________________*/
-        /*XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX*/
+       
         /*_______________________________________________________________________________________________________________________________________________________________________________________________*/
 
     } // UiSystem namespace end
