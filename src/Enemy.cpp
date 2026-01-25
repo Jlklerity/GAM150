@@ -1403,8 +1403,8 @@
             AEGfxPrint(Graphics::font_id, s, -0.95f, 0.90f, 0.55f, 1, 1, 1, 1);                                                 // draw score at top-left-ish
 
             // typed buffer (bottom center-ish)                                                                                 // note about typed text location
-            std::string typed_line = "TYPE: " + typed;                                                                          // build typed line
-            AEGfxPrint(Graphics::font_id, typed_line.c_str(), -0.40f, -0.90f, 0.6f, 1, 1, 1, 1);                                // draw typed line near bottom
+           // std::string typed_line = "TYPE: " + typed;                                                                          // build typed line
+           // AEGfxPrint(Graphics::font_id, typed_line.c_str(), -0.40f, -0.90f, 0.6f, 1, 1, 1, 1);                                // draw typed line near bottom
         }
         /*_______________________________________________________________________________________________________________________________________________________________________________________________*/
         /*XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX*/

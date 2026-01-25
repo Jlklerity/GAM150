@@ -4,9 +4,36 @@
 #include <cstring>
 #include "Typing.h"
 #include <iostream>
+#include "Enemy.h"
+
+
+
+
 
 namespace
 {
+
+    // for debug
+    static bool s_debugSubmitted = false; // check for submission
+    static bool s_debugCorrect = false; // check if submission correct
+    static std::string s_debugTyped; // str for whats typed
+    static std::string s_debugTarget; // str for correct ans
+    //
+
+
+    static int s_targetIndex = -1;
+
+    //cursor
+    static float s_cursorTimer = 0.0f; 
+    static bool  s_cursorVisible = true;
+
+    //shake anim
+    static float s_shakeStrength = 4.0f;  // pixels of offset
+    static std::string s_shakeText;
+    static float s_shakeTextTime = 0.0f;
+    static const float s_shakeTextDuration = 0.15f;
+
+
 	AEGfxTexture* lettersTex = nullptr; // texture for letters spritesheet
     AEGfxVertexList* letterQuad = nullptr; //texture for single letter 
 
@@ -15,7 +42,7 @@ namespace
     const float UV_W{1.0f / COLS }; //uv width per letter
 	const float UV_H {1.0f / ROWS}; //uv height per letter
 
-    const char* target{ "BANANA" }; // target word, change to enemys one later
+    //const char* target{ "BANANA" }; // target word, change to enemys one later
     char typed[32]{}; // word typed enters this array
     int typedLen{}; // length of typed word
 
@@ -42,7 +69,7 @@ static bool KeyPressedOnce(int key)
 //convert char to index for sprite sheet
 static int CharToIndex(char c)
 {
-	c = ToUpper(c);// convert to upper
+    c = (char)toupper((unsigned char)c);;// convert to upper
 	if (c < 'A' || c > 'Z') return -1; //if not A-Z, return -1 so draw loop cannot draw 
     return (c - 'A'); // return the index of letters for drawing of sprite
 }
@@ -72,17 +99,7 @@ static void PopChar()
     }
 }
 
-// check if what we typed match target
-static bool SubmitCorrect()
-{
-    int i = 0; //index
-    while (target[i] && typed[i]) //while both strs still have chars
-    {
-		if (ToUpper(target[i]) != ToUpper(typed[i])) return false; // if mismatch, return false
-		++i;// next char
-    }
-    return (target[i] == '\0' && typed[i] == '\0'); // check if both strs end tgt
-}
+
 
 //clear everyth typed
 static void ClearTyped()
@@ -130,6 +147,79 @@ static void DrawWordCentered(const char* word, float centerX, float y,
 }
 
 
+static void DrawCursorAfterWordCentered(const char* word, float centerX, float y,float w, float h, float spacing){
+    int len = (int)strlen(word);
+
+    // total width of letters + spacing
+    float totalWidth = (len * w) + ((len > 0) ? (len - 1) * spacing : 0.0f);
+
+    // start x that DrawWordCentered uses
+    float startX = centerX - totalWidth * 0.5f;
+
+    // cursor x position = after last character
+    float cursorX = startX + len * (w + spacing);
+
+    // Draw a thin rectangle as cursor
+    // You'll need a simple "white quad" mesh or use AEGfx primitives.
+    AEGfxSetRenderMode(AE_GFX_RM_COLOR);
+    AEGfxSetBlendMode(AE_GFX_BM_BLEND);
+    AEGfxSetTransparency(1.0f);
+
+    // make cursor thin; height ~ 70% of letter height
+    float cw = 8.0f;
+    float ch = h * 0.7f;
+
+    AEGfxSetRenderMode(AE_GFX_RM_COLOR);
+    AEGfxSetBlendMode(AE_GFX_BM_BLEND);
+    AEGfxSetTransparency(1.0f);
+
+    
+    AEGfxSetBlendColor(1.0f, 1.0f, 1.0f, 1.0f);
+
+
+    Mesh_Renderer(letterQuad /*or a plain quad*/, cursorX, y, cw, ch, 0.0f);
+}
+
+const char* Typing_GetText()
+{
+    return typed; //return typed word
+}
+
+void Typing_Clear()
+{
+    ClearTyped(); //clear 
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 // load letter spritesheet, create quad for single tile, clear typed array n reset keyboard hist
@@ -138,14 +228,10 @@ void Typing_Init()
     lettersTex = AEGfxTextureLoad("Assets/lettersheet-Sheet.png"); // load
     AE_ASSERT_MESG(lettersTex, "Failed to load letters spritesheet!"); 
 
-	const float LETTER_UV_W = 1.0f / 8.0f; // uv size per tile
-    const float LETTER_UV_H = 1.0f / 4.0f;
-
-	letterQuad = Sprite_Mesh(LETTER_UV_W, LETTER_UV_H); // create quad
+	letterQuad = Sprite_Mesh(UV_W, UV_H); // create quad
 
 	ClearTyped(); // clear
 
-    
 	for (int i = 0; i < 256; ++i) prevKey[i] = false; // clear prevKey so can type immediately
 }
 
@@ -162,45 +248,169 @@ void Typing_Update()
         }
     }
 
-    // backspace
-    if (KeyPressedOnce(AEVK_BACK))
-    {
-        PopChar();
-    }
+    if (KeyPressedOnce(AEVK_BACK)) PopChar(); // backspace
 
-    // submit
-    if (KeyPressedOnce(AEVK_RETURN))
+
+    float dt = (float)AEFrameRateControllerGetFrameTime();
+    s_cursorTimer += dt; // add dt for cursor timer
+
+    if (s_cursorTimer >= 0.5f) // blink every 0.5s
     {
-        std::cout << "SUBMIT: " << typed << std::endl;
-        if (SubmitCorrect())
+        s_cursorTimer = 0.0f; // reset
+        s_cursorVisible = !s_cursorVisible; 
+    }
+    
+    // update shake text timer
+    if (s_shakeTextTime > 0.0f) // check if shake animation is active
+    {
+        s_shakeTextTime -= dt; //countdown remaining shake duration
+        if (s_shakeTextTime <= 0.0f) // check if shake fin
         {
-            std::cout << "Correct (" << typed << ")\n";
+            s_shakeTextTime = 0.0f; // reset shake itmer
+            s_shakeText.clear();   // remove shaken word after duration
         }
-        else {
-            std::cout << " wrong u Typed: " << typed << " Target: " << target << "\n";
-        }
-
-        ClearTyped(); 
     }
+
 }
 
 
-//draw whatever is currently in typed
+//draw whatever is currently in typed, no input logic
 void Typing_Render()
 {
-    DrawWordCentered(typed, 0.0f, -350.0f, 60.0f, 60.0f, 8.0f);
+    float dx = 0.0f, dy = 0.0f;
+
+    if (s_shakeTextTime > 0.0f && !s_shakeText.empty() ) // if shake timer is active and theres text to shake
+    {
+        dx = ((float)rand() / RAND_MAX * 2.0f - 1.0f) * s_shakeStrength; // (float)rand() / RAND_MAX generates random float 0 to 1, *2 stretches the range, -1 recenters the range around zero
+        dy = ((float)rand() / RAND_MAX * 2.0f - 1.0f) * s_shakeStrength;
+
+        DrawWordCentered(s_shakeText.c_str(), 0.0f + dx, -350.0f + dy, 60.0f, 60.0f, 8.0f);
+    }
+    else
+    {
+        DrawWordCentered(typed, 0.0f, -350.0f, 60.0f, 60.0f, 8.0f);
+    }
 
 
-    static bool printed = false; // debug text
+    if (s_cursorVisible)
+    {
+        DrawCursorAfterWordCentered(typed, 0.0f + dx, -350.0f + dy, 60.0f, 60.0f, 8.0f);
+    }
+#ifdef _DEBUG                                                   // debug chunk
+    static bool printed = false; 
     if (!printed)
     {
         std::cout << "Typing_Render called" << std::endl;
         printed = true;
     }
+
+    if (s_debugSubmitted)
+    {
+        std::cout << "SUBMIT: " << s_debugTyped << std::endl;
+
+        if (s_debugCorrect)
+        {
+            std::cout << "RESULT: CORRECT" << std::endl;
+            std::cout << "TARGET WORD: " << s_debugTarget << std::endl;
+        }
+        else
+        {
+            std::cout << "RESULT: WRONG" << std::endl;
+            if (!s_debugTarget.empty())
+                std::cout << "TARGET WORD: " << s_debugTarget << std::endl;
+            else
+                std::cout << "TARGET WORD: <none>" << std::endl;
+        }
+
+        std::cout << "------------------------" << std::endl;
+
+        s_debugSubmitted = false; // print once per submit
+    }
+#endif
 }
 
 void Typing_Exit()
 {
     if (letterQuad) { AEGfxMeshFree(letterQuad); letterQuad = nullptr; } //freeee
     if (lettersTex) { AEGfxTextureUnload(lettersTex); lettersTex = nullptr; }// freeeeeee
+}
+
+
+
+
+
+
+
+
+
+
+
+// connects typing and the enemies, params are (enemy_pool, score), enemy pool to find n kill enemy, score so can modify score
+void Typing_UpdateAndApplyToEnemies(std::vector<Data::Enemy>& enemy_pool, Data::Score& score){
+    Typing_Update(); //call typing update logic, basicallly pushing whatever is typed to the buffer
+    bool submitted = KeyPressedOnce(AEVK_RETURN);    // check for enter
+
+    std::string typed_buffer = typed; // convert from char array to std::string
+
+    if (typed_buffer.empty()) //if nothing typed, unlock target and return
+    {
+        s_targetIndex = -1;
+        return;
+    }
+
+    
+    if (s_targetIndex >= 0) // means have locked enemy target
+        //if index out of range OR enemy no longer active OR enemy_is_dying OR the typed letters no longer match the start of the target word, target lock clear (s_targetIndex =-1)
+        if (s_targetIndex >= (int)enemy_pool.size() || !enemy_pool[(size_t)s_targetIndex].enemy_is_active || enemy_pool[(size_t)s_targetIndex].enemy_is_dying || !Utility::String_StartsWith(enemy_pool[(size_t)s_targetIndex].enemy_word_text, typed_buffer)) s_targetIndex = -1;
+       
+    // if no target locked try to find one
+    if (s_targetIndex < 0) s_targetIndex = EnemySystem::Enemy_FindBestTargetByPrefix(enemy_pool, typed_buffer);
+
+    // if player pressed enter, always clear (and only kill if locked + exact match)
+    if (submitted)
+    {
+        //debug chunk
+        s_debugSubmitted = true;
+        s_debugTyped = typed_buffer;
+        s_debugCorrect = false;
+        s_debugTarget.clear();
+        //
+        //if (s_targetIndex < 0)  s_targetIndex = EnemySystem::Enemy_FindBestTargetByPrefix(enemy_pool, typed_buffer);
+        bool correct = false; //for shake
+
+        if (s_targetIndex >= 0) // if have target
+        {
+            Data::Enemy& target = enemy_pool[(size_t)s_targetIndex];
+            s_debugTarget = target.enemy_word_text; //store its word for debug
+
+            //if enemy valid AND typed word matches
+            if (target.enemy_is_active && !target.enemy_is_dying && target.enemy_word_text == typed_buffer)
+            {
+                EnemySystem::Enemy_Killed(target); //kill the enemy
+                score.score_value += target.enemy_word_length * 10; // increase score based on word length (length x 10)
+                s_debugCorrect = true;
+                correct = true; //no shake
+            }
+        }
+
+        if (!correct) //if not correct
+        {
+            s_shakeText = typed_buffer;           // store what is typed
+            s_shakeTextTime = s_shakeTextDuration;
+        }
+
+
+
+        ClearTyped();  //clear
+        s_targetIndex = -1; //no target lock
+        return;
+    }
+
+
+    // No target locked yet -> allow free typing (don’t clear)
+    if (s_targetIndex < 0)
+    {
+        return;
+    }
+
 }

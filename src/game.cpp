@@ -58,8 +58,10 @@ namespace {
 	float random_spawn_timer_seconds = 999.0f;                                                     // start high to spawn immediately
 
 	// Typing state (To be edited by Peng Fei)
-	std::string typed_buffer;                                                                      // typed letters buffer
-	int typed_target_index = -1;                                                                   // current target enemy index
+	//std::string typed_buffer;                                                                      // typed letters buffer
+	//int typed_target_index = -1;                                                                   // current target enemy index
+	int typed_target_index = -1; 
+
 	/*_______________________________________________________________________________________________________________________________________________________________________________________________*/
 }
 
@@ -140,71 +142,9 @@ void Game_Update()
 				Control Key + "=" -> Increase difficulty
 	*//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
 	DebugSystem::Debug_HandleInputs(is_enemy_area_box_visible, is_random_spawning_enabled, is_difficulty_debug_visible, health, enemy_pool, free_slot_queue, enemy_area, word_bank);
-	/*_______________________________________________________________________________________________________________________________________________________________________________________________*/
+	
 
-	// Notes for Peng Fei
-	// To kill enemy use "EnemySystem::Enemy_Killed(target)", target being the specific enemy to kill
-	// To add score after killing enemy, "score.score_value += score", score being the specific points to give, can just do "+= 1"
-	/*_______________________________________________________________________________________________________________________________________________________________________________________________*/
-	/*XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX*/
-	/*_______________________________________________________________________________________________________________________________________________________________________________________________*/
-	if (AEInputCheckTriggered(AEVK_RETURN))                                                              // enter pressed check
-	{
-		typed_buffer.clear();                                                                            // clear typed letters
-		typed_target_index = -1;                                                                         // clear target lock
-	}
 
-	if (AEInputCheckTriggered(AEVK_BACK))                                                                // backspace pressed check
-	{
-		if (!typed_buffer.empty())                                                                       // check if there is something to delete
-			typed_buffer.pop_back();                                                                     // remove last letter
-
-		if (typed_buffer.empty())                                                                        // check if buffer is now empty
-			typed_target_index = -1;                                                                     // clear target lock
-	}
-
-	char typed_char = 0;                                                                                 // typed character storage
-	if (Utility::Input_GetTriggeredLetter(typed_char))                                                   // check for A-Z key press
-	{
-		typed_buffer.push_back(typed_char);                                                              // add letter to buffer
-
-		if (typed_target_index >= 0)                                                                     // check if a target is already locked
-		{
-			if (typed_target_index >= (int)enemy_pool.size()                                             // check bounds
-				|| !enemy_pool[(size_t)typed_target_index].enemy_is_active                               // check active
-				|| enemy_pool[(size_t)typed_target_index].enemy_is_dying                                 // check not dying
-				|| !Utility::String_StartsWith(enemy_pool[(size_t)typed_target_index].enemy_word_text,
-					typed_buffer))                                                                       // check prefix still matches
-			{
-				typed_target_index = -1;                                                                 // unlock invalid target
-			}
-		}
-
-		if (typed_target_index < 0)                                                                      // check if no target is locked
-			typed_target_index = EnemySystem::Enemy_FindBestTargetByPrefix(enemy_pool, typed_buffer);    // find best target by prefix
-
-		if (typed_target_index >= 0)                                                                     // check if target exists
-		{
-			Data::Enemy& target = enemy_pool[(size_t)typed_target_index];                                // reference target enemy
-			if (target.enemy_is_active && !target.enemy_is_dying
-				&& target.enemy_word_text == typed_buffer)                                               // check full word match
-			{
-				EnemySystem::Enemy_Killed(target);                                                       // start death drop
-
-				score.score_value += target.enemy_word_length * 10;                                      // add score based on word length
-
-				typed_buffer.clear();                                                                    // clear typed letters
-				typed_target_index = -1;                                                                 // clear target lock
-			}
-		}
-		else                                                                                             // handle no match case
-		{
-			typed_buffer.clear();                                                                        // clear typed letters on mismatch
-		}
-	}
-	/*_______________________________________________________________________________________________________________________________________________________________________________________________*/
-	/*XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX*/
-	/*_______________________________________________________________________________________________________________________________________________________________________________________________*/
 	float dt = (float)AEFrameRateControllerGetFrameTime();                                               // read delta time for this frame
 	dt *= PowerUpSystem::GetTimeScale(); // azfar code
 
@@ -234,16 +174,6 @@ void Game_Update()
 		{
 			free_slot_queue.push_back(i);                                                                // return slot index to free queue
 
-			// Notes for Peng Fei
-			// Have to compare target index to i, then clear it by doing -1
-			/*_________________________________________________________________________________________________________________________________*/
-			/*XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX*/
-			/*_________________________________________________________________________________________________________________________________*/
-			if (typed_target_index == i)                                                                 // check if target index points to this slot
-				typed_target_index = -1;                                                                 // clear target lock
-			/*_________________________________________________________________________________________________________________________________*/
-			/*XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX*/
-			/*_________________________________________________________________________________________________________________________________*/
 		}
 	}
 	
@@ -294,7 +224,7 @@ void Game_Update()
 	}
 	else 
 	{
-		Typing_Update();
+		Typing_UpdateAndApplyToEnemies(enemy_pool, score);
 		Typing_Render();
 
 		// Update timer
@@ -344,7 +274,7 @@ void Game_Update()
 	/*_________________________________________________________________________________________________________________________________________*/
 	/*XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX*/
 	/*_________________________________________________________________________________________________________________________________________*/
-	UiSystem::Ui_DrawScoreAndTyped(score, typed_buffer);                                                 // draw score and typed buffer
+	UiSystem::Ui_DrawScoreAndTyped(score, Typing_GetText());                                                 // draw score and typed buffer
 	/*_________________________________________________________________________________________________________________________________________*/
 	/*XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX*/
 	/*_________________________________________________________________________________________________________________________________________*/
