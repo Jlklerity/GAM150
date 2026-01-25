@@ -5,6 +5,7 @@
 #include "Shop.h"
 #include "GameStateManager.h"
 #include "Enemy.h"
+#include "PowerUp.h"
 
 namespace {
 	//avatar mesh and texture
@@ -106,6 +107,8 @@ void Game_Init()
 
 	Typing_Init();
 	Shop_Init();
+	PowerUpSystem::Init(); // azfar code ver 1
+
 }
 
 
@@ -203,6 +206,7 @@ void Game_Update()
 	/*XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX*/
 	/*_______________________________________________________________________________________________________________________________________________________________________________________________*/
 	float dt = (float)AEFrameRateControllerGetFrameTime();                                               // read delta time for this frame
+	dt *= PowerUpSystem::GetTimeScale(); // azfar code
 
 	DifficultySystem::Difficulty_UpdateOverTime(dt);                                                     // increase difficulty over time
 
@@ -242,6 +246,20 @@ void Game_Update()
 			/*_________________________________________________________________________________________________________________________________*/
 		}
 	}
+	
+	PowerUpSystem::Update(dt, enemy_pool);
+
+	// mouse click -> convert to world coords
+	if (AEInputCheckTriggered(AEVK_LBUTTON))
+	{
+		s32 mx, my;
+		AEInputGetCursorPosition(&mx, &my);
+		float wx = (float)mx - 800.0f;
+		float wy = 450.0f - (float)my;
+		PowerUpSystem::OnMouseClick(wx, wy, enemy_pool);
+	} // azfar code
+
+
 
 	EnemySystem::Enemy_ResolveLaneStacking(enemy_pool, enemy_area);                                      // fix spacing in lanes
 	/*_________________________________________________________________________________________________________________________________________*/
@@ -281,6 +299,7 @@ void Game_Update()
 
 		// Update timer
 		animTimer += (float)AEFrameRateControllerGetFrameTime();
+
 
 		if (animTimer >= animDuration)
 		{
@@ -329,6 +348,8 @@ void Game_Update()
 	/*_________________________________________________________________________________________________________________________________________*/
 	/*XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX*/
 	/*_________________________________________________________________________________________________________________________________________*/
+
+	PowerUpSystem::Draw(); // azfar code
 }
 
 void Game_Exit()
@@ -337,6 +358,7 @@ void Game_Exit()
 
 	Typing_Exit();
 	Shop_Exit();
+	PowerUpSystem::Free();
 	if (playerMesh) {
 		AEGfxMeshFree(playerMesh);
 		playerMesh = nullptr;
