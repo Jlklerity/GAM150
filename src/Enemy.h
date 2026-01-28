@@ -295,16 +295,6 @@ namespace Utility
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
     void String_ToUpperInPlace(std::string& s);
 
-    /*_______________________________________________________________________________________________________________________________________________________________________________________________*/
-    /*XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX*/
-    /*_______________________________________________________________________________________________________________________________________________________________________________________________*/
-    bool String_StartsWith(const std::string& text, const std::string& prefix);
-
-    bool Input_GetTriggeredLetter(char& out_char);
-    /*_______________________________________________________________________________________________________________________________________________________________________________________________*/
-    /*XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX*/
-    /*_______________________________________________________________________________________________________________________________________________________________________________________________*/
-
 } // Utility namespace end
 /*___________________________________________________________________________________________________________________________________________________________________________________________________*/
 
@@ -380,6 +370,9 @@ meshes with a standard 2D transform.
 *//*_________________________________________________________________________________________________________________________________________________________________________________________________*/
 namespace Graphics
 {
+
+
+    extern s8 font_id;
     /*
     @function       Graphics_GetEnemyTextureByWordLength
     @params         word_length (int)
@@ -573,6 +566,7 @@ namespace HealthSystem
     0 and 'h.health_max' to prevent underflow or overflow.
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
     void Health_Add(Data::Health& h, float amount);
+     
 
 } // HealthSystem namespace end
 /*___________________________________________________________________________________________________________________________________________________________________________________________________*/
@@ -794,13 +788,6 @@ namespace EnemySystem
     scaled fall speed and inserted into the pool.
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
     void Enemy_SpawnFromPool(std::vector<Data::Enemy>& pool, std::deque<int>& free_slots, const Data::EnemyArea& area, const Data::WordBank& bank, int word_length);
-    /*_______________________________________________________________________________________________________________________________________________________________________________________________*/
-    /*XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX*/
-    /*_______________________________________________________________________________________________________________________________________________________________________________________________*/
-    int Enemy_FindBestTargetByPrefix(const std::vector<Data::Enemy>& pool, const std::string& typed_prefix);
-    /*_______________________________________________________________________________________________________________________________________________________________________________________________*/
-    /*XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX*/
-    /*_______________________________________________________________________________________________________________________________________________________________________________________________*/
 
 } // EnemySystem namespace end
 /*___________________________________________________________________________________________________________________________________________________________________________________________________*/
@@ -852,13 +839,7 @@ namespace UiSystem
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
     void Debug_DrawDifficultyTopRight(bool show, bool auto_spawn_on, const Data::Health& health);
 
-    /*_______________________________________________________________________________________________________________________________________________________________________________________________*/
-    /*XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX*/
-    /*_______________________________________________________________________________________________________________________________________________________________________________________________*/
-    void Ui_DrawScoreAndTyped(const Data::Score& score, const std::string& typed);
-    /*_______________________________________________________________________________________________________________________________________________________________________________________________*/
-    /*XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX*/
-    /*_______________________________________________________________________________________________________________________________________________________________________________________________*/
+    void Ui_DrawHealthBar(Data::Health& h, Data::Meshes& meshes); //Health bar visible in the game (jeremy)
 
 } // UiSystem namespace end
 /*___________________________________________________________________________________________________________________________________________________________________________________________________*/
@@ -939,5 +920,6 @@ namespace EnemyManage
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
     void EnemyManage_FreeMeshes(Data::Meshes& meshes);
 
+    
 } // EnemyManage namespace end
 /*___________________________________________________________________________________________________________________________________________________________________________________________________*/

@@ -34,8 +34,8 @@ namespace {
 	const float SPRITE_UV_WIDTH = 1.0f / SPRITE_COLS;
 	const float SPRITE_UV_HEIGHT = 1.0f / SPRITE_ROWS;
   
-	// Toggle for Shop state
-	bool isShopOpen = false;
+	//bool isShopOpen = false;
+	bool isPaused = false;
 
 	/*
 	@overview   Enemy
@@ -56,11 +56,11 @@ namespace {
 	bool is_difficulty_debug_visible = false;                                                      // toggle for difficulty text
 
 	float random_spawn_timer_seconds = 999.0f;                                                     // start high to spawn immediately
-
-	// Typing state (To be edited by Peng Fei)
-	std::string typed_buffer;                                                                      // typed letters buffer
-	int typed_target_index = -1;                                                                   // current target enemy index
 	/*_______________________________________________________________________________________________________________________________________________________________________________________________*/
+
+	// Typing state
+	int typed_target_index = -1; 
+
 }
 
 void Game_Init()
@@ -106,7 +106,7 @@ void Game_Init()
 	bgMesh = Rect_Mesh(1.0f, 1.0f, 0xFFFFFFFF);
 
 	Typing_Init();
-	Shop_Init();
+	//Shop_Init();
 	PowerUpSystem::Init(); // azfar code ver 1
 
 }
@@ -114,242 +114,270 @@ void Game_Init()
 
 void Game_Update()
 {
-	if (AEInputCheckTriggered(AEVK_TAB)) {
-		isShopOpen = !isShopOpen; //toggle shop menu and resume gameplay
-	}
+    // ------------------------------------------------------------------------
+    // 1. INPUTS
+    // ------------------------------------------------------------------------
+    if (AEInputCheckTriggered(AEVK_ESCAPE)) {
+        isPaused = !isPaused; // pauses game
+    }
 
-	if (AEInputCheckTriggered(AEVK_ESCAPE)) {//press q to return to main menu
-		gGameStateNext = GS_MAIN_MENU;
-	}
+    //if (AEInputCheckTriggered(AEVK_TAB)) {
+    //    isShopOpen = !isShopOpen; // toggle shop menu and resume gameplay
+    //}
+    
 
-	/*
-	@overview   Debug section
-	@author     Wong Zi Yuan (w.ziyuan@digipen.edu)
+    // ------------------------------------------------------------------------
+    // 2. GAMEPLAY LOGIC (Run only when active)
+    // ------------------------------------------------------------------------
+    if (!isPaused)
+    {
+        /*
+        @overview   Debug section
+        @author     Wong Zi Yuan (w.ziyuan@digipen.edu)
 
-	@info       Control Key + "1" -> Toggle debug box
-				Control Key + "2" -> Add health (10.0)
-				Control Key + "3" -> Spawn 3-letter enemy
-				Control Key + "4" -> Spawn 4-letter enemy
-				Control Key + "5" -> Spawn 5-letter enemy
-				Control Key + "6" -> Spawn 6-letter enemy
-				Control Key + "7" -> Spawn 7-letter enemy
-				Control Key + "8" -> Spawn 8-letter enemy
-				Control Key + "9" -> Toggle on/off auto enemy spawn
-				Control Key + "0" -> Toggle difficulty display
-				Control Key + "-" -> Decrease difficulty
-				Control Key + "=" -> Increase difficulty
-	*//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
-	DebugSystem::Debug_HandleInputs(is_enemy_area_box_visible, is_random_spawning_enabled, is_difficulty_debug_visible, health, enemy_pool, free_slot_queue, enemy_area, word_bank);
-	/*_______________________________________________________________________________________________________________________________________________________________________________________________*/
+        @info       Control Key + "1" -> Toggle debug box
+                    Control Key + "2" -> Add health (10.0)
+                    Control Key + "3" -> Spawn 3-letter enemy
+                    Control Key + "4" -> Spawn 4-letter enemy
+                    Control Key + "5" -> Spawn 5-letter enemy
+                    Control Key + "6" -> Spawn 6-letter enemy
+                    Control Key + "7" -> Spawn 7-letter enemy
+                    Control Key + "8" -> Spawn 8-letter enemy
+                    Control Key + "9" -> Toggle on/off auto enemy spawn
+                    Control Key + "0" -> Toggle difficulty display
+                    Control Key + "-" -> Decrease difficulty
+                    Control Key + "=" -> Increase difficulty
+        *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
+        DebugSystem::Debug_HandleInputs(is_enemy_area_box_visible, is_random_spawning_enabled, is_difficulty_debug_visible, health, enemy_pool, free_slot_queue, enemy_area, word_bank);
+        /*_______________________________________________________________________________________________________________________________________________________________________________________________*/
 
-	// Notes for Peng Fei
-	// To kill enemy use "EnemySystem::Enemy_Killed(target)", target being the specific enemy to kill
-	// To add score after killing enemy, "score.score_value += score", score being the specific points to give, can just do "+= 1"
-	/*_______________________________________________________________________________________________________________________________________________________________________________________________*/
-	/*XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX*/
-	/*_______________________________________________________________________________________________________________________________________________________________________________________________*/
-	if (AEInputCheckTriggered(AEVK_RETURN))                                                              // enter pressed check
-	{
-		typed_buffer.clear();                                                                            // clear typed letters
-		typed_target_index = -1;                                                                         // clear target lock
-	}
+        float dt = (float)AEFrameRateControllerGetFrameTime();                                               // read delta time for this frame
+        dt *= PowerUpSystem::GetTimeScale(); // azfar code
 
-	if (AEInputCheckTriggered(AEVK_BACK))                                                                // backspace pressed check
-	{
-		if (!typed_buffer.empty())                                                                       // check if there is something to delete
-			typed_buffer.pop_back();                                                                     // remove last letter
+        DifficultySystem::Difficulty_UpdateOverTime(dt);                                                     // increase difficulty over time
 
-		if (typed_buffer.empty())                                                                        // check if buffer is now empty
-			typed_target_index = -1;                                                                     // clear target lock
-	}
+        if (is_random_spawning_enabled)                                                                      // check if auto spawning is on
+        {
+            random_spawn_timer_seconds += dt;                                                                // add dt to spawn timer
+            float interval = DifficultySystem::Difficulty_GetSpawnIntervalSeconds();                         // get current spawn interval
 
-	char typed_char = 0;                                                                                 // typed character storage
-	if (Utility::Input_GetTriggeredLetter(typed_char))                                                   // check for A-Z key press
-	{
-		typed_buffer.push_back(typed_char);                                                              // add letter to buffer
+            if (random_spawn_timer_seconds >= interval)                                                      // check if time to spawn
+            {
+                random_spawn_timer_seconds = 0.0f;                                                           // reset spawn timer
+                int len = DifficultySystem::Difficulty_GetRandomWordLength();                                // pick random word length
+                EnemySystem::Enemy_SpawnFromPool(enemy_pool, free_slot_queue, enemy_area, word_bank, len);   // spawn enemy
+            }
+        }
 
-		if (typed_target_index >= 0)                                                                     // check if a target is already locked
-		{
-			if (typed_target_index >= (int)enemy_pool.size()                                             // check bounds
-				|| !enemy_pool[(size_t)typed_target_index].enemy_is_active                               // check active
-				|| enemy_pool[(size_t)typed_target_index].enemy_is_dying                                 // check not dying
-				|| !Utility::String_StartsWith(enemy_pool[(size_t)typed_target_index].enemy_word_text,
-					typed_buffer))                                                                       // check prefix still matches
-			{
-				typed_target_index = -1;                                                                 // unlock invalid target
-			}
-		}
+        for (int i = 0; i < EnemyConfig::MAX_ENEMIES; ++i)                                                   // loop through all pool slots
+        {
+            Data::Enemy& e = enemy_pool[(size_t)i];                                                          // reference enemy slot
+            bool was_active = e.enemy_is_active;                                                             // remember active state before update
 
-		if (typed_target_index < 0)                                                                      // check if no target is locked
-			typed_target_index = EnemySystem::Enemy_FindBestTargetByPrefix(enemy_pool, typed_buffer);    // find best target by prefix
+            EnemySystem::Enemy_Update(e, enemy_area, dt, health);                                            // update enemy movement and state
 
-		if (typed_target_index >= 0)                                                                     // check if target exists
-		{
-			Data::Enemy& target = enemy_pool[(size_t)typed_target_index];                                // reference target enemy
-			if (target.enemy_is_active && !target.enemy_is_dying
-				&& target.enemy_word_text == typed_buffer)                                               // check full word match
-			{
-				EnemySystem::Enemy_Killed(target);                                                       // start death drop
+            if (was_active && !e.enemy_is_active)                                                            // check if enemy just became inactive
+            {
+                free_slot_queue.push_back(i);                                                                // return slot index to free queue
 
-				score.score_value += target.enemy_word_length * 10;                                      // add score based on word length
+            }
+        }
 
-				typed_buffer.clear();                                                                    // clear typed letters
-				typed_target_index = -1;                                                                 // clear target lock
-			}
-		}
-		else                                                                                             // handle no match case
-		{
-			typed_buffer.clear();                                                                        // clear typed letters on mismatch
-		}
-	}
-	/*_______________________________________________________________________________________________________________________________________________________________________________________________*/
-	/*XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX*/
-	/*_______________________________________________________________________________________________________________________________________________________________________________________________*/
-	float dt = (float)AEFrameRateControllerGetFrameTime();                                               // read delta time for this frame
-	dt *= PowerUpSystem::GetTimeScale(); // azfar code
+        PowerUpSystem::Update(dt, enemy_pool);
 
-	DifficultySystem::Difficulty_UpdateOverTime(dt);                                                     // increase difficulty over time
+        // mouse click -> convert to world coords
+        if (AEInputCheckTriggered(AEVK_LBUTTON))
+        {
+            s32 mx, my;
+            AEInputGetCursorPosition(&mx, &my);
+            float wx = (float)mx - 800.0f;
+            float wy = 450.0f - (float)my;
+            PowerUpSystem::OnMouseClick(wx, wy, enemy_pool);
+        } // azfar code
 
-	if (is_random_spawning_enabled)                                                                      // check if auto spawning is on
-	{
-		random_spawn_timer_seconds += dt;                                                                // add dt to spawn timer
-		float interval = DifficultySystem::Difficulty_GetSpawnIntervalSeconds();                         // get current spawn interval
+        EnemySystem::Enemy_ResolveLaneStacking(enemy_pool, enemy_area);                                      // fix spacing in lanes
 
-		if (random_spawn_timer_seconds >= interval)                                                      // check if time to spawn
-		{
-			random_spawn_timer_seconds = 0.0f;                                                           // reset spawn timer
-			int len = DifficultySystem::Difficulty_GetRandomWordLength();                                // pick random word length
-			EnemySystem::Enemy_SpawnFromPool(enemy_pool, free_slot_queue, enemy_area, word_bank, len);   // spawn enemy
-		}
-	}
+        // MOVED TYPING LOGIC HERE (so it pauses)
+        Typing_UpdateAndApplyToEnemies(enemy_pool, score);
 
-	for (int i = 0; i < EnemyConfig::MAX_ENEMIES; ++i)                                                   // loop through all pool slots
-	{
-		Data::Enemy& e = enemy_pool[(size_t)i];                                                          // reference enemy slot
-		bool was_active = e.enemy_is_active;                                                             // remember active state before update
+        // MOVED ANIMATION LOGIC HERE (so it pauses)
+        // Update timer
+        animTimer += (float)AEFrameRateControllerGetFrameTime();
 
-		EnemySystem::Enemy_Update(e, enemy_area, dt, health);                                            // update enemy movement and state
+        if (animTimer >= animDuration)
+        {
+            animTimer = 0.0f;
 
-		if (was_active && !e.enemy_is_active)                                                            // check if enemy just became inactive
-		{
-			free_slot_queue.push_back(i);                                                                // return slot index to free queue
+            // Move to next frame
+            currentFrameIndex++;
+            if (currentFrameIndex >= 8) // Max sprites
+                currentFrameIndex = 0;
 
-			// Notes for Peng Fei
-			// Have to compare target index to i, then clear it by doing -1
-			/*_________________________________________________________________________________________________________________________________*/
-			/*XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX*/
-			/*_________________________________________________________________________________________________________________________________*/
-			if (typed_target_index == i)                                                                 // check if target index points to this slot
-				typed_target_index = -1;                                                                 // clear target lock
-			/*_________________________________________________________________________________________________________________________________*/
-			/*XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX*/
-			/*_________________________________________________________________________________________________________________________________*/
-		}
-	}
-	
-	PowerUpSystem::Update(dt, enemy_pool);
+            // Calculate UV Offset (Which "window" of the image to look at)
+            int col = currentFrameIndex % SPRITE_COLS;
+            int row = currentFrameIndex / SPRITE_COLS;
 
-	// mouse click -> convert to world coords
-	if (AEInputCheckTriggered(AEVK_LBUTTON))
-	{
-		s32 mx, my;
-		AEInputGetCursorPosition(&mx, &my);
-		float wx = (float)mx - 800.0f;
-		float wy = 450.0f - (float)my;
-		PowerUpSystem::OnMouseClick(wx, wy, enemy_pool);
-	} // azfar code
+            uvOffsetX = col * SPRITE_UV_WIDTH;
+            uvOffsetY = row * SPRITE_UV_HEIGHT;
+        }
+    }
+    //else if (isShopOpen)
+    //{
+    //    // If shop is open, just run the Shop Module
+    //    Shop_Update();
+    //}
 
+    // ------------------------------------------------------------------------
+    // 3. RENDERING (Always run so the screen doesn't go black)
+    // ------------------------------------------------------------------------
 
+    /*_________________________________________________________________________________________________________________________________________*/
 
-	EnemySystem::Enemy_ResolveLaneStacking(enemy_pool, enemy_area);                                      // fix spacing in lanes
-	/*_________________________________________________________________________________________________________________________________________*/
+    //background
+    AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
+    AEGfxSetBlendMode(AE_GFX_BM_NONE);
+    AEGfxSetTransparency(1.0f);
+    AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f); // Reset Color
 
-	//background
-	AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
-	AEGfxSetBlendMode(AE_GFX_BM_NONE);
-	AEGfxSetTransparency(1.0f);
-	AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f); // Reset Color
+    AEGfxTexture* activeBg = (gShopBgID == 0) ? bgTexture1 : bgTexture2;
+    AEGfxTextureSet(activeBg, 0.0f, 0.0f);
+    //// Optional tint for demo purposes if textures are identical
+    //if (gShopBgID == 1) AEGfxSetColorToMultiply(0.5f, 0.5f, 0.7f, 1.0f); // change background color
+    Mesh_Renderer(bgMesh, 0.0f, 0.0f, 1600.0f, 900.0f, 0.0f);
 
-	AEGfxTexture* activeBg = (gShopBgID == 0) ? bgTexture1 : bgTexture2;
-	AEGfxTextureSet(activeBg, 0.0f, 0.0f);
-	// Optional tint for demo purposes if textures are identical
-	if (gShopBgID == 1) AEGfxSetColorToMultiply(0.5f, 0.5f, 0.7f, 1.0f); // change background color
-	Mesh_Renderer(bgMesh, 0.0f, 0.0f, 1600.0f, 900.0f, 0.0f);
+    //player
+    AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
+    AEGfxSetBlendMode(AE_GFX_BM_BLEND);
+    AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);
 
-	//player
-	AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
-	AEGfxSetBlendMode(AE_GFX_BM_BLEND);
-	AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);
+    AEGfxTexture* activePlayer = (gShopSkinID == 0) ? playerTexture1 : playerTexture2;
+    AEGfxTextureSet(activePlayer, uvOffsetX, uvOffsetY);
 
-	AEGfxTexture* activePlayer = (gShopSkinID == 0) ? playerTexture1 : playerTexture2;
-	AEGfxTextureSet(activePlayer, uvOffsetX, uvOffsetY);
+    if (gShopSkinID == 1) AEGfxSetColorToMultiply(1.0f, 0.6f, 0.6f, 1.0f); // change player skin color
+    Mesh_Renderer(playerMesh, spriteX, spriteY, 150.0f, 150.0f, 0.0f);
 
-	if (gShopSkinID == 1) AEGfxSetColorToMultiply(1.0f, 0.6f, 0.6f, 1.0f); // change player skin color
-	Mesh_Renderer(playerMesh, spriteX, spriteY, 150.0f, 150.0f, 0.0f);
+    // Render typing letters 
+    
+    Typing_Render();
+    
 
-	if (isShopOpen)
-	{
-		// If shop is open, just run the Shop Module
-		Shop_Update();
-	}
-	else 
-	{
-		Typing_Update();
-		Typing_Render();
+    /*
+    @overview   Draw enemies and debug overlays
+    @author     Wong Zi Yuan (w.ziyuan@digipen.edu)
+    *//*_______________________________________________________________________________________________________________________________________*/
 
-		// Update timer
-		animTimer += (float)AEFrameRateControllerGetFrameTime();
+    if (is_enemy_area_box_visible)                                                                       // check debug draw flag
+    {
+        UiSystem::Debug_DrawEnemyAreaBox(meshes, enemy_area);                                            // draw enemy area box
+        UiSystem::Debug_DrawEnemyLaneLines(meshes, enemy_area);                                          // draw lane lines
+    }
 
+    for (const auto& e : enemy_pool)                                                                     // loop through enemies for sprite draw
+        EnemySystem::Enemy_Draw(meshes, e);                                                              // draw enemy sprite
 
-		if (animTimer >= animDuration)
-		{
-			animTimer = 0.0f;
+    for (const auto& e : enemy_pool)                                                                     // loop through enemies for word draw
+        EnemySystem::Enemy_DrawWord(e);                                                                  // draw enemy word
 
-			// Move to next frame
-			currentFrameIndex++;
-			if (currentFrameIndex >= 8) // Max sprites
-				currentFrameIndex = 0;
+    UiSystem::Debug_DrawDifficultyTopRight(is_difficulty_debug_visible,
+        is_random_spawning_enabled, health);                                                             // draw debug difficulty ui with health
+    /*_________________________________________________________________________________________________________________________________________*/
 
-			// Calculate UV Offset (Which "window" of the image to look at)
-			int col = currentFrameIndex % SPRITE_COLS;
-			int row = currentFrameIndex / SPRITE_COLS;
+    UiSystem::Ui_DrawScoreAndTyped(score);                                                               // draw score and typed buffer
 
-			uvOffsetX = col * SPRITE_UV_WIDTH;
-			uvOffsetY = row * SPRITE_UV_HEIGHT;
-		}
-	}
+    PowerUpSystem::Draw(); // azfar code
 
-	/*
-	@overview   Draw enemies and debug overlays
-	@author     Wong Zi Yuan (w.ziyuan@digipen.edu)
-	*//*_______________________________________________________________________________________________________________________________________*/
+    UiSystem::Ui_DrawHealthBar(health, meshes); // jeremy code
 
-	if (is_enemy_area_box_visible)                                                                       // check debug draw flag
-	{
-		UiSystem::Debug_DrawEnemyAreaBox(meshes, enemy_area);                                            // draw enemy area box
-		UiSystem::Debug_DrawEnemyLaneLines(meshes, enemy_area);                                          // draw lane lines
-	}
+    // PAUSE OVERLAY
+    if (isPaused)
+    {
+        if (Graphics::font_id >= 0)
+        {
+            // --- Draw "PAUSED" Text ---
+            const char* pauseText = "PAUSED";
+            float w, h;
+            AEGfxGetPrintSize(Graphics::font_id, pauseText, 1.0f, &w, &h);
 
-	for (const auto& e : enemy_pool)                                                                     // loop through enemies for sprite draw
-		EnemySystem::Enemy_Draw(meshes, e);                                                              // draw enemy sprite
+            AEGfxSetBlendMode(AE_GFX_BM_BLEND);
+            AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);
+            AEGfxPrint(Graphics::font_id, pauseText, -w * 0.5f, 0.25f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f);
 
-	for (const auto& e : enemy_pool)                                                                     // loop through enemies for word draw
-		EnemySystem::Enemy_DrawWord(e);                                                                  // draw enemy word
+            // ========================================================================
+            // Button Configuration
+            // ========================================================================
+            float btnW = 300.0f;
+            float btnH = 60.0f;
+            float btnX = 0.0f; // Centered Horizontally
 
-	UiSystem::Debug_DrawDifficultyTopRight(is_difficulty_debug_visible,
-		is_random_spawning_enabled, health);                                                             // draw debug difficulty ui with health
-	/*_________________________________________________________________________________________________________________________________________*/
+            // Y Positions
+            float resumeY = -50.0f;
+            float menuY = -150.0f;
 
+            // ========================================================================
+            // Draw "RESUME" Button
+            // ========================================================================
+            // 1. Background
+            AEGfxSetRenderMode(AE_GFX_RM_COLOR);
+            AEGfxSetBlendMode(AE_GFX_BM_BLEND);
+            AEGfxSetTransparency(1.0f);
+            AEGfxSetColorToMultiply(0.3f, 0.3f, 0.3f, 1.0f);
+            Mesh_Renderer(bgMesh, btnX, resumeY, btnW, btnH, 0.0f);
 
-	/*_________________________________________________________________________________________________________________________________________*/
-	/*XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX*/
-	/*_________________________________________________________________________________________________________________________________________*/
-	UiSystem::Ui_DrawScoreAndTyped(score, typed_buffer);                                                 // draw score and typed buffer
-	/*_________________________________________________________________________________________________________________________________________*/
-	/*XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX*/
-	/*_________________________________________________________________________________________________________________________________________*/
+            // 2. Text
+            const char* resumeText = "RESUME";
+            float rw, rh;
+            AEGfxGetPrintSize(Graphics::font_id, resumeText, 0.6f, &rw, &rh);
+            AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);
+            // -0.15f Y is approx -50.0f world units
+            AEGfxPrint(Graphics::font_id, resumeText, -rw * 0.5f, -0.15f, 0.6f, 1.0f, 1.0f, 1.0f, 1.0f);
 
-	PowerUpSystem::Draw(); // azfar code
+            // ========================================================================
+            // Draw "MAIN MENU" Button
+            // ========================================================================
+            // 1. Background
+            AEGfxSetRenderMode(AE_GFX_RM_COLOR);
+            AEGfxSetColorToMultiply(0.3f, 0.3f, 0.3f, 1.0f);
+            Mesh_Renderer(bgMesh, btnX, menuY, btnW, btnH, 0.0f);
+
+            // 2. Text
+            const char* menuText = "MAIN MENU";
+            float mw, mh;
+            AEGfxGetPrintSize(Graphics::font_id, menuText, 0.6f, &mw, &mh);
+            AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);
+            // -0.37f Y is approx -150.0f world units
+            AEGfxPrint(Graphics::font_id, menuText, -mw * 0.5f, -0.37f, 0.6f, 1.0f, 1.0f, 1.0f, 1.0f);
+
+            // ========================================================================
+            // Handle Mouse Clicks
+            // ========================================================================
+            if (AEInputCheckTriggered(AEVK_LBUTTON))
+            {
+                s32 mx, my;
+                AEInputGetCursorPosition(&mx, &my);
+
+                float wx = (float)mx - 800.0f;
+                float wy = 450.0f - (float)my;
+
+                float halfW = btnW * 0.5f;
+                float halfH = btnH * 0.5f;
+
+                // Check RESUME
+                if (wx >= (btnX - halfW) && wx <= (btnX + halfW) &&
+                    wy >= (resumeY - halfH) && wy <= (resumeY + halfH))
+                {
+                    isPaused = false; // Just unpause
+                }
+
+                // Check MAIN MENU
+                if (wx >= (btnX - halfW) && wx <= (btnX + halfW) &&
+                    wy >= (menuY - halfH) && wy <= (menuY + halfH))
+                {
+                    isPaused = false;
+                    gGameStateNext = GS_MAIN_MENU;
+                }
+            }
+        }
+    }
 }
 
 void Game_Exit()
@@ -357,7 +385,7 @@ void Game_Exit()
 	EnemyManage::EnemyManage_FreeMeshes(meshes);
 
 	Typing_Exit();
-	Shop_Exit();
+	//Shop_Exit();
 	PowerUpSystem::Free();
 	if (playerMesh) {
 		AEGfxMeshFree(playerMesh);

@@ -1,3 +1,4 @@
+#include "GameStateManager.h"
 #include "Shop.h"
 #include "MeshTemplates.h"
 #include "MeshRenderer.h"
@@ -48,6 +49,9 @@ void Shop_Init() {
 
 void Shop_Update(){
 	 
+	if (AEInputCheckTriggered(AEVK_ESCAPE)) {
+		gGameStateNext = GS_MAIN_MENU;
+	}
 	// Draw Overlay
 	AEGfxSetRenderMode(AE_GFX_RM_COLOR);
 	AEGfxSetBlendMode(AE_GFX_BM_BLEND);

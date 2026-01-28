@@ -2,6 +2,7 @@
 #include <cstdio>
 #include "MainMenu.h"
 #include "game.h"
+#include "Shop.h"
 
 //define global variables
 int gGameStateCurr = GS_NONE;
@@ -52,7 +53,11 @@ void GSM_Update()
 			gGameStateUpdate = Game_Update;
 			gGameStateExit = Game_Exit;
 			break;
-
+		case GS_SHOP:
+			gGameStateInit = Shop_Init;
+			gGameStateUpdate = Shop_Update;
+			gGameStateExit = Shop_Exit;
+			break;
 		case GS_QUIT:
 			// will handle the actual quitting in main
 			gGameStateInit = nullptr;
