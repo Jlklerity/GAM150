@@ -766,11 +766,10 @@
         @usage          Enemy_SpawnFromPool
 
         This function maps a lane id into the usable horizontal range and returns the
-        corresponding X coordinate. If there is only one lane, it returns the midpoint of the usable range.
+        corresponding X coordinate.
         *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
         float Enemy_GetLaneX(int lane_id, float usable_min_x, float usable_max_x)
         {
-            if (EnemyConfig::ENEMY_LANE_COUNT <= 1) return (usable_min_x + usable_max_x) * 0.5f;                                // single lane fallback
             float t = (float)lane_id / (float)(EnemyConfig::ENEMY_LANE_COUNT - 1);                                              // lane position as 0..1
             return Utility::Utility_Lerp(usable_min_x, usable_max_x, t);                                                        // return lane x position
         }
