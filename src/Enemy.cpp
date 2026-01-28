@@ -601,6 +601,10 @@
     *//*_________________________________________________________________________________________________________________________________________________________________________________________________*/
     namespace HealthSystem
     {
+        void Health_Init(Data::Health& health) {
+            health.health_current = health.health_max;
+        }
+
         /*
         @function       Health_Add
         @params         h (Data::Health&), amount (float)
@@ -616,6 +620,7 @@
             h.health_current += amount;                                                                                         // add change to current health
             h.health_current = Utility::Utility_Clamp(h.health_current, 0.0f, h.health_max);                                    // clamp to valid range
         }
+
     } // HealthSystem namespace end
     /*___________________________________________________________________________________________________________________________________________________________________________________________________*/
 
@@ -766,11 +771,10 @@
         @usage          Enemy_SpawnFromPool
 
         This function maps a lane id into the usable horizontal range and returns the
-        corresponding X coordinate. If there is only one lane, it returns the midpoint of the usable range.
+        corresponding X coordinate. 
         *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
         float Enemy_GetLaneX(int lane_id, float usable_min_x, float usable_max_x)
         {
-            if (EnemyConfig::ENEMY_LANE_COUNT <= 1) return (usable_min_x + usable_max_x) * 0.5f;                                // single lane fallback
             float t = (float)lane_id / (float)(EnemyConfig::ENEMY_LANE_COUNT - 1);                                              // lane position as 0..1
             return Utility::Utility_Lerp(usable_min_x, usable_max_x, t);                                                        // return lane x position
         }
@@ -1317,6 +1321,7 @@
             AEGfxSetBlendMode(AE_GFX_BM_BLEND);                                                                                 // enable blending for text
             AEGfxPrint(Graphics::font_id, buffer, -0.13f, 0.90f, 0.5f, 1.0f, 0.9f, 0.2f, 1.0f);                                 // draw top-right-ish text
         }
+
         void Ui_DrawHealthBar(Data::Health& health, Data::Meshes& meshes) { //(jeremy)
             float bar_w = 250.0f;  // Total width of the bar
             float bar_h = 25.0f;   // Total height of the bar
@@ -1434,6 +1439,7 @@
             Graphics::font_id = AEGfxCreateFont("Assets/Pixel-Game.otf", 80);                                           // load font
             AE_ASSERT_MESG(Graphics::font_id >= 0, "Failed to load font: Assets/Pixel-Game.otf");                       // stop if font fails
         }
+
 
         /*
         @function       EnemyManage_LoadMeshes

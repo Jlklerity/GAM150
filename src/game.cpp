@@ -90,6 +90,7 @@ void Game_Init()
 	@author     Wong Zi Yuan (w.ziyuan@digipen.edu)
 	*//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
 	EnemyManage::EnemyManage_InitEngine(word_bank);                                                // start engine and load words
+    HealthSystem::Health_Init(health);              //Start game with full health
 	meshes = EnemyManage::EnemyManage_LoadMeshes(enemy_animation);                                 // load textures and meshes
 	enemy_area.area_spawn_y = AEGfxGetWinMaxY() + (EnemyConfig::ENEMY_SIZE_PX * 0.5f) + 400.0f;    // place spawn line above the screen
 	
@@ -104,8 +105,9 @@ void Game_Init()
 	/*_______________________________________________________________________________________________________________________________________________________________________________________________*/
 	
 	bgMesh = Rect_Mesh(1.0f, 1.0f, 0xFFFFFFFF);
-
+    
 	Typing_Init();
+
 	//Shop_Init();
 	PowerUpSystem::Init(); // azfar code ver 1
 

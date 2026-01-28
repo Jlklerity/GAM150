@@ -555,6 +555,8 @@ current health value stays within a valid range (0 to max).
 *//*_________________________________________________________________________________________________________________________________________________________________________________________________*/
 namespace HealthSystem
 {
+    void Health_Init(Data::Health& health); //initialize health when entering game
+
     /*
     @function       Health_Add
     @params         h (Data::Health&), amount (float)
