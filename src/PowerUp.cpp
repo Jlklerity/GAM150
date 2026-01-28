@@ -85,8 +85,6 @@ namespace
     // ------------------------------
     AEGfxVertexList* g_quadMesh = nullptr;
 
-    // Font handle used by AEGfxPrint (created in Init, destroyed in Free)
-    s8 g_powerupFont = -1;
 
     // ------------------------------
     // Utility helpers
@@ -185,15 +183,13 @@ namespace
     void DrawCenteredLabel(const char* text, float worldX, float worldY, float scale,
         float r, float g, float b, float a)
     {
-        if (g_powerupFont < 0 || !text) return;
-
         float nx, ny;
         WorldToNDC(worldX, worldY, nx, ny);
 
         float w = 0.0f, h = 0.0f;
-        AEGfxGetPrintSize(g_powerupFont, text, scale, &w, &h);
+        AEGfxGetPrintSize(Graphics::font_id, text, scale, &w, &h);
 
-        AEGfxPrint(g_powerupFont, text, nx - w * 0.5f, ny - h * 0.5f, scale, r, g, b, a);
+        AEGfxPrint(Graphics::font_id, text, nx - w * 0.5f, ny - h * 0.5f, scale, r, g, b, a);
     }
 
     // ------------------------------
@@ -280,7 +276,6 @@ namespace PowerUpSystem
         // NOTE: Replace this path with your project font file.
         // Example:
         // g_powerupFont = AEGfxCreateFont("Assets/<yourfont>.otf", 72);
-        g_powerupFont = AEGfxCreateFont("Assets/Pixel-Game.otf", 72);
 
         g_buttonCooldownRemaining = 0.0f;
 
@@ -300,12 +295,6 @@ namespace PowerUpSystem
         {
             AEGfxMeshFree(g_quadMesh);
             g_quadMesh = nullptr;
-        }
-
-        if (g_powerupFont >= 0)
-        {
-            AEGfxDestroyFont(g_powerupFont);
-            g_powerupFont = -1;
         }
     }
 
