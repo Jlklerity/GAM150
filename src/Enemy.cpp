@@ -27,13 +27,13 @@
         const float TEXT_SCALE = 0.6f;                                                                                          // enemy word text scale
 
         // Difficulty tuning
-        const float DIFFICULTY_RAMP_PER_SECOND = 0.15f;                                                                         // difficulty gain per second
+        const float DIFFICULTY_RAMP_PER_SECOND = 0.1f;                                                                         // difficulty gain per second
         const float DIFFICULTY_MAX = 30.0f;                                                                                     // cap for difficulty value
 
         // Random spawn tuning
         const float RANDOM_SPAWN_INTERVAL_START_SECONDS = 2.0f;                                                                 // starting spawn interval
         const float RANDOM_SPAWN_INTERVAL_MIN_SECONDS = 0.85f;                                                                  // minimum spawn interval
-        const float RANDOM_SPAWN_INTERVAL_DECREASE_PER_LEVEL = 0.030f;                                                          // interval decrease per difficulty level
+        const float RANDOM_SPAWN_INTERVAL_DECREASE_PER_LEVEL = 0.020f;                                                          // interval decrease per difficulty level
 
         // Fall speed tuning
         const float ENEMY_FALL_SPEED_START = 48.0f;                                                                             // starting fall speed
@@ -792,7 +792,7 @@
         *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
         bool Enemy_IsLaneSpawnYFree(int lane_id, float spawn_y, const std::vector<Data::Enemy>& pool)
         {
-            float closest_gap = 999999.0f;                                                                                      // start with very large gap
+            float closest_gap = 999.0f;                                                                                         // start with very large gap
 
             for (const auto& e : pool)                                                                                          // loop through enemy pool
             {

@@ -55,7 +55,7 @@ namespace {
 	bool is_random_spawning_enabled = true;                                                        // toggle for auto spawning
 	bool is_difficulty_debug_visible = false;                                                      // toggle for difficulty text
 
-	float random_spawn_timer_seconds = 999.0f;                                                     // start high to spawn immediately
+	float random_spawn_timer_seconds = 9999.0f;                                                    // start high to spawn immediately
 	/*_______________________________________________________________________________________________________________________________________________________________________________________________*/
 
 	// Typing state
@@ -92,7 +92,7 @@ void Game_Init()
 	EnemyManage::EnemyManage_InitEngine(word_bank);                                                // start engine and load words
     HealthSystem::Health_Init(health);              //Start game with full health
 	meshes = EnemyManage::EnemyManage_LoadMeshes(enemy_animation);                                 // load textures and meshes
-	enemy_area.area_spawn_y = AEGfxGetWinMaxY() + (EnemyConfig::ENEMY_SIZE_PX * 0.5f) + 400.0f;    // place spawn line above the screen
+	enemy_area.area_spawn_y = AEGfxGetWinMaxY() + (EnemyConfig::ENEMY_SIZE_PX * 0.5f);             // place spawn line above the screen
 	
 	enemy_pool.resize((size_t)EnemyConfig::MAX_ENEMIES);                                           // allocate enemy pool to the configured maximum size
 	free_slot_queue.clear();                                                                       // clear any previous free-slot indices before repopulating

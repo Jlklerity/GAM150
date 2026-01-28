@@ -7,7 +7,6 @@
 #pragma once
 
 #include <cstdlib>      // rand, srand
-#include <ctime>        // time
 #include <vector>       // std::vector
 #include <deque>        // std::deque
 #include <string>       // std::string
@@ -136,7 +135,7 @@ namespace Data
         float area_min_x = -600.0f;                                                                          // left bound of enemy area
         float area_max_x = 740.0f;                                                                           // right bound of enemy area
 
-        float area_spawn_y = 700.0f;                                                                         // spawn height
+        float area_spawn_y = -200.0f;                                                                        // spawn height
         float area_landing_y = -250.0f;                                                                      // landing height
 
         float Area_BoxMinY() const { return area_landing_y; }                                                // bottom of the area box
