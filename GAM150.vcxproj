@@ -14,19 +14,20 @@
     <ClCompile Include="src\Enemy.cpp" />
     <ClCompile Include="src\Game.cpp" />
     <ClCompile Include="src\GameStateManager.cpp" />
+    <ClCompile Include="src\Leaderboard.cpp" />
     <ClCompile Include="src\Main.cpp" />
     <ClCompile Include="src\MainMenu.cpp" />
     <ClCompile Include="src\MeshRenderer.cpp" />
     <ClCompile Include="src\MeshTemplates.cpp" />
-
     <ClCompile Include="src\PowerUp.cpp" />
     <ClCompile Include="src\Shop.cpp" />
     <ClCompile Include="src\Typing.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\Enemy.h" />
-    <ClInclude Include="src\game.h" />
+    <ClInclude Include="src\Game.h" />
     <ClInclude Include="src\GameStateManager.h" />
+    <ClInclude Include="src\Leaderboard.h" />
     <ClInclude Include="src\MainMenu.h" />
     <ClInclude Include="src\MeshRenderer.h" />
     <ClInclude Include="src\MeshTemplates.h" />
@@ -39,6 +40,18 @@
   </ItemGroup>
   <ItemGroup>
     <None Include=".gitignore" />
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="Assets\leaderboard.txt">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+      </ExcludedFromBuild>
+      <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+      </DeploymentContent>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+      </ExcludedFromBuild>
+      <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+      </DeploymentContent>
+    </Text>
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>

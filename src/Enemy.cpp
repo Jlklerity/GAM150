@@ -1380,6 +1380,9 @@
 
             if (is_ctrl_down && AEInputCheckTriggered(AEVK_2))
                 HealthSystem::Health_Add(health, 10.0f);                                                                        // add health
+           
+            if (is_ctrl_down && AEInputCheckTriggered(AEVK_M))
+                HealthSystem::Health_Add(health, -10.0f);
 
             if (is_ctrl_down && AEInputCheckTriggered(AEVK_9))
                 is_random_spawning_enabled = !is_random_spawning_enabled;                                                       // toggle auto spawning

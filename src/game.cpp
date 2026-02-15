@@ -1,11 +1,15 @@
 #include "Game.h"
+#include <crtdbg.h> // To check for memory leaks
+#include "AEEngine.h"
 #include "MeshTemplates.h"
 #include "MeshRenderer.h"
 #include "Typing.h"
 #include "Shop.h"
 #include "GameStateManager.h"
+#include "Leaderboard.h"
 #include "Enemy.h"
 #include "PowerUp.h"
+#include "MainMenu.h"
 
 namespace {
 	//avatar mesh and texture
@@ -34,8 +38,9 @@ namespace {
 	const float SPRITE_UV_WIDTH = 1.0f / SPRITE_COLS;
 	const float SPRITE_UV_HEIGHT = 1.0f / SPRITE_ROWS;
   
-	//bool isShopOpen = false;
 	bool isPaused = false;
+    bool isDead = false;
+    bool openLeaderboard = false;
 
 	/*
 	@overview   Enemy
@@ -54,13 +59,14 @@ namespace {
 	bool is_enemy_area_box_visible = false;                                                        // toggle for debug box drawing
 	bool is_random_spawning_enabled = true;                                                        // toggle for auto spawning
 	bool is_difficulty_debug_visible = false;                                                      // toggle for difficulty text
-
+    
 	float random_spawn_timer_seconds = 9999.0f;                                                    // start high to spawn immediately
 	/*_______________________________________________________________________________________________________________________________________________________________________________________________*/
 
 	// Typing state
 	int typed_target_index = -1; 
-
+    bool isGameOver;
+    std::string temp_name;
 }
 
 void Game_Init()
@@ -70,12 +76,16 @@ void Game_Init()
 	currentFrameIndex = 0;
 	uvOffsetX = 0.0f;
 	uvOffsetY = 0.0f;
-	
+    score.score_value = 0;
+    isGameOver = false;
+    openLeaderboard = false;
+    isPaused = false;      
+    isDead = false;
+
 	//player
 	playerTexture1 = AEGfxTextureLoad("Assets/characterSheet.png");
 	playerTexture2 = AEGfxTextureLoad("Assets/characterSheet.png");//for ltr when we have more player skins
 	AE_ASSERT_MESG(playerTexture1, "Failed to load characterSheet!");
-
 
 	if (playerMesh != nullptr) AEGfxMeshFree(playerMesh);
 	playerMesh = Sprite_Mesh(SPRITE_UV_WIDTH, SPRITE_UV_HEIGHT);
@@ -131,7 +141,9 @@ void Game_Update()
     // ------------------------------------------------------------------------
     // 2. GAMEPLAY LOGIC (Run only when active)
     // ------------------------------------------------------------------------
-    if (!isPaused)
+    if (health.health_current == 0) isDead = 1; //check if player is dead
+
+    if (!isPaused && !isDead)
     {
         /*
         @overview   Debug section
@@ -291,7 +303,7 @@ void Game_Update()
     UiSystem::Ui_DrawHealthBar(health, meshes); // jeremy code
 
     // PAUSE OVERLAY
-    if (isPaused)
+    if (isPaused && !isDead)
     {
         if (Graphics::font_id >= 0)
         {
@@ -375,8 +387,142 @@ void Game_Update()
                     wy >= (menuY - halfH) && wy <= (menuY + halfH))
                 {
                     isPaused = false;
+                    temp_name = "";
+                    ResetPlayerName(temp_name);
                     gGameStateNext = GS_MAIN_MENU;
                 }
+            }
+        }
+    }
+
+    // Game Over & Leaderboard OVERLAY
+    if (isDead) {
+
+        // 1. Save the score once
+        if (!isGameOver) {
+            temp_name = Main_Menu_GetPlayerName();
+            Leaderboard_System::Write_Leaderboard(temp_name, score.score_value);
+            isGameOver = true;
+        }
+
+        // ==========================================
+        // GAME OVER OVERLAY
+        // ==========================================
+        if (!openLeaderboard)
+        {
+            const char* gameoverText = "GAME OVER";
+            float w, h;
+            AEGfxGetPrintSize(Graphics::font_id, gameoverText, 1.0f, &w, &h);
+
+            AEGfxSetBlendMode(AE_GFX_BM_BLEND);
+            AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);
+            AEGfxPrint(Graphics::font_id, gameoverText, -w * 0.5f, 0.25f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f);
+
+            float btnW = 300.0f;
+            float btnH = 60.0f;
+            float btnX = 0.0f; // Centered Horizontally
+
+            // Y Positions
+            float restartY = -50.0f;
+            float leaderY = -150.0f;
+            float menuY = -250.0f;
+
+            // --- Draw "RESTART" Button ---
+            AEGfxSetRenderMode(AE_GFX_RM_COLOR);
+            AEGfxSetBlendMode(AE_GFX_BM_BLEND);
+            AEGfxSetTransparency(1.0f);
+            AEGfxSetColorToMultiply(0.3f, 0.3f, 0.3f, 1.0f);
+            Mesh_Renderer(bgMesh, btnX, restartY, btnW, btnH, 0.0f);
+
+            const char* restartText = "RESTART";
+            float rw, rh;
+            AEGfxGetPrintSize(Graphics::font_id, restartText, 0.6f, &rw, &rh);
+            AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);
+            AEGfxPrint(Graphics::font_id, restartText, -rw * 0.5f, -0.15f, 0.6f, 1.0f, 1.0f, 1.0f, 1.0f);
+
+            // --- Draw "LEADERBOARD" Button ---
+            AEGfxSetRenderMode(AE_GFX_RM_COLOR);
+            AEGfxSetColorToMultiply(0.3f, 0.3f, 0.3f, 1.0f);
+            Mesh_Renderer(bgMesh, btnX, leaderY, btnW, btnH, 0.0f);
+
+            const char* leaderText = "LEADERBOARD";
+            float lw, lh;
+            AEGfxGetPrintSize(Graphics::font_id, leaderText, 0.6f, &lw, &lh);
+            AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);
+            AEGfxPrint(Graphics::font_id, leaderText, -lw * 0.5f, -0.37f, 0.6f, 1.0f, 1.0f, 1.0f, 1.0f);
+
+            // --- Draw "MAIN MENU" Button ---
+            AEGfxSetRenderMode(AE_GFX_RM_COLOR);
+            AEGfxSetColorToMultiply(0.3f, 0.3f, 0.3f, 1.0f);
+            Mesh_Renderer(bgMesh, btnX, menuY, btnW, btnH, 0.0f);
+
+            const char* menuText = "MAIN MENU";
+            float mw, mh;
+            AEGfxGetPrintSize(Graphics::font_id, menuText, 0.6f, &mw, &mh);
+            AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);
+            AEGfxPrint(Graphics::font_id, menuText, -mw * 0.5f, -0.59f, 0.6f, 1.0f, 1.0f, 1.0f, 1.0f);
+
+            if (AEInputCheckTriggered(AEVK_LBUTTON))
+            {
+                s32 mx, my;
+                AEInputGetCursorPosition(&mx, &my);
+
+                float wx = (float)mx - 800.0f;
+                float wy = 450.0f - (float)my;
+                float halfW = btnW * 0.5f;
+                float halfH = btnH * 0.5f;
+
+                // Check RESTART
+                if (wx >= (btnX - halfW) && wx <= (btnX + halfW) && wy >= (restartY - halfH) && wy <= (restartY + halfH)) {
+                    isDead = false;
+                    gGameStateNext = GS_RESTART;
+                }
+
+                // Check MAIN MENU
+                if (wx >= (btnX - halfW) && wx <= (btnX + halfW) && wy >= (menuY - halfH) && wy <= (menuY + halfH)) {
+                    isDead = false;
+                    temp_name = "";
+                    ResetPlayerName(temp_name);
+                    gGameStateNext = GS_MAIN_MENU;
+                }
+
+                // Check LEADERBOARD
+                if (wx >= (btnX - halfW) && wx <= (btnX + halfW) && wy >= (leaderY - halfH) && wy <= (leaderY + halfH)) {
+                    openLeaderboard = true;
+                }
+            }
+        }
+        // ==========================================
+            //LEADERBOARD OVERLAY
+        // ==========================================
+        else
+        {
+            // 1. Draw a dark translucent background
+            AEGfxSetRenderMode(AE_GFX_RM_COLOR);
+            AEGfxSetBlendMode(AE_GFX_BM_BLEND);
+            AEGfxSetTransparency(0.85f); // 85% opacity
+            AEGfxSetColorToMultiply(0.0f, 0.0f, 0.0f, 1.0f); // Pitch Black
+
+            // Reusing bgMesh
+            Mesh_Renderer(bgMesh, 0.0f, 0.0f, 1600.0f, 900.0f, 0.0f);
+
+            // IMPORTANT: Reset transparency back to 1.0f so the text draws fully opaque!
+            AEGfxSetTransparency(1.0f);
+
+            // 2. Draw the actual scores
+            Leaderboard_System::Display_Leaderboard();
+
+            // 3. Draw a prompt so they know how to leave
+            if (Graphics::font_id >= 0) {
+                const char* promptText = "Press ESC or Click to Return";
+                float pw, ph;
+                AEGfxGetPrintSize(Graphics::font_id, promptText, 0.5f, &pw, &ph);
+                AEGfxPrint(Graphics::font_id, promptText, -pw * 0.5f, -0.8f, 0.5f, 1.0f, 1.0f, 0.0f, 1.0f);
+            }
+
+            // 4. Return to the Game Over buttons if they click or hit Escape
+            if (AEInputCheckTriggered(AEVK_ESCAPE) || AEInputCheckTriggered(AEVK_LBUTTON)) {
+                openLeaderboard = false;
             }
         }
     }
