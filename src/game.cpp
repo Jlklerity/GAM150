@@ -10,6 +10,8 @@
 #include "Enemy.h"
 #include "PowerUp.h"
 #include "MainMenu.h"
+#include "DebugConsole.h"
+
 
 namespace {
 	//avatar mesh and texture
@@ -121,11 +123,24 @@ void Game_Init()
 	//Shop_Init();
 	PowerUpSystem::Init(); // azfar code ver 1
 
+    DebugConsole::Init(
+        is_enemy_area_box_visible,
+        is_random_spawning_enabled,
+        is_difficulty_debug_visible,
+        health,
+        enemy_pool,
+        free_slot_queue,
+        enemy_area,
+        word_bank
+    );
 }
 
 
 void Game_Update()
 {
+
+    DebugConsole::Update();
+    if (DebugConsole::IsOpen()) goto render_only; // freeze everything while console open
     // ------------------------------------------------------------------------
     // 1. INPUTS
     // ------------------------------------------------------------------------
@@ -162,7 +177,7 @@ void Game_Update()
                     Control Key + "-" -> Decrease difficulty
                     Control Key + "=" -> Increase difficulty
         *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
-        DebugSystem::Debug_HandleInputs(is_enemy_area_box_visible, is_random_spawning_enabled, is_difficulty_debug_visible, health, enemy_pool, free_slot_queue, enemy_area, word_bank);
+       // DebugSystem::Debug_HandleInputs(is_enemy_area_box_visible, is_random_spawning_enabled, is_difficulty_debug_visible, health, enemy_pool, free_slot_queue, enemy_area, word_bank);
         /*_______________________________________________________________________________________________________________________________________________________________________________________________*/
 
         float dt = (float)AEFrameRateControllerGetFrameTime();                                               // read delta time for this frame
@@ -246,7 +261,8 @@ void Game_Update()
     // ------------------------------------------------------------------------
 
     /*_________________________________________________________________________________________________________________________________________*/
-
+render_only:
+    //DebugConsole::Render(); // draw console on top of everything
     //background
     AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
     AEGfxSetBlendMode(AE_GFX_BM_NONE);
@@ -525,7 +541,9 @@ void Game_Update()
                 openLeaderboard = false;
             }
         }
+
     }
+    DebugConsole::Render();
 }
 
 void Game_Exit()
@@ -535,6 +553,8 @@ void Game_Exit()
 	Typing_Exit();
 	//Shop_Exit();
 	PowerUpSystem::Free();
+    DebugConsole::Exit();
+
 	if (playerMesh) {
 		AEGfxMeshFree(playerMesh);
 		playerMesh = nullptr;

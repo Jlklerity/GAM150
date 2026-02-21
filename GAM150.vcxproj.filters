@@ -12,6 +12,7 @@
     <ClCompile Include="src\Typing.cpp" />
     <ClCompile Include="src\Leaderboard.cpp" />
     <ClCompile Include="src\MeshTemplates.cpp" />
+    <ClCompile Include="src\DebugConsole.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\Enemy.h" />
@@ -24,6 +25,7 @@
     <ClInclude Include="src\Typing.h" />
     <ClInclude Include="src\Leaderboard.h" />
     <ClInclude Include="src\MeshTemplates.h" />
+    <ClInclude Include="src\DebugConsole.h" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="Assets\characterSheet.png" />
