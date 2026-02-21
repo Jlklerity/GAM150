@@ -9,8 +9,6 @@ namespace Leaderboard_Data
 			: player_name{ playerName }, player_score{ playerScore } {
 		};
 
-		std::pair<std::string, int> getPlayerData() const { return { player_name, player_score }; };
-
 		std::string player_name; 
 		int player_score;
 	};
@@ -18,12 +16,14 @@ namespace Leaderboard_Data
 
 namespace Leaderboard_System
 {
+	void Init();
+	void Free();
+	void Display_Leaderboard(bool& openLeaderboard);
+
 	//Stores leaderboard scores into txt file
 	void Read_Leaderboard();
 
 	void Write_Leaderboard(const std::string& player_name, const int& player_score);
-
-	void Display_Leaderboard();
 }
 
  

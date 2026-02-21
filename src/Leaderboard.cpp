@@ -2,6 +2,8 @@
 #include "Enemy.h"
 #include "GameStateManager.h"
 #include "Game.h"
+#include "MeshRenderer.h"
+#include "MeshTemplates.h"
 #include <iostream>
 #include <vector>
 #include <fstream>   // Required for file I/O
@@ -18,10 +20,23 @@ namespace
 	// NEW: How many lines to show on screen at once
 	const int ENTRIES_PER_PAGE = 5;
 	const int MAX_LEADERBOARD_SIZE = 50;
+	AEGfxVertexList* overlayMesh = nullptr;
 }
 
 namespace Leaderboard_System 
 {
+	void Init() {
+		// Create a dedicated 1x1 white mesh just for the leaderboard overlay
+		overlayMesh = Rect_Mesh(1.0f, 1.0f, 0xFFFFFFFF);
+	}
+
+	void Free() {
+		if (overlayMesh) {
+			AEGfxMeshFree(overlayMesh);
+			overlayMesh = nullptr;
+		}
+	}
+
 	std::vector<Leaderboard_Data::Entry> leaderboard_list;
 
 	static bool CompareScores(const Leaderboard_Data::Entry& a, const Leaderboard_Data::Entry& b) {
@@ -72,7 +87,28 @@ namespace Leaderboard_System
 
 	}
 
-	void Display_Leaderboard() {
+	void Display_Leaderboard(bool& openLeaderboard) {
+		AEGfxSetRenderMode(AE_GFX_RM_COLOR);
+		AEGfxSetBlendMode(AE_GFX_BM_BLEND);
+		AEGfxSetTransparency(0.85f);
+		AEGfxSetColorToMultiply(0.0f, 0.0f, 0.0f, 1.0f);
+
+		Mesh_Renderer(overlayMesh, 0.0f, 0.0f, 1600.0f, 900.0f, 0.0f);
+
+		AEGfxSetTransparency(1.0f); // Reset transparency for text
+
+		// 3. Draw a prompt so they know how to leave
+		if (Graphics::font_id >= 0) {
+			const char* promptText = "Press ESC or Click to Return";
+			float pw, ph;
+			AEGfxGetPrintSize(Graphics::font_id, promptText, 0.5f, &pw, &ph);
+			AEGfxPrint(Graphics::font_id, promptText, -pw * 0.5f, -0.8f, 0.5f, 1.0f, 1.0f, 0.0f, 1.0f);
+		}
+
+		// 4. Return to the Game Over buttons if they click or hit Escape
+		if (AEInputCheckTriggered(AEVK_ESCAPE) || AEInputCheckTriggered(AEVK_LBUTTON)) {
+			openLeaderboard = false;
+		}
 		if (Graphics::font_id < 0) return;
 
 		//MOUSE WHEEL settings
@@ -84,8 +120,8 @@ namespace Leaderboard_System
 			else scroll_offset++;
 		}
 
-		float max_offset = leaderboard_list.size() - ENTRIES_PER_PAGE;
-		scroll_offset = Utility::Utility_Clamp(scroll_offset, 0, max_offset);
+		u64 max_offset = leaderboard_list.size() - ENTRIES_PER_PAGE;
+		scroll_offset = Utility::Utility_Clamp(scroll_offset, 0, (float)max_offset);
 
 
 		//RENDER LEADERBOARD
@@ -94,7 +130,7 @@ namespace Leaderboard_System
 
 		for (int i = 0; i < ENTRIES_PER_PAGE; ++i) { //display leaderboard starting from highest to lowest score
 
-			int data_index = scroll_offset + i;
+			int data_index = (int)scroll_offset + i;
 			if (data_index >= leaderboard_list.size()) break;
 
 			const auto& entry = leaderboard_list[data_index];
