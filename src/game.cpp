@@ -119,7 +119,7 @@ void Game_Init()
 	bgMesh = Rect_Mesh(1.0f, 1.0f, 0xFFFFFFFF);
     
 	Typing_Init();
-
+    Leaderboard_System::Init();
 	//Shop_Init();
 	PowerUpSystem::Init(); // azfar code ver 1
 
