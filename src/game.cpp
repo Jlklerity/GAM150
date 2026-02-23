@@ -11,6 +11,8 @@
 #include "PowerUp.h"
 #include "MainMenu.h"
 #include "DebugConsole.h"
+#include "GameOver.h"
+#include "Pause.h"
 
 
 namespace {
@@ -319,34 +321,11 @@ render_only:
     UiSystem::Ui_DrawHealthBar(health, meshes); // jeremy code
 
     // PAUSE OVERLAY
-    if (isPaused && !isDead)
-    {
-        if (isPaused && !isDead) {
-            UiSystem::Ui_DrawPauseMenu(isPaused, bgMesh); 
-        }
-        
-    }
+    UiPauseMenu::Check_Paused(isPaused, isDead, bgMesh);
 
     // Game Over & Leaderboard OVERLAY
-    if (isDead) {
-
-        //Save the score once
-        if (!isGameOver) {
-            temp_name = Main_Menu_GetPlayerName();
-            Leaderboard_System::Write_Leaderboard(temp_name, score.score_value);
-            isGameOver = true;
-        }
-
-        if (!openLeaderboard) {
-            UiSystem::Ui_GameOverMenu(isGameOver, score, openLeaderboard, bgMesh, isDead);
-        }
-            //LEADERBOARD OVERLAY
-        else
-        {
-            Leaderboard_System::Display_Leaderboard(openLeaderboard);
-        }
-
-    }
+    UiGameOver::Check_IfDead(isDead, isGameOver, openLeaderboard, bgMesh, temp_name, score);
+    
     DebugConsole::Render();
 }
 

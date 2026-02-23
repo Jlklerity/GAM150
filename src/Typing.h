@@ -16,8 +16,6 @@ namespace Data { struct Score; }
 namespace UiSystem
 {
     void Ui_DrawScoreAndTyped(const Data::Score& score);
-    void Ui_DrawPauseMenu(bool& isPaused, AEGfxVertexList* bgMesh);
-    void Ui_GameOverMenu(bool& isGameOver, const Data::Score& score, bool& openLeaderboard, AEGfxVertexList* bgMesh, bool& isDead);
 }
 
 void Typing_UpdateAndApplyToEnemies(std::vector<Data::Enemy>& enemy_pool, Data::Score& score);

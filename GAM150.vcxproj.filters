@@ -13,6 +13,8 @@
     <ClCompile Include="src\Leaderboard.cpp" />
     <ClCompile Include="src\MeshTemplates.cpp" />
     <ClCompile Include="src\DebugConsole.cpp" />
+    <ClCompile Include="src\GameOver.cpp" />
+    <ClCompile Include="src\Pause.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\Enemy.h" />
@@ -26,6 +28,8 @@
     <ClInclude Include="src\Leaderboard.h" />
     <ClInclude Include="src\MeshTemplates.h" />
     <ClInclude Include="src\DebugConsole.h" />
+    <ClInclude Include="src\GameOver.h" />
+    <ClInclude Include="src\Pause.h" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="Assets\characterSheet.png" />
