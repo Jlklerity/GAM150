@@ -19,6 +19,8 @@ namespace
 
     float winW;
     float winH;
+    float worldX;
+    float worldY;
 
     const float PLAY_WIDTH = 240.0f;
     const float PLAY_HEIGHT = 240.0f;
@@ -83,8 +85,8 @@ void Main_Menu_EnterName() {
     winW = (float)AEGfxGetWindowWidth();
     winH = (float)AEGfxGetWindowHeight();
 
-    float worldX = (float)mouseX - (winW * 0.5f);
-    float worldY = (winH * 0.5f) - (float)mouseY;
+    worldX = (float)mouseX - (winW * 0.5f);
+    worldY = (winH * 0.5f) - (float)mouseY;
 
     if (AEInputCheckTriggered(AEVK_LBUTTON))
     {
@@ -184,8 +186,8 @@ void Main_Menu_EnterName() {
 }
 
 void Main_Menu_Init() {
-    float winW = (float)AEGfxGetWindowWidth();
-    float winH = (float)AEGfxGetWindowHeight();
+    winW = (float)AEGfxGetWindowWidth();
+    winH = (float)AEGfxGetWindowHeight();
 
     LOGO_Y = winH * 0.35f;              
     PLAY_BTN_Y = winH * 0.05f;         
@@ -268,11 +270,11 @@ void Main_Menu_Update() {
         s32 mouseX, mouseY;
         AEInputGetCursorPosition(&mouseX, &mouseY);
 
-        float winW = (float)AEGfxGetWindowWidth();
-        float winH = (float)AEGfxGetWindowHeight();
+        winW = (float)AEGfxGetWindowWidth();
+        winH = (float)AEGfxGetWindowHeight();
         // Convert screen coordinates (Top-Left 0,0) to World Coordinates (Center 0,0)
-        float worldX = (float)mouseX - (winW * 0.5f);
-        float worldY = (winH * 0.5f) - (float)mouseY;
+        worldX = (float)mouseX - (winW * 0.5f);
+        worldY = (winH * 0.5f) - (float)mouseY;
 
         if (AEInputCheckTriggered(AEVK_LBUTTON))
         {
