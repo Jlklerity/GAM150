@@ -23,23 +23,37 @@ namespace
     const float SHOP_WIDTH = 240.0f;
     const float SHOP_HEIGHT = 240.0f;
 
-    const float EXIT_WIDTH = 200.0f;
+    const float EXIT_WIDTH = 240.0f;
     const float EXIT_HEIGHT = 80.0f;
+
+    const float PLAY_HITBOX_WIDTH = 200.0f;
+    const float PLAY_HITBOX_HEIGHT = 95.0f;
+
+    const float SHOP_HITBOX_WIDTH = 200.0f;
+    const float SHOP_HITBOX_HEIGHT = 95.0f;
 
     const float LOGO_WIDTH = 400.0f;
     const float LOGO_HEIGHT = 150.0f;
 
+    const float EXITNAME_WIDTH = 240.0f;
+    const float EXITNAME_HEIGHT = 80.0f;
+
+    const float ENTERGAME_WIDTH = 240.0f;
+    const float ENTERGAME_HEIGHT = 80.0f;
+
+
     // ---------------------------------------------------------------------------
     // POSITIONS
     // ---------------------------------------------------------------------------
-    const float LOGO_Y = 250.0f;
-    const float PLAY_BTN_Y = 50.0f;
-    const float SHOP_BTN_Y = -100.0f;
-    const float EXIT_BTN_Y = -230.0f;
-    const float EXITNAME_BTN_Y = -230.0f;
-    const float ENTERGAME_BTN_Y = -230.0f;
-    const float EXITNAME_BTN_x = -450.0f;
-    const float ENTERGAME_BTN_X = 450.0f;
+  
+    float LOGO_Y;
+    float PLAY_BTN_Y;
+    float SHOP_BTN_Y;
+    float EXIT_BTN_Y;
+    float EXITNAME_BTN_Y;
+    float ENTERGAME_BTN_Y;
+    float EXITNAME_BTN_X;
+    float ENTERGAME_BTN_X;
 
     bool nameEntered = false;
     bool isEnteringName = false; //draws main menu if not in entering name screen
@@ -65,26 +79,23 @@ void Main_Menu_EnterName() {
 
     float winW = (float)AEGfxGetWindowWidth();
     float winH = (float)AEGfxGetWindowHeight();
+
     float worldX = (float)mouseX - (winW * 0.5f);
     float worldY = (winH * 0.5f) - (float)mouseY;
 
     if (AEInputCheckTriggered(AEVK_LBUTTON))
     {
-        // Helper to check collision with a button at a specific Y
-        auto CheckClick = [&](float btnX, float btnY, float btnW, float btnH) -> bool {
-            // AABB Collision: Mouse vs Rectangle
-            // Since buttons are drawn at X=0 (Center), the X range is [-W/2, W/2]
-            return (worldX >= btnX - (btnW * 0.5f) && worldX <= btnX + (btnW * 0.5f) &&
-                worldY >= btnY - btnH * 0.5f && worldY <= btnY + btnH * 0.5f);
-            };
-
-        // Check Play before going to entering name screen
-        if ((!player_name.empty()) && CheckClick(ENTERGAME_BTN_X, ENTERGAME_BTN_Y, EXIT_WIDTH, EXIT_HEIGHT))
+        // --- Check Enter Game Button ---
+        if ((!player_name.empty()) &&
+            worldX >= ENTERGAME_BTN_X - (EXITNAME_WIDTH * 0.5f) && worldX <= ENTERGAME_BTN_X + (EXITNAME_WIDTH * 0.5f) &&
+            worldY >= ENTERGAME_BTN_Y - (ENTERGAME_HEIGHT * 0.5f) && worldY <= ENTERGAME_BTN_Y + (ENTERGAME_HEIGHT * 0.5f))
         {
             isEnteringName = false;
             gGameStateNext = GS_GAME;
         }
-        else if(CheckClick(EXITNAME_BTN_x, EXITNAME_BTN_Y, EXIT_WIDTH, EXIT_HEIGHT))
+        // --- Check Exit Name Button ---
+        else if (worldX >= EXITNAME_BTN_X - (EXITNAME_WIDTH * 0.5f) && worldX <= EXITNAME_BTN_X + (EXITNAME_WIDTH * 0.5f) &&
+            worldY >= EXITNAME_BTN_Y - (EXITNAME_HEIGHT * 0.5f) && worldY <= EXITNAME_BTN_Y + (EXITNAME_HEIGHT * 0.5f))
         {
             isEnteringName = false;
             player_name = "";
@@ -118,20 +129,20 @@ void Main_Menu_EnterName() {
     AEGfxSetBlendMode(AE_GFX_BM_BLEND);
     AEGfxSetColorToMultiply(1.0f, 0.0f, 0.0f, 1.0f); 
     // Reusing your Exit Button mesh temporarily just to get a box on screen
-    Mesh_Renderer(pMeshExitBtn, -450.0f, EXITNAME_BTN_Y, 1.0f, 1.0f, 0.0f);
+    Mesh_Renderer(pMeshExitBtn, EXITNAME_BTN_X, EXITNAME_BTN_Y, 1.0f, 1.0f, 0.0f);
 
     AEGfxSetRenderMode(AE_GFX_RM_COLOR);//enter game button
     AEGfxSetBlendMode(AE_GFX_BM_BLEND);
     AEGfxSetColorToMultiply(0.0f, 1.0f, 0.0f, 1.0f);
     // Reusing your Exit Button mesh temporarily just to get a box on screen
-    Mesh_Renderer(pMeshExitBtn, 450.0f, ENTERGAME_BTN_Y, 1.0f, 1.0f, 0.0f);
+    Mesh_Renderer(pMeshExitBtn, ENTERGAME_BTN_X, ENTERGAME_BTN_Y, 1.0f, 1.0f, 0.0f);
 
     if (Graphics::font_id >= 0) {//display name being typed
         AEGfxSetBlendMode(AE_GFX_BM_BLEND);
 
         const char* promptText = "Enter Name:";
         float promptWidth = 0.0f, promptHeight = 0.0f;
-        float promptScale = 1.0f; // Feel free to tweak this size
+        float promptScale = 1.0f; 
 
         // Measure and center the prompt
         AEGfxGetPrintSize(Graphics::font_id, promptText, promptScale, &promptWidth, &promptHeight);
@@ -170,6 +181,19 @@ void Main_Menu_EnterName() {
 }
 
 void Main_Menu_Init() {
+    float winW = (float)AEGfxGetWindowWidth();
+    float winH = (float)AEGfxGetWindowHeight();
+
+    LOGO_Y = winH * 0.35f;              
+    PLAY_BTN_Y = winH * 0.05f;         
+    SHOP_BTN_Y = winH * -0.15f;        
+    EXIT_BTN_Y = winH * -0.35f;      
+
+    EXITNAME_BTN_Y = winH * -0.35f;
+    ENTERGAME_BTN_Y = winH * -0.35f;
+
+    EXITNAME_BTN_X = winW * -0.35f;     
+    ENTERGAME_BTN_X = winW * 0.35f;     
 
     if (Graphics::font_id < 0) {
         Graphics::font_id = AEGfxCreateFont("Assets/Pixel-Game.otf", 48);
@@ -249,26 +273,21 @@ void Main_Menu_Update() {
 
         if (AEInputCheckTriggered(AEVK_LBUTTON))
         {
-            // Helper to check collision with a button at a specific Y
-            auto CheckClick = [&](float btnY, float btnW, float btnH) -> bool {
-                // AABB Collision: Mouse vs Rectangle
-                // Since buttons are drawn at X=0 (Center), the X range is [-W/2, W/2]
-                return (worldX >= -btnW * 0.5f && worldX <= btnW * 0.5f &&
-                    worldY >= btnY - btnH * 0.5f && worldY <= btnY + btnH * 0.5f);
-                };
-
-            // Check Play before going to entering name screen
-            if (CheckClick(PLAY_BTN_Y, PLAY_WIDTH, PLAY_HEIGHT))
+            // --- Check Play Button (Using the smaller Hitbox dimensions) ---
+            if (worldX >= 0.0f - (PLAY_HITBOX_WIDTH * 0.5f) && worldX <= 0.0f + (PLAY_HITBOX_WIDTH * 0.5f) &&
+                worldY >= PLAY_BTN_Y - (PLAY_HITBOX_HEIGHT * 0.5f) && worldY <= PLAY_BTN_Y + (PLAY_HITBOX_HEIGHT * 0.5f))
             {
                 isEnteringName = true;
             }
-            // Check Shop
-            else if (CheckClick(SHOP_BTN_Y, SHOP_WIDTH, SHOP_HEIGHT))
+            // --- Check Shop Button (Using the smaller Hitbox dimensions) ---
+            else if (worldX >= 0.0f - (SHOP_HITBOX_WIDTH * 0.5f) && worldX <= 0.0f + (SHOP_HITBOX_WIDTH * 0.5f) &&
+                worldY >= SHOP_BTN_Y - (SHOP_HITBOX_HEIGHT * 0.5f) && worldY <= SHOP_BTN_Y + (SHOP_HITBOX_HEIGHT * 0.5f))
             {
                 gGameStateNext = GS_SHOP;
             }
-            // Check Exit
-            else if (CheckClick(EXIT_BTN_Y, EXIT_WIDTH, EXIT_HEIGHT))
+            // --- Check Exit Button (Using EXIT_WIDTH/HEIGHT since it's a solid Rect_Mesh) ---
+            else if (worldX >= 0.0f - (EXIT_WIDTH * 0.5f) && worldX <= 0.0f + (EXIT_WIDTH * 0.5f) &&
+                worldY >= EXIT_BTN_Y - (EXIT_HEIGHT * 0.5f) && worldY <= EXIT_BTN_Y + (EXIT_HEIGHT * 0.5f))
             {
                 gGameStateNext = GS_QUIT;
             }
