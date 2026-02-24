@@ -17,6 +17,9 @@ namespace
     AEGfxTexture* pTexPlay = nullptr;        // Play Button Texture
     AEGfxTexture* pTexShop = nullptr;        // Shop Button Texture
 
+    float winW;
+    float winH;
+
     const float PLAY_WIDTH = 240.0f;
     const float PLAY_HEIGHT = 240.0f;
 
@@ -77,8 +80,8 @@ void Main_Menu_EnterName() {
     s32 mouseX, mouseY;
     AEInputGetCursorPosition(&mouseX, &mouseY);
 
-    float winW = (float)AEGfxGetWindowWidth();
-    float winH = (float)AEGfxGetWindowHeight();
+    winW = (float)AEGfxGetWindowWidth();
+    winH = (float)AEGfxGetWindowHeight();
 
     float worldX = (float)mouseX - (winW * 0.5f);
     float worldY = (winH * 0.5f) - (float)mouseY;
