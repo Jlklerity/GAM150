@@ -86,3 +86,33 @@ AEGfxVertexList* Sprite_Mesh(const f32 sprite_uv_width, const f32 sprite_uv_heig
 	}
 	return pMesh;
 }
+
+AEGfxVertexList* Spritesheet_Mesh(float width, float height, float uMin, float vMin, float uMax, float vMax)
+{
+	AEGfxMeshStart();
+	float w = width * 0.5f;
+	float h = height * 0.5f;
+
+	// Triangle 1 (Bottom-Left, Bottom-Right, Top-Left)
+	AEGfxTriAdd(
+		-w, -h, 0xFFFFFFFF, uMin, vMax,
+		w, -h, 0xFFFFFFFF, uMax, vMax,
+		-w, h, 0xFFFFFFFF, uMin, vMin
+	);
+
+	// Triangle 2 (Bottom-Right, Top-Right, Top-Left)
+	AEGfxTriAdd(
+		w, -h, 0xFFFFFFFF, uMax, vMax,
+		w, h, 0xFFFFFFFF, uMax, vMin,
+		-w, h, 0xFFFFFFFF, uMin, vMin
+	);
+
+	AEGfxVertexList* pMesh = AEGfxMeshEnd();
+
+
+	if (!pMesh) {
+		printf("Error creating spritesheet mesh!\n");
+		return 0;
+	}
+	return pMesh;
+}

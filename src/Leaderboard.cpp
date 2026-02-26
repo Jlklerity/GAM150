@@ -16,7 +16,7 @@
 namespace 
 {
 	float scroll_offset = 0.0f; //scroll initial position
-
+	int highest_score = 0;
 	// NEW: How many lines to show on screen at once
 	const int ENTRIES_PER_PAGE = 5;
 	const int MAX_LEADERBOARD_SIZE = 50;
@@ -35,6 +35,11 @@ namespace Leaderboard_System
 			AEGfxMeshFree(overlayMesh);
 			overlayMesh = nullptr;
 		}
+	}
+
+	int GetHighestScore() {
+		Read_Leaderboard();
+		return highest_score;
 	}
 
 	std::vector<Leaderboard_Data::Entry> leaderboard_list;
@@ -56,9 +61,11 @@ namespace Leaderboard_System
 		int player_score;
 		while (file_stream >> player_name >> player_score) { //store file data to vector for displaying or writing 
 			Leaderboard_Data::Entry newEntry{ player_name, player_score };
+			if (player_score > highest_score) highest_score = player_score;
 			leaderboard_list.push_back(newEntry);
 			std::cout << newEntry.player_name << newEntry.player_score << "\n";
 		}
+		
 		file_stream.close();
 	}
 
@@ -72,6 +79,7 @@ namespace Leaderboard_System
 		 
 		//sort players from highest to lowest score		
 		std::sort(leaderboard_list.begin(), leaderboard_list.end(), CompareScores);
+		
 		const char* leaderboard_filepath = "Assets/leaderboard.txt";
 		std::ofstream file_stream(leaderboard_filepath);
 

@@ -252,7 +252,11 @@ void Game_Update()
             uvOffsetY = row * SPRITE_UV_HEIGHT;
         }
     }
-    
+    //else if (isShopOpen)
+    //{
+    //    // If shop is open, just run the Shop Module
+    //    Shop_Update();
+    //}
 
     // ------------------------------------------------------------------------
     // 3. RENDERING (Always run so the screen doesn't go black)

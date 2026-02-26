@@ -18,6 +18,7 @@ namespace Leaderboard_System
 {
 	void Init();
 	void Free();
+	int GetHighestScore();
 	void Display_Leaderboard(bool& openLeaderboard);
 
 	//Stores leaderboard scores into txt file

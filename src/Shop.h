@@ -1,5 +1,6 @@
 #pragma once
 
+void DisplayScore();
 void Shop_Init();
 
 void Shop_Update();

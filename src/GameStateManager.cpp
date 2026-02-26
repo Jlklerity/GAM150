@@ -1,8 +1,8 @@
 #include "GameStateManager.h"
-#include <cstdio>
 #include "MainMenu.h"
 #include "game.h"
 #include "Shop.h"
+#include "TimeGame.h"
 
 //define global variables
 int gGameStateCurr = GS_NONE;
@@ -52,6 +52,11 @@ void GSM_Update()
 			gGameStateInit = Game_Init;
 			gGameStateUpdate = Game_Update;
 			gGameStateExit = Game_Exit;
+			break;
+		case GS_GAME_TIMEMODE: 
+			gGameStateInit = GameTimeMode_Init; 
+			gGameStateUpdate = GameTimeMode_Update;
+			gGameStateExit = GameTimeMode_Exit;
 			break;
 		case GS_SHOP:
 			gGameStateInit = Shop_Init;

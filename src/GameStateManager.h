@@ -6,6 +6,7 @@ enum GameState
 	GS_NONE = 0,
 	GS_MAIN_MENU,
 	GS_GAME,
+	GS_GAME_TIMEMODE,
 	GS_SHOP,
 	GS_QUIT,
 	GS_RESTART

@@ -23,7 +23,9 @@
     <ClCompile Include="src\MeshTemplates.cpp" />
     <ClCompile Include="src\Pause.cpp" />
     <ClCompile Include="src\PowerUp.cpp" />
+    <ClCompile Include="src\Settings.cpp" />
     <ClCompile Include="src\Shop.cpp" />
+    <ClCompile Include="src\TimeGame.cpp" />
     <ClCompile Include="src\Typing.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -38,7 +40,9 @@
     <ClInclude Include="src\MeshTemplates.h" />
     <ClInclude Include="src\Pause.h" />
     <ClInclude Include="src\PowerUp.h" />
+    <ClInclude Include="src\Settings.h" />
     <ClInclude Include="src\Shop.h" />
+    <ClInclude Include="src\TimeGame.h" />
     <ClInclude Include="src\Typing.h" />
   </ItemGroup>
   <ItemGroup>
