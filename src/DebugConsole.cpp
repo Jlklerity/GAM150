@@ -138,12 +138,13 @@ namespace
         {
             if (tokens.size() < 2)
             {
-                PushHistory("Usage: /spawn [3-8]", true);
+                PushHistory("Usage: /spawn [1-8]", true);
                 return;
             }
             int len = std::stoi(tokens[1]);
-            if (len == 1) EnemySystem::Enemy_SpawnFriendlyFromPool(*s_pEnemyPool, *s_pFreeSlots, *s_pEnemyArea, *s_pWordBank, 3, 8, 1.15f);
-            if (len == 2) EnemySystem::Enemy_SpawnShieldedFromPool(*s_pEnemyPool, *s_pFreeSlots, *s_pEnemyArea, *s_pWordBank, 3, 8, 1.05f);
+            int max_len = DifficultySystem::Difficulty_GetUnlockedMaxWordLength();
+            if (len == 1) EnemySystem::Enemy_SpawnFriendlyFromPool(*s_pEnemyPool, *s_pFreeSlots, *s_pEnemyArea, *s_pWordBank, 3, max_len, 1.15f);
+            if (len == 2) EnemySystem::Enemy_SpawnShieldedFromPool(*s_pEnemyPool, *s_pFreeSlots, *s_pEnemyArea, *s_pWordBank, 3, max_len, 1.05f);
             if (len < 3 || len > 8)
             {
                 PushHistory("Error: word length must be between 3 and 8.", true);
