@@ -28,37 +28,37 @@ modifying the core enemy logic.
 namespace EnemyConfig
 {
 	// Enemy pool sizing and safety limits
-	extern const int   MAX_ENEMIES;                                                                              // max enemies stored in the pool
-	extern const int   MAX_SPAWN_TRIES;                                                                          // max attempts to find a safe spawn spot
-	extern const int   MAX_WORD_TRIES;                                                                           // max attempts to find a unique word
+	extern const int   MAX_ENEMIES;                                                                                         // max enemies stored in the pool
+	extern const int   MAX_SPAWN_TRIES;                                                                                     // max attempts to find a safe spawn spot
+	extern const int   MAX_WORD_TRIES;                                                                                      // max attempts to find a unique word
 
 	// Visual and text sizing
-	extern const float ENEMY_SIZE_PX;                                                                            // enemy sprite size
-	extern const float TEXT_SCALE;                                                                               // enemy word text scale
+	extern const float ENEMY_SIZE_PX;                                                                                       // enemy sprite size
+	extern const float TEXT_SCALE;                                                                                          // enemy word text scale
 
 	// Difficulty tuning
-	extern const float DIFFICULTY_RAMP_PER_SECOND;                                                               // difficulty gain per second
-	extern const float DIFFICULTY_MAX;                                                                           // cap for difficulty value
+	extern const float DIFFICULTY_RAMP_PER_SECOND;                                                                          // difficulty gain per second
+	extern const float DIFFICULTY_MAX;                                                                                      // cap for difficulty value
 
 	// Random spawn tuning
-	extern const float RANDOM_SPAWN_INTERVAL_START_SECONDS;                                                      // starting spawn interval
-	extern const float RANDOM_SPAWN_INTERVAL_MIN_SECONDS;                                                        // minimum spawn interval
-	extern const float RANDOM_SPAWN_INTERVAL_DECREASE_PER_LEVEL;                                                 // interval decrease per difficulty level
+	extern const float RANDOM_SPAWN_INTERVAL_START_SECONDS;                                                                 // starting spawn interval
+	extern const float RANDOM_SPAWN_INTERVAL_MIN_SECONDS;                                                                   // minimum spawn interval
+	extern const float RANDOM_SPAWN_INTERVAL_DECREASE_PER_LEVEL;                                                            // interval decrease per difficulty level
 
 	// Fall speed tuning
-	extern const float ENEMY_FALL_SPEED_START;                                                                   // starting fall speed
-	extern const float ENEMY_FALL_SPEED_INCREASE_PER_LEVEL;                                                      // fall speed increase per difficulty level
+	extern const float ENEMY_FALL_SPEED_START;                                                                              // starting fall speed
+	extern const float ENEMY_FALL_SPEED_INCREASE_PER_LEVEL;                                                                 // fall speed increase per difficulty level
 
 	// Death drop tuning
-	extern const float ENEMY_DEATH_FALL_SPEED;                                                                   // fast drop speed when killed
-	extern const float ENEMY_DEATH_LINGER_SECONDS;                                                               // time to keep a killed enemy visible before removing it
+	extern const float ENEMY_DEATH_FALL_SPEED;                                                                              // fast drop speed when killed
+	extern const float ENEMY_DEATH_LINGER_SECONDS;                                                                          // time to keep a killed enemy visible before removing it
 
 	// Spacing
-	extern const float ENEMY_OVERLAP_PADDING_PX;                                                                 // extra padding between enemies
+	extern const float ENEMY_OVERLAP_PADDING_PX;                                                                            // extra padding between enemies
 
 	// Lane system
-	extern const int   ENEMY_LANE_COUNT;                                                                         // number of horizontal lanes
-	extern const float ENEMY_LANE_MIN_GAP_PX;                                                                    // min vertical spacing per lane
+	extern const int   ENEMY_LANE_COUNT;                                                                                    // number of horizontal lanes
+	extern const float ENEMY_LANE_MIN_GAP_PX;                                                                               // min vertical spacing per lane
 }
 /*___________________________________________________________________________________________________________________________________________________________________________________________________*/
 
@@ -80,8 +80,8 @@ namespace Data
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
     struct Health
     {
-        float health_max = 100.0f;                                                                           // maximum health value
-        float health_current = 100.0f;                                                                       // current health value
+        float health_max = 100.0f;                                                                                          // maximum health value
+        float health_current = 100.0f;                                                                                      // current health value
     };
 
     /*
@@ -92,7 +92,7 @@ namespace Data
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
     struct Score
     {
-        int score_value = 0;                                                                                 // current score value
+        int score_value = 0;                                                                                                // current score value
     };
 
     /*
@@ -105,21 +105,21 @@ namespace Data
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
     struct SpriteAnim
     {
-        int animation_columns = 6;                                                                           // number of columns in the sheet
-        int animation_rows = 2;                                                                              // number of rows in the sheet
-        int animation_row_index = 0;                                                                         // which row of the sprite sheet to animate
+        int animation_columns = 6;                                                                                          // number of columns in the sheet
+        int animation_rows = 2;                                                                                             // number of rows in the sheet
+        int animation_row_index = 0;                                                                                        // which row of the sprite sheet to animate
 
-        float animation_timer_seconds = 0.0f;                                                                // time since last frame change
-        float animation_frame_duration_seconds = 0.10f;                                                      // time per animation frame
+        float animation_timer_seconds = 0.0f;                                                                               // time since last frame change
+        float animation_frame_duration_seconds = 0.10f;                                                                     // time per animation frame
 
-        int animation_frame_index = 0;                                                                       // current frame index
+        int animation_frame_index = 0;                                                                                      // current frame index
 
-        float animation_uv_x = 0.0f;                                                                         // current frame uv x start
-        float animation_uv_y = 0.0f;                                                                         // current frame uv y start
+        float animation_uv_x = 0.0f;                                                                                        // current frame uv x start
+        float animation_uv_y = 0.0f;                                                                                        // current frame uv y start
 
-        float Anim_UvWidth()  const { return 1.0f / (float)animation_columns; }                              // width of one frame in uv space
-        float Anim_UvHeight() const { return 1.0f / (float)animation_rows; }                                 // height of one frame in uv space
-        int   Anim_FrameCount() const { return animation_columns; }                                          // number of frames in the current row
+        float Anim_UvWidth()  const { return 1.0f / (float)animation_columns; }                                             // width of one frame in uv space
+        float Anim_UvHeight() const { return 1.0f / (float)animation_rows; }                                                // height of one frame in uv space
+        int   Anim_FrameCount() const { return animation_columns; }                                                         // number of frames in the current row
 
     };
 
@@ -132,14 +132,27 @@ namespace Data
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
     struct EnemyArea
     {
-        float area_min_x = -600.0f;                                                                          // left bound of enemy area
-        float area_max_x = 740.0f;                                                                           // right bound of enemy area
+        float area_min_x = -600.0f;                                                                                         // left bound of enemy area
+        float area_max_x = 740.0f;                                                                                          // right bound of enemy area
 
-        float area_spawn_y = -200.0f;                                                                        // spawn height
-        float area_landing_y = -250.0f;                                                                      // landing height
+        float area_spawn_y = -200.0f;                                                                                       // spawn height
+        float area_landing_y = -250.0f;                                                                                     // landing height
 
-        float Area_BoxMinY() const { return area_landing_y; }                                                // bottom of the area box
-        float Area_BoxMaxY() const { return area_spawn_y; }                                                  // top of the area box
+        float Area_BoxMinY() const { return area_landing_y; }                                                               // bottom of the area box
+        float Area_BoxMaxY() const { return area_spawn_y; }                                                                 // top of the area box
+    };
+
+    /*
+    @enum           EnemyType
+    @brief          Identifies enemy behavior type (normal, friendly, shielded).
+
+    This enum contains xxx
+    *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
+    enum class EnemyType
+    {
+        NORMAL,                                                                                                             // standard enemy
+        FRIENDLY,                                                                                                           // friendly npc
+        SHIELDED                                                                                                            // enemy with shield
     };
 
     /*
@@ -152,24 +165,31 @@ namespace Data
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
     struct Enemy
     {
-        float enemy_position_x = 0.0f;                                                                       // enemy x position
-        float enemy_position_y = 0.0f;                                                                       // enemy y position
+        float enemy_position_x = 0.0f;                                                                                      // enemy x position
+        float enemy_position_y = 0.0f;                                                                                      // enemy y position
 
-        float enemy_fall_speed_units_per_second = EnemyConfig::ENEMY_FALL_SPEED_START;                                    // fall speed for normal drop
+        float enemy_fall_speed_units_per_second = EnemyConfig::ENEMY_FALL_SPEED_START;                                      // fall speed for normal drop
 
-        bool enemy_is_active = true;                                                                         // visibility and update flag
-        bool enemy_has_landed = false;                                                                       // landing state flag
-        bool enemy_did_damage = false;                                                                       // damage applied flag
+        bool enemy_is_active = true;                                                                                        // visibility and update flag
+        bool enemy_has_landed = false;                                                                                      // landing state flag
+        bool enemy_did_damage = false;                                                                                      // damage applied flag
 
-        bool enemy_is_dying = false;                                                                         // death drop state flag
-        float enemy_dying_linger_timer_seconds = 0.0f;                                                       // time spent sitting on landing line
+        bool enemy_is_dying = false;                                                                                        // death drop state flag
+        float enemy_dying_linger_timer_seconds = 0.0f;                                                                      // time spent sitting on landing line
 
-        int enemy_word_length = 6;                                                                           // word length for this enemy
-        std::string enemy_word_text;                                                                         // word text shown on enemy
+        EnemyType enemy_type = EnemyType::NORMAL;                                                                           // what kind of enemy this is
 
-        int enemy_lane_id = -1;                                                                              // lane index for this enemy
+        bool enemy_shield_intact = false;                                                                                   // shield stage flag (only for shield enemy)
+        std::string enemy_word_text_alt;                                                                                    // hidden/second word (only for shield enemy)
 
-        SpriteAnim enemy_animation{};                                                                        // animation state for this enemy
+        int enemy_death_row_index = 1;                                                                                      // death animation row
+
+        int enemy_word_length = 3;                                                                                          // word length for this enemy
+        std::string enemy_word_text;                                                                                        // word text shown on enemy
+
+        int enemy_lane_id = -1;                                                                                             // lane index for this enemy
+
+        SpriteAnim enemy_animation{};                                                                                       // animation state for this enemy
     };
 
     /*
@@ -179,9 +199,10 @@ namespace Data
     This struct stores pointers to the meshes needed to draw enemies and optional debug shapes.
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
     struct Meshes
-    {
-        AEGfxVertexList* enemy_sprite_mesh = nullptr;                                                        // quad mesh for enemy sprite
-        AEGfxVertexList* debug_box_mesh = nullptr;                                                           // box mesh for debug shapes
+    {                                      
+        AEGfxVertexList* enemy_sprite_mesh = nullptr;                                                                       // 2-row mesh (normal + friendly)
+        AEGfxVertexList* shield_sprite_mesh = nullptr;                                                                      // 3-row mesh (shield enemy)
+        AEGfxVertexList* debug_box_mesh = nullptr;                                                                          // box mesh for debug shapes
     };
 
     /*
@@ -192,12 +213,12 @@ namespace Data
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
     struct WordBank
     {
-        std::vector<std::string> words_3;                                                                    // list of 3-letter words
-        std::vector<std::string> words_4;                                                                    // list of 4-letter words
-        std::vector<std::string> words_5;                                                                    // list of 5-letter words
-        std::vector<std::string> words_6;                                                                    // list of 6-letter words
-        std::vector<std::string> words_7;                                                                    // list of 7-letter words
-        std::vector<std::string> words_8;                                                                    // list of 8-letter words
+        std::vector<std::string> words_3;                                                                                   // list of 3-letter words
+        std::vector<std::string> words_4;                                                                                   // list of 4-letter words
+        std::vector<std::string> words_5;                                                                                   // list of 5-letter words
+        std::vector<std::string> words_6;                                                                                   // list of 6-letter words
+        std::vector<std::string> words_7;                                                                                   // list of 7-letter words
+        std::vector<std::string> words_8;                                                                                   // list of 8-letter words
     };
 } // Data namespace end
 /*___________________________________________________________________________________________________________________________________________________________________________________________________*/
@@ -246,17 +267,6 @@ namespace Utility
     If the range is invalid (maximum_inclusive < minimum), it safely returns 'minimum'.
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
     int Utility_RandInt(int minimum, int maximum_inclusive);
-
-    /*
-    @function       Input_CtrlDown
-    @brief          Checks whether either Control key is currently held down.
-
-    @usage          wWinMain
-
-    This function returns true if the left CTRL or right CTRL key is pressed in the current frame,
-    otherwise returns false.
-    *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
-    bool Input_CtrlDown();
 
     /*
     @function       Convert_WorldToNdc
@@ -369,8 +379,6 @@ meshes with a standard 2D transform.
 *//*_________________________________________________________________________________________________________________________________________________________________________________________________*/
 namespace Graphics
 {
-
-
     extern s8 font_id;
     /*
     @function       Graphics_GetEnemyTextureByWordLength
@@ -622,28 +630,40 @@ namespace EnemySystem
 {
     /*
     @function       Enemy_IsWordInUse
-    @params         pool (const std::vector<Data::Enemy>&), word_text (const std::string&)
-    @brief          Checks whether a word is already assigned to an active enemy.
+    @params         pool (const std::vector<Data::Enemy>&), word_text (const std::string&), include_hidden_words (bool)
+    @brief          Checks if a word is already assigned to any active enemy in the pool.
 
     @usage          Enemy_PickUniqueWord
 
-    This function scans the enemy pool and returns true if any active enemy currently has 'word_text'
-    as its assigned word. Inactive enemies are ignored.
+    This function scans all active enemies and returns true if any of them already use the given word. 
+    If include_hidden_words is true, it also checks the hidden second word on shielded enemies.
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
-    bool Enemy_IsWordInUse(const std::vector<Data::Enemy>& pool, const std::string& word_text);
+    bool Enemy_IsWordInUse(const std::vector<Data::Enemy>& pool, const std::string& word_text, bool include_hidden_words);
 
     /*
     @function       Enemy_PickUniqueWord
-    @params         word_length (int), bank (const Data::WordBank&), pool (const std::vector<Data::Enemy>&)
-    @brief          Selects a random word of a given length that is not currently used by any active enemy.
+    @params         word_length (int), bank (const Data::WordBank&), pool (const std::vector<Data::Enemy>&), include_hidden_words (bool)
+    @brief          Picks a random word of the given length that is not already used by any active enemy.
 
     @usage          Enemy_SpawnFromPool
 
-    This function looks up the word list for 'word_length', then repeatedly picks random candidates until it
-    finds one that is not already assigned to an active enemy (up to MAX_WORD_TRIES attempts). If it cannot
-    find a unique word, it returns an empty string.
+    This function randomly picks words from the word bank and keeps trying until it finds one that
+    is not already in use. Returns an empty string if no unique word is found within the attempt limit.
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
-    std::string Enemy_PickUniqueWord(int word_length, const Data::WordBank& bank, const std::vector<Data::Enemy>& pool);
+    std::string Enemy_PickUniqueWord(int word_length, const Data::WordBank& bank, const std::vector<Data::Enemy>& pool, bool include_hidden_words);
+
+
+    /*
+    @function       Enemy_PickUniqueWordRandomLength
+    @params         min_len (int), max_len (int), bank (const Data::WordBank&), pool (const std::vector<Data::Enemy>&), include_hidden_words (bool), max_tries_total (int)
+    @brief          Picks a unique word with a random length chosen between min_len and max_len.
+
+    @usage          Enemy_SpawnFriendlyFromPool, Enemy_SpawnShieldedFromPool
+
+    This function picks a random word length each attempt and tries to find a unique word of that
+    length. It keeps trying up to max_tries_total times. Returns an empty string if nothing is found.
+    *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
+    std::string Enemy_PickUniqueWordRandomLength(int min_len, int max_len, const Data::WordBank& bank, const std::vector<Data::Enemy>& pool, bool include_hidden_words, int max_tries_total);
 
     /*
     @function       Enemy_GetWordHalfWidthWorld
@@ -695,6 +715,18 @@ namespace EnemySystem
     their initial values so the enemy is ready to update and render.
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
     Data::Enemy Enemy_Create(const Data::EnemyArea& area, int word_length, const std::string& word_text, float fall_speed, int lane_id);
+
+    /*
+    @function       Enemy_BreakShield
+    @params         e (Data::Enemy&)
+    @brief          Breaks the shield on a shielded enemy and switches it to its second word.
+
+    @usage          wWinMain
+
+    This function removes the shield from a shielded enemy. It swaps in the hidden second word,
+    updates the word length, and resets the animation to the unshielded row of the sprite sheet.
+    *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
+    void Enemy_BreakShield(Data::Enemy& e);
 
     /*
     @function       Enemy_Killed
@@ -789,6 +821,30 @@ namespace EnemySystem
     scaled fall speed and inserted into the pool.
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
     void Enemy_SpawnFromPool(std::vector<Data::Enemy>& pool, std::deque<int>& free_slots, const Data::EnemyArea& area, const Data::WordBank& bank, int word_length);
+    
+    /*
+    @function       Enemy_SpawnFriendlyFromPool
+    @params         pool (std::vector<Data::Enemy>&), free_slots (std::deque<int>&), area (const Data::EnemyArea&), bank (const Data::WordBank&), min_word_len (int), max_word_len (int), speed_multiplier (float);
+    @brief          Spawns a friendly enemy into an available pool slot using lane-based placement.
+
+    @usage          wWinMain
+
+    This function works the same as Enemy_SpawnFromPool but creates a friendly enemy. Friendly
+    enemies do not damage the player when they land. The speed_multiplier scales the fall speed.
+    *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
+    void Enemy_SpawnFriendlyFromPool(std::vector<Data::Enemy>& pool, std::deque<int>& free_slots, const Data::EnemyArea& area, const Data::WordBank& bank, int min_word_len, int max_word_len, float speed_multiplier);
+
+    /*
+    @function       Enemy_SpawnShieldedFromPool
+    @params         pool (std::vector<Data::Enemy>&), free_slots (std::deque<int>&), area (const Data::EnemyArea&), bank (const Data::WordBank&), min_word_len (int), max_word_len (int), speed_multiplier (float);
+    @brief          Spawns a shielded enemy into an available pool slot using lane-based placement.
+
+    @usage          wWinMain
+
+    This function spawns a shielded enemy that needs two words to defeat. It picks two unique
+    words: the first is shown while the shield is up, the second is revealed after the shield breaks.
+    *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
+    void Enemy_SpawnShieldedFromPool(std::vector<Data::Enemy>& pool, std::deque<int>& free_slots, const Data::EnemyArea& area, const Data::WordBank& bank, int min_word_len, int max_word_len, float speed_multiplier);
 
 } // EnemySystem namespace end
 /*___________________________________________________________________________________________________________________________________________________________________________________________________*/
@@ -843,33 +899,6 @@ namespace UiSystem
     void Ui_DrawHealthBar(Data::Health& h, Data::Meshes& meshes); //Health bar visible in the game (jeremy)
 
 } // UiSystem namespace end
-/*___________________________________________________________________________________________________________________________________________________________________________________________________*/
-
-/*
-@namespace      DebugSystem
-@brief          Provides debug-only input handling for toggles, cheats, and test spawns.
-
-This namespace contains helper code for developer/testing controls, such as toggling debug visuals,
-adjusting difficulty/health, enabling or disabling auto-spawning, and manually spawning enemies of
-specific word lengths.
-*//*_________________________________________________________________________________________________________________________________________________________________________________________________*/
-namespace DebugSystem
-{
-    /*
-    @function       Debug_HandleInputs
-    @params         is_enemy_area_box_visible (bool&), is_random_spawning_enabled (bool&), is_difficulty_debug_visible (bool&), health (Data::Health&),
-                    enemy_pool (std::vector<Data::Enemy>&), free_slot_queue (std::deque<int>&), enemy_area (const Data::EnemyArea&), word_bank (const Data::WordBank&)
-    @brief          Processes debug key inputs and applies the corresponding debug actions.
-
-    @usage          wWinMain
-
-    This function listens for CTRL + key combinations to toggle debug overlays, modify health and
-    difficulty values, toggle auto-spawning, and manually spawn enemies with specific word lengths.
-    *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
-    void Debug_HandleInputs(bool& is_enemy_area_box_visible, bool& is_random_spawning_enabled, bool& is_difficulty_debug_visible, Data::Health& health,
-                            std::vector<Data::Enemy>& enemy_pool, std::deque<int>& free_slot_queue, const Data::EnemyArea& enemy_area, const Data::WordBank& word_bank);
-
-} // DebugSystem namespace end
 /*___________________________________________________________________________________________________________________________________________________________________________________________________*/
 
 /*

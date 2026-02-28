@@ -12,13 +12,11 @@ void Typing_Exit();
 
 namespace Data { struct Enemy; }
 namespace Data { struct Score; }
+namespace Data { struct Health; }
 
 namespace UiSystem
 {
     void Ui_DrawScoreAndTyped(const Data::Score& score);
 }
 
-void Typing_UpdateAndApplyToEnemies(std::vector<Data::Enemy>& enemy_pool, Data::Score& score);
-
-
-
+void Typing_UpdateAndApplyToEnemies(std::vector<Data::Enemy>& enemy_pool, Data::Score& score, Data::Health& health);

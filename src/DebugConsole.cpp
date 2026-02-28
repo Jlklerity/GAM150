@@ -132,7 +132,7 @@ namespace
         const std::string& cmd = tokens[0];
 
         // ------------------------------------------------------------------
-        // /spawn [3-8]   -- spawn an enemy of the given word length
+        // /spawn [1-8]   -- spawn an enemy of the given word length
         // ------------------------------------------------------------------
         if (IEquals(cmd, "spawn"))
         {
@@ -142,6 +142,8 @@ namespace
                 return;
             }
             int len = std::stoi(tokens[1]);
+            if (len == 1) EnemySystem::Enemy_SpawnFriendlyFromPool(*s_pEnemyPool, *s_pFreeSlots, *s_pEnemyArea, *s_pWordBank, 3, 8, 1.15f);
+            if (len == 2) EnemySystem::Enemy_SpawnShieldedFromPool(*s_pEnemyPool, *s_pFreeSlots, *s_pEnemyArea, *s_pWordBank, 3, 8, 1.05f);
             if (len < 3 || len > 8)
             {
                 PushHistory("Error: word length must be between 3 and 8.", true);

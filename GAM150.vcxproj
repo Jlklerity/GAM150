@@ -46,6 +46,7 @@
     <ClInclude Include="src\Typing.h" />
   </ItemGroup>
   <ItemGroup>
+    <Image Include="Assets\bossEnemy.png" />
     <Image Include="Assets\characterSheet.png" />
   </ItemGroup>
   <ItemGroup>

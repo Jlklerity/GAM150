@@ -399,8 +399,7 @@ void Typing_Exit()
 
 
 
-// connects typing and the enemies, params are (enemy_pool, score), enemy pool to find n kill enemy, score so can modify score
-void Typing_UpdateAndApplyToEnemies(std::vector<Data::Enemy>& enemy_pool, Data::Score& score) {
+void Typing_UpdateAndApplyToEnemies(std::vector<Data::Enemy>& enemy_pool, Data::Score& score, Data::Health& health) {
     Typing_Update(); //call typing update logic, basicallly pushing whatever is typed to the buffer
     bool submitted = KeyPressedOnce(AEVK_RETURN);    // check for enter
 
@@ -440,10 +439,35 @@ void Typing_UpdateAndApplyToEnemies(std::vector<Data::Enemy>& enemy_pool, Data::
             //if enemy valid AND typed word matches
             if (target.enemy_is_active && !target.enemy_is_dying && target.enemy_word_text == typed_buffer)
             {
-                EnemySystem::Enemy_Killed(target); //kill the enemy
-                score.score_value += target.enemy_word_length * 10; // increase score based on word length (length x 10)
+                // -------------------------
+                // FRIENDLY NPC: penalize + take 10 hp damage, then die
+                // -------------------------
+                if (target.enemy_type == Data::EnemyType::FRIENDLY)
+                {
+                    EnemySystem::Enemy_Killed(target);                                                          // kill friendly
+                    score.score_value -= target.enemy_word_length * 10;                                         // deduct score (you can tune)
+                    health.health_current -= 10;                                                                // take 10 damage
+                    if (health.health_current < 0) health.health_current = 0;                                   // clamp
+                }
+                // -------------------------
+                // SHIELDED NPC: first word breaks shield, second word kills
+                // -------------------------
+                else if (target.enemy_type == Data::EnemyType::SHIELDED && target.enemy_shield_intact)
+                {
+                    EnemySystem::Enemy_BreakShield(target);                                                     // row 0 to row 1, swap to word2
+                    score.score_value += target.enemy_word_length * 10;                                         // reward
+                }
+                // -------------------------
+                // NORMAL enemy OR shielded after shield broken: kill + gain score
+                // -------------------------
+                else
+                {
+                    EnemySystem::Enemy_Killed(target);                                                          // kill
+                    score.score_value += target.enemy_word_length * 10;                                         // reward
+                }
+
                 s_debugCorrect = true;
-                correct = true; //no shake
+                correct = true; // no shake
             }
         }
 
