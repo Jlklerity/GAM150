@@ -479,6 +479,8 @@ namespace DifficultySystem
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
     float Difficulty_Get();
 
+    void Difficulty_Reset();
+
     /*
     @function       Difficulty_Add
     @params         amount (float)

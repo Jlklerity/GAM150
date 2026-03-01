@@ -85,7 +85,7 @@ void Game_Init()
     openLeaderboard = false;
     isPaused = false;
     isDead = false;
-
+    DifficultySystem::Difficulty_Reset();
     //player
     playerTexture1 = AEGfxTextureLoad("Assets/characterSheet.png");
     playerTexture2 = AEGfxTextureLoad("Assets/characterSheet.png");//for ltr when we have more player skins
