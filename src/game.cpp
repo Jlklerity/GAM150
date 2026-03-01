@@ -11,6 +11,7 @@
 #include "PowerUp.h"
 #include "MainMenu.h"
 #include "DebugConsole.h"
+#include "Particles.h"
 #include "GameOver.h"
 #include "Pause.h"
 
@@ -135,6 +136,8 @@ void Game_Init()
         enemy_area,
         word_bank
     );
+    Particles_Init();
+
 }
 
 
@@ -197,20 +200,25 @@ void Game_Update()
         for (int i = 0; i < EnemyConfig::MAX_ENEMIES; ++i)                                                                            // loop through all pool slots
         {
             Data::Enemy& e = enemy_pool[(size_t)i];                                                                                   // reference enemy slot
-            bool was_active = e.enemy_is_active;                                                                                      // remember active state before update
+            bool was_active = e.enemy_is_active;
+            bool was_damage_done = e.enemy_did_damage;
 
-            EnemySystem::Enemy_Update(e, enemy_area, dt, health);                                                                     // update enemy movement and state
+            EnemySystem::Enemy_Update(e, enemy_area, dt, health);
 
-            if (was_active && !e.enemy_is_active)                                                                                     // check if enemy just became inactive
+            if (was_active && !e.enemy_is_active)
             {
-                free_slot_queue.push_back(i);                                                                                         // return slot index to free queue
+                free_slot_queue.push_back(i);
 
+                if (!was_damage_done)
+                    Particles_SpawnDamageImpact(e.enemy_position_x, e.enemy_position_y);
+                else
+                    Particles_SpawnKillImpact(e.enemy_position_x, e.enemy_position_y, e.enemy_word_length);
             }
         }
         EnemySystem::Enemy_ResolveLaneStacking(enemy_pool, enemy_area);                                                               // fix spacing in lanes
 
         PowerUpSystem::Update(dt, enemy_pool);
-
+        Particles_Update(dt);
         // mouse click -> convert to world coords
         if (AEInputCheckTriggered(AEVK_LBUTTON))
         {
@@ -298,6 +306,8 @@ render_only:
     for (const auto& e : enemy_pool)                                                                                        // loop through enemies for word draw
         EnemySystem::Enemy_DrawWord(e);                                                                                     // draw enemy word
 
+    Particles_Draw();
+
     UiSystem::Debug_DrawDifficultyTopRight(is_difficulty_debug_visible,
         is_random_spawning_enabled, health);                                                                                // draw debug difficulty ui with health
     /*_________________________________________________________________________________________________________________________________________*/
@@ -324,6 +334,7 @@ void Game_Exit()
     Typing_Exit();
     Leaderboard_System::Free();
     PowerUpSystem::Free();
+    Particles_Free();
     DebugConsole::Exit();
 
     if (playerMesh) {

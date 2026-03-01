@@ -21,6 +21,7 @@
     <ClCompile Include="src\MainMenu.cpp" />
     <ClCompile Include="src\MeshRenderer.cpp" />
     <ClCompile Include="src\MeshTemplates.cpp" />
+    <ClCompile Include="src\Particles.cpp" />
     <ClCompile Include="src\Pause.cpp" />
     <ClCompile Include="src\PowerUp.cpp" />
     <ClCompile Include="src\Settings.cpp" />
@@ -38,6 +39,7 @@
     <ClInclude Include="src\MainMenu.h" />
     <ClInclude Include="src\MeshRenderer.h" />
     <ClInclude Include="src\MeshTemplates.h" />
+    <ClInclude Include="src\Particles.h" />
     <ClInclude Include="src\Pause.h" />
     <ClInclude Include="src\PowerUp.h" />
     <ClInclude Include="src\Settings.h" />
