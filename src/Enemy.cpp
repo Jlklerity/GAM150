@@ -6,6 +6,7 @@
     *//*_________________________________________________________________________________________________________________________________________________________________________________________________*/
 
 #include "Enemy.h"      // Enemy API
+#include "PowerUp.h"
 
     /*
     @namespace      EnemyConfig
@@ -1024,6 +1025,7 @@ namespace EnemySystem
                     e.enemy_is_active = false;                                                                              // remove enemy after landing
 
                     if (e.enemy_type != Data::EnemyType::FRIENDLY)                                                          // friendly enemies do not deal damage when they land
+                        if (!PowerUpSystem::IsShieldActive())
                         HealthSystem::Health_Add(health, -10.0f);                                                           // apply landing damage once
                 }
                 else                                                                                                        // damage already handled

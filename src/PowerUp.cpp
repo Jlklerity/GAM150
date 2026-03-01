@@ -1,439 +1,435 @@
 /**
  * @file PowerUp.cpp
  * @author Azfar
- * @brief Power-up system implementation (button + falling drops + effects).
+ * @brief Power-up system - sky drops activated by number keys 1/2/3.
+ *
+ * Up to MAX_SLOTS (3) drops fall simultaneously, one per slot.
+ * Each slot is tied to a number key: slot 0 = key 1, slot 1 = key 2, slot 2 = key 3.
+ * Pressing the matching key while a drop is active in that slot activates its effect.
+ * Drops that reach the enemy landing line disappear without activating.
  *
  * Rendering:
- * - Uses a simple 1x1 quad mesh in AE_GFX_RM_COLOR as a placeholder for the button and drop.
- * - Uses Alpha Engine text rendering (AEGfxCreateFont/AEGfxPrint/AEGfxGetPrintSize).
+ * - Loads one sprite texture per power type (powerup_lightning / shield / slow).
+ * - Falls back to a coloured quad if the texture is missing.
+ * - Draws the slot number centred on the sprite so the player knows which key to press.
  *
  * Coordinates:
- * - Game world uses origin at center (0,0), screen size 1600x900.
- * - Text rendering uses normalized coordinates in [-1, +1].
- *
- * Effects:
- * - Lightning: kills all active enemies using EnemySystem::Enemy_Killed().
- * - Shield: sets a timer (damage immunity requires later health integration).
- * - TimeSlow: sets a timer and exposes GetTimeScale() for game dt scaling.
+ * - World origin at centre (0,0), screen 1600x900.
+ * - Text in normalised [-1,+1] NDC.
  */
 
 #include "PowerUp.h"
-#include "Enemy.h"
-
-#include <cstdlib>
-#include <ctime>
+#include "Enemy.h"        // EnemySystem::Enemy_Killed, Data::Enemy, Data::EnemyArea, EnemyConfig
+#include "MeshTemplates.h"
+#include "MeshRenderer.h"
 
 #include "AEEngine.h"
 #include "AEGraphics.h"
 #include "AEMath.h"
 
+#include <cstdlib>
+#include <ctime>
+#include <cstdio>  // snprintf
+
 namespace
 {
-    // ------------------------------
-    // Screen constants (1600 x 900)
-    // ------------------------------
+    // ----------------------------------------------------------------
+    // Screen / world constants
+    // ----------------------------------------------------------------
     constexpr float SCREEN_HALF_W = 800.0f;
     constexpr float SCREEN_HALF_H = 450.0f;
-    constexpr float UI_MARGIN = 80.0f;
 
-    // ------------------------------
-    // Button and effect tuning
-    // ------------------------------
-    constexpr float BUTTON_COOLDOWN_SECONDS = 30.0f;
+    // ----------------------------------------------------------------
+    // Drop tuning
+    // ----------------------------------------------------------------
+    constexpr int   MAX_SLOTS = 3;        // 3 simultaneous drops max
+    constexpr float DROP_SIZE = 150.0f;   // matches ENEMY_SIZE_PX
+    constexpr float DROP_HALF = DROP_SIZE * 0.5f;
+    constexpr float DROP_SPAWN_X_MARGIN = 80.0f; // keep drops away from screen edges
 
-    constexpr float SHIELD_DURATION = 5.0f;
-    constexpr float SLOW_DURATION = 5.0f;
-    constexpr float SLOW_SCALE = 0.4f; // 40% speed while slow is active
-
-    // Default drop spawn range (seconds)
+    // default spawn interval range (seconds between new drops)
     constexpr float DROP_SPAWN_MIN_DEFAULT = 6.0f;
     constexpr float DROP_SPAWN_MAX_DEFAULT = 12.0f;
 
-    // ------------------------------
-    // UI button state
-    // ------------------------------
-    float g_buttonX = -SCREEN_HALF_W + UI_MARGIN; // -720
-    float g_buttonY = -SCREEN_HALF_H + UI_MARGIN; // -370
-    float g_buttonRadius = 40.0f;
-    float g_buttonCooldownRemaining = 0.0f;
+    // ----------------------------------------------------------------
+    // Effect durations
+    // ----------------------------------------------------------------
+    constexpr float SHIELD_DURATION = 5.0f;
+    constexpr float SLOW_DURATION = 5.0f;
+    constexpr float SLOW_SCALE = 0.4f;  // 40% game speed during slow
 
-    // ------------------------------
-    // Falling drop state (single drop MVP)
-    // ------------------------------
-    bool  g_dropActive = false;
-    float g_dropX = 0.0f;
-    float g_dropY = 0.0f;
-    float g_dropRadius = 28.0f;
-    float g_dropFallSpeed = 160.0f;
-
-    float g_dropSpawnTimer = 0.0f;
-    float g_dropSpawnMin = DROP_SPAWN_MIN_DEFAULT;
-    float g_dropSpawnMax = DROP_SPAWN_MAX_DEFAULT;
-    float g_nextDropSpawnIn = 8.0f;
-
-    PowerUpSystem::PowerType g_dropType = PowerUpSystem::PowerType::Lightning;
-    PowerUpSystem::PowerType g_buttonType = PowerUpSystem::PowerType::Lightning;
-
-    // ------------------------------
-    // Effect timers
-    // ------------------------------
-    float g_shieldRemaining = 0.0f;
-    float g_slowRemaining = 0.0f;
-
-    // ------------------------------
-    // Rendering resources
-    // ------------------------------
-    AEGfxVertexList* g_quadMesh = nullptr;
-
-
-    // ------------------------------
-    // Utility helpers
-    // ------------------------------
-    float Rand01() { return (float)std::rand() / (float)RAND_MAX; }
-    float RandRange(float a, float b) { return a + (b - a) * Rand01(); }
-
-    /**
-     * @brief Checks whether a point lies within a circular hit area.
-     */
-    bool PointInCircle(float px, float py, float cx, float cy, float r)
+    // ----------------------------------------------------------------
+    // Per-slot drop state
+    // ----------------------------------------------------------------
+    struct Drop
     {
-        float dx = px - cx, dy = py - cy;
-        return (dx * dx + dy * dy) <= (r * r);
+        bool  active = false;
+        float x = 0.0f;
+        float y = 0.0f;
+        float fallSpeed = 0.0f;
+        PowerUpSystem::PowerType type = PowerUpSystem::PowerType::Lightning;
+    };
+
+    static Drop  g_slots[MAX_SLOTS];
+
+    // ----------------------------------------------------------------
+    // Spawn timer
+    // ----------------------------------------------------------------
+    static float g_spawnTimer = 0.0f;
+    static float g_spawnMin = DROP_SPAWN_MIN_DEFAULT;
+    static float g_spawnMax = DROP_SPAWN_MAX_DEFAULT;
+    static float g_nextSpawnIn = 8.0f;
+
+    // ----------------------------------------------------------------
+    // Effect timers
+    // ----------------------------------------------------------------
+    static float g_shieldRemaining = 0.0f;
+    static float g_slowRemaining = 0.0f;
+
+    // ----------------------------------------------------------------
+    // Rendering resources
+    // ----------------------------------------------------------------
+    static AEGfxVertexList* g_mesh = nullptr;   // unit quad for sprite + fallback
+
+    // One texture per power type (loaded in Init, may be nullptr if asset missing)
+    static AEGfxTexture* g_texLightning = nullptr;
+    static AEGfxTexture* g_texShield = nullptr;
+    static AEGfxTexture* g_texSlow = nullptr;
+
+    // Last enemy area passed to Update — lets DebugSpawn use correct bounds
+    static Data::EnemyArea s_lastEnemyArea{};
+
+    // ----------------------------------------------------------------
+    // Helpers
+    // ----------------------------------------------------------------
+    static float Rand01()
+    {
+        return (float)std::rand() / (float)RAND_MAX;
     }
 
-    /**
-     * @brief Converts world coordinates (center origin) to normalized coordinates in [-1,+1].
-     * @param wx World X in pixels.
-     * @param wy World Y in pixels.
-     * @param nx Output normalized X.
-     * @param ny Output normalized Y.
-     */
-    void WorldToNDC(float wx, float wy, float& nx, float& ny)
+    static float RandRange(float a, float b)
+    {
+        return a + (b - a) * Rand01();
+    }
+
+    static void WorldToNDC(float wx, float wy, float& nx, float& ny)
     {
         nx = wx / SCREEN_HALF_W;
         ny = wy / SCREEN_HALF_H;
     }
 
     /**
-     * @brief Maps a power type to a short label to display on screen.
+     * @brief Returns the sprite texture for a power type, or nullptr if not loaded.
      */
-    const char* PowerTypeToText(PowerUpSystem::PowerType type)
+    static AEGfxTexture* TextureForType(PowerUpSystem::PowerType t)
     {
-        switch (type)
+        switch (t)
         {
-        case PowerUpSystem::PowerType::Lightning: return "LGT";
-        case PowerUpSystem::PowerType::Shield:    return "SHD";
-        case PowerUpSystem::PowerType::TimeSlow:  return "SLOW";
-        default: return "?";
+        case PowerUpSystem::PowerType::Lightning: return g_texLightning;
+        case PowerUpSystem::PowerType::Shield:    return g_texShield;
+        case PowerUpSystem::PowerType::TimeSlow:  return g_texSlow;
         }
+        return nullptr;
     }
 
     /**
-     * @brief Creates a 1x1 quad mesh centered at origin (used as a sprite placeholder).
-     * The mesh is created once and reused.
+     * @brief Returns the fallback colour (r,g,b) for a power type.
      */
-    void CreateQuadMeshIfNeeded()
+    static void ColorForType(PowerUpSystem::PowerType t, float& r, float& g, float& b)
     {
-        if (g_quadMesh) return;
-
-        AEGfxMeshStart();
-
-        // 1x1 quad (2 triangles), centered at origin
-        AEGfxTriAdd(
-            -0.5f, -0.5f, 0xFFFFFFFF, 0.0f, 1.0f,
-            0.5f, -0.5f, 0xFFFFFFFF, 1.0f, 1.0f,
-            -0.5f, 0.5f, 0xFFFFFFFF, 0.0f, 0.0f);
-
-        AEGfxTriAdd(
-            0.5f, -0.5f, 0xFFFFFFFF, 1.0f, 1.0f,
-            0.5f, 0.5f, 0xFFFFFFFF, 1.0f, 0.0f,
-            -0.5f, 0.5f, 0xFFFFFFFF, 0.0f, 0.0f);
-
-        g_quadMesh = AEGfxMeshEnd();
-    }
-
-    /**
-     * @brief Draws a colored quad at a world position, scaled to size.
-     */
-    void DrawQuadColor(float x, float y, float sx, float sy, float r, float g, float b, float a)
-    {
-        AEGfxSetRenderMode(AE_GFX_RM_COLOR);
-        AEGfxSetBlendMode(AE_GFX_BM_BLEND);
-        AEGfxSetTransparency(1.0f);
-        AEGfxSetColorToMultiply(r, g, b, a);
-        AEGfxSetColorToAdd(0, 0, 0, 0);
-
-        AEMtx33 scale, trans, transform;
-        AEMtx33Scale(&scale, sx, sy);
-        AEMtx33Trans(&trans, x, y);
-
-        // transform = trans * scale
-        AEMtx33Concat(&transform, &trans, &scale);
-
-        AEGfxSetTransform(transform.m);
-        AEGfxMeshDraw(g_quadMesh, AE_GFX_MDM_TRIANGLES);
-    }
-
-    /**
-     * @brief Draws centered text at a given world coordinate by converting to normalized coords.
-     *
-     * Alpha Engine text is rendered in normalized coordinates and anchored at bottom-left.
-     * We use AEGfxGetPrintSize to center the label.
-     */
-    void DrawCenteredLabel(const char* text, float worldX, float worldY, float scale,
-        float r, float g, float b, float a)
-    {
-        float nx, ny;
-        WorldToNDC(worldX, worldY, nx, ny);
-
-        float w = 0.0f, h = 0.0f;
-        AEGfxGetPrintSize(Graphics::font_id, text, scale, &w, &h);
-
-        AEGfxPrint(Graphics::font_id, text, nx - w * 0.5f, ny - h * 0.5f, scale, r, g, b, a);
-    }
-
-    // ------------------------------
-    // Activation logic
-    // ------------------------------
-
-    /**
-     * @brief Lightning effect: kill all active enemies via official enemy pipeline.
-     */
-    void ActivateLightning(std::vector<Data::Enemy>& enemy_pool)
-    {
-        for (Data::Enemy& e : enemy_pool)
+        switch (t)
         {
-            if (e.enemy_is_active && !e.enemy_is_dying)
-                EnemySystem::Enemy_Killed(e);
+        case PowerUpSystem::PowerType::Lightning: r = 1.0f; g = 0.85f; b = 0.1f; return; // gold
+        case PowerUpSystem::PowerType::Shield:    r = 0.2f; g = 1.0f;  b = 0.4f; return; // green
+        case PowerUpSystem::PowerType::TimeSlow:  r = 0.6f; g = 0.2f;  b = 1.0f; return; // purple
         }
+        r = g = b = 1.0f;
     }
 
     /**
-     * @brief Shield effect: enable shield timer (damage immunity requires later health integration).
+     * @brief Picks a random power type.
      */
-    void ActivateShield()
+    static PowerUpSystem::PowerType RandomType()
     {
-        g_shieldRemaining = SHIELD_DURATION;
-    }
-
-    /**
-     * @brief TimeSlow effect: enable slow timer. Game should scale dt using GetTimeScale().
-     */
-    void ActivateTimeSlow()
-    {
-        g_slowRemaining = SLOW_DURATION;
-    }
-
-    /**
-     * @brief Activates a power-up type.
-     */
-    void Activate(PowerUpSystem::PowerType type, std::vector<Data::Enemy>& enemy_pool)
-    {
-        switch (type)
-        {
-        case PowerUpSystem::PowerType::Lightning: ActivateLightning(enemy_pool); break;
-        case PowerUpSystem::PowerType::Shield:    ActivateShield(); break;
-        case PowerUpSystem::PowerType::TimeSlow:  ActivateTimeSlow(); break;
-        }
-    }
-
-    /**
-     * @brief Returns a random power-up type (uniform).
-     */
-    PowerUpSystem::PowerType RandomType()
-    {
-        int v = (int)(RandRange(0.0f, 3.0f)); // 0..2
+        int v = (int)(RandRange(0.0f, 3.0f));
         if (v < 0) v = 0;
         if (v > 2) v = 2;
         return (PowerUpSystem::PowerType)v;
     }
 
     /**
-     * @brief Spawns a falling drop slightly above the top of the screen.
+     * @brief Tries to spawn into any free slot. Picks a random free slot so
+     *        the slot order isn't always predictable.
      */
-    void SpawnDrop()
+    static void TrySpawnDrop(const Data::EnemyArea& area)
     {
-        g_dropActive = true;
-        g_dropType = RandomType();
+        // Collect free slot indices
+        int free[MAX_SLOTS];
+        int freeCount = 0;
+        for (int i = 0; i < MAX_SLOTS; ++i)
+            if (!g_slots[i].active) free[freeCount++] = i;
 
-        float minX = -SCREEN_HALF_W + UI_MARGIN;
-        float maxX = SCREEN_HALF_W - UI_MARGIN;
-        float topY = SCREEN_HALF_H + 60.0f;
+        if (freeCount == 0) return; // all slots occupied
 
-        g_dropX = RandRange(minX, maxX);
-        g_dropY = topY;
-        g_dropFallSpeed = RandRange(140.0f, 240.0f);
+        // Pick a random free slot
+        int chosen = free[(int)(RandRange(0.0f, (float)freeCount))];
+        if (chosen < 0) chosen = 0;
+        if (chosen >= freeCount) chosen = freeCount - 1;
+        int slot = free[chosen];
+
+        float minX = area.area_min_x + DROP_HALF + DROP_SPAWN_X_MARGIN;
+        float maxX = area.area_max_x - DROP_HALF - DROP_SPAWN_X_MARGIN;
+        if (minX > maxX) { minX = -400.0f; maxX = 400.0f; }
+
+        g_slots[slot].active = true;
+        g_slots[slot].type = RandomType();
+        g_slots[slot].x = RandRange(minX, maxX);
+        g_slots[slot].y = area.area_spawn_y + DROP_SIZE;  // just above spawn line
+        g_slots[slot].fallSpeed = RandRange(80.0f, 160.0f);
+    }
+
+    // ----------------------------------------------------------------
+    // Effect activation
+    // ----------------------------------------------------------------
+    static void ActivateLightning(std::vector<Data::Enemy>& pool)
+    {
+        for (Data::Enemy& e : pool)
+            if (e.enemy_is_active && !e.enemy_is_dying)
+                EnemySystem::Enemy_Killed(e);
+    }
+
+    static void Activate(PowerUpSystem::PowerType type, std::vector<Data::Enemy>& pool)
+    {
+        switch (type)
+        {
+        case PowerUpSystem::PowerType::Lightning: ActivateLightning(pool); break;
+        case PowerUpSystem::PowerType::Shield:    g_shieldRemaining = SHIELD_DURATION; break;
+        case PowerUpSystem::PowerType::TimeSlow:  g_slowRemaining = SLOW_DURATION;   break;
+        }
     }
 }
 
+
 namespace PowerUpSystem
 {
+    // ----------------------------------------------------------------
     void Init()
     {
         std::srand((unsigned)std::time(nullptr));
-        CreateQuadMeshIfNeeded();
 
-        // NOTE: Replace this path with your project font file.
-        // Example:
-        // g_powerupFont = AEGfxCreateFont("Assets/<yourfont>.otf", 72);
+        // Create unit quad mesh
+        if (g_mesh) { AEGfxMeshFree(g_mesh); g_mesh = nullptr; }
+        g_mesh = Sprite_Mesh(1.0f, 1.0f);  // full UV (no atlas slicing needed)
 
-        g_buttonCooldownRemaining = 0.0f;
+        // Load sprite textures — gracefully handle missing assets
+        g_texLightning = AEGfxTextureLoad("Assets/powerup_lightning.png");
+        g_texShield = AEGfxTextureLoad("Assets/powerup_shield.png");
+        g_texSlow = AEGfxTextureLoad("Assets/powerup_slow.png");
 
-        g_dropActive = false;
-        g_dropSpawnTimer = 0.0f;
-        g_nextDropSpawnIn = RandRange(g_dropSpawnMin, g_dropSpawnMax);
+        // Reset slots
+        for (int i = 0; i < MAX_SLOTS; ++i)
+            g_slots[i].active = false;
 
+        // Reset timers
+        g_spawnTimer = 0.0f;
+        g_nextSpawnIn = RandRange(g_spawnMin, g_spawnMax);
         g_shieldRemaining = 0.0f;
         g_slowRemaining = 0.0f;
-
-        g_buttonType = PowerType::Lightning;
     }
 
+    // ----------------------------------------------------------------
     void Free()
     {
-        if (g_quadMesh)
-        {
-            AEGfxMeshFree(g_quadMesh);
-            g_quadMesh = nullptr;
-        }
+        if (g_mesh) { AEGfxMeshFree(g_mesh);              g_mesh = nullptr; }
+        if (g_texLightning) { AEGfxTextureUnload(g_texLightning); g_texLightning = nullptr; }
+        if (g_texShield) { AEGfxTextureUnload(g_texShield);    g_texShield = nullptr; }
+        if (g_texSlow) { AEGfxTextureUnload(g_texSlow);      g_texSlow = nullptr; }
     }
 
+    // ----------------------------------------------------------------
     void SetDropSpawnInterval(float minSeconds, float maxSeconds)
     {
-        if (minSeconds < 0.2f) minSeconds = 0.2f;
-        if (maxSeconds < minSeconds) maxSeconds = minSeconds;
-
-        g_dropSpawnMin = minSeconds;
-        g_dropSpawnMax = maxSeconds;
-
-        // Restart timer so tuning is immediately noticeable.
-        g_dropSpawnTimer = 0.0f;
-        g_nextDropSpawnIn = RandRange(g_dropSpawnMin, g_dropSpawnMax);
+        if (minSeconds < 0.2f)        minSeconds = 0.2f;
+        if (maxSeconds < minSeconds)  maxSeconds = minSeconds;
+        g_spawnMin = minSeconds;
+        g_spawnMax = maxSeconds;
+        g_spawnTimer = 0.0f;
+        g_nextSpawnIn = RandRange(g_spawnMin, g_spawnMax);
     }
 
+    // ----------------------------------------------------------------
     bool IsShieldActive()
     {
         return g_shieldRemaining > 0.0f;
     }
 
+    // ----------------------------------------------------------------
     float GetTimeScale()
     {
         return (g_slowRemaining > 0.0f) ? SLOW_SCALE : 1.0f;
     }
 
-    void Update(float dt, std::vector<Data::Enemy>& enemy_pool)
+    // ----------------------------------------------------------------
+    void Update(float dt, std::vector<Data::Enemy>& enemy_pool,
+        const Data::EnemyArea& enemy_area)
     {
-        (void)enemy_pool;
+        s_lastEnemyArea = enemy_area;  // cache for DebugSpawn
+        // ---- Decay effect timers ----
+        if (g_shieldRemaining > 0.0f) { g_shieldRemaining -= dt; if (g_shieldRemaining < 0.0f) g_shieldRemaining = 0.0f; }
+        if (g_slowRemaining > 0.0f) { g_slowRemaining -= dt; if (g_slowRemaining < 0.0f) g_slowRemaining = 0.0f; }
 
-        // Effect timers (real-time)
-        if (g_shieldRemaining > 0.0f)
+        // ---- Spawn timer ----
+        g_spawnTimer += dt;
+        if (g_spawnTimer >= g_nextSpawnIn)
         {
-            g_shieldRemaining -= dt;
-            if (g_shieldRemaining < 0.0f) g_shieldRemaining = 0.0f;
-        }
-        if (g_slowRemaining > 0.0f)
-        {
-            g_slowRemaining -= dt;
-            if (g_slowRemaining < 0.0f) g_slowRemaining = 0.0f;
-        }
-
-        // Button cooldown (real-time)
-        if (g_buttonCooldownRemaining > 0.0f)
-        {
-            g_buttonCooldownRemaining -= dt;
-            if (g_buttonCooldownRemaining < 0.0f)
-                g_buttonCooldownRemaining = 0.0f;
+            g_spawnTimer = 0.0f;
+            g_nextSpawnIn = RandRange(g_spawnMin, g_spawnMax);
+            TrySpawnDrop(enemy_area);
         }
 
-        /**
-         * Drop movement/spawn can be slowed locally by time-scale.
-         * If you already scale dt globally in game.cpp using GetTimeScale(),
-         * then you should set scaledDt = dt (to avoid double-slowing drops).
-         */
-        float scaledDt = dt * GetTimeScale();
+        // ---- Move drops + key input + floor check ----
+        // Key codes for 1, 2, 3
+        const int keys[MAX_SLOTS] = { AEVK_1, AEVK_2, AEVK_3 };
 
-        // Random drop spawn timer
-        g_dropSpawnTimer += scaledDt;
-        if (!g_dropActive && g_dropSpawnTimer >= g_nextDropSpawnIn)
+        for (int i = 0; i < MAX_SLOTS; ++i)
         {
-            g_dropSpawnTimer = 0.0f;
-            g_nextDropSpawnIn = RandRange(g_dropSpawnMin, g_dropSpawnMax);
-            SpawnDrop();
-        }
+            Drop& d = g_slots[i];
+            if (!d.active) continue;
 
-        // Falling movement
-        if (g_dropActive)
-        {
-            g_dropY -= g_dropFallSpeed * scaledDt;
+            // Fall
+            d.y -= d.fallSpeed * dt;
 
-            float bottomKillY = -SCREEN_HALF_H - 60.0f;
-            if (g_dropY < bottomKillY)
-                g_dropActive = false;
-        }
-    }
-
-    void OnMouseClick(float mouseX, float mouseY, std::vector<Data::Enemy>& enemy_pool)
-    {
-        // Click falling drop
-        if (g_dropActive && PointInCircle(mouseX, mouseY, g_dropX, g_dropY, g_dropRadius))
-        {
-            g_dropActive = false;
-            Activate(g_dropType, enemy_pool);
-            return;
-        }
-
-        // Click UI button (cooldown gated)
-        if (PointInCircle(mouseX, mouseY, g_buttonX, g_buttonY, g_buttonRadius))
-        {
-            if (g_buttonCooldownRemaining <= 0.0f)
+            // Floor reached — disappear without activating
+            if (d.y - DROP_HALF <= enemy_area.area_landing_y)
             {
-                Activate(g_buttonType, enemy_pool);
-                g_buttonCooldownRemaining = BUTTON_COOLDOWN_SECONDS;
+                d.active = false;
+                continue;
+            }
+
+            // Number key press — activate and consume the drop
+            if (AEInputCheckTriggered(static_cast<u8>(keys[i])))
+            {
+                d.active = false;
+                Activate(d.type, enemy_pool);
             }
         }
     }
 
+    // ----------------------------------------------------------------
+    void OnMouseClick(float /*mouseX*/, float /*mouseY*/, std::vector<Data::Enemy>& /*enemy_pool*/)
+    {
+        // No-op: power-ups are now activated by number keys, not mouse clicks.
+    }
+
+    // ----------------------------------------------------------------
+    void DebugSpawn(PowerType type)
+    {
+        // Find a free slot
+        int slot = -1;
+        for (int i = 0; i < MAX_SLOTS; ++i)
+        {
+            if (!g_slots[i].active) { slot = i; break; }
+        }
+        if (slot < 0) return;  // all slots occupied
+
+        float minX = s_lastEnemyArea.area_min_x + DROP_HALF + DROP_SPAWN_X_MARGIN;
+        float maxX = s_lastEnemyArea.area_max_x - DROP_HALF - DROP_SPAWN_X_MARGIN;
+        if (minX > maxX) { minX = -400.0f; maxX = 400.0f; }
+
+        g_slots[slot].active = true;
+        g_slots[slot].type = type;
+        g_slots[slot].x = RandRange(minX, maxX);
+        g_slots[slot].y = s_lastEnemyArea.area_spawn_y + DROP_SIZE;
+        g_slots[slot].fallSpeed = RandRange(80.0f, 160.0f);
+    }
+
+    // ----------------------------------------------------------------
     void Draw()
     {
-        CreateQuadMeshIfNeeded();
+        if (!g_mesh) return;
 
-        // Button visuals: dim while cooling down
-        float mul = (g_buttonCooldownRemaining <= 0.0f) ? 1.0f : 0.35f;
-
-        // Color by power type
-        float br = 0.2f, bg = 0.8f, bb = 1.0f; // Lightning
-        if (g_buttonType == PowerType::Shield) { br = 0.2f; bg = 1.0f; bb = 0.4f; }
-        if (g_buttonType == PowerType::TimeSlow) { br = 0.7f; bg = 0.3f; bb = 1.0f; }
-
-        DrawQuadColor(g_buttonX, g_buttonY,
-            g_buttonRadius * 2.0f, g_buttonRadius * 2.0f,
-            br * mul, bg * mul, bb * mul, 1.0f);
-
-        // Button label (centered)
-        DrawCenteredLabel(PowerTypeToText(g_buttonType), g_buttonX, g_buttonY, 0.5f,
-            1.f, 1.f, 1.f, 1.f);
-
-        // Drop visuals
-        if (g_dropActive)
+        for (int i = 0; i < MAX_SLOTS; ++i)
         {
-            float dr = 1.0f, dg = 0.9f, db = 0.2f; // Lightning-ish gold
-            if (g_dropType == PowerType::Shield) { dr = 0.2f; dg = 1.0f; db = 0.4f; }
-            if (g_dropType == PowerType::TimeSlow) { dr = 0.7f; dg = 0.3f; db = 1.0f; }
+            const Drop& d = g_slots[i];
+            if (!d.active) continue;
 
-            DrawQuadColor(g_dropX, g_dropY,
-                g_dropRadius * 2.0f, g_dropRadius * 2.0f,
-                dr, dg, db, 1.0f);
+            AEGfxTexture* tex = TextureForType(d.type);
 
-            // Drop label (centered)
-            DrawCenteredLabel(PowerTypeToText(g_dropType), g_dropX, g_dropY, 0.5f,
-                0.f, 0.f, 0.f, 1.f);
+            if (tex)
+            {
+                // ---- Textured sprite ----
+                AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
+                AEGfxSetBlendMode(AE_GFX_BM_BLEND);
+                AEGfxSetTransparency(1.0f);
+                AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);
+                AEGfxTextureSet(tex, 0.0f, 0.0f);
+                Mesh_Renderer(g_mesh, d.x, d.y, DROP_SIZE, DROP_SIZE, 0.0f);
+            }
+            else
+            {
+                // ---- Fallback: coloured quad ----
+                float r, g, b;
+                ColorForType(d.type, r, g, b);
+
+                AEGfxSetRenderMode(AE_GFX_RM_COLOR);
+                AEGfxSetBlendMode(AE_GFX_BM_BLEND);
+                AEGfxSetTransparency(1.0f);
+                AEGfxSetColorToMultiply(r, g, b, 1.0f);
+                Mesh_Renderer(g_mesh, d.x, d.y, DROP_SIZE, DROP_SIZE, 0.0f);
+                AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);
+            }
+
+            // ---- Slot number label centred on sprite ----
+            if (Graphics::font_id >= 0)
+            {
+                char numBuf[4];
+                std::snprintf(numBuf, sizeof(numBuf), "%d", i + 1);
+
+                float nx, ny;
+                WorldToNDC(d.x, d.y, nx, ny);
+
+                float tw = 0.0f, th = 0.0f;
+                AEGfxGetPrintSize(Graphics::font_id, numBuf, 0.6f, &tw, &th);
+
+                AEGfxSetBlendMode(AE_GFX_BM_BLEND);
+                AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);
+                AEGfxPrint(Graphics::font_id, numBuf,
+                    nx - tw * 0.5f,
+                    ny - th * 0.5f,
+                    0.6f,
+                    0.0f, 0.0f, 0.0f, // black text
+                    1.0f);
+            }
         }
 
-        // Optional tiny indicators while effects are active
-        if (g_shieldRemaining > 0.0f)
-            DrawQuadColor(g_buttonX + 70.0f, g_buttonY, 18.0f, 18.0f, 0.2f, 1.0f, 0.4f, 1.0f);
+        // ---- Active effect indicator icons (bottom-left corner) ----
+        if (g_shieldRemaining > 0.0f || g_slowRemaining > 0.0f)
+        {
+            float iconX = -SCREEN_HALF_W + 40.0f;  // anchored to left edge
+            float iconY = -SCREEN_HALF_H + 40.0f;  // anchored to bottom edge
+            float iconSize = 32.0f;
+            float gap = 44.0f;
 
-        if (g_slowRemaining > 0.0f)
-            DrawQuadColor(g_buttonX + 95.0f, g_buttonY, 18.0f, 18.0f, 0.7f, 0.3f, 1.0f, 1.0f);
+            if (g_shieldRemaining > 0.0f)
+            {
+                AEGfxSetRenderMode(AE_GFX_RM_COLOR);
+                AEGfxSetBlendMode(AE_GFX_BM_BLEND);
+                AEGfxSetTransparency(1.0f);
+                AEGfxSetColorToMultiply(0.2f, 1.0f, 0.4f, 1.0f);
+                Mesh_Renderer(g_mesh, iconX, iconY, iconSize, iconSize, 0.0f);
+                iconX += gap;
+            }
+
+            if (g_slowRemaining > 0.0f)
+            {
+                AEGfxSetRenderMode(AE_GFX_RM_COLOR);
+                AEGfxSetBlendMode(AE_GFX_BM_BLEND);
+                AEGfxSetTransparency(1.0f);
+                AEGfxSetColorToMultiply(0.6f, 0.2f, 1.0f, 1.0f);
+                Mesh_Renderer(g_mesh, iconX, iconY, iconSize, iconSize, 0.0f);
+            }
+
+            AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);
+        }
     }
 }

@@ -14,6 +14,7 @@
 #include "Particles.h"
 #include "GameOver.h"
 #include "Pause.h"
+#include "Weather.h"
 
 
 namespace {
@@ -137,6 +138,7 @@ void Game_Init()
         word_bank
     );
     Particles_Init();
+    Weather_Init();
 
 }
 
@@ -217,8 +219,9 @@ void Game_Update()
         }
         EnemySystem::Enemy_ResolveLaneStacking(enemy_pool, enemy_area);                                                               // fix spacing in lanes
 
-        PowerUpSystem::Update(dt, enemy_pool);
+        PowerUpSystem::Update(dt, enemy_pool, enemy_area);
         Particles_Update(dt);
+        Weather_Update(dt, enemy_pool);
         // mouse click -> convert to world coords
         if (AEInputCheckTriggered(AEVK_LBUTTON))
         {
@@ -230,7 +233,9 @@ void Game_Update()
         } // azfar code
 
         // MOVED TYPING LOGIC HERE (so it pauses)
-        Typing_UpdateAndApplyToEnemies(enemy_pool, score, health);
+        // Gate typing while player is frozen (snow) or stunned (thunder)
+        if (!Weather_IsPlayerFrozen() && !Weather_IsPlayerStunned())
+            Typing_UpdateAndApplyToEnemies(enemy_pool, score, health);
 
         // MOVED ANIMATION LOGIC HERE (so it pauses)
         // Update timer
@@ -316,6 +321,8 @@ render_only:
 
     PowerUpSystem::Draw(); // azfar code
 
+    Weather_Draw();
+
     UiSystem::Ui_DrawHealthBar(health, meshes); // jeremy code
 
     // PAUSE OVERLAY
@@ -335,6 +342,7 @@ void Game_Exit()
     Leaderboard_System::Free();
     PowerUpSystem::Free();
     Particles_Free();
+    Weather_Exit();
     DebugConsole::Exit();
 
     if (playerMesh) {
