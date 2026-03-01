@@ -140,18 +140,6 @@ void Main_Menu_EnterName() {
             player_name = "";
             selected_mode = "";
         }
-        //// --- Check Zen Mode Button ---
-        //else if (worldX >= ZENMODE_BTN_X - (ZENMODE_WIDTH * 0.5f) && worldX <= ZENMODE_BTN_X + (ZENMODE_WIDTH * 0.5f) &&
-        //    worldY >= ZENMODE_BTN_Y - (ZENMODE_HEIGHT * 0.5f) && worldY <= ZENMODE_BTN_Y + (ZENMODE_HEIGHT * 0.5f))
-        //{
-        //    selected_mode = "ZEN";
-        //}
-        //// --- Check Time Mode Button ---
-        //else if (worldX >= TIMEMODE_BTN_X - (TIMEMODE_WIDTH * 0.5f) && worldX <= TIMEMODE_BTN_X + (TIMEMODE_WIDTH * 0.5f) &&
-        //    worldY >= TIMEMODE_BTN_Y - (TIMEMODE_HEIGHT * 0.5f) && worldY <= TIMEMODE_BTN_Y + (TIMEMODE_HEIGHT * 0.5f))
-        //{
-        //    selected_mode = "TIME";
-        //}
     }
     
     if (AEInputCheckTriggered(AEVK_ESCAPE)) { isEnteringName = false; player_name = ""; selected_mode = "ZEN"; }
@@ -176,18 +164,6 @@ void Main_Menu_EnterName() {
         cursorVisible = !cursorVisible;
         cursorTimer = 0.0f;
     }
-
-    //AEGfxSetRenderMode(AE_GFX_RM_COLOR);//zen mode button
-    //AEGfxSetBlendMode(AE_GFX_BM_BLEND);
-    //AEGfxSetColorToMultiply(0.5f, 0.5f, 0.5f, 1.0f);
-    //
-    //Mesh_Renderer(pMeshZenModeBtn, ZENMODE_BTN_X, ZENMODE_BTN_Y, 1.0f, 1.0f, 0.0f);
-
-    //AEGfxSetRenderMode(AE_GFX_RM_COLOR);//time mode button
-    //AEGfxSetBlendMode(AE_GFX_BM_BLEND);
-    //AEGfxSetColorToMultiply(0.5f, 0.5f, 0.5f, 1.0f);
-
-    //Mesh_Renderer(pMeshTimeModeBtn, TIMEMODE_BTN_X, TIMEMODE_BTN_Y, 1.0f, 1.0f, 0.0f);
 
     AEGfxSetRenderMode(AE_GFX_RM_COLOR);//exit button
     AEGfxSetBlendMode(AE_GFX_BM_BLEND);
@@ -244,7 +220,7 @@ void Main_Menu_EnterName() {
             // Measure the combined string ("Mode: ZEN" or "Mode: TIME")
             AEGfxGetPrintSize(Graphics::font_id, modeDisplay.c_str(), modeScale, &modeWidth, &modeHeight);
 
-            float modeStartX = 0.0f - (modeWidth * 0.5f);
+            modeStartX = 0.0f - (modeWidth * 0.5f);
 
             AEGfxSetBlendMode(AE_GFX_BM_BLEND);
             AEGfxPrint(Graphics::font_id, modeDisplay.c_str(), modeStartX, modeY, modeScale, 1.0f, 1.0f, 1.0f, 1.0f);
@@ -253,7 +229,7 @@ void Main_Menu_EnterName() {
         if (selected_mode == "TIME") {
             AEGfxGetPrintSize(Graphics::font_id, modeDisplay.c_str(), modeScale, &modeWidth, &modeHeight);
 
-            float modeStartX = 0.0f - (modeWidth * 0.5f);
+            modeStartX = 0.0f - (modeWidth * 0.5f);
 
             AEGfxSetBlendMode(AE_GFX_BM_BLEND);
             AEGfxPrint(Graphics::font_id, modeDisplay.c_str(), modeStartX, modeY, modeScale, 1.0f, 1.0f, 1.0f, 1.0f);
@@ -276,42 +252,6 @@ void Main_Menu_EnterName() {
             AEGfxSetBlendMode(AE_GFX_BM_BLEND);
             AEGfxPrint(Graphics::font_id, "_", cursorX, textY, textScale, 1.0f, 1.0f, 1.0f, 1.0f);
         }
-
-        // ==========================================================
-        // --- Draw "ZEN" inside the left button ---
-        // ==========================================================
-        //float zenTextW = 0.0f, zenTextH = 0.0f;
-        //AEGfxGetPrintSize(Graphics::font_id, "ZEN", 1.0f, &zenTextW, &zenTextH);
-
-        //// Convert button World Coordinates to Text NDC (-1.0 to 1.0)
-        //float zenNdcX = ZENMODE_BTN_X / (winW * 0.5f);
-        //float zenNdcY = ZENMODE_BTN_Y / (winH * 0.5f);
-
-        //// Center X on the button, and nudge Y down a tiny bit to visually center it in the box
-        //float zenStartX = zenNdcX - (zenTextW * 0.5f);
-        //float zenStartY = zenNdcY - 0.035f;
-
-        //AEGfxSetBlendMode(AE_GFX_BM_BLEND);
-        //// Drawing in White (1, 1, 1, 1) so it pops on the red box
-        //AEGfxPrint(Graphics::font_id, "ZEN", zenStartX, zenStartY, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f);
-
-
-        //// ==========================================================
-        //// --- Draw "TIME" inside the right button ---
-        //// ==========================================================
-        //float timeTextW = 0.0f, timeTextH = 0.0f;
-        //AEGfxGetPrintSize(Graphics::font_id, "TIME", 1.0f, &timeTextW, &timeTextH);
-
-        //// Convert button World Coordinates to Text NDC (-1.0 to 1.0)
-        //float timeNdcX = TIMEMODE_BTN_X / (winW * 0.5f);
-        //float timeNdcY = TIMEMODE_BTN_Y / (winH * 0.5f);
-
-        //// Center X on the button, and nudge Y down a tiny bit
-        //float timeStartX = timeNdcX - (timeTextW * 0.5f);
-        //float timeStartY = timeNdcY - 0.035f;
-
-        //AEGfxSetBlendMode(AE_GFX_BM_BLEND);
-        //AEGfxPrint(Graphics::font_id, "TIME", timeStartX, timeStartY, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f);
     }
 
 }
@@ -546,7 +486,18 @@ void Main_Menu_Exit() {
         AEGfxMeshFree(pMeshExitBtn);
         pMeshExitBtn = nullptr;
     }
-
+    if (pMeshSettingsBtn) { 
+        AEGfxMeshFree(pMeshSettingsBtn); 
+        pMeshSettingsBtn = nullptr; 
+    }
+    if (pMeshLeftArrow) {
+        AEGfxMeshFree(pMeshLeftArrow);
+        pMeshLeftArrow = nullptr;
+    }
+    if (pMeshRightArrow) {
+        AEGfxMeshFree(pMeshRightArrow);
+        pMeshRightArrow = nullptr;
+    }
     // Free Textures
     if (pTexPlay) {
         AEGfxTextureUnload(pTexPlay);
@@ -555,5 +506,9 @@ void Main_Menu_Exit() {
     if (pTexShop) {
         AEGfxTextureUnload(pTexShop);
         pTexShop = nullptr;
+    }
+    if (pTexArrows) {
+        AEGfxTextureUnload(pTexArrows);
+        pTexArrows = nullptr;
     }
 }

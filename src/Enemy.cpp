@@ -1608,6 +1608,10 @@ namespace EnemyManage
         srand((unsigned)time(NULL));                                                                                        // seed random generator
 
         Word::Word_LoadAll(bank);                                                                                           // load word lists
+        
+        if (Graphics::font_id >= 0) {
+            AEGfxDestroyFont(Graphics::font_id);
+        }
 
         Graphics::font_id = AEGfxCreateFont("Assets/Pixel-Game.otf", 80);                                                   // load font
         AE_ASSERT_MESG(Graphics::font_id >= 0, "Failed to load font: Assets/Pixel-Game.otf");                               // stop if font fails
