@@ -161,7 +161,7 @@ namespace
             }
 
             //int len = std::stoi(tokens[1]);
-            int max_len = DifficultySystem::Difficulty_GetUnlockedMaxWordLength();
+           // int max_len = DifficultySystem::Difficulty_GetUnlockedMaxWordLength();
 
             // /spawn [3-8]
             int len = 0;
