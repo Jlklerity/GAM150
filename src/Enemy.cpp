@@ -462,6 +462,10 @@ namespace DifficultySystem
         return difficulty_value;                                                                                            // read difficulty value
     }
 
+    void Difficulty_Reset() {
+        difficulty_value = 0.0f;
+    }
+
     /*
     @function       Difficulty_Add
     @params         amount (float)
