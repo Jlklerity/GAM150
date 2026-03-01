@@ -160,18 +160,25 @@ namespace
                 return;
             }
 
-            int len = std::stoi(tokens[1]);
+            //int len = std::stoi(tokens[1]);
             int max_len = DifficultySystem::Difficulty_GetUnlockedMaxWordLength();
-            if (len == 1) EnemySystem::Enemy_SpawnFriendlyFromPool(*s_pEnemyPool, *s_pFreeSlots, *s_pEnemyArea, *s_pWordBank, 3, max_len, 1.15f);
-            if (len == 2) EnemySystem::Enemy_SpawnShieldedFromPool(*s_pEnemyPool, *s_pFreeSlots, *s_pEnemyArea, *s_pWordBank, 3, max_len, 1.05f);
+
+            // /spawn [3-8]
+            int len = 0;
+            try
+            {
+                len = std::stoi(tokens[1]);
+            }
+            catch (...)
+            {
+                PushHistory("Error: unknown spawn type. Use [3-8], friendly, or shield.", true);
+                return;
+            }
             if (len < 3 || len > 8)
             {
                 PushHistory("Error: word length must be between 3 and 8.", true);
                 return;
             }
-            EnemySystem::Enemy_SpawnFromPool(*s_pEnemyPool, *s_pFreeSlots, *s_pEnemyArea, *s_pWordBank, len);
-            PushHistory("Spawned " + std::to_string(len) + "-letter enemy.", false);
-            return;
         }
 
         // ------------------------------------------------------------------
