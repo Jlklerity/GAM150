@@ -132,15 +132,34 @@ namespace
         const std::string& cmd = tokens[0];
 
         // ------------------------------------------------------------------
-        // /spawn [1-8]   -- spawn an enemy of the given word length
+        // /spawn [3-8]   -- spawn an enemy of the given word length
         // ------------------------------------------------------------------
         if (IEquals(cmd, "spawn"))
         {
             if (tokens.size() < 2)
             {
-                PushHistory("Usage: /spawn [1-8]", true);
+                PushHistory("Usage: /spawn [3-8] | friendly | shield", true);
                 return;
             }
+
+            // /spawn friendly
+            if (IEquals(tokens[1], "friendly"))
+            {
+                int max_len = DifficultySystem::Difficulty_GetUnlockedMaxWordLength();
+                EnemySystem::Enemy_SpawnFriendlyFromPool(*s_pEnemyPool, *s_pFreeSlots, *s_pEnemyArea, *s_pWordBank, 3, max_len, 1.15f);
+                PushHistory("Spawned friendly enemy.", false);
+                return;
+            }
+
+            // /spawn shield
+            if (IEquals(tokens[1], "shield"))
+            {
+                int max_len = DifficultySystem::Difficulty_GetUnlockedMaxWordLength();
+                EnemySystem::Enemy_SpawnShieldedFromPool(*s_pEnemyPool, *s_pFreeSlots, *s_pEnemyArea, *s_pWordBank, 3, max_len, 1.05f);
+                PushHistory("Spawned shielded enemy.", false);
+                return;
+            }
+
             int len = std::stoi(tokens[1]);
             int max_len = DifficultySystem::Difficulty_GetUnlockedMaxWordLength();
             if (len == 1) EnemySystem::Enemy_SpawnFriendlyFromPool(*s_pEnemyPool, *s_pFreeSlots, *s_pEnemyArea, *s_pWordBank, 3, max_len, 1.15f);
@@ -237,6 +256,8 @@ namespace
         if (IEquals(cmd, "help"))
         {
             PushHistory("/spawn [3-8]         - spawn enemy by word length", false);
+            PushHistory("/spawn friendly      - spawn a friendly enemy", false);
+            PushHistory("/spawn shield        - spawn a shielded enemy", false);
             PushHistory("/health add          - add 10 HP", false);
             PushHistory("/difficulty up       - increase difficulty by 1", false);
             PushHistory("/difficulty down     - decrease difficulty by 1", false);
