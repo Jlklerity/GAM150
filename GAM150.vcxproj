@@ -24,6 +24,7 @@
     <ClCompile Include="src\Particles.cpp" />
     <ClCompile Include="src\Pause.cpp" />
     <ClCompile Include="src\PowerUp.cpp" />
+    <ClCompile Include="src\ScreenTransition.cpp" />
     <ClCompile Include="src\Settings.cpp" />
     <ClCompile Include="src\Shop.cpp" />
     <ClCompile Include="src\TimeGame.cpp" />
@@ -43,6 +44,7 @@
     <ClInclude Include="src\Particles.h" />
     <ClInclude Include="src\Pause.h" />
     <ClInclude Include="src\PowerUp.h" />
+    <ClInclude Include="src\ScreenTransition.h" />
     <ClInclude Include="src\Settings.h" />
     <ClInclude Include="src\Shop.h" />
     <ClInclude Include="src\TimeGame.h" />
