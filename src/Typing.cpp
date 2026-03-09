@@ -25,7 +25,7 @@ namespace Utility
         return true;  //all match
     }
 
-   
+
 }
 
 namespace EnemySystem
@@ -134,7 +134,7 @@ namespace
 
         if (key < 0 || key >= 512) return false; // rej if oob
 
-      
+
         bool curr = (AEInputCheckCurr(static_cast<u8>(key)) != 0); // basically curr == true means key held down, false = not held down
         bool once = curr && !maxKey[key]; // checks if its pressed once
         maxKey[key] = curr; // save current key state to be used in next frame again
@@ -387,6 +387,54 @@ void Typing_Exit()
 {
     if (letterQuad) { AEGfxMeshFree(letterQuad); letterQuad = nullptr; } //freeee
     if (lettersTex) { AEGfxTextureUnload(lettersTex); lettersTex = nullptr; }// freeeeeee
+}
+
+/*
+draws all active enemy words with typing highlight.
+ The currently targeted enemy's word is split into a green typed prefix n
+ black remaining suffix. All other enemies words drawn in black.
+*/
+void Typing_DrawEnemyWords(const std::vector<Data::Enemy>& enemy_pool)
+{
+    if (Graphics::font_id < 0) return;                                                                                      // skip if font missing
+
+    for (int i = 0; i < (int)enemy_pool.size(); ++i)                                                                       // loop through all enemies by index so we can compare against s_targetIndex
+    {
+        const Data::Enemy& e = enemy_pool[(size_t)i];                                                                       // read enemy data
+
+        if (!e.enemy_is_active) continue;                                                                                   // skip inactive enemies
+        if (e.enemy_word_text.empty()) continue;                                                                            // skip if no text
+
+        float ndc_x = 0.0f, ndc_y = 0.0f;
+        Utility::Convert_WorldToNdc(e.enemy_position_x, e.enemy_position_y, ndc_x, ndc_y);                                 // convert enemy world pos to NDC for text placement
+
+        float text_w = 0.0f, text_h = 0.0f;
+        AEGfxGetPrintSize(Graphics::font_id, e.enemy_word_text.c_str(), EnemyConfig::TEXT_SCALE, &text_w, &text_h);        // measure full word size for centering
+
+        float draw_x = ndc_x - (text_w * 0.5f);                                                                            // center text horizontally over enemy
+        float draw_y = ndc_y - (text_h * -2.5f);                                                                           // position text vertically above enemy
+
+        AEGfxSetBlendMode(AE_GFX_BM_BLEND);                                                                                // enable blending for text
+
+        if (i == s_targetIndex && typedLen > 0)                                                                             // this enemy is the current target and player has typed something
+        {
+            int split = (typedLen < (int)e.enemy_word_text.size()) ? typedLen : (int)e.enemy_word_text.size();             // clamp split to word length jic typedLen overshoots
+
+            std::string prefix = e.enemy_word_text.substr(0, (size_t)split);                                               // typed portion of the word
+            std::string suffix = e.enemy_word_text.substr((size_t)split);                                                  // remaining untyped portion
+
+            float prefix_w = 0.0f, prefix_h = 0.0f;
+            AEGfxGetPrintSize(Graphics::font_id, prefix.c_str(), EnemyConfig::TEXT_SCALE, &prefix_w, &prefix_h);           // measure prefix width so suffix starts right after
+
+            AEGfxPrint(Graphics::font_id, prefix.c_str(), draw_x, draw_y, EnemyConfig::TEXT_SCALE, 0.1f, 0.9f, 0.2f, 1); // draw typed prefix in green
+            if (!suffix.empty())
+                AEGfxPrint(Graphics::font_id, suffix.c_str(), draw_x + prefix_w, draw_y, EnemyConfig::TEXT_SCALE, 0, 0, 0, 1); // draw remaining suffix in black, offset by prefix width
+        }
+        else
+        {
+            AEGfxPrint(Graphics::font_id, e.enemy_word_text.c_str(), draw_x, draw_y, EnemyConfig::TEXT_SCALE, 0, 0, 0, 1); // not targeted, draw full word in black
+        }
+    }
 }
 
 

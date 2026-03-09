@@ -20,3 +20,5 @@ namespace UiSystem
 }
 
 void Typing_UpdateAndApplyToEnemies(std::vector<Data::Enemy>& enemy_pool, Data::Score& score, Data::Health& health);
+
+void Typing_DrawEnemyWords(const std::vector<Data::Enemy>& enemy_pool);

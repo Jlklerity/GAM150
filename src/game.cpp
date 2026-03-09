@@ -308,8 +308,7 @@ render_only:
     for (const auto& e : enemy_pool)                                                                                        // loop through enemies for sprite draw
         EnemySystem::Enemy_Draw(meshes, e);                                                                                 // draw enemy sprite
 
-    for (const auto& e : enemy_pool)                                                                                        // loop through enemies for word draw
-        EnemySystem::Enemy_DrawWord(e);                                                                                     // draw enemy word
+    Typing_DrawEnemyWords(enemy_pool);                                                                                   // draw enemy word
 
     Particles_Draw();
 
