@@ -12,6 +12,8 @@ game.cpp only calls Init / Update / Render / Exit / IsOpen.
 #include "MeshRenderer.h"
 #include "MeshTemplates.h"
 #include "Enemy.h"
+#include "PowerUp.h"
+#include "Weather.h"
 
 #include <string>
 #include <vector>
@@ -271,7 +273,71 @@ namespace
             PushHistory("/difficulty show     - toggle difficulty HUD", false);
             PushHistory("/debugbox            - toggle enemy area box", false);
             PushHistory("/autospawn           - toggle auto enemy spawning", false);
+            PushHistory("/powerup lightning   - force-spawn Lightning drop", false); // azfar code start
+            PushHistory("/powerup shield      - force-spawn Shield drop", false);
+            PushHistory("/powerup slow        - force-spawn TimeSlow drop", false);
+            PushHistory("/weather snow        - trigger blizzard event", false);
+            PushHistory("/weather thunder     - trigger thunderstorm event", false);
             return;
+        }
+
+        // ------------------------------------------------------------------
+        // /powerup lightning | shield | slow | force spawn a power up drop
+        // ------------------------------------------------------------------
+        if (IEquals(cmd, "powerup"))
+        {
+            if (tokens.size() < 2)
+            {
+                PushHistory("Usage: /powerup [lightning|shield|slow]", true);
+                return;
+            }
+            if (IEquals(tokens[1], "lightning"))
+            {
+                PowerUpSystem::DebugSpawn(PowerUpSystem::PowerType::Lightning);
+                PushHistory("Spawned Lightning power-up.", false);
+            }
+            else if (IEquals(tokens[1], "shield"))
+            {
+                PowerUpSystem::DebugSpawn(PowerUpSystem::PowerType::Shield);
+                PushHistory("Spawned Shield power-up.", false);
+            }
+            else if (IEquals(tokens[1], "slow"))
+            {
+                PowerUpSystem::DebugSpawn(PowerUpSystem::PowerType::TimeSlow);
+                PushHistory("Spawned TimeSlow power-up.", false);
+            }
+            else
+            {
+                PushHistory("Unknown power-up type. Use: lightning | shield | slow", true);
+            }
+            return;
+        }
+
+        // ------------------------------------------------------------------
+        // /weather snow | thunder   -- force-trigger a weather event
+        // ------------------------------------------------------------------
+        if (IEquals(cmd, "weather"))
+        {
+            if (tokens.size() < 2)
+            {
+                PushHistory("Usage: /weather [snow|thunder]", true);
+                return;
+            }
+            if (IEquals(tokens[1], "snow"))
+            {
+                Weather_ForceEvent(0);
+                PushHistory("Triggered snow blizzard.", false);
+            }
+            else if (IEquals(tokens[1], "thunder"))
+            {
+                Weather_ForceEvent(1);
+                PushHistory("Triggered thunderstorm.", false);
+            }
+            else
+            {
+                PushHistory("Unknown weather type. Use: snow | thunder", true);
+            }
+            return; // azfar code end
         }
 
         // ------------------------------------------------------------------

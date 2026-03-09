@@ -7,19 +7,27 @@
  * @brief Power-up system interface for the typing game.
  *
  * This module handles:
- * - A bottom-left power-up button with a 30 second cooldown.
- * - Random falling power-up drops that can be clicked to activate effects.
- * - Gameplay effects (Lightning, Shield, TimeSlow).
+ * - Up to 3 simultaneous power-up drops falling from the sky.
+ * - Each drop occupies a numbered slot (1, 2, 3).
+ * - Player presses the matching number key to activate the drop in that slot.
+ * - Drops that reach the floor (enemy landing line) disappear without activating.
+ * - Gameplay effects: Lightning, Shield, TimeSlow.
  *
- * Integration (typical):
+ * Integration (game.cpp):
  * - Call PowerUpSystem::Init() once in Game_Init().
- * - Call PowerUpSystem::Update(dt, enemy_pool) every frame.
- * - Convert mouse pixel coords to world coords, then call PowerUpSystem::OnMouseClick().
- * - Call PowerUpSystem::Draw() after drawing the world (draw last so UI appears on top).
+ * - Call PowerUpSystem::Update(dt, enemy_pool, enemy_area) every frame.
+ * - Call PowerUpSystem::Draw() in the render block.
  * - Call PowerUpSystem::Free() once in Game_Exit().
+ * - OnMouseClick() is a no-op stub kept for link compatibility.
+ *
+ * Assets expected (place in Assets/):
+ *   Assets/powerup_lightning.png
+ *   Assets/powerup_shield.png
+ *   Assets/powerup_slow.png
  */
 
 namespace Data { struct Enemy; }
+namespace Data { struct EnemyArea; }
 
 namespace PowerUpSystem
 {
@@ -30,80 +38,58 @@ namespace PowerUpSystem
     enum class PowerType
     {
         Lightning = 0, /**< Instantly kills all active enemies on screen. */
-        Shield,        /**< Makes player immune to damage for a duration (requires health integration later). */
+        Shield,        /**< Makes player immune to damage for a duration. */
         TimeSlow       /**< Slows the game for a duration by returning a time scale < 1.0f. */
     };
 
-    /**
-     * @brief Initializes power-up system resources.
-     *
-     * Creates the placeholder quad mesh for rendering drops/buttons (color mode) and
-     * loads the font used to render labels.
-     *
-     * Call once at game initialization.
-     */
+    /** @brief Initialises power-up resources. Call once in Game_Init(). */
     void Init();
 
-    /**
-     * @brief Frees power-up system resources.
-     *
-     * Releases mesh and font resources created in Init().
-     * Call once at game shutdown.
-     */
+    /** @brief Releases resources. Call once in Game_Exit(). */
     void Free();
 
     /**
-     * @brief Updates power-up logic (cooldowns, timers, spawning, drop movement).
-     *
-     * @param dt Delta time in seconds (if global time slow is applied in game.cpp, pass scaled dt).
-     * @param enemy_pool Reference to the enemy pool. Used when activating certain effects.
+     * @brief Updates power-up logic (timers, spawning, falling, key input).
+     * @param dt           Delta time in seconds.
+     * @param enemy_pool   Enemy pool used by Lightning activation.
+     * @param enemy_area   Enemy play area - landing y used as the drop floor.
      */
-    void Update(float dt, std::vector<Data::Enemy>& enemy_pool);
+    void Update(float dt, std::vector<Data::Enemy>& enemy_pool,
+        const Data::EnemyArea& enemy_area);
 
     /**
-     * @brief Handles a mouse click to activate the UI button or a falling drop.
-     *
-     * @param mouseX Mouse X in world coordinates (origin at center, range approx [-800, +800]).
-     * @param mouseY Mouse Y in world coordinates (origin at center, range approx [-450, +450]).
-     * @param enemy_pool Reference to the enemy pool used by activation logic.
+     * @brief No-op stub retained for link compatibility with game.cpp.
+     *        Mouse clicks no longer activate power-ups.
      */
     void OnMouseClick(float mouseX, float mouseY, std::vector<Data::Enemy>& enemy_pool);
 
-    /**
-     * @brief Draws the power-up UI button and the falling drop (if active).
-     *
-     * Draw this AFTER drawing enemies and other world elements so it appears on top (UI layer).
-     */
+    /** @brief Draws all active drops (sprite + slot number + effect timers). */
     void Draw();
 
-    /**
-     * @brief Returns whether Shield is currently active.
-     *
-     * Note: Actual "immunity to damage" requires health system integration.
-     * For now, this is an effect-state query for future use.
-     *
-     * @return true if shield timer > 0, false otherwise.
-     */
+    /** @brief Returns true while the Shield effect is active. */
     bool IsShieldActive();
 
     /**
      * @brief Returns a time scale multiplier for TimeSlow.
-     *
-     * When TimeSlow is active, this returns a value < 1.0f (e.g. 0.4f).
-     * Integration:
-     * - Multiply your game dt by this value to slow everything.
-     *
-     * @return 1.0f if no slow is active; otherwise a smaller time scale.
+     * @return 1.0f normally; SLOW_SCALE while slow is active.
      */
     float GetTimeScale();
 
     /**
-     * @brief Sets the random drop spawn interval for testing/balancing.
-     *
-     * Drops will spawn after a randomized delay between [minSeconds, maxSeconds].
-     *
-     * @param minSeconds Minimum time between spawns (clamped to >= 0.2s).
-     * @param maxSeconds Maximum time between spawns (clamped to >= minSeconds).
+     * @brief Sets the random drop spawn interval.
+     * @param minSeconds  Minimum seconds between spawns (clamped >= 0.2).
+     * @param maxSeconds  Maximum seconds between spawns (clamped >= minSeconds).
      */
     void SetDropSpawnInterval(float minSeconds, float maxSeconds);
+
+    /**
+     * @brief Debug helper: force-spawns a drop of the given type into a free slot.
+     *
+     * Spawns at a fixed Y above the screen centre so it is immediately visible.
+     * Uses the last known enemy area bounds; safe to call any time after Init().
+     * No-ops silently if all 3 slots are already occupied.
+     *
+     * @param type  The power-up type to force-spawn.
+     */
+    void DebugSpawn(PowerType type);
 }

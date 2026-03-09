@@ -24,10 +24,12 @@
     <ClCompile Include="src\Particles.cpp" />
     <ClCompile Include="src\Pause.cpp" />
     <ClCompile Include="src\PowerUp.cpp" />
+    <ClCompile Include="src\ScreenTransition.cpp" />
     <ClCompile Include="src\Settings.cpp" />
     <ClCompile Include="src\Shop.cpp" />
     <ClCompile Include="src\TimeGame.cpp" />
     <ClCompile Include="src\Typing.cpp" />
+    <ClCompile Include="src\Weather.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\DebugConsole.h" />
@@ -42,10 +44,12 @@
     <ClInclude Include="src\Particles.h" />
     <ClInclude Include="src\Pause.h" />
     <ClInclude Include="src\PowerUp.h" />
+    <ClInclude Include="src\ScreenTransition.h" />
     <ClInclude Include="src\Settings.h" />
     <ClInclude Include="src\Shop.h" />
     <ClInclude Include="src\TimeGame.h" />
     <ClInclude Include="src\Typing.h" />
+    <ClInclude Include="src\Weather.h" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="Assets\bossEnemy.png" />

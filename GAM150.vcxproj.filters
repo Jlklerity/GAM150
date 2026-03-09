@@ -17,6 +17,9 @@
     <ClCompile Include="src\Pause.cpp" />
     <ClCompile Include="src\TimeGame.cpp" />
     <ClCompile Include="src\Settings.cpp" />
+    <ClCompile Include="src\Particles.cpp" />
+    <ClCompile Include="src\Weather.cpp" />
+    <ClCompile Include="src\ScreenTransition.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\Enemy.h" />
@@ -34,6 +37,9 @@
     <ClInclude Include="src\Pause.h" />
     <ClInclude Include="src\TimeGame.h" />
     <ClInclude Include="src\Settings.h" />
+    <ClInclude Include="src\Particles.h" />
+    <ClInclude Include="src\Weather.h" />
+    <ClInclude Include="src\ScreenTransition.h" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="Assets\characterSheet.png" />
