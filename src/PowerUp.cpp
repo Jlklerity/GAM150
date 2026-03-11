@@ -19,7 +19,6 @@
  */
 
 #include "PowerUp.h"
-#include "Enemy.h"        // EnemySystem::Enemy_Killed, Data::Enemy, Data::EnemyArea, EnemyConfig
 #include "MeshTemplates.h"
 #include "MeshRenderer.h"
 
@@ -164,7 +163,7 @@ namespace
     static void TrySpawnDrop(const Data::EnemyArea& area)
     {
         // Collect free slot indices
-        int free[MAX_SLOTS];
+        int free[MAX_SLOTS] = {};
         int freeCount = 0;
         for (int i = 0; i < MAX_SLOTS; ++i)
             if (!g_slots[i].active) free[freeCount++] = i;
@@ -191,18 +190,18 @@ namespace
     // ----------------------------------------------------------------
     // Effect activation
     // ----------------------------------------------------------------
-    static void ActivateLightning(std::vector<Data::Enemy>& pool)
+    static void ActivateLightning(std::vector<Data::Enemy>& pool, Data::Health& health)
     {
         for (Data::Enemy& e : pool)
             if (e.enemy_is_active && !e.enemy_is_dying)
-                EnemySystem::Enemy_Killed(e);
+                EnemySystem::Enemy_Killed(e, health);
     }
 
-    static void Activate(PowerUpSystem::PowerType type, std::vector<Data::Enemy>& pool)
+    static void Activate(PowerUpSystem::PowerType type, std::vector<Data::Enemy>& pool, Data::Health& health)
     {
         switch (type)
         {
-        case PowerUpSystem::PowerType::Lightning: ActivateLightning(pool); break;
+        case PowerUpSystem::PowerType::Lightning: ActivateLightning(pool, health); break;
         case PowerUpSystem::PowerType::Shield:    g_shieldRemaining = SHIELD_DURATION; break;
         case PowerUpSystem::PowerType::TimeSlow:  g_slowRemaining = SLOW_DURATION;   break;
         }
@@ -271,7 +270,7 @@ namespace PowerUpSystem
 
     // ----------------------------------------------------------------
     void Update(float dt, std::vector<Data::Enemy>& enemy_pool,
-        const Data::EnemyArea& enemy_area)
+        const Data::EnemyArea& enemy_area, Data::Health& health)
     {
         s_lastEnemyArea = enemy_area;  // cache for DebugSpawn
         // ---- Decay effect timers ----
@@ -310,7 +309,7 @@ namespace PowerUpSystem
             if (AEInputCheckTriggered(static_cast<u8>(keys[i])))
             {
                 d.active = false;
-                Activate(d.type, enemy_pool);
+                Activate(d.type, enemy_pool, health);
             }
         }
     }

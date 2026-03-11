@@ -44,6 +44,9 @@ namespace EnemyConfig
     const float ENEMY_DEATH_FALL_SPEED = 850.0f;                                                                            // fast drop speed when killed
     const float ENEMY_DEATH_LINGER_SECONDS = 0.5f;                                                                          // time to keep a killed enemy visible before removing it
 
+    // Friendly fly-away tuning
+    const float ENEMY_FRIENDLY_FLY_SPEED = 300.0f;                                                                          // upward fly speed for bird phase
+
     // Spacing
     const float ENEMY_OVERLAP_PADDING_PX = 12.0f;                                                                           // extra padding between enemies
 
@@ -912,7 +915,7 @@ namespace EnemySystem
         e.enemy_animation.animation_row_index = 1;                                                                          // switch to the unshielded animation row
         e.enemy_animation.animation_frame_index = 0;                                                                        // restart animation from frame 0
         e.enemy_animation.animation_timer_seconds = 0.0f;                                                                   // reset the frame timer
-        Animation::Animation_SetFrame(e.enemy_animation, 0);                                                                // apply the new frame and update UV coords
+        Animation::Animation_SetFrame(e.enemy_animation, 0);                                                                // update UV coords to match the new row and frame
     }
 
     /*
@@ -926,25 +929,41 @@ namespace EnemySystem
     flag so the enemy can drop off-screen, and marks damage as already handled so a killed enemy will not
     apply landing damage.
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
-    void Enemy_Killed(Data::Enemy& e)
+    void Enemy_Killed(Data::Enemy& e, Data::Health& health)
     {
         if (!e.enemy_is_active) return;                                                                                     // ignore if already inactive
-        if (e.enemy_is_dying) return;                                                                                       // ignore if already dying
+        if (e.enemy_is_dying)   return;                                                                                     // ignore if already dying
 
-        e.enemy_is_dying = true;                                                                                            // enter dying state
-        e.enemy_has_landed = false;                                                                                         // clear landed flag for death drop
-
+        // shared state
+        e.enemy_is_dying = true;
+        e.enemy_has_landed = false;                                                                                         // land flag
+        e.enemy_did_damage = true;                                                                                          // prevent any further landing damage
         e.enemy_dying_linger_timer_seconds = 0.0f;                                                                          // start linger timer from zero
-        e.enemy_did_damage = true;                                                                                          // mark damage as already handled
 
-        e.enemy_animation.animation_columns = 6;                                                                            // all sheets use 6 columns
-        e.enemy_animation.animation_rows = (e.enemy_type == Data::EnemyType::SHIELDED) ? 3 : 2;                             // shielded sheet has 3 rows, others have 2
-
-        e.enemy_animation.animation_row_index = e.enemy_death_row_index;                                                    // switch to that enemy's configured death row
-        e.enemy_animation.animation_frame_index = 0;                                                                        // start dying animation from frame 0
+        e.enemy_animation.animation_columns = 6;                                                                            // all sheets uses 6 columns
+        e.enemy_animation.animation_frame_index = 0;                                                                        // start death animation from frame 0
         e.enemy_animation.animation_timer_seconds = 0.0f;                                                                   // restart timing
 
-        Animation::Animation_SetFrame(e.enemy_animation, 0);                                                                // start at dying frame 0 (and set UVs)
+        if (e.enemy_type == Data::EnemyType::FRIENDLY)                                                                      // friendly npc
+        {
+            HealthSystem::Health_Add(health, 10.0f);
+            e.enemy_word_text.clear();                                                                                      // hide word label immediately
+            e.enemy_word_length = 0;                                                                                        // clear word length to match
+            e.enemy_animation.animation_rows = 3;                                                                           // friendly sheet has 3 rows
+            e.enemy_animation.animation_row_index = e.enemy_death_row_index;                                                // break free from cage row
+        }
+        else if (e.enemy_type == Data::EnemyType::SHIELDED)                                                                 // shield enemy
+        {
+            e.enemy_animation.animation_rows = 3;                                                                           // shielded sheet has 3 rows
+            e.enemy_animation.animation_row_index = e.enemy_death_row_index;                                                // death row
+        }
+        else
+        {
+            e.enemy_animation.animation_rows = 2;                                                                           // normal sheet has 2 rows
+            e.enemy_animation.animation_row_index = e.enemy_death_row_index;                                                // death row
+        }
+
+        Animation::Animation_SetFrame(e.enemy_animation, 0);                                                                // update UV coords to match the new row and frame
     }
 
     /*
@@ -961,6 +980,77 @@ namespace EnemySystem
     void Enemy_Update(Data::Enemy& e, const Data::EnemyArea& area, float dt, Data::Health& health)
     {
         if (!e.enemy_is_active) return;                                                                                     // skip inactive enemies
+
+        // friendly lifecycle
+        if (e.enemy_type == Data::EnemyType::FRIENDLY)                                                                      // friendly has a unique 3 stage lifecycle, handle separately
+        {
+            if (e.enemy_animation.animation_row_index == 0)                                                                 // row 0: cage falling, behaves like a normal enemy
+            {
+                Animation::Animation_Update(e.enemy_animation, dt);                                                         // advance cage animation
+
+                if (!e.enemy_has_landed)                                                                                    // cage is still falling
+                {
+                    e.enemy_position_y -= e.enemy_fall_speed_units_per_second * dt;                                         // fall downward
+
+                    e.enemy_position_x = Utility::Utility_Clamp(e.enemy_position_x,
+                        area.area_min_x, area.area_max_x);                          // clamp x within enemy area
+                    e.enemy_position_y = Utility::Utility_Clamp(e.enemy_position_y,
+                        area.Area_BoxMinY(), area.Area_BoxMaxY());                  // clamp y within enemy area
+
+                    if (e.enemy_position_y <= area.area_landing_y)                                                          // reached landing line
+                    {
+                        e.enemy_position_y = area.area_landing_y;                                                           // snap to landing line
+                        e.enemy_has_landed = true;                                                                          // mark as landed
+
+                        if (!e.enemy_did_damage)                                                                            // damage not applied yet
+                        {
+                            e.enemy_did_damage = true;                                                                      // mark damage handled
+                            e.enemy_is_active = false;                                                                      // remove after landing
+
+                            if (!PowerUpSystem::IsShieldActive())                                                           // only damage if shield is not active
+                                HealthSystem::Health_Add(health, -10.0f);                                                   // damage player
+                        }
+                        else                                                                                                // damage already handled
+                        {
+                            e.enemy_is_active = false;                                                                      // remove enemy
+                        }
+                    }
+                }
+            }
+            else if (e.enemy_animation.animation_row_index == 1)                                                            // row 1: break free animation, plays once with no movement
+            {
+                const int last_frame = e.enemy_animation.animation_columns - 1;                                             // last frame index in the row
+
+                if (e.enemy_animation.animation_frame_index < last_frame)                                                   // keep advancing until the final frame
+                {
+                    e.enemy_animation.animation_timer_seconds += dt;                                                        // accumulate time for break free animation
+
+                    if (e.enemy_animation.animation_timer_seconds >= e.enemy_animation.animation_frame_duration_seconds)    // advance when frame duration is reached
+                    {
+                        e.enemy_animation.animation_timer_seconds = 0.0f;                                                   // reset timer after frame advance
+                        Animation::Animation_SetFrame(e.enemy_animation, e.enemy_animation.animation_frame_index + 1);      // move to the next frame
+                    }
+                }
+                else                                                                                                        // final frame reached, transition to bird fly
+                {
+                    e.enemy_animation.animation_row_index = 2;                                                              // switch to bird fly row
+                    e.enemy_animation.animation_frame_index = 0;                                                            // reset to first frame
+                    e.enemy_animation.animation_timer_seconds = 0.0f;                                                       // reset frame timer
+                    Animation::Animation_SetFrame(e.enemy_animation, 0);                                                    // update UV coords to match the new row and frame
+                    e.enemy_is_dying = false;                                                                               // no longer in break free phase, now flying
+                }
+            }
+            else if (e.enemy_animation.animation_row_index == 2)                                                            // row 2: bird fly away, moves upward until off screen
+            {
+                Animation::Animation_Update(e.enemy_animation, dt);                                                         // advance bird animation
+
+                e.enemy_position_y += EnemyConfig::ENEMY_FRIENDLY_FLY_SPEED * dt;                                           // fly upward
+
+                if (e.enemy_position_y > area.area_spawn_y + EnemyConfig::ENEMY_SIZE_PX)                                    // fully above the spawn line
+                    e.enemy_is_active = false;                                                                              // despawn once off screen
+            }
+            return;                                                                                                         // friendly fully handled, skip normal and dying paths
+        }
 
         // Dying fall
         if (e.enemy_is_dying)                                                                                               // handle dying state (death animation + drop)
@@ -1024,8 +1114,7 @@ namespace EnemySystem
                     e.enemy_did_damage = true;                                                                              // mark damage handled
                     e.enemy_is_active = false;                                                                              // remove enemy after landing
 
-                    if (e.enemy_type != Data::EnemyType::FRIENDLY)                                                          // friendly enemies do not deal damage when they land
-                        if (!PowerUpSystem::IsShieldActive())
+                    if (!PowerUpSystem::IsShieldActive())
                         HealthSystem::Health_Add(health, -10.0f);                                                           // apply landing damage once
                 }
                 else                                                                                                        // damage already handled
@@ -1059,6 +1148,8 @@ namespace EnemySystem
                 if (!pool[(size_t)i].enemy_is_active) continue;                                                             // skip inactive enemies
                 if (pool[(size_t)i].enemy_lane_id != lane) continue;                                                        // skip other lanes
                 if (pool[(size_t)i].enemy_is_dying) continue;                                                               // skip dying enemies
+                if (pool[(size_t)i].enemy_type == Data::EnemyType::FRIENDLY
+                    && pool[(size_t)i].enemy_animation.animation_row_index >= 1) continue;                                  // skip friendly enemies in break free or fly away phase
                 idxs.push_back(i);                                                                                          // keep this enemy index
             }
 
@@ -1115,9 +1206,12 @@ namespace EnemySystem
 
         if (!tex) return;                                                                                                   // skip if texture missing
 
-        AEGfxVertexList* mesh = meshes.enemy_sprite_mesh;                                                                   // default to 2-row mesh for normal and friendly
+        AEGfxVertexList* mesh = meshes.enemy_sprite_mesh;                                                                   // default to 2-row mesh for normal enemies
         if (e.enemy_type == Data::EnemyType::SHIELDED)                                                                      // check if is shielded enemies
             mesh = meshes.shield_sprite_mesh;                                                                               // correct UV slicing for shielded enemies mesh
+
+        if (e.enemy_type == Data::EnemyType::FRIENDLY)                                                                      // check if is friendly npc
+            mesh = meshes.friendly_sprite_mesh;                                                                             // correct UV slicing for shielded enemies mesh
 
         if (!mesh) return;                                                                                                  // skip if mesh missing
 
@@ -1339,18 +1433,20 @@ namespace EnemySystem
         pool[(size_t)slot] = Enemy_Create(area, word_length, unique_word, fall_speed, chosen_lane);                         // create enemy
 
         Data::Enemy& e = pool[(size_t)slot];                                                                                // get reference to the newly created enemy
+        e.enemy_animation.animation_columns = 6;                                                                            // friendly sheet has 6 columns
+        e.enemy_animation.animation_rows = 3;                                                                               // friendly sheet has 3 rows
         e.enemy_position_x = Utility::Utility_Clamp(chosen_x, usable_min_x, usable_max_x);                                  // clamp spawn x within usable bounds
         e.enemy_position_y = Utility::Utility_Clamp(area.area_spawn_y, area.Area_BoxMinY(), area.Area_BoxMaxY());           // clamp spawn y within the enemy area
 
         e.enemy_type = Data::EnemyType::FRIENDLY;                                                                           // mark as a friendly enemy
-        e.enemy_death_row_index = 1;                                                                                        // friendly death animation is on row 1
-        e.enemy_shield_intact = false;                                                                                      // friendly enemies have no shield
-        e.enemy_word_text_alt.clear();                                                                                      // friendly enemies have no second word
+        e.enemy_death_row_index = 1;                                                                                        // break free animation
+        e.enemy_shield_intact = false;                                                                                      // no shield
+        e.enemy_word_text_alt.clear();                                                                                      // no second word
 
-        e.enemy_animation.animation_row_index = 0;                                                                          // start on the idle animation row
+        e.enemy_animation.animation_row_index = 0;                                                                          // start on cage falling animation
         e.enemy_animation.animation_frame_index = 0;                                                                        // start from frame 0
         e.enemy_animation.animation_timer_seconds = 0.0f;                                                                   // reset the frame timer
-        Animation::Animation_SetFrame(e.enemy_animation, 0);                                                                // apply frame 0 and update UV coords
+        Animation::Animation_SetFrame(e.enemy_animation, 0);                                                                // update UV coords to match the new row and frame
     }
 
 
@@ -1425,7 +1521,7 @@ namespace EnemySystem
         e.enemy_animation.animation_row_index = 0;                                                                          // start on the shielded animation row
         e.enemy_animation.animation_frame_index = 0;                                                                        // start from frame 0
         e.enemy_animation.animation_timer_seconds = 0.0f;                                                                   // reset the frame timer
-        Animation::Animation_SetFrame(e.enemy_animation, 0);                                                                // apply frame 0 and update UV coords
+        Animation::Animation_SetFrame(e.enemy_animation, 0);                                                                // update UV coords to match the new row and frame
     }
 
 } // EnemySystem namespace end
@@ -1559,7 +1655,10 @@ namespace UiSystem
         AEGfxPrint(Graphics::font_id, buffer, -0.13f, 0.90f, 0.5f, 1.0f, 0.9f, 0.2f, 1.0f);                                 // draw top-right-ish text
     }
 
-    void Ui_DrawHealthBar(Data::Health& health, Data::Meshes& meshes) { //(jeremy)
+    /*
+    @author         Jeremy
+    *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
+    void Ui_DrawHealthBar(Data::Health& health, Data::Meshes& meshes) {
         float bar_w = 250.0f;  // Total width of the bar
         float bar_h = 25.0f;   // Total height of the bar
         float bar_x = -550.0f; // Center X position of the bar
@@ -1610,7 +1709,7 @@ namespace EnemyManage
         srand((unsigned)time(NULL));                                                                                        // seed random generator
 
         Word::Word_LoadAll(bank);                                                                                           // load word lists
-        
+
         if (Graphics::font_id >= 0) {
             AEGfxDestroyFont(Graphics::font_id);
         }
@@ -1660,7 +1759,7 @@ namespace EnemyManage
         Graphics::enemy_textures[8] = AEGfxTextureLoad("Assets/8letterEnemy.png");                                          // load 8-letter enemy texture
         AE_ASSERT_MESG(Graphics::enemy_textures[8], "Failed to load: Assets/8letterEnemy.png");                             // stop if missing
 
-        // build 2-row mesh (normal + friendly)
+        // build 2-row mesh (normal enemies)
         {
             Data::SpriteAnim anim2 = enemy_anim;
             anim2.animation_columns = 6;
@@ -1676,6 +1775,15 @@ namespace EnemyManage
             anim3.animation_rows = 3;
 
             meshes.shield_sprite_mesh = Graphics::Mesh_BuildSpriteQuad(anim3.Anim_UvWidth(), anim3.Anim_UvHeight(), 0xFFFFFFFF);
+        }
+
+        // build 3-row mesh (friendly)
+        {
+            Data::SpriteAnim anim3f = enemy_anim;
+            anim3f.animation_columns = 6;
+            anim3f.animation_rows = 3;
+
+            meshes.friendly_sprite_mesh = Graphics::Mesh_BuildSpriteQuad(anim3f.Anim_UvWidth(), anim3f.Anim_UvHeight(), 0xFFFFFFFF);
         }
 
         meshes.debug_box_mesh = Graphics::Mesh_BuildUnitRect(0xFFFFFFFF);                                                   // build debug rectangle mesh
@@ -1696,9 +1804,10 @@ namespace EnemyManage
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
     void EnemyManage_FreeMeshes(Data::Meshes& meshes)
     {
-        if (meshes.debug_box_mesh)     AEGfxMeshFree(meshes.debug_box_mesh);                                                // free debug mesh
-        if (meshes.enemy_sprite_mesh)  AEGfxMeshFree(meshes.enemy_sprite_mesh);                                             // free enemy mesh
+        if (meshes.debug_box_mesh) AEGfxMeshFree(meshes.debug_box_mesh);                                                    // free debug mesh
+        if (meshes.enemy_sprite_mesh) AEGfxMeshFree(meshes.enemy_sprite_mesh);                                              // free enemy mesh
         if (meshes.shield_sprite_mesh) AEGfxMeshFree(meshes.shield_sprite_mesh);                                            // free shield mesh
+        if (meshes.friendly_sprite_mesh) AEGfxMeshFree(meshes.friendly_sprite_mesh);                                        // free friendly mesh
 
         meshes = {};                                                                                                        // reset mesh pointers to defaults
 
@@ -1721,6 +1830,41 @@ namespace EnemyManage
         {
             AEGfxDestroyFont(Graphics::font_id);                                                                            // destroy font
             Graphics::font_id = -1;                                                                                         // reset font id
+        }
+    }
+
+    /*
+    @function       EnemyPool_Free
+    @params         pool (std::vector<Data::Enemy>&), free_slots (std::deque<int>&)
+    @brief          Deactivates all enemies in the pool and rebuilds the free-slot queue.
+
+    @usage          Game.cpp
+
+    Every slot is reset to a clean inactive state regardless of enemy type (normal, friendly,
+    shielded). The free_slots queue is rebuilt from scratch so the pool is ready for re-init
+    without needing a full resize.
+    *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
+    void EnemyPool_Free(std::vector<Data::Enemy>& pool, std::deque<int>& free_slots)
+    {
+        free_slots.clear();                                                                                                 // discard any stale indices
+
+        for (int i = 0; i < (int)pool.size(); ++i)
+        {
+            Data::Enemy& e = pool[(size_t)i];
+
+            // Clear all state regardless of type
+            e.enemy_is_active = false;
+            e.enemy_is_dying = false;
+            e.enemy_has_landed = false;
+            e.enemy_did_damage = false;
+            e.enemy_word_text.clear();
+            e.enemy_word_text_alt.clear();
+            e.enemy_word_length = 0;
+            e.enemy_lane_id = -1;
+            e.enemy_shield_intact = false;
+            e.enemy_dying_linger_timer_seconds = 0.0f;
+
+            free_slots.push_back(i);                                                                                        // return slot to the free queue
         }
     }
 } // EnemyManage namespace end
