@@ -339,7 +339,7 @@ void GameTimeMode_Update()
         EnemySystem::Enemy_ResolveLaneStacking(enemy_pool, enemy_area);    // fix spacing between enemies in same lane
 
         // ---- Power-ups ----
-        PowerUpSystem::Update(dt, enemy_pool, enemy_area);
+        PowerUpSystem::Update(dt, enemy_pool, enemy_area, health);
         Particles_Update(dt);
         Weather_Update(dt, enemy_pool);
 

@@ -32,13 +32,13 @@ namespace EnemyConfig
     const float DIFFICULTY_MAX = 30.0f;                                                                                     // cap for difficulty value
 
     // Random spawn tuning
-    const float RANDOM_SPAWN_INTERVAL_START_SECONDS = 2.0f;                                                                 // starting spawn interval
+    const float RANDOM_SPAWN_INTERVAL_START_SECONDS = 2.5f;                                                                 // starting spawn interval
     const float RANDOM_SPAWN_INTERVAL_MIN_SECONDS = 0.85f;                                                                  // minimum spawn interval
     const float RANDOM_SPAWN_INTERVAL_DECREASE_PER_LEVEL = 0.020f;                                                          // interval decrease per difficulty level
 
     // Fall speed tuning
-    const float ENEMY_FALL_SPEED_START = 48.0f;                                                                             // starting fall speed
-    const float ENEMY_FALL_SPEED_INCREASE_PER_LEVEL = 1.35f;                                                                // fall speed increase per difficulty level
+    const float ENEMY_FALL_SPEED_START = 40.0f;                                                                             // starting fall speed
+    const float ENEMY_FALL_SPEED_INCREASE_PER_LEVEL = 1.3f;                                                                 // fall speed increase per difficulty level
 
     // Death drop tuning
     const float ENEMY_DEATH_FALL_SPEED = 850.0f;                                                                            // fast drop speed when killed
