@@ -22,40 +22,40 @@ and cutscene timing.  Adjust values here without touching core boss logic.
 namespace BossConfig
 {
     // Spawn timing
-    extern const float BOSS_SPAWN_INTERVAL_SECONDS;            // seconds between boss waves (60 s)
+    extern const float BOSS_SPAWN_INTERVAL_SECONDS;                                                                         // how many seconds pass between boss spawns
 
     // Movement
-    extern const float BOSS_MOVE_SPEED;                        // horizontal movement speed in world-px/s
+    extern const float BOSS_MOVE_SPEED;                                                                                     // how fast the boss slides left and right in pixels per second
 
     // Defeat requirement
-    extern const int   BOSS_WORDS_TO_DEFEAT;                   // words needed to defeat the boss (30)
+    extern const int   BOSS_WORDS_TO_DEFEAT;                                                                                // how many words the player must type to kill the boss
 
-    // Word lengths (fixed, not scaled by difficulty)
-    extern const int   BOSS_WORD_MIN_LEN;                      // min boss kill-word / minion word length
-    extern const int   BOSS_WORD_MAX_LEN;                      // max boss kill-word / minion word length
+    // Word lengths
+    extern const int   BOSS_WORD_MIN_LEN;                                                                                   // shortest word the boss or its minions can use
+    extern const int   BOSS_WORD_MAX_LEN;                                                                                   // longest word the boss or its minions can use
 
     // Sprite sizing
-    extern const float BOSS_SPRITE_SCALE;                      // 1.2× normal enemy size
-    extern const float BOSS_SPRITE_W_RATIO;                    // width-to-height ratio (landscape)
+    extern const float BOSS_SPRITE_SCALE;                                                                                   // how much bigger the boss sprite is compared to a normal enemy
+    extern const float BOSS_SPRITE_W_RATIO;                                                                                 // makes the boss sprite wider than it is tall
 
     // Hit-flash feedback
-    extern const float BOSS_HIT_TINT_DURATION_SECONDS;         // how long the red tint lasts after a hit
+    extern const float BOSS_HIT_TINT_DURATION_SECONDS;                                                                      // how long the boss flashes red after being hit
 
     // Flash attack
-    extern const float BOSS_FLASH_INTERVAL_MIN_SECONDS;        // minimum random interval between flash attacks
-    extern const float BOSS_FLASH_INTERVAL_MAX_SECONDS;        // maximum random interval between flash attacks
-    extern const float BOSS_FLASH_FADE_DURATION_SECONDS;       // time for the white overlay to fade to zero
+    extern const float BOSS_FLASH_INTERVAL_MIN_SECONDS;                                                                     // shortest possible wait before the next screen flash attack
+    extern const float BOSS_FLASH_INTERVAL_MAX_SECONDS;                                                                     // longest possible wait before the next screen flash attack
+    extern const float BOSS_FLASH_FADE_DURATION_SECONDS;                                                                    // how long the white flash overlay takes to fade out
 
     // Minions
-    extern const int   BOSS_MINION_CAP;                        // max simultaneous minions
-    extern const float BOSS_MINION_SPAWN_INTERVAL_SECONDS;     // interval between minion waves
-    extern const int   BOSS_MINION_WAVE_SIZE;                  // minions spawned per wave
+    extern const int   BOSS_MINION_CAP;                                                                                     // maximum number of minions allowed on screen at once
+    extern const float BOSS_MINION_SPAWN_INTERVAL_SECONDS;                                                                  // how many seconds between each minion wave
+    extern const int   BOSS_MINION_WAVE_SIZE;                                                                               // how many minions spawn in one wave
 
     // Cutscene
-    extern const float BOSS_CUTSCENE_DURATION_SECONDS;         // how long the spawn cutscene lasts
+    extern const float BOSS_CUTSCENE_DURATION_SECONDS;                                                                      // how long the boss entrance animation plays before gameplay resumes
 
-    // Y position of the boss sprite (stationary on the landing line)
-    extern const float BOSS_POSITION_Y;                        // boss sits at (or just above) landing line
+    // Y position of the boss
+    extern const float BOSS_POSITION_Y;                                                                                     // the fixed vertical position where the boss sits during a fight
 }
 /*___________________________________________________________________________________________________________________________________________________________________________________________________*/
 
@@ -65,7 +65,7 @@ namespace BossConfig
                 minion management, visual feedback, and defeat/cleanup.
 
 All public functions match the call sites in game.cpp.  All internal state lives in an anonymous
-namespace inside Boss.cpp — nothing leaks through this header.
+namespace inside Boss.cpp -- nothing leaks through this header.
 *//*_________________________________________________________________________________________________________________________________________________________________________________________________*/
 namespace BossSystem
 {
@@ -104,7 +104,7 @@ namespace BossSystem
     @brief          Full per-frame boss tick: timing, state transitions, movement, minion management,
                     kill-word pool injection/removal, hit feedback, and flash attack.
 
-    @usage          Game_Update — must be called BEFORE the regular spawn block and BEFORE
+    @usage          Game_Update -- must be called BEFORE the regular spawn block and BEFORE
                     Typing_UpdateAndApplyToEnemies each frame.
 
     This function owns the 60-second trigger, the pool-clear wait, the cutscene countdown, boss
@@ -121,7 +121,7 @@ namespace BossSystem
     @params         meshes (const Data::Meshes&)
     @brief          Renders the boss sprite with the current hit-tint colour and the kill-word label.
 
-    @usage          Game_Update (render phase) — draw after enemy sprites, before UI overlays.
+    @usage          Game_Update (render phase) -- draw after enemy sprites, before UI overlays.
 
     Draws the boss sprite at the current boss position using AEGfxTextureSet + Draw_DrawMeshAt,
     then draws the kill-word centered above the sprite via AEGfxPrint.  Applies red tint while
@@ -134,7 +134,7 @@ namespace BossSystem
     @function       Boss_DrawFlashOverlay
     @brief          Renders the white full-screen flash overlay if a flash attack is in progress.
 
-    @usage          Game_Update (render phase) — must be drawn LAST so it appears over everything.
+    @usage          Game_Update (render phase) -- must be drawn LAST so it appears over everything.
 
     This function draws a full-window white rectangle scaled to cover the entire screen, with alpha
     derived from the current flash timer.  Does nothing when no flash is active.
@@ -145,7 +145,7 @@ namespace BossSystem
     @function       Boss_GetKillWordSlot
     @brief          Returns the pool slot index reserved for the boss kill-word enemy, or -1 if none.
 
-    @usage          Game_Update enemy loop — used to skip the kill-word slot in Enemy_Update so
+    @usage          Game_Update enemy loop -- used to skip the kill-word slot in Enemy_Update so
                     Boss_Update retains full ownership of that slot's state transitions.
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
     int Boss_GetKillWordSlot();
@@ -154,7 +154,7 @@ namespace BossSystem
     @function       Boss_IsActive
     @brief          Returns true while the boss is alive (CUTSCENE or ACTIVE state).
 
-    @usage          game.cpp — used to suppress regular enemy spawning in the spawn block.
+    @usage          game.cpp -- used to suppress regular enemy spawning in the spawn block.
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
     bool Boss_IsActive();
 
@@ -162,7 +162,7 @@ namespace BossSystem
     @function       Boss_ForceSpawn
     @brief          Immediately triggers the boss spawn sequence, bypassing the 60-second timer.
 
-    @usage          Debug / testing — call once from game.cpp (e.g. on a key press) to spawn the
+    @usage          Debug / testing -- call once from game.cpp (e.g. on a key press) to spawn the
                     boss instantly without waiting for the cycle timer.
 
     Sets the cycle timer to the trigger threshold so the next Boss_Update call transitions to
