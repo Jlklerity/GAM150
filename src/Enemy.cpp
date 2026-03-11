@@ -946,7 +946,7 @@ namespace EnemySystem
 
         if (e.enemy_type == Data::EnemyType::FRIENDLY)                                                                      // friendly npc
         {
-            HealthSystem::Health_Add(health, 10.0f);
+            HealthSystem::Health_Add(health, 10.0f);                                                                        // heal player
             e.enemy_word_text.clear();                                                                                      // hide word label immediately
             e.enemy_word_length = 0;                                                                                        // clear word length to match
             e.enemy_animation.animation_rows = 3;                                                                           // friendly sheet has 3 rows

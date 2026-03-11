@@ -83,7 +83,7 @@ namespace
     float       boss_flash_active_timer = 0.0f;                                                                             // counts down while the white flash overlay is still visible
 
     // assets
-    AEGfxTexture* boss_texture = nullptr;                                                                               // the loaded boss sprite sheet texture
+    AEGfxTexture* boss_texture = nullptr;                                                                                  // boss sprite sheet texture
     AEGfxVertexList* boss_sprite_mesh = nullptr;                                                                           // mesh built to match the boss sprite sheet UV layout
     AEGfxVertexList* boss_flash_mesh = nullptr;                                                                            // full screen rectangle used to draw the flash overlay
 
