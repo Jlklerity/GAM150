@@ -16,6 +16,8 @@
 namespace 
 {
 	float scroll_offset = 0.0f; //scroll initial position
+	int highest_zen_score = 0;
+	int highest_time_score = 0;
 	int highest_score = 0;
 	// NEW: How many lines to show on screen at once
 	const int ENTRIES_PER_PAGE = 5;
@@ -48,6 +50,8 @@ namespace Leaderboard_System
 
 	int GetHighestScore() {
 		Read_ZenLeaderboard();
+		Read_TimeLeaderboard();
+		highest_score = (highest_time_score > highest_zen_score) ? highest_time_score : highest_zen_score;
 		return highest_score;
 	}
 
@@ -73,7 +77,7 @@ namespace Leaderboard_System
 		int player_score;
 		while (file_stream >> player_name >> player_score) { //store file data to vector for displaying or writing 
 			Leaderboard_Data::ZenEntry newEntry{ player_name, player_score };
-			if (player_score > highest_score) highest_score = player_score;
+			if (player_score > highest_zen_score) highest_zen_score = player_score;
 			leaderboard_list.push_back(newEntry);
 			std::cout << newEntry.player_name << newEntry.player_score << "\n";
 		}
@@ -89,8 +93,10 @@ namespace Leaderboard_System
 		std::ifstream f(TIMED_LB_PATH);
 		if (!f.is_open()) return;                                           // file may not exist on first run, thats fine
 		std::string n; int s;
-		while (f >> n >> s)
+		while (f >> n >> s) {
+			if (s > highest_time_score) highest_time_score = s;
 			s_timedBoard.push_back({ n, s });                               // push each name-score pair into the vector
+		}
 		f.close();
 	}
 
