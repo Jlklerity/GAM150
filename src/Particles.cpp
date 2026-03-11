@@ -1,9 +1,3 @@
-/*!
-@file           Particles.cpp
-@brief          Self-contained particle system implementation.
-                See Particles.h for integration instructions.
-*/
-
 #include "Particles.h"
 #include "AEEngine.h"
 #include <cmath>

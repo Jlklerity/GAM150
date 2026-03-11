@@ -1,26 +1,3 @@
-/*!
-@file           Particles.h
-@brief          Self-contained particle system for impact effects.
-
-Two effects are provided:
-  - Particles_SpawnDamageImpact : full combo (dust + flash + screen shake + impact lines)
-                                  called when an enemy lands and deals damage.
-  - Particles_SpawnKillImpact   : color burst splat (no shake)
-                                  called when a typed/killed enemy hits the floor.
-
-Integration in game.cpp (nothing else needs to change):
-    Game_Init()   -> Particles_Init()
-    Game_Update() -> Particles_Update(dt)   [inside gameplay block]
-    Game_Exit()   -> Particles_Free()
-    render block  -> Particles_Draw()       [after enemies, before UI]
-
-    Inside the  was_active && !e.enemy_is_active  loop:
-        if (e.enemy_did_damage == false before update, i.e. natural land)
-            Particles_SpawnDamageImpact(e.enemy_position_x, e.enemy_position_y);
-        else (typed kill landing)
-            Particles_SpawnKillImpact(e.enemy_position_x, e.enemy_position_y, e.enemy_word_length);
-*/
-
 #pragma once
 #include "AEEngine.h"
 
