@@ -168,6 +168,11 @@ void Game_Update()
     if (!isPaused && !isDead)
     {
         float dt = (float)AEFrameRateControllerGetFrameTime();                                               // read delta time for this frame
+        if (dt > 0.1f)
+        {
+            // Force it to a safe standard frame time (~60 FPS)
+            dt = 0.01667f;
+        }
         dt *= PowerUpSystem::GetTimeScale(); // azfar code
 
         DifficultySystem::Difficulty_UpdateOverTime(dt);                                                                              // increase difficulty over time

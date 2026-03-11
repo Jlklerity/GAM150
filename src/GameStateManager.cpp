@@ -3,6 +3,7 @@
 #include "game.h"
 #include "Shop.h"
 #include "TimeGame.h"
+#include <AEEngine.h>
 
 //define global variables
 int gGameStateCurr = GS_NONE;
@@ -82,5 +83,7 @@ void GSM_Update()
 		// initialize the new state 
 		if (gGameStateInit)
 			gGameStateInit();
+
+		AEFrameRateControllerReset();
 	}
 }
