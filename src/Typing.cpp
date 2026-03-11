@@ -488,13 +488,11 @@ void Typing_UpdateAndApplyToEnemies(std::vector<Data::Enemy>& enemy_pool, Data::
             if (target.enemy_is_active && !target.enemy_is_dying && target.enemy_word_text == typed_buffer)
             {
                 // -------------------------
-                // FRIENDLY NPC: penalize + take 10 hp damage, then die
+                // FRIENDLY NPC: heal 10 hp
                 // -------------------------
                 if (target.enemy_type == Data::EnemyType::FRIENDLY)
                 {
-                    EnemySystem::Enemy_Killed(target);                                                          // kill friendly
-                    score.score_value -= target.enemy_word_length * 10;                                         // deduct score (you can tune)
-                    health.health_current -= 10;                                                                // take 10 damage
+                    EnemySystem::Enemy_Killed(target, health);                                                  // kill friendly
                     if (health.health_current < 0) health.health_current = 0;                                   // clamp
                 }
                 // -------------------------
@@ -510,7 +508,7 @@ void Typing_UpdateAndApplyToEnemies(std::vector<Data::Enemy>& enemy_pool, Data::
                 // -------------------------
                 else
                 {
-                    EnemySystem::Enemy_Killed(target);                                                          // kill
+                    EnemySystem::Enemy_Killed(target, health);                                                  // kill
                     score.score_value += target.enemy_word_length * 10;                                         // reward
                 }
 
