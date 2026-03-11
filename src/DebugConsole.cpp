@@ -77,10 +77,10 @@ namespace
 
     bool KeyTriggered(int key)
     {
-        if (key < 0 || key >= 256) return false;                            // rej if oob
-        bool curr = (AEInputCheckCurr(static_cast<u8>(key)) != 0);         // true if key is held down this frame
-        bool triggered = curr && !s_prevKeys[key];                          // only true on the first frame the key is pressed
-        s_prevKeys[key] = curr;                                             // save state for next frame comparison
+        if (key < 0 || key >= 256) return false;
+        bool curr = (AEInputCheckCurr(static_cast<u8>(key)) != 0);
+        bool triggered = curr && !s_prevKeys[key];
+        s_prevKeys[key] = curr;
         return triggered;
     }
 
@@ -89,10 +89,10 @@ namespace
     // ---------------------------------------------------------------------------
     void PushHistory(const std::string& text, bool isError = false)
     {
-        s_history.push_back({ text, isError });                             // append new entry to history
+        s_history.push_back({ text, isError });
         if ((int)s_history.size() > MAX_HISTORY)
-            s_history.erase(s_history.begin());                             // drop oldest entry if over limit
-        s_scrollOffset = 0;                                                 // snap back to bottom on new entry
+            s_history.erase(s_history.begin()); // drop oldest
+        s_scrollOffset = 0; // snap back to bottom on new entry
     }
 
     // ---------------------------------------------------------------------------
@@ -101,18 +101,18 @@ namespace
     std::vector<std::string> Tokenise(const std::string& line)
     {
         std::vector<std::string> tokens;
-        std::istringstream ss(line);                                        // wrap line in a stream so we can extract word by word
+        std::istringstream ss(line);
         std::string tok;
-        while (ss >> tok) tokens.push_back(tok);                           // push each whitespace-separated token into the vector
+        while (ss >> tok) tokens.push_back(tok);
         return tokens;
     }
 
-    // case-insensitive compare, used so commands work regardless of caps
+    // Case-insensitive compare
     bool IEquals(const std::string& a, const std::string& b)
     {
-        if (a.size() != b.size()) return false;                            // diff lengths = cant be equal
+        if (a.size() != b.size()) return false;
         for (size_t i = 0; i < a.size(); ++i)
-            if (std::tolower((unsigned char)a[i]) != std::tolower((unsigned char)b[i])) return false; // compare lowercase versions char by char
+            if (std::tolower((unsigned char)a[i]) != std::tolower((unsigned char)b[i])) return false;
         return true;
     }
 
@@ -121,15 +121,17 @@ namespace
     // ---------------------------------------------------------------------------
     void ExecuteCommand(const std::string& raw)
     {
-        PushHistory("> " + raw, false);                                     // echo the typed command into history in white
+        // Echo the typed command into history (white)
+        PushHistory("> " + raw, false);
 
+        // Strip leading '/' if present
         std::string line = raw;
-        if (!line.empty() && line[0] == '/') line = line.substr(1);        // strip leading '/' if present before tokenising
+        if (!line.empty() && line[0] == '/') line = line.substr(1);
 
-        auto tokens = Tokenise(line);                                       // split into command + arguments
-        if (tokens.empty()) return;                                         // nth to do if empty after stripping
+        auto tokens = Tokenise(line);
+        if (tokens.empty()) return;
 
-        const std::string& cmd = tokens[0];                                 // first token is the command name
+        const std::string& cmd = tokens[0];
 
         // ------------------------------------------------------------------
         // /spawn [3-8]   -- spawn an enemy of the given word length
@@ -145,7 +147,7 @@ namespace
             // /spawn friendly
             if (IEquals(tokens[1], "friendly"))
             {
-                int max_len = DifficultySystem::Difficulty_GetUnlockedMaxWordLength();                                          // get current max word length based on difficulty
+                int max_len = DifficultySystem::Difficulty_GetUnlockedMaxWordLength();
                 EnemySystem::Enemy_SpawnFriendlyFromPool(*s_pEnemyPool, *s_pFreeSlots, *s_pEnemyArea, *s_pWordBank, 3, max_len, 1.15f);
                 PushHistory("Spawned friendly enemy.", false);
                 return;
@@ -154,28 +156,34 @@ namespace
             // /spawn shield
             if (IEquals(tokens[1], "shield"))
             {
-                int max_len = DifficultySystem::Difficulty_GetUnlockedMaxWordLength();                                          // get current max word length based on difficulty
+                int max_len = DifficultySystem::Difficulty_GetUnlockedMaxWordLength();
                 EnemySystem::Enemy_SpawnShieldedFromPool(*s_pEnemyPool, *s_pFreeSlots, *s_pEnemyArea, *s_pWordBank, 3, max_len, 1.05f);
                 PushHistory("Spawned shielded enemy.", false);
                 return;
             }
 
+            //int len = std::stoi(tokens[1]);
+           // int max_len = DifficultySystem::Difficulty_GetUnlockedMaxWordLength();
+
             // /spawn [3-8]
             int len = 0;
             try
             {
-                len = std::stoi(tokens[1]);                                 // try to parse the length arg as int
+                len = std::stoi(tokens[1]);
             }
             catch (...)
             {
-                PushHistory("Error: unknown spawn type. Use [3-8], friendly, or shield.", true); // not a number or known keyword
+                PushHistory("Error: unknown spawn type. Use [3-8], friendly, or shield.", true);
                 return;
             }
             if (len < 3 || len > 8)
             {
-                PushHistory("Error: word length must be between 3 and 8.", true);               // valid int but out of supported range
+                PushHistory("Error: word length must be between 3 and 8.", true);
                 return;
             }
+            EnemySystem::Enemy_SpawnFromPool(*s_pEnemyPool, *s_pFreeSlots, *s_pEnemyArea, *s_pWordBank, len);
+            PushHistory("Spawned enemy with word length " + std::to_string(len) + ".", false);
+            return;                                                         // must return or falls through to unknown command
         }
 
         // ------------------------------------------------------------------
@@ -190,8 +198,8 @@ namespace
             }
             if (IEquals(tokens[1], "add"))
             {
-                HealthSystem::Health_Add(*s_pHealth, 10.0f);                                    // add 10 hp via the health system
-                PushHistory("Added 10 HP. Current: " + std::to_string((int)s_pHealth->health_current), false); // confirm with new value
+                HealthSystem::Health_Add(*s_pHealth, 10.0f);
+                PushHistory("Added 10 HP. Current: " + std::to_string((int)s_pHealth->health_current), false);
             }
             else
             {
@@ -212,19 +220,19 @@ namespace
             }
             if (IEquals(tokens[1], "up"))
             {
-                DifficultySystem::Difficulty_Add(1.0f);                     // increase difficulty by 1 level
+                DifficultySystem::Difficulty_Add(1.0f);
                 PushHistory("Difficulty increased to " +
-                    std::to_string((int)DifficultySystem::Difficulty_Get()) + ".", false); // confirm new level
+                    std::to_string((int)DifficultySystem::Difficulty_Get()) + ".", false);
             }
             else if (IEquals(tokens[1], "down"))
             {
-                DifficultySystem::Difficulty_Add(-1.0f);                    // decrease difficulty by 1 level
+                DifficultySystem::Difficulty_Add(-1.0f);
                 PushHistory("Difficulty decreased to " +
-                    std::to_string((int)DifficultySystem::Difficulty_Get()) + ".", false); // confirm new level
+                    std::to_string((int)DifficultySystem::Difficulty_Get()) + ".", false);
             }
             else if (IEquals(tokens[1], "show"))
             {
-                *s_pDifficultyVisible = !*s_pDifficultyVisible;             // toggle the difficulty HUD overlay
+                *s_pDifficultyVisible = !*s_pDifficultyVisible;
                 PushHistory(std::string("Difficulty HUD: ") + (*s_pDifficultyVisible ? "ON" : "OFF"), false);
             }
             else
@@ -239,7 +247,7 @@ namespace
         // ------------------------------------------------------------------
         if (IEquals(cmd, "debugbox"))
         {
-            *s_pEnemyAreaVisible = !*s_pEnemyAreaVisible;                   // toggle the enemy area bounding box overlay
+            *s_pEnemyAreaVisible = !*s_pEnemyAreaVisible;
             PushHistory(std::string("Debug box: ") + (*s_pEnemyAreaVisible ? "ON" : "OFF"), false);
             return;
         }
@@ -249,7 +257,7 @@ namespace
         // ------------------------------------------------------------------
         if (IEquals(cmd, "autospawn"))
         {
-            *s_pAutoSpawn = !*s_pAutoSpawn;                                 // toggle random enemy spawning on/off
+            *s_pAutoSpawn = !*s_pAutoSpawn;
             PushHistory(std::string("Auto-spawn: ") + (*s_pAutoSpawn ? "ON" : "OFF"), false);
             return;
         }
@@ -288,17 +296,17 @@ namespace
             }
             if (IEquals(tokens[1], "lightning"))
             {
-                PowerUpSystem::DebugSpawn(PowerUpSystem::PowerType::Lightning); // force spawn a lightning drop
+                PowerUpSystem::DebugSpawn(PowerUpSystem::PowerType::Lightning);
                 PushHistory("Spawned Lightning power-up.", false);
             }
             else if (IEquals(tokens[1], "shield"))
             {
-                PowerUpSystem::DebugSpawn(PowerUpSystem::PowerType::Shield);    // force spawn a shield drop
+                PowerUpSystem::DebugSpawn(PowerUpSystem::PowerType::Shield);
                 PushHistory("Spawned Shield power-up.", false);
             }
             else if (IEquals(tokens[1], "slow"))
             {
-                PowerUpSystem::DebugSpawn(PowerUpSystem::PowerType::TimeSlow);  // force spawn a time slow drop
+                PowerUpSystem::DebugSpawn(PowerUpSystem::PowerType::TimeSlow);
                 PushHistory("Spawned TimeSlow power-up.", false);
             }
             else
@@ -320,19 +328,19 @@ namespace
             }
             if (IEquals(tokens[1], "snow"))
             {
-                Weather_ForceEvent(0);                                      // 0 = snow/blizzard event
+                Weather_ForceEvent(0);
                 PushHistory("Triggered snow blizzard.", false);
             }
             else if (IEquals(tokens[1], "thunder"))
             {
-                Weather_ForceEvent(1);                                      // 1 = thunderstorm event
+                Weather_ForceEvent(1);
                 PushHistory("Triggered thunderstorm.", false);
             }
             else
             {
                 PushHistory("Unknown weather type. Use: snow | thunder", true);
             }
-            return;
+            return; // azfar code end
         }
 
         // ------------------------------------------------------------------
@@ -348,27 +356,28 @@ namespace
     // Draw a solid-color quad in world space
     void DrawPanel(float x, float y, float w, float h, float r, float g, float b, float a)
     {
-        if (!s_pPanelMesh) return;                                          // skip if mesh not initialised
+        if (!s_pPanelMesh) return;
 
-        AEGfxSetRenderMode(AE_GFX_RM_COLOR);                               // solid color render mode
-        AEGfxSetBlendMode(AE_GFX_BM_BLEND);                                // enable alpha blending for transparency
+        AEGfxSetRenderMode(AE_GFX_RM_COLOR);
+        AEGfxSetBlendMode(AE_GFX_BM_BLEND);
         AEGfxSetTransparency(1.0f);
-        AEGfxSetColorToMultiply(r, g, b, a);                               // apply panel color and alpha
+        AEGfxSetColorToMultiply(r, g, b, a);
         AEGfxSetColorToAdd(0.0f, 0.0f, 0.0f, 0.0f);
-        Mesh_Renderer(s_pPanelMesh, x, y, w, h, 0.0f);                     // draw the quad at given world position and size
+        Mesh_Renderer(s_pPanelMesh, x, y, w, h, 0.0f);
     }
 
-    // nx/ny are already in NDC [-1,1], no conversion needed
+    // Print text; nx/ny are already in NDC [-1,1]
     void DrawText(const char* text, float nx, float ny, float scale,
         float r, float g, float b)
     {
-        if (Graphics::font_id < 0) return;                                  // skip if font not loaded
+        if (Graphics::font_id < 0) return;
         AEGfxSetBlendMode(AE_GFX_BM_BLEND);
-        AEGfxPrint(Graphics::font_id, text, nx, ny, scale, r, g, b, 1.0f); // draw text at ndc position with given color
+        AEGfxPrint(Graphics::font_id, text, nx, ny, scale, r, g, b, 1.0f);
     }
 
-    float WorldYtoNDC(float wy) { return wy / HALF_H; }                    // convert world y to NDC range -1..1
-    float WorldXtoNDC(float wx) { return wx / HALF_W; }                    // convert world x to NDC range -1..1
+    // Convert world Y to NDC
+    float WorldYtoNDC(float wy) { return wy / HALF_H; }
+    float WorldXtoNDC(float wx) { return wx / HALF_W; }
 
 } // anonymous namespace
 
@@ -387,34 +396,36 @@ namespace DebugConsole
         Data::EnemyArea& enemy_area,
         Data::WordBank& word_bank)
     {
-        s_pEnemyAreaVisible = &is_enemy_area_box_visible;                   // store ref to debug box toggle
-        s_pAutoSpawn = &is_random_spawning_enabled;                         // store ref to auto spawn toggle
-        s_pDifficultyVisible = &is_difficulty_debug_visible;                // store ref to difficulty hud toggle
-        s_pHealth = &health;                                                // store ref to player health
-        s_pEnemyPool = &enemy_pool;                                         // store ref to enemy pool for spawn commands
-        s_pFreeSlots = &free_slot_queue;                                    // store ref to free slot queue for spawn commands
-        s_pEnemyArea = &enemy_area;                                         // store ref to enemy area for spawn commands
-        s_pWordBank = &word_bank;                                           // store ref to word bank for spawn commands
+        s_pEnemyAreaVisible = &is_enemy_area_box_visible;
+        s_pAutoSpawn = &is_random_spawning_enabled;
+        s_pDifficultyVisible = &is_difficulty_debug_visible;
+        s_pHealth = &health;
+        s_pEnemyPool = &enemy_pool;
+        s_pFreeSlots = &free_slot_queue;
+        s_pEnemyArea = &enemy_area;
+        s_pWordBank = &word_bank;
 
-        s_isOpen = false;                                                   // console starts closed
+        s_isOpen = false;
         s_inputLen = 0;
         s_inputBuf[0] = '\0';
         s_scrollOffset = 0;
-        s_history.clear();                                                  // clear any leftover history from a previous session
+        s_history.clear();
 
         s_cursorTimer = 0.0f;
         s_cursorVisible = true;
 
-        for (int i = 0; i < 256; ++i) s_prevKeys[i] = false;              // clear key state so no phantom inputs on first frame
+        for (int i = 0; i < 256; ++i) s_prevKeys[i] = false;
 
-        s_pPanelMesh = Rect_Mesh(1.0f, 1.0f, 0xFFFFFFFF);                 // build a 1x1 unit quad, reused for all background panels
+        // Build a 1x1 unit quad for drawing panels (reused for all backgrounds)
+        s_pPanelMesh = Rect_Mesh(1.0f, 1.0f, 0xFFFFFFFF);
     }
 
     void Update()
     {
         float dt = (float)AEFrameRateControllerGetFrameTime();
 
-        // ---- Toggle console open with '/' key (AEVK_SLASH = 0xBF on Windows) ----
+        // ---- Toggle console open / close with '/' key ----
+        // AEVK_SLASH = 0xBF on Windows virtual key
         if (KeyTriggered(AEVK_SLASH) && !s_isOpen)
         {
             s_isOpen = true;
@@ -422,29 +433,29 @@ namespace DebugConsole
             s_inputBuf[0] = '\0';
             s_cursorTimer = 0.0f;
             s_cursorVisible = true;
-            s_inputBuf[s_inputLen++] = '/';                                 // pre-fill '/' so player sees it immediately
+            // Pre-fill '/' so the player sees it immediately
+            s_inputBuf[s_inputLen++] = '/';
             s_inputBuf[s_inputLen] = '\0';
-            *s_pDifficultyVisible = true;                                   // auto-show difficulty HUD when console opens
-            return;                                                         // consume the '/' keypress so it doesn't get typed
+            return; // consume the '/' keypress
         }
 
-        if (!s_isOpen) return;                                              // skip all input handling if console is closed
+        if (!s_isOpen) return;
 
         // ---- Cursor blink ----
         s_cursorTimer += dt;
         if (s_cursorTimer >= 0.5f)
         {
-            s_cursorTimer = 0.0f;                                           // reset timer
-            s_cursorVisible = !s_cursorVisible;                             // toggle cursor visibility every 0.5s
+            s_cursorTimer = 0.0f;
+            s_cursorVisible = !s_cursorVisible;
         }
 
         // ---- Scroll history with mouse wheel ----
         {
             s32 wheel = 0;
             AEInputMouseWheelDelta(&wheel);
-            int maxScroll = ((int)s_history.size() - VISIBLE_LINES > 0) ? (int)s_history.size() - VISIBLE_LINES : 0; // max scroll = entries that don't fit on screen
-            if (wheel > 0) s_scrollOffset = (s_scrollOffset + 1 < maxScroll) ? s_scrollOffset + 1 : maxScroll; // scroll up (older entries)
-            if (wheel < 0) s_scrollOffset = (s_scrollOffset - 1 > 0) ? s_scrollOffset - 1 : 0;                 // scroll down (newer entries)
+            int maxScroll = ((int)s_history.size() - VISIBLE_LINES > 0) ? (int)s_history.size() - VISIBLE_LINES : 0;
+            if (wheel > 0) s_scrollOffset = (s_scrollOffset + 1 < maxScroll) ? s_scrollOffset + 1 : maxScroll; // scroll up (older)
+            if (wheel < 0) s_scrollOffset = (s_scrollOffset - 1 > 0) ? s_scrollOffset - 1 : 0;                 // scroll down (newer)
         }
 
         // ---- Escape closes without submitting ----
@@ -456,7 +467,7 @@ namespace DebugConsole
             return;
         }
 
-        // ---- Enter: execute command if input has content, close if empty ----
+        // ---- Enter submits ----
         if (KeyTriggered(AEVK_RETURN))
         {
             std::string cmd(s_inputBuf);
@@ -480,41 +491,46 @@ namespace DebugConsole
             return;
         }
 
-        // ---- Backspace: remove last char but never delete the leading '/' ----
+        // ---- Backspace ----
         if (KeyTriggered(AEVK_BACK))
         {
+            // Don't let player delete the leading '/'
             if (s_inputLen > 1)
-                s_inputBuf[--s_inputLen] = '\0';                           // decrement length and null terminate
+            {
+                s_inputBuf[--s_inputLen] = '\0';
+            }
             return;
         }
 
-        // ---- Letter, digit, and space input ----
-        if (s_inputLen < (int)sizeof(s_inputBuf) - 2)                      // leave room for null terminator
+        // ---- Letter keys A-Z ----
+        if (s_inputLen < (int)sizeof(s_inputBuf) - 2) // leave room for null
         {
             for (int k = AEVK_A; k <= AEVK_Z; ++k)
             {
                 if (KeyTriggered(k))
                 {
-                    char c = (char)('a' + (k - AEVK_A));                   // convert keycode to lowercase char
+                    char c = (char)('a' + (k - AEVK_A)); // lowercase
                     s_inputBuf[s_inputLen++] = c;
                     s_inputBuf[s_inputLen] = '\0';
                 }
             }
 
-            // AEVK_0 .. AEVK_9 = 0x30 .. 0x39
+            // ---- Digit keys 0-9 ----
+            // Alpha Engine AEVK_0 .. AEVK_9 = 0x30 .. 0x39
             for (int k = AEVK_0; k <= AEVK_9; ++k)
             {
                 if (KeyTriggered(k))
                 {
-                    char c = (char)('0' + (k - AEVK_0));                   // convert keycode to digit char
+                    char c = (char)('0' + (k - AEVK_0));
                     s_inputBuf[s_inputLen++] = c;
                     s_inputBuf[s_inputLen] = '\0';
                 }
             }
 
+            // ---- Space ----
             if (KeyTriggered(AEVK_SPACE))
             {
-                s_inputBuf[s_inputLen++] = ' ';                            // append space for multi-word commands
+                s_inputBuf[s_inputLen++] = ' ';
                 s_inputBuf[s_inputLen] = '\0';
             }
         }
@@ -522,37 +538,42 @@ namespace DebugConsole
 
     void Render()
     {
-        bool hasHistory = !s_history.empty();                               // only draw history panel if there are entries
+        // History panel is always visible if there are entries (even when console is closed)
+        // Input bar only visible when open
+        bool hasHistory = !s_history.empty();
 
         // ---- Draw history panel background ----
         if (s_isOpen && hasHistory)
         {
             float panelY = s_isOpen
                 ? HISTORY_PANEL_Y
-                : -HALF_H + INPUT_BAR_H + HISTORY_PANEL_H * 0.5f + 4.0f;  // position above input bar
+                : -HALF_H + INPUT_BAR_H + HISTORY_PANEL_H * 0.5f + 4.0f;
 
-            DrawPanel(0.0f, panelY, SCREEN_W, HISTORY_PANEL_H, 0.0f, 0.0f, 0.0f, 0.65f); // semi-transparent black background
+            DrawPanel(0.0f, panelY, SCREEN_W, HISTORY_PANEL_H, 0.0f, 0.0f, 0.0f, 0.65f);
 
+            // ---- Draw history lines ----
+            // s_scrollOffset=0 means show the newest VISIBLE_LINES entries
             int totalEntries = (int)s_history.size();
-            int bottomIdx = totalEntries - 1 - s_scrollOffset;             // newest visible entry index
-            int topIdx = bottomIdx - (VISIBLE_LINES - 1);                  // oldest visible entry index
+            // The bottom of the visible window in history index terms:
+            int bottomIdx = totalEntries - 1 - s_scrollOffset;         // newest visible
+            int topIdx = bottomIdx - (VISIBLE_LINES - 1);           // oldest visible
 
             float textScale = 0.38f;
-            float lineStartY = panelY + (HISTORY_PANEL_H * 0.5f) - 4.0f;  // start drawing from top of panel
+            float lineStartY = panelY + (HISTORY_PANEL_H * 0.5f) - 4.0f; // top of panel
 
-            for (int line = 0; line < VISIBLE_LINES; ++line)               // draw each visible history line
+            for (int line = 0; line < VISIBLE_LINES; ++line)
             {
                 int entryIdx = topIdx + line;
-                if (entryIdx < 0 || entryIdx >= totalEntries) continue;    // skip out-of-range indices
+                if (entryIdx < 0 || entryIdx >= totalEntries) continue;
 
                 const HistoryEntry& entry = s_history[(size_t)entryIdx];
 
-                float worldY = lineStartY - (line * HISTORY_LINE_H) - HISTORY_LINE_H * 0.5f; // calc y pos for this line
+                float worldY = lineStartY - (line * HISTORY_LINE_H) - HISTORY_LINE_H * 0.5f;
                 float ny = WorldYtoNDC(worldY);
-                float nx = WorldXtoNDC(-HALF_W + 12.0f);                   // left margin
+                float nx = WorldXtoNDC(-HALF_W + 12.0f); // left margin
 
                 float r = entry.isError ? 1.0f : 1.0f;
-                float g = entry.isError ? 0.2f : 1.0f;                     // red for errors, white for normal
+                float g = entry.isError ? 0.2f : 1.0f;
                 float b = entry.isError ? 0.2f : 1.0f;
 
                 DrawText(entry.text.c_str(), nx, ny, textScale, r, g, b);
@@ -560,34 +581,39 @@ namespace DebugConsole
 
             // ---- Scroll indicators ----
             int maxScroll = (totalEntries - VISIBLE_LINES > 0) ? totalEntries - VISIBLE_LINES : 0;
-            if (s_scrollOffset < maxScroll)                                 // more entries above current view
+            if (s_scrollOffset < maxScroll) // can scroll up (older entries above)
             {
                 float ny = WorldYtoNDC(panelY + HISTORY_PANEL_H * 0.5f - 2.0f);
                 DrawText("^", WorldXtoNDC(HALF_W - 30.0f), ny, 0.35f, 0.8f, 0.8f, 0.8f);
             }
-            if (s_scrollOffset > 0)                                         // more entries below current view
+            if (s_scrollOffset > 0) // can scroll down (newer entries below)
             {
                 float ny = WorldYtoNDC(panelY - HISTORY_PANEL_H * 0.5f + 2.0f);
                 DrawText("v", WorldXtoNDC(HALF_W - 30.0f), ny, 0.35f, 0.8f, 0.8f, 0.8f);
             }
         }
 
-        if (!s_isOpen) return;                                              // skip input bar if console is closed
+        // ---- Draw input bar (only when open) ----
+        if (!s_isOpen) return;
 
-        DrawPanel(0.0f, INPUT_BAR_Y, SCREEN_W, INPUT_BAR_H, 0.08f, 0.08f, 0.08f, 0.92f);                  // dark background bar
-        DrawPanel(0.0f, INPUT_BAR_Y + INPUT_BAR_H * 0.5f + 1.0f, SCREEN_W, 2.0f, 0.4f, 0.8f, 0.4f, 1.0f); // thin green accent line above bar
+        // Background bar
+        DrawPanel(0.0f, INPUT_BAR_Y, SCREEN_W, INPUT_BAR_H, 0.08f, 0.08f, 0.08f, 0.92f);
 
+        // Thin accent line above the bar
+        DrawPanel(0.0f, INPUT_BAR_Y + INPUT_BAR_H * 0.5f + 1.0f, SCREEN_W, 2.0f, 0.4f, 0.8f, 0.4f, 1.0f);
+
+        // Input text + cursor
         if (Graphics::font_id >= 0)
         {
             std::string display = std::string(s_inputBuf);
-            if (s_cursorVisible) display += "_";                            // append blinking cursor char
+            if (s_cursorVisible) display += "_";
 
             float textScale = 0.42f;
-            float nx = WorldXtoNDC(-HALF_W + 12.0f);                       // left margin
+            float nx = WorldXtoNDC(-HALF_W + 12.0f);
             float ny = WorldYtoNDC(INPUT_BAR_Y - 6.0f);
 
             AEGfxSetBlendMode(AE_GFX_BM_BLEND);
-            AEGfxPrint(Graphics::font_id, display.c_str(), nx, ny, textScale, 0.6f, 1.0f, 0.6f, 1.0f); // draw input text in green
+            AEGfxPrint(Graphics::font_id, display.c_str(), nx, ny, textScale, 0.6f, 1.0f, 0.6f, 1.0f);
         }
     }
 
@@ -595,17 +621,17 @@ namespace DebugConsole
     {
         if (s_pPanelMesh)
         {
-            AEGfxMeshFree(s_pPanelMesh);                                    // free the panel quad mesh
+            AEGfxMeshFree(s_pPanelMesh);
             s_pPanelMesh = nullptr;
         }
-        s_history.clear();                                                  // clear history so it doesnt persist across sessions
+        s_history.clear();
         s_isOpen = false;
         s_inputLen = 0;
     }
 
     bool IsOpen()
     {
-        return s_isOpen;                                                    // used by game.cpp to freeze gameplay while console is open
+        return s_isOpen;
     }
 
 } // namespace DebugConsole

@@ -26,20 +26,20 @@
 #include <algorithm>
 
 // ---------------------------------------------------------------------------
-// timed leaderboard helpers
-
-//using -> : Assets/leaderboard_timed.txt separae from normal leaderbnoard
+// Timed leaderboard helpers
+// These live here so they don't touch Leaderboard.cpp at all.
+// The timed board uses a separate file: Assets/leaderboard_timed.txt
 // ---------------------------------------------------------------------------
 namespace
 {
-    //  Timed leaderboard file path 
+    // ---- Timed leaderboard file path ----
     static const char* TIMED_LB_PATH = "Assets/leaderboard_timed.txt";
 
-    // read write  display for the timed board 
+    // ---- Simple read / write / display for the timed board ----
     struct TimedEntry
     {
         std::string name;
-        int score;
+        int         score;
     };
 
     static std::vector<TimedEntry> s_timedBoard;
@@ -69,24 +69,24 @@ namespace
     }
 
     // ---------------------------------------------------------------------------
-    // All game state for timed mode 
+    // All game state for timed mode (mirrors game.cpp anonymous namespace)
     // ---------------------------------------------------------------------------
 
-    //  Player visuals 
+    // ---- Player visuals ----
     AEGfxTexture* playerTexture1 = nullptr;
     AEGfxTexture* playerTexture2 = nullptr;
     AEGfxVertexList* playerMesh = nullptr;
 
-    //  Background visuals 
+    // ---- Background visuals ----
     AEGfxTexture* bgTexture1 = nullptr;
     AEGfxTexture* bgTexture2 = nullptr;
     AEGfxVertexList* bgMesh = nullptr;
 
-    //  Player sprite position 
+    // ---- Player sprite position ----
     const float SPRITE_X = -700.0f;
     const float SPRITE_Y = -200.0f;
 
-    //  Sprite sheet animation 
+    // ---- Sprite sheet animation ----
     const int   SPRITE_COLS = 8;
     const int   SPRITE_ROWS = 1;
     const float SPRITE_UV_WIDTH = 1.0f / SPRITE_COLS;
@@ -97,13 +97,13 @@ namespace
     float       uvOffsetX = 0.0f;
     float       uvOffsetY = 0.0f;
 
-    //  Game flow flags 
+    // ---- Game flow flags ----
     bool isPaused = false;
     bool isTimedOut = false;                                          // true once countdown hits zero
     bool scoreWritten = false;                                          // guard so we only write the score once
     bool openLeaderboard = false;                                          // true when the timed leaderboard overlay is showing
 
-    //  Enemy / game systems (same pattern as game.cpp) 
+    // ---- Enemy / game systems (same pattern as game.cpp) ----
     Data::WordBank              word_bank{};
     Data::Health                health{};
     Data::Score                 score{};
@@ -120,26 +120,29 @@ namespace
 
     float random_spawn_timer_seconds = 9999.0f;                            // start high so first enemy spawns immediately
 
-    //  Countdown timer 
+    // ---- Countdown timer ----
     static const float TOTAL_TIME = 60.0f;                                 // seconds for timed mode
     float time_remaining = TOTAL_TIME;
 
-    //  timed mode spawn interval multiplier thats faster than normal mode 
+    // ---- Timed-mode spawn interval multiplier ----
+    // Faster than normal mode to keep pressure up during the short window
     static const float TIMED_SPAWN_MULTIPLIER = 0.55f;
 
-    // ---- Leaderboard overlay scroll 
+    // ---- Leaderboard overlay scroll ----
     float lb_scroll = 0.0f;
     static const int LB_VISIBLE = 5;
 
     // ---- Timer display state ----
     float flash_timer = 0.0f;                                         // counts down after the 10s screen flash triggers
     bool  flash_triggered = false;                                        // guard so the 10s flash only fires once
-    float blink_timer = 0.0f;                                         // drives the sub10  blink
+    float blink_timer = 0.0f;                                         // drives the sub-10s number blink
     bool  blink_visible = true;                                         // current blink on/off state
     static const float FLASH_DURATION = 0.35f;                              // how long the screen flash lasts
     static const float BLINK_INTERVAL = 0.35f;                              // how fast the number blinks under 10s
 
-    // Draw the timed leaderboard overlay
+    // ---------------------------------------------------------------------------
+    // Draw the timed leaderboard overlay (called instead of Leaderboard_System::Display)
+    // ---------------------------------------------------------------------------
     void DrawTimedLeaderboard()
     {
         AEGfxSetRenderMode(AE_GFX_RM_COLOR);
@@ -194,25 +197,26 @@ namespace
             openLeaderboard = false;                                        // close leaderboard, return to timeout screen
     }
 
-    
-    // ggs
+    // ---------------------------------------------------------------------------
+    // Draw the timeout / end-of-round screen (equivalent of GameOver for timed mode)
+    // ---------------------------------------------------------------------------
     void DrawTimeoutScreen()
     {
         if (Graphics::font_id < 0) return;
 
-        //  "TIME'S UP!" header 
+        // ---- "TIME'S UP!" header ----
         const char* header = "TIME'S UP!";
         float hw, hh;
         AEGfxGetPrintSize(Graphics::font_id, header, 1.0f, &hw, &hh);
         AEGfxPrint(Graphics::font_id, header, -hw * 0.5f, 0.55f, 1.0f, 1.0f, 0.85f, 0.2f, 1.0f); // centered, gold color
 
-        //  final score  
+        // ---- Final score display ----
         std::string scoreStr = "Score: " + std::to_string(score.score_value);
         float sw, sh;
         AEGfxGetPrintSize(Graphics::font_id, scoreStr.c_str(), 0.7f, &sw, &sh);
         AEGfxPrint(Graphics::font_id, scoreStr.c_str(), -sw * 0.5f, 0.25f, 0.7f, 1.0f, 1.0f, 1.0f, 1.0f); // centered white
 
-        //  Button layout 
+        // ---- Button layout (same positions as GameOver) ----
         float btnW = 300.0f;
         float btnH = 60.0f;
         float btnX = 0.0f;
@@ -221,7 +225,7 @@ namespace
         float menuY = -250.0f;
 
         // helper lambda: draw a grey button background then its label centered on top
-        auto DrawBtn = [&](float cy, const char* label, float scale)
+        auto DrawBtn = [&](float cy, const char* label, float scale, float textNDC_Y)
             {
                 AEGfxSetRenderMode(AE_GFX_RM_COLOR);
                 AEGfxSetBlendMode(AE_GFX_BM_BLEND);
@@ -231,14 +235,14 @@ namespace
                 float lw, lh;
                 AEGfxGetPrintSize(Graphics::font_id, label, scale, &lw, &lh);
                 AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);
-                AEGfxPrint(Graphics::font_id, label, -lw * 0.5f, cy / 450.0f, scale, 1.0f, 1.0f, 1.0f, 1.0f); // centered label
+                AEGfxPrint(Graphics::font_id, label, -lw * 0.5f, textNDC_Y, scale, 1.0f, 1.0f, 1.0f, 1.0f); // centered label
             };
 
-        DrawBtn(restartY, "RESTART", 0.6f);
-        DrawBtn(leaderY, "LEADERBOARD", 0.6f);
-        DrawBtn(menuY, "MAIN MENU", 0.6f);
+        DrawBtn(restartY, "RESTART", 0.6f, -0.15f);                    // NDC Y values copied from GameOver.cpp
+        DrawBtn(leaderY, "LEADERBOARD", 0.6f, -0.37f);
+        DrawBtn(menuY, "MAIN MENU", 0.6f, -0.59f);
 
-        //  click handling 
+        // ---- Click handling ----
         if (AEInputCheckTriggered(AEVK_LBUTTON))
         {
             s32 mx, my;
@@ -267,10 +271,12 @@ namespace
         }
     }
 
+    // ---------------------------------------------------------------------------
     // DrawTimerEffects
-    //    green -> yellow -> red as time drops
-    //    one time screen flash when time hits 10s 
-    //    number blinks under 10s
+    //   1. Top-center countdown number, green -> yellow -> red as time drops
+    //   2. One-shot screen flash when time hits 10s ("last chance" moment)
+    //   3. Number blinks on/off rapidly when under 10s
+    // ---------------------------------------------------------------------------
     void DrawTimerEffects()
     {
         if (!bgMesh || Graphics::font_id < 0) return;
@@ -278,10 +284,11 @@ namespace
         float dt = (float)AEFrameRateControllerGetFrameTime();
         float pct = time_remaining / TOTAL_TIME;                            // 1.0 = full, 0.0 = empty
 
-        //  screen flash AT 10s
-        // When time crosses 10s for the first time, fire a  red flash
-        // over the whole screen
-        
+        // ================================================================
+        // 1. ONE-SHOT SCREEN FLASH AT 10s
+        // When time crosses 10s for the first time, fire a brief red flash
+        // over the whole screen to signal "last chance"
+        // ================================================================
         if (!flash_triggered && time_remaining <= 10.0f)
         {
             flash_triggered = true;                                         // only fire once per round
@@ -302,8 +309,10 @@ namespace
             Mesh_Renderer(bgMesh, 0.0f, 0.0f, 1600.0f, 900.0f, 0.0f);     // full screen quad
         }
 
-        // BLINK LOGIC 
+        // ================================================================
+        // 2. BLINK LOGIC (sub-10s only)
         // Toggle blink_visible on a fixed interval so the number flashes
+        // ================================================================
         if (time_remaining <= 10.0f)
         {
             blink_timer += dt;
@@ -319,9 +328,10 @@ namespace
             blink_timer = 0.0f;
         }
 
-        //  COUNTDOWN NUMBER  green -> yellow -> red
-        // grows abit bigger for urgency (tentative canm remove if weird)
-
+        // ================================================================
+        // 3. COUNTDOWN NUMBER — top-center, green -> yellow -> red
+        // Scale grows slightly under 10s for extra urgency
+        // ================================================================
         if (!blink_visible) return;                                         // skip drawing when in blink-off phase
 
         AEGfxSetTransparency(1.0f);
@@ -346,7 +356,9 @@ namespace
 
 } // anonymous namespace
 
+// ---------------------------------------------------------------------------
 // Public functions called by GameStateManager
+// ---------------------------------------------------------------------------
 
 void GameTimeMode_Init()
 {
@@ -531,7 +543,9 @@ void GameTimeMode_Update()
         scoreWritten = true;                                                // guard so this only runs once
     }
 
-    // RENDERING 
+    // ------------------------------------------------------------------------
+    // RENDERING (always runs, even when paused or timed out)
+    // ------------------------------------------------------------------------
 render_only:
 
     // ---- Background ----
