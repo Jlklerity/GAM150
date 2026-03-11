@@ -221,6 +221,10 @@ void GameTimeMode_Init()
     if (playerMesh) AEGfxMeshFree(playerMesh);                             // free old mesh if restarting
     playerMesh = Sprite_Mesh(SPRITE_UV_WIDTH, SPRITE_UV_HEIGHT);           // build sprite sheet mesh
 
+    if (bgTexture1) { AEGfxTextureUnload(bgTexture1); bgTexture1 = nullptr; }
+    if (bgTexture2) { AEGfxTextureUnload(bgTexture2); bgTexture2 = nullptr; }
+    if (bgMesh) { AEGfxMeshFree(bgMesh); bgMesh = nullptr; }
+
     // ---- Background textures and quad mesh ----
     bgTexture1 = AEGfxTextureLoad("Assets/background.png");
     bgTexture2 = AEGfxTextureLoad("Assets/background.png");                // placeholder for alt bg slot
