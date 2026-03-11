@@ -25,49 +25,9 @@
 #include <fstream>
 #include <algorithm>
 
-// ---------------------------------------------------------------------------
-// Timed leaderboard helpers
-// These live here so they don't touch Leaderboard.cpp at all.
-// The timed board uses a separate file: Assets/leaderboard_timed.txt
-// ---------------------------------------------------------------------------
 namespace
 {
-    // ---- Timed leaderboard file path ----
-    static const char* TIMED_LB_PATH = "Assets/leaderboard_timed.txt";
-
-    // ---- Simple read / write / display for the timed board ----
-    struct TimedEntry
-    {
-        std::string name;
-        int         score;
-    };
-
-    static std::vector<TimedEntry> s_timedBoard;
-
-    void TimedLB_Read()
-    {
-        s_timedBoard.clear();                                               // flush previous data before reading
-        std::ifstream f(TIMED_LB_PATH);
-        if (!f.is_open()) return;                                           // file may not exist on first run, thats fine
-        std::string n; int s;
-        while (f >> n >> s)
-            s_timedBoard.push_back({ n, s });                               // push each name-score pair into the vector
-        f.close();
-    }
-
-    void TimedLB_Write(const std::string& name, int score)
-    {
-        TimedLB_Read();                                                     // load existing entries first so we dont overwrite them
-        s_timedBoard.push_back({ name, score });                            // add the new entry
-        std::sort(s_timedBoard.begin(), s_timedBoard.end(),
-            [](const TimedEntry& a, const TimedEntry& b) { return a.score > b.score; }); // sort highest to lowest
-        std::ofstream f(TIMED_LB_PATH);
-        if (!f.is_open()) return;                                           // cant write if file fails to open
-        for (const auto& e : s_timedBoard)
-            f << e.name << " " << e.score << "\n";                         // write each entry as "name score" on its own line
-        f.close();
-    }
-
+   
     // ---------------------------------------------------------------------------
     // All game state for timed mode (mirrors game.cpp anonymous namespace)
     // ---------------------------------------------------------------------------
@@ -140,137 +100,7 @@ namespace
     static const float FLASH_DURATION = 0.35f;                              // how long the screen flash lasts
     static const float BLINK_INTERVAL = 0.35f;                              // how fast the number blinks under 10s
 
-    // ---------------------------------------------------------------------------
-    // Draw the timed leaderboard overlay (called instead of Leaderboard_System::Display)
-    // ---------------------------------------------------------------------------
-    void DrawTimedLeaderboard()
-    {
-        AEGfxSetRenderMode(AE_GFX_RM_COLOR);
-        AEGfxSetBlendMode(AE_GFX_BM_BLEND);
-        AEGfxSetTransparency(0.85f);                                        // semi-transparent black background
-        AEGfxSetColorToMultiply(0.0f, 0.0f, 0.0f, 1.0f);
-        Mesh_Renderer(bgMesh, 0.0f, 0.0f, 1600.0f, 900.0f, 0.0f);
-        AEGfxSetTransparency(1.0f);                                         // reset transparency for text
-
-        if (Graphics::font_id < 0) return;
-
-        // ---- Title ----
-        const char* title = "TIMED MODE - LEADERBOARD";
-        float tw, th;
-        AEGfxGetPrintSize(Graphics::font_id, title, 0.7f, &tw, &th);
-        AEGfxPrint(Graphics::font_id, title, -tw * 0.5f, 0.75f, 0.7f, 1.0f, 0.85f, 0.2f, 1.0f); // centered, gold color
-
-        // ---- Mouse wheel scrolling ----
-        s32 wheel = 0;
-        AEInputMouseWheelDelta(&wheel);
-        int maxScroll = ((int)s_timedBoard.size() - LB_VISIBLE > 0) ? (int)s_timedBoard.size() - LB_VISIBLE : 0; // max scroll = entries that dont fit
-        if (wheel > 0) lb_scroll = (lb_scroll - 1.0f < 0.0f) ? 0.0f : lb_scroll - 1.0f;          // scroll up toward older entries
-        if (wheel < 0) lb_scroll = (lb_scroll + 1.0f > (float)maxScroll) ? (float)maxScroll : lb_scroll + 1.0f; // scroll down toward newer
-
-        float startY = 0.5f;
-        float spacing = 0.2f;
-
-        for (int i = 0; i < LB_VISIBLE; ++i)
-        {
-            int idx = (int)lb_scroll + i;
-            if (idx >= (int)s_timedBoard.size()) break;                     // stop if past end of list
-
-            const auto& e = s_timedBoard[(size_t)idx];
-            std::string line = std::to_string(idx + 1) + ".   " + e.name + "   " + std::to_string(e.score); // format as "rank. name score"
-            float y = startY - (i * spacing);
-            AEGfxPrint(Graphics::font_id, line.c_str(), -0.3f, y, 0.9f, 1.0f, 1.0f, 1.0f, 1.0f);
-        }
-
-        // ---- Scroll indicators ----
-        if (lb_scroll > 0)
-            AEGfxPrint(Graphics::font_id, "^", 0.4f, 0.6f, 0.8f, 0.8f, 0.8f, 0.8f, 1.0f);        // more entries above
-        if ((int)lb_scroll < maxScroll)
-            AEGfxPrint(Graphics::font_id, "v", 0.4f, -0.6f, 0.8f, 0.8f, 0.8f, 0.8f, 1.0f);       // more entries below
-
-        // ---- Return prompt ----
-        const char* prompt = "Press ESC or Click to Return";
-        float pw, ph;
-        AEGfxGetPrintSize(Graphics::font_id, prompt, 0.45f, &pw, &ph);
-        AEGfxPrint(Graphics::font_id, prompt, -pw * 0.5f, -0.85f, 0.45f, 1.0f, 1.0f, 0.0f, 1.0f); // yellow
-
-        if (AEInputCheckTriggered(AEVK_ESCAPE) || AEInputCheckTriggered(AEVK_LBUTTON))
-            openLeaderboard = false;                                        // close leaderboard, return to timeout screen
-    }
-
-    // ---------------------------------------------------------------------------
-    // Draw the timeout / end-of-round screen (equivalent of GameOver for timed mode)
-    // ---------------------------------------------------------------------------
-    void DrawTimeoutScreen()
-    {
-        if (Graphics::font_id < 0) return;
-
-        // ---- "TIME'S UP!" header ----
-        const char* header = "TIME'S UP!";
-        float hw, hh;
-        AEGfxGetPrintSize(Graphics::font_id, header, 1.0f, &hw, &hh);
-        AEGfxPrint(Graphics::font_id, header, -hw * 0.5f, 0.55f, 1.0f, 1.0f, 0.85f, 0.2f, 1.0f); // centered, gold color
-
-        // ---- Final score display ----
-        std::string scoreStr = "Score: " + std::to_string(score.score_value);
-        float sw, sh;
-        AEGfxGetPrintSize(Graphics::font_id, scoreStr.c_str(), 0.7f, &sw, &sh);
-        AEGfxPrint(Graphics::font_id, scoreStr.c_str(), -sw * 0.5f, 0.25f, 0.7f, 1.0f, 1.0f, 1.0f, 1.0f); // centered white
-
-        // ---- Button layout (same positions as GameOver) ----
-        float btnW = 300.0f;
-        float btnH = 60.0f;
-        float btnX = 0.0f;
-        float restartY = -50.0f;
-        float leaderY = -150.0f;
-        float menuY = -250.0f;
-
-        // helper lambda: draw a grey button background then its label centered on top
-        auto DrawBtn = [&](float cy, const char* label, float scale, float textNDC_Y)
-            {
-                AEGfxSetRenderMode(AE_GFX_RM_COLOR);
-                AEGfxSetBlendMode(AE_GFX_BM_BLEND);
-                AEGfxSetTransparency(1.0f);
-                AEGfxSetColorToMultiply(0.3f, 0.3f, 0.3f, 1.0f);              // dark grey button bg
-                Mesh_Renderer(bgMesh, btnX, cy, btnW, btnH, 0.0f);
-                float lw, lh;
-                AEGfxGetPrintSize(Graphics::font_id, label, scale, &lw, &lh);
-                AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);
-                AEGfxPrint(Graphics::font_id, label, -lw * 0.5f, textNDC_Y, scale, 1.0f, 1.0f, 1.0f, 1.0f); // centered label
-            };
-
-        DrawBtn(restartY, "RESTART", 0.6f, -0.15f);                    // NDC Y values copied from GameOver.cpp
-        DrawBtn(leaderY, "LEADERBOARD", 0.6f, -0.37f);
-        DrawBtn(menuY, "MAIN MENU", 0.6f, -0.59f);
-
-        // ---- Click handling ----
-        if (AEInputCheckTriggered(AEVK_LBUTTON))
-        {
-            s32 mx, my;
-            AEInputGetCursorPosition(&mx, &my);
-            float wx = (float)mx - 800.0f;                                 // convert cursor to world x
-            float wy = 450.0f - (float)my;                                 // convert cursor to world y
-            float hW = btnW * 0.5f;
-            float hH = btnH * 0.5f;
-
-            if (wx >= btnX - hW && wx <= btnX + hW && wy >= restartY - hH && wy <= restartY + hH)
-                gGameStateNext = GS_RESTART;                               // restart timed mode
-
-            if (wx >= btnX - hW && wx <= btnX + hW && wy >= leaderY - hH && wy <= leaderY + hH)
-            {
-                TimedLB_Read();                                             // refresh board data before showing
-                lb_scroll = 0.0f;                                          // snap scroll to top
-                openLeaderboard = true;
-            }
-
-            if (wx >= btnX - hW && wx <= btnX + hW && wy >= menuY - hH && wy <= menuY + hH)
-            {
-                std::string blank = "";
-                ResetPlayerName(blank);                                     // clear stored name before returning to menu
-                gGameStateNext = GS_MAIN_MENU;
-            }
-        }
-    }
-
+   
     // ---------------------------------------------------------------------------
     // DrawTimerEffects
     //   1. Top-center countdown number, green -> yellow -> red as time drops
@@ -539,7 +369,7 @@ void GameTimeMode_Update()
     if (isTimedOut && !scoreWritten)
     {
         std::string name = Main_Menu_GetPlayerName();
-        TimedLB_Write(name, score.score_value);                             // save to timed leaderboard file
+        Leaderboard_System::Write_TimeLeaderboard(name, score.score_value);
         scoreWritten = true;                                                // guard so this only runs once
     }
 
@@ -599,9 +429,9 @@ render_only:
     if (isTimedOut)
     {
         if (!openLeaderboard)
-            DrawTimeoutScreen();                                            // show TIME'S UP + buttons
+            UiGameOver::DrawTimeoutScreen(score, bgMesh, openLeaderboard);  // show leaderboard when leaderboard clicked 
         else
-            DrawTimedLeaderboard();                                         // show timed leaderboard overlay
+            Leaderboard_System::Display_TimeLeaderboard(openLeaderboard);   // show timed leaderboard overlay
     }
 
     DebugConsole::Render();                                                 // console always renders on top of everything

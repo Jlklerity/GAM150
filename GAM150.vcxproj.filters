@@ -50,5 +50,6 @@
   </ItemGroup>
   <ItemGroup>
     <Text Include="Assets\leaderboard.txt" />
+    <Text Include="Assets\leaderboard_timed.txt" />
   </ItemGroup>
 </Project>

@@ -215,7 +215,11 @@ void Main_Menu_Input()
     worldY = (winH * 0.5f) - (float)mouseY;                                                                                 // convert screen Y to world Y
 
     if (selected_mode == "") selected_mode = "ZEN";                                                                         // default mode safety check
-
+    
+    if (AEInputCheckTriggered(AEVK_ESCAPE))
+    {
+        gGameStateNext = GS_QUIT;
+    }
     if (AEInputCheckTriggered(AEVK_LBUTTON))                                                                                // check for left click
     {
         // --- Check Play Button ---
