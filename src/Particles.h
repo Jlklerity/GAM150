@@ -52,3 +52,12 @@ void Particles_SpawnDamageImpact(float x, float y);
 @param      word_length     Enemy word length (3-8) used to pick burst color.
 */
 void Particles_SpawnKillImpact(float x, float y, int word_length);
+
+/*
+@function   Particles_TriggerShake
+@brief      Starts a screen shake with custom duration and intensity.
+            Safe to call at any time; overwrites any ongoing shake.
+@param      duration    Seconds the shake lasts.
+@param      intensity   Max pixel offset per axis.
+*/
+void Particles_TriggerShake(float duration, float intensity);

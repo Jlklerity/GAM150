@@ -433,5 +433,15 @@ void Particles_SpawnKillImpact(float x, float y, int word_length)
         if (i % 2 == 0) { p.r = cr;  p.g = cg;  p.b = cb; }
         else { p.r = cr2; p.g = cg2; p.b = cb2; }
     }
-    
+
 }
+
+#pragma warning(push)
+#pragma warning(disable: 26440)  // VCR003: suppress 'function can be made static' - intentionally non-static, declared in Particles.h
+void Particles_TriggerShake(float duration, float intensity)
+{
+    g_shake.timer = duration;
+    g_shake.duration = duration;
+    g_shake.intensity = intensity;
+}
+#pragma warning(pop)
