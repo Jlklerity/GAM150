@@ -21,6 +21,8 @@
     <ClCompile Include="src\Weather.cpp" />
     <ClCompile Include="src\ScreenTransition.cpp" />
     <ClCompile Include="src\Boss.cpp" />
+    <ClCompile Include="src\BackgroundParallex.cpp" />
+    <ClCompile Include="src\LaserBeam.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\Enemy.h" />
@@ -42,6 +44,8 @@
     <ClInclude Include="src\Weather.h" />
     <ClInclude Include="src\ScreenTransition.h" />
     <ClInclude Include="src\Boss.h" />
+    <ClInclude Include="src\BackgroundParallex.h" />
+    <ClInclude Include="src\LaserBeam.h" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="Assets\characterSheet.png" />

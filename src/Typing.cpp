@@ -6,6 +6,7 @@
 #include "MainMenu.h"
 #include "Typing.h"
 #include "Enemy.h"
+#include "LaserBeam.h"
 #include <cstring>
 #include <iostream>
 
@@ -492,6 +493,7 @@ void Typing_UpdateAndApplyToEnemies(std::vector<Data::Enemy>& enemy_pool, Data::
                 // -------------------------
                 if (target.enemy_type == Data::EnemyType::FRIENDLY)
                 {
+                    LaserBeam_Fire(target.enemy_position_x, target.enemy_position_y); // fire laser to enemy
                     EnemySystem::Enemy_Killed(target, health);                                                  // kill friendly
                     if (health.health_current < 0) health.health_current = 0;                                   // clamp
                 }
@@ -508,6 +510,7 @@ void Typing_UpdateAndApplyToEnemies(std::vector<Data::Enemy>& enemy_pool, Data::
                 // -------------------------
                 else
                 {
+                    LaserBeam_Fire(target.enemy_position_x, target.enemy_position_y); // fire laser to enemy
                     EnemySystem::Enemy_Killed(target, health);                                                  // kill
                     score.score_value += target.enemy_word_length * 10;                                         // reward
                 }
