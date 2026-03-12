@@ -27,38 +27,38 @@ modifying the core enemy logic.
 *//*_________________________________________________________________________________________________________________________________________________________________________________________________*/
 namespace EnemyConfig
 {
-	// Enemy pool sizing and safety limits
-	extern const int   MAX_ENEMIES;                                                                                         // max enemies stored in the pool
-	extern const int   MAX_SPAWN_TRIES;                                                                                     // max attempts to find a safe spawn spot
-	extern const int   MAX_WORD_TRIES;                                                                                      // max attempts to find a unique word
+    // Enemy pool sizing and safety limits
+    extern const int   MAX_ENEMIES;                                                                                         // max enemies stored in the pool
+    extern const int   MAX_SPAWN_TRIES;                                                                                     // max attempts to find a safe spawn spot
+    extern const int   MAX_WORD_TRIES;                                                                                      // max attempts to find a unique word
 
-	// Visual and text sizing
-	extern const float ENEMY_SIZE_PX;                                                                                       // enemy sprite size
-	extern const float TEXT_SCALE;                                                                                          // enemy word text scale
+    // Visual and text sizing
+    extern const float ENEMY_SIZE_PX;                                                                                       // enemy sprite size
+    extern const float TEXT_SCALE;                                                                                          // enemy word text scale
 
-	// Difficulty tuning
-	extern const float DIFFICULTY_RAMP_PER_SECOND;                                                                          // difficulty gain per second
-	extern const float DIFFICULTY_MAX;                                                                                      // cap for difficulty value
+    // Difficulty tuning
+    extern const float DIFFICULTY_RAMP_PER_SECOND;                                                                          // difficulty gain per second
+    extern const float DIFFICULTY_MAX;                                                                                      // cap for difficulty value
 
-	// Random spawn tuning
-	extern const float RANDOM_SPAWN_INTERVAL_START_SECONDS;                                                                 // starting spawn interval
-	extern const float RANDOM_SPAWN_INTERVAL_MIN_SECONDS;                                                                   // minimum spawn interval
-	extern const float RANDOM_SPAWN_INTERVAL_DECREASE_PER_LEVEL;                                                            // interval decrease per difficulty level
+    // Random spawn tuning
+    extern const float RANDOM_SPAWN_INTERVAL_START_SECONDS;                                                                 // starting spawn interval
+    extern const float RANDOM_SPAWN_INTERVAL_MIN_SECONDS;                                                                   // minimum spawn interval
+    extern const float RANDOM_SPAWN_INTERVAL_DECREASE_PER_LEVEL;                                                            // interval decrease per difficulty level
 
-	// Fall speed tuning
-	extern const float ENEMY_FALL_SPEED_START;                                                                              // starting fall speed
-	extern const float ENEMY_FALL_SPEED_INCREASE_PER_LEVEL;                                                                 // fall speed increase per difficulty level
+    // Fall speed tuning
+    extern const float ENEMY_FALL_SPEED_START;                                                                              // starting fall speed
+    extern const float ENEMY_FALL_SPEED_INCREASE_PER_LEVEL;                                                                 // fall speed increase per difficulty level
 
-	// Death drop tuning
-	extern const float ENEMY_DEATH_FALL_SPEED;                                                                              // fast drop speed when killed
-	extern const float ENEMY_DEATH_LINGER_SECONDS;                                                                          // time to keep a killed enemy visible before removing it
+    // Death drop tuning
+    extern const float ENEMY_DEATH_FALL_SPEED;                                                                              // fast drop speed when killed
+    extern const float ENEMY_DEATH_LINGER_SECONDS;                                                                          // time to keep a killed enemy visible before removing it
 
-	// Spacing
-	extern const float ENEMY_OVERLAP_PADDING_PX;                                                                            // extra padding between enemies
+    // Spacing
+    extern const float ENEMY_OVERLAP_PADDING_PX;                                                                            // extra padding between enemies
 
-	// Lane system
-	extern const int   ENEMY_LANE_COUNT;                                                                                    // number of horizontal lanes
-	extern const float ENEMY_LANE_MIN_GAP_PX;                                                                               // min vertical spacing per lane
+    // Lane system
+    extern const int   ENEMY_LANE_COUNT;                                                                                    // number of horizontal lanes
+    extern const float ENEMY_LANE_MIN_GAP_PX;                                                                               // min vertical spacing per lane
 }
 /*___________________________________________________________________________________________________________________________________________________________________________________________________*/
 
@@ -152,7 +152,7 @@ namespace Data
     {
         NORMAL,                                                                                                             // standard enemy
         FRIENDLY,                                                                                                           // friendly npc
-        SHIELDED                                                                                                            // enemy with shield
+        SHIELDED,                                                                                                           // enemy with shield
     };
 
     /*
@@ -199,9 +199,10 @@ namespace Data
     This struct stores pointers to the meshes needed to draw enemies and optional debug shapes.
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
     struct Meshes
-    {                                      
-        AEGfxVertexList* enemy_sprite_mesh = nullptr;                                                                       // 2-row mesh (normal + friendly)
+    {
+        AEGfxVertexList* enemy_sprite_mesh = nullptr;                                                                       // 2-row mesh (normal enemies)
         AEGfxVertexList* shield_sprite_mesh = nullptr;                                                                      // 3-row mesh (shield enemy)
+        AEGfxVertexList* friendly_sprite_mesh = nullptr;                                                                    // 3-row mesh (friendly)
         AEGfxVertexList* debug_box_mesh = nullptr;                                                                          // box mesh for debug shapes
     };
 
@@ -577,7 +578,7 @@ namespace HealthSystem
     0 and 'h.health_max' to prevent underflow or overflow.
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
     void Health_Add(Data::Health& h, float amount);
-     
+
 
 } // HealthSystem namespace end
 /*___________________________________________________________________________________________________________________________________________________________________________________________________*/
@@ -591,6 +592,19 @@ handling frame looping, and computing the UV offsets for the current frame.
 *//*_________________________________________________________________________________________________________________________________________________________________________________________________*/
 namespace Animation
 {
+    /*
+    @function       Animation_ApplyUv
+    @params         anim (Data::SpriteAnim&)
+    @brief          Recomputes and writes the UV x/y offsets from the current frame index and row.
+
+    @usage          Animation_SetFrame, Animation_Update
+
+    This function calculates the column from the current frame index, reads the current row index,
+    and updates the UV coordinates on the animation struct. It is called whenever the frame changes
+    to keep the UV offsets in sync with the sprite sheet layout.
+    *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
+    void Animation_ApplyUv(Data::SpriteAnim& anim);
+
     /*
     @function       Animation_SetFrame
     @params         anim (Data::SpriteAnim&), frame_index (int)
@@ -637,7 +651,7 @@ namespace EnemySystem
 
     @usage          Enemy_PickUniqueWord
 
-    This function scans all active enemies and returns true if any of them already use the given word. 
+    This function scans all active enemies and returns true if any of them already use the given word.
     If include_hidden_words is true, it also checks the hidden second word on shielded enemies.
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
     bool Enemy_IsWordInUse(const std::vector<Data::Enemy>& pool, const std::string& word_text, bool include_hidden_words);
@@ -741,12 +755,12 @@ namespace EnemySystem
     flag so the enemy can drop off-screen, and marks damage as already handled so a killed enemy will not
     apply landing damage.
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
-    void Enemy_Killed(Data::Enemy& e);
+    void Enemy_Killed(Data::Enemy& e, Data::Health& health);
 
     /*
     @function       Enemy_Update
     @params         e (Data::Enemy&), area (const Data::EnemyArea&), dt (float), health (Data::Health&)
-    @brief          Updates an enemy’s animation, movement, and state transitions for the current frame.
+    @brief          Updates an enemy's animation, movement, and state transitions for the current frame.
 
     @usage          wWinMain
 
@@ -809,6 +823,19 @@ namespace EnemySystem
     bool Enemy_IsSpawnSpotFree(float spawn_x, float spawn_y, const std::vector<Data::Enemy>& pool, float half_size_with_padding);
 
     /*
+    @function       Enemy_FindSpawnLane
+    @params         pool (const std::vector<Data::Enemy>&), area (const Data::EnemyArea&), overlap_half (float), usable_min_x (float), usable_max_x (float), out_chosen_x (float&), out_chosen_lane (int&)
+    @brief          Searches for a free lane and x position to spawn an enemy at the spawn line.
+
+    @usage          Enemy_SpawnFromPool, Enemy_SpawnFriendlyFromPool, Enemy_SpawnShieldedFromPool
+
+    This function first tries random lanes up to MAX_SPAWN_TRIES, then falls back to scanning all lanes
+    in order. Returns true if a valid lane was found, false otherwise. The chosen x and lane index are
+    written to out_chosen_x and out_chosen_lane.
+    *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
+    bool Enemy_FindSpawnLane(const std::vector<Data::Enemy>& pool, const Data::EnemyArea& area, float overlap_half, float usable_min_x, float usable_max_x, float& out_chosen_x, int& out_chosen_lane);
+
+    /*
     @function       Enemy_SpawnFromPool
     @params         pool (std::vector<Data::Enemy>&), free_slots (std::deque<int>&), area (const Data::EnemyArea&), bank (const Data::WordBank&), word_length (int)
     @brief          Spawns a new enemy into an available pool slot using lane-based, non-overlapping placement.
@@ -819,11 +846,11 @@ namespace EnemySystem
     horizontal bounds based on sprite size and word width, then searches for a valid lane position at the
     spawn line. It first tries random lanes up to MAX_SPAWN_TRIES, then falls back to scanning all lanes.
     A spawn is accepted only if the lane has enough vertical spacing near the spawn line and the new enemy
-    won’t overlap any active enemy. When a valid spot is found, the enemy is created with a difficulty-
+    won't overlap any active enemy. When a valid spot is found, the enemy is created with a difficulty-
     scaled fall speed and inserted into the pool.
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
     void Enemy_SpawnFromPool(std::vector<Data::Enemy>& pool, std::deque<int>& free_slots, const Data::EnemyArea& area, const Data::WordBank& bank, int word_length);
-    
+
     /*
     @function       Enemy_SpawnFriendlyFromPool
     @params         pool (std::vector<Data::Enemy>&), free_slots (std::deque<int>&), area (const Data::EnemyArea&), bank (const Data::WordBank&), min_word_len (int), max_word_len (int), speed_multiplier (float);
@@ -952,6 +979,20 @@ namespace EnemyManage
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
     void EnemyManage_FreeMeshes(Data::Meshes& meshes);
 
-    
+    /*
+    @function       EnemyPool_Free
+    @params         pool (std::vector<Data::Enemy>&), free_slots (std::deque<int>&)
+    @brief          Deactivates all enemies in the pool and rebuilds the free-slot queue.
+
+    @usage          Game_Exit
+
+    Iterates every slot regardless of enemy type (normal, friendly, shielded).  Marks each slot
+    inactive, clears its word and state, then pushes its index back into free_slots so the pool
+    is ready for a clean re-init without a full resize.  The boss slot must already have been
+    returned by Boss_Free before this is called.
+    *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
+    void EnemyPool_Free(std::vector<Data::Enemy>& pool, std::deque<int>& free_slots);
+
+
 } // EnemyManage namespace end
 /*___________________________________________________________________________________________________________________________________________________________________________________________________*/

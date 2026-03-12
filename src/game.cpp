@@ -15,6 +15,7 @@
 #include "GameOver.h"
 #include "Pause.h"
 #include "Weather.h"
+#include "Boss.h"
 
 
 namespace {
@@ -49,9 +50,11 @@ namespace {
     bool openLeaderboard = false;
 
     /*
-    @overview   Enemy
+    @overview   Enemy and Boss
     @author     Wong Zi Yuan (w.ziyuan@digipen.edu)
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
+
+    // Enemy
     Data::WordBank      word_bank{};                                                                                        // create word bank container
     Data::Health        health{};                                                                                           // create health state
     Data::Score         score{};                                                                                            // create score state
@@ -67,6 +70,9 @@ namespace {
     bool is_difficulty_debug_visible = false;                                                                               // toggle for difficulty text
 
     float random_spawn_timer_seconds = 9999.0f;                                                                             // start high to spawn immediately
+
+    // Boss
+    bool boss_spawning_blocked = false;                                                                                     // tracks whether the boss is blocking normal enemy spawning
     /*_______________________________________________________________________________________________________________________________________________________________________________________________*/
 
     // Typing state
@@ -102,9 +108,11 @@ void Game_Init()
     AE_ASSERT_MESG(bgTexture1, "Failed to load background!");
 
     /*
-    @overview   Enemy
+    @overview   Enemy and Boss
     @author     Wong Zi Yuan (w.ziyuan@digipen.edu)
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
+
+    // Enemy
     EnemyManage::EnemyManage_InitEngine(word_bank);                                                                         // start engine and load words
     HealthSystem::Health_Init(health);                                                                                      //Start game with full health
     meshes = EnemyManage::EnemyManage_LoadMeshes(enemy_animation);                                                          // load textures and meshes
@@ -118,6 +126,10 @@ void Game_Init()
         enemy_pool[(size_t)i].enemy_is_active = false;                                                                      // mark slot inactive
         free_slot_queue.push_back(i);                                                                                       // push slot index into free queue
     }
+
+    // Boss
+    boss_spawning_blocked = false;                                                                                          // make sure normal spawning is allowed at the start
+    BossSystem::Boss_Init(meshes, word_bank);                                                                               // load boss assets and reset all boss state
     /*_______________________________________________________________________________________________________________________________________________________________________________________________*/
 
     bgMesh = Rect_Mesh(1.0f, 1.0f, 0xFFFFFFFF);
@@ -175,18 +187,27 @@ void Game_Update()
         }
         dt *= PowerUpSystem::GetTimeScale(); // azfar code
 
+        /*
+        @overview   Boss update and enemy spawning
+        @author     Wong Zi Yuan (w.ziyuan@digipen.edu)
+        *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
         DifficultySystem::Difficulty_UpdateOverTime(dt);                                                                              // increase difficulty over time
 
-        if (is_random_spawning_enabled)                                                                                               // check if auto spawning is on
-        {
-            random_spawn_timer_seconds += dt;                                                                                         // add dt to spawn timer
-            float interval = DifficultySystem::Difficulty_GetSpawnIntervalSeconds();                                                  // get current spawn interval
+        BossSystem::Boss_Update(enemy_pool, free_slot_queue, enemy_area, word_bank, dt, boss_spawning_blocked);                       // run boss logic for this frame
 
-            if (random_spawn_timer_seconds >= interval)                                                                               // check if time to spawn
+        if (boss_spawning_blocked)                                                                                                    // check if the boss is preventing normal spawns
+            random_spawn_timer_seconds = 0.0f;                                                                                        // reset the spawn timer so no enemy spawns while boss is active
+
+        if (is_random_spawning_enabled && !boss_spawning_blocked)                                                                     // only spawn normal enemies when spawning is on and the boss is not active
+        {
+            random_spawn_timer_seconds += dt;                                                                                         // count up toward the next spawn
+            float interval = DifficultySystem::Difficulty_GetSpawnIntervalSeconds();                                                  // get how many seconds to wait between spawns based on current difficulty
+
+            if (random_spawn_timer_seconds >= interval)                                                                               // check if enough time has passed to spawn the next enemy
             {
-                random_spawn_timer_seconds = 0.0f;                                                                                    // reset spawn timer
-                int roll = Utility::Utility_RandInt(0, 99);                                                                           // roll 0..99
-                int max_len = DifficultySystem::Difficulty_GetUnlockedMaxWordLength();                                                // scale max word length with difficulty
+                random_spawn_timer_seconds = 0.0f;                                                                                    // reset the timer after a spawn
+                int roll = Utility::Utility_RandInt(0, 99);                                                                           // roll a random number to decide which enemy type to spawn
+                int max_len = DifficultySystem::Difficulty_GetUnlockedMaxWordLength();                                                // get the longest word allowed at the current difficulty level
 
                 if (roll < 15)                                                                                                        // 15% chance: spawn a friendly enemy
                 {
@@ -198,7 +219,7 @@ void Game_Update()
                 }
                 else                                                                                                                  // 70% chance: spawn a normal enemy
                 {
-                    int len = DifficultySystem::Difficulty_GetRandomWordLength();                                                     // normal word length logic
+                    int len = DifficultySystem::Difficulty_GetRandomWordLength();                                                     // pick a random word length within the current difficulty range
                     EnemySystem::Enemy_SpawnFromPool(enemy_pool, free_slot_queue, enemy_area, word_bank, len);
                 }
             }
@@ -207,24 +228,27 @@ void Game_Update()
         for (int i = 0; i < EnemyConfig::MAX_ENEMIES; ++i)                                                                            // loop through all pool slots
         {
             Data::Enemy& e = enemy_pool[(size_t)i];                                                                                   // reference enemy slot
-            bool was_active = e.enemy_is_active;
-            bool was_damage_done = e.enemy_did_damage;
+            bool was_active = e.enemy_is_active;                                                                                      // remember if this enemy was alive before the update
+            bool was_damage_done = e.enemy_did_damage;                                                                                // remember if this enemy already dealt its damage before the update
 
-            EnemySystem::Enemy_Update(e, enemy_area, dt, health);
+            if (BossSystem::Boss_GetKillWordSlot() >= 0 && i == BossSystem::Boss_GetKillWordSlot()) continue;                         // skip the boss kill word slot so Boss_Update stays in full control of it
 
-            if (was_active && !e.enemy_is_active)
+            EnemySystem::Enemy_Update(e, enemy_area, dt, health);                                                                     // run movement, animation, landing and damage logic for this enemy
+
+            if (was_active && !e.enemy_is_active)                                                                                     // check if the enemy just became inactive this frame
             {
-                free_slot_queue.push_back(i);
+                free_slot_queue.push_back(i);                                                                                         // return this slot to the free list so it can be reused
 
-                if (!was_damage_done)
-                    Particles_SpawnDamageImpact(e.enemy_position_x, e.enemy_position_y);
-                else
-                    Particles_SpawnKillImpact(e.enemy_position_x, e.enemy_position_y, e.enemy_word_length);
+                if (!was_damage_done)                                                                                                 // check if the enemy was killed by the player before landing
+                    Particles_SpawnDamageImpact(e.enemy_position_x, e.enemy_position_y);                                              // spawn a damage hit effect since the enemy was killed by the player
+                else                                                                                                                  // enemy landed and dealt damage before being killed
+                    Particles_SpawnKillImpact(e.enemy_position_x, e.enemy_position_y, e.enemy_word_length);                           // spawn a landing impact effect since the enemy reached the bottom
             }
         }
         EnemySystem::Enemy_ResolveLaneStacking(enemy_pool, enemy_area);                                                               // fix spacing in lanes
+        /*_______________________________________________________________________________________________________________________________________________________________________________________________*/
 
-        PowerUpSystem::Update(dt, enemy_pool, enemy_area);
+        PowerUpSystem::Update(dt, enemy_pool, enemy_area, health);
         Particles_Update(dt);
         Weather_Update(dt, enemy_pool);
         // mouse click -> convert to world coords
@@ -299,27 +323,34 @@ render_only:
 
     Typing_Render();
 
-
     /*
     @overview   Draw enemies and debug overlays
     @author     Wong Zi Yuan (w.ziyuan@digipen.edu)
-    *//*_______________________________________________________________________________________________________________________________________*/
+        *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
     if (is_enemy_area_box_visible)                                                                                          // check debug draw flag
     {
         UiSystem::Debug_DrawEnemyAreaBox(meshes, enemy_area);                                                               // draw enemy area box
         UiSystem::Debug_DrawEnemyLaneLines(meshes, enemy_area);                                                             // draw lane lines
     }
 
-    for (const auto& e : enemy_pool)                                                                                        // loop through enemies for sprite draw
-        EnemySystem::Enemy_Draw(meshes, e);                                                                                 // draw enemy sprite
+    for (int di = 0; di < (int)enemy_pool.size(); ++di)                                                                     // loop through enemies for sprite draw
+    {
+        if (BossSystem::Boss_GetKillWordSlot() >= 0 && di == BossSystem::Boss_GetKillWordSlot()) continue;                  // skip the boss kill word slot since Boss_Draw handles it separately
+        EnemySystem::Enemy_Draw(meshes, enemy_pool[(size_t)di]);                                                            // draw enemy sprite
+    }
 
-    Typing_DrawEnemyWords(enemy_pool);                                                                                   // draw enemy word
+    for (int di = 0; di < (int)enemy_pool.size(); ++di)                                                                     // loop through enemies for word draw
+    {
+        if (BossSystem::Boss_GetKillWordSlot() >= 0 && di == BossSystem::Boss_GetKillWordSlot()) continue;                  // skip the boss kill word slot since Boss_Draw handles it separately
+        EnemySystem::Enemy_DrawWord(enemy_pool[(size_t)di]);                                                                // draw enemy word
+    }
+
+    BossSystem::Boss_Draw(meshes);                                                                                          // draw the boss sprite, kill word label and progress counter
 
     Particles_Draw();
 
-    UiSystem::Debug_DrawDifficultyTopRight(is_difficulty_debug_visible,
-        is_random_spawning_enabled, health);                                                                                // draw debug difficulty ui with health
-    /*_________________________________________________________________________________________________________________________________________*/
+    UiSystem::Debug_DrawDifficultyTopRight(is_difficulty_debug_visible, is_random_spawning_enabled, health);                // draw debug difficulty ui with health
+    /*_______________________________________________________________________________________________________________________________________________________________________________________________*/
 
     UiSystem::Ui_DrawScoreAndTyped(score); // draw score and typed buffer
 
@@ -328,6 +359,13 @@ render_only:
     Weather_Draw();
 
     UiSystem::Ui_DrawHealthBar(health, meshes); // jeremy code
+
+    /*
+    @overview   Boss flash overlay draw
+    @author     Wong Zi Yuan (w.ziyuan@digipen.edu)
+    *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
+    BossSystem::Boss_DrawFlashOverlay(meshes);                                                                              // draw the white flash overlay on top of everything else
+    /*_______________________________________________________________________________________________________________________________________________________________________________________________*/
 
     // PAUSE OVERLAY
     UiPauseMenu::Check_Paused(isPaused, isDead, bgMesh);
@@ -340,7 +378,14 @@ render_only:
 
 void Game_Exit()
 {
-    EnemyManage::EnemyManage_FreeMeshes(meshes);                                                                            // free all meshes related to enemy 
+    /*
+    @overview   Boss and enemy cleanup
+    @author     Wong Zi Yuan (w.ziyuan@digipen.edu)
+    *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
+    BossSystem::Boss_Free(meshes, free_slot_queue, enemy_pool);                                                             // unload boss assets and return the reserved pool slot
+    EnemyManage::EnemyPool_Free(enemy_pool, free_slot_queue);                                                               // deactivate all enemy slots and rebuild the free slot queue
+    EnemyManage::EnemyManage_FreeMeshes(meshes);                                                                            // unload all enemy textures and meshes from memory
+    /*_______________________________________________________________________________________________________________________________________________________________________________________________*/
 
     Typing_Exit();
     Leaderboard_System::Free();

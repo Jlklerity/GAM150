@@ -12,6 +12,7 @@ game.cpp only calls Init / Update / Render / Exit / IsOpen.
 #include "MeshRenderer.h"
 #include "MeshTemplates.h"
 #include "Enemy.h"
+#include "Boss.h"
 #include "PowerUp.h"
 #include "Weather.h"
 
@@ -159,6 +160,14 @@ namespace
                 int max_len = DifficultySystem::Difficulty_GetUnlockedMaxWordLength();
                 EnemySystem::Enemy_SpawnShieldedFromPool(*s_pEnemyPool, *s_pFreeSlots, *s_pEnemyArea, *s_pWordBank, 3, max_len, 1.05f);
                 PushHistory("Spawned shielded enemy.", false);
+                return;
+            }
+
+            // /spawn boss
+            if (IEquals(tokens[1], "boss"))
+            {
+                BossSystem::Boss_ForceSpawn();
+                PushHistory("Spawned boss.", false);
                 return;
             }
 

@@ -17,6 +17,7 @@
 #include "Typing.h"
 #include "Settings.h"
 #include "ScreenTransition.h"
+#include "BackgroundParallex.h"
 #include <iostream>
 
 /*
@@ -34,10 +35,12 @@ namespace
     AEGfxVertexList* pMeshSettingsBtn = nullptr;                                                                            // mesh for settings button
     AEGfxVertexList* pMeshLeftArrow = nullptr;                                                                              // mesh for left arrow
     AEGfxVertexList* pMeshRightArrow = nullptr;                                                                             // mesh for right arrow
+    AEGfxVertexList* pMeshLeaderboardBtn = nullptr;
 
     AEGfxTexture* pTexPlay = nullptr;                                                                                       // play button texture
     AEGfxTexture* pTexShop = nullptr;                                                                                       // shop button texture
     AEGfxTexture* pTexArrows = nullptr;                                                                                     // arrow buttons texture
+   // AEGfxTexture* pTexLeaderboard = nullptr;
 
     // ---------------------------------------------------------------------------
     // WINDOW & CURSOR DATA
@@ -56,6 +59,8 @@ namespace
     const float SHOP_HEIGHT = 240.0f;                                                                                       // height of shop button
     const float EXIT_WIDTH = 240.0f;                                                                                        // width of exit button
     const float EXIT_HEIGHT = 80.0f;                                                                                        // height of exit button
+    const float LEADERBOARD_WIDTH = 240.0f;
+    const float LEADERBOARD_HEIGHT = 80.0f;
 
     const float PLAY_HITBOX_WIDTH = 200.0f;                                                                                 // interactable width for play
     const float PLAY_HITBOX_HEIGHT = 95.0f;                                                                                 // interactable height for play
@@ -104,6 +109,8 @@ namespace
     float LEFTARROW_BTN_Y;                                                                                                  // Y pos for left arrow
     float RIGHTARROW_BTN_X;                                                                                                 // X pos for right arrow
     float RIGHTARROW_BTN_Y;                                                                                                 // Y pos for right arrow
+    float LEADERBOARD_BTN_X;
+    float LEADERBOARD_BTN_Y;
 
     // ---------------------------------------------------------------------------
     // STATE & LOGIC VARIABLES
@@ -113,6 +120,7 @@ namespace
     bool nameEntered = false;                                                                                               // flag indicating name submission
     bool isEnteringName = false;                                                                                            // flag for current sub-state
     bool inSettings = false;                                                                                                // flag for settings overlay
+    bool inLeaderboard = false;
 
     std::string player_name = "";                                                                                           // holds typed player name
     std::string selected_mode = "";                                                                                         // holds currently selected game mode
@@ -199,6 +207,7 @@ void Draw_Main_Menu(float textNdcOffset)
     AEGfxSetRenderMode(AE_GFX_RM_COLOR);                                                                                    // swap back to color mode
     Mesh_Renderer(pMeshExitBtn, 0.0f, EXIT_BTN_Y, 1.0f, 1.0f, 0.0f);                                                        // render exit button
     Mesh_Renderer(pMeshSettingsBtn, SETTINGS_BTN_X, SETTINGS_BTN_Y, 1.0f, 1.0f, 0.0f);                                      // render settings button
+    Mesh_Renderer(pMeshLeaderboardBtn, LEADERBOARD_BTN_X, LEADERBOARD_BTN_Y, 1.0f, 1.0f, 0.0f);
 }
 
 /*
@@ -258,6 +267,12 @@ void Main_Menu_Input()
             worldY >= RIGHTARROW_BTN_Y - (RIGHTARROW_HEIGHT * 0.5f) && worldY <= RIGHTARROW_BTN_Y + (RIGHTARROW_HEIGHT * 0.5f))
         {
             selected_mode = (selected_mode == "ZEN") ? "TIME" : "ZEN";                                                      // toggle game mode
+        }
+        // --- Check Leaderboard Button ---
+        else if (worldX >= LEADERBOARD_BTN_X - (LEADERBOARD_WIDTH * 0.5f) && worldX <= LEADERBOARD_BTN_X + (LEADERBOARD_WIDTH * 0.5f) &&
+            worldY >= LEADERBOARD_BTN_Y - (LEADERBOARD_HEIGHT * 0.5f) && worldY <= LEADERBOARD_BTN_Y + (LEADERBOARD_HEIGHT * 0.5f))
+        {
+            inLeaderboard = true; // Open the overlay!                                                                                             
         }
     }
 }
@@ -347,6 +362,8 @@ void Main_Menu_EnterName(float worldYOffset, float ndcYOffset, bool allowInput)
         }
     }
 
+    AEGfxSetBackgroundColor(0.53f, 0.81f, 0.92f);                                                                              // clear screen to black
+
     // Draw Exit Name Button
     AEGfxSetRenderMode(AE_GFX_RM_COLOR);                                                                                    // set to color mode
     AEGfxSetBlendMode(AE_GFX_BM_BLEND);                                                                                     // enable alpha blend
@@ -432,6 +449,14 @@ void Main_Menu_EnterName(float worldYOffset, float ndcYOffset, bool allowInput)
 *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
 void Main_Menu_Init()
 {
+    inLeaderboard = false;
+    Leaderboard_System::Init();
+    Leaderboard_System::Read_ZenLeaderboard();
+    Leaderboard_System::Read_TimeLeaderboard();
+
+
+    BackgroundParallex::MenuParallax_Init();
+
     selected_mode = "ZEN";                                                                                                  // default selected mode
     inSettings = false;                                                                                                     // default settings closed
     isTransitioningToName = false;                                                                                          // clear transition flag
@@ -440,6 +465,9 @@ void Main_Menu_Init()
     {
         Graphics::font_id = AEGfxCreateFont("Assets/Pixel-Game.otf", 48);                                                   // load UI font
     }
+
+    /*pTexLeaderboard = AEGfxTextureLoad("Assets/leaderboard_btn.png");
+    AE_ASSERT_MESG(pTexLeaderboard, "Failed to load leaderboard_btn.png")        */                                           // check texture success
 
     pTexPlay = AEGfxTextureLoad("Assets/play.png");                                                                         // load play texture
     AE_ASSERT_MESG(pTexPlay, "Failed to load play.png");                                                                    // check texture success
@@ -451,9 +479,12 @@ void Main_Menu_Init()
     AE_ASSERT_MESG(pTexArrows, "Failed to load LeftRightButtons.png");                                                      // check texture success
 
     pMeshLogo = Rect_Mesh(LOGO_WIDTH, LOGO_HEIGHT, 0xFF0000FF);                                                             // build logo rect mesh
+    pMeshLeaderboardBtn = Rect_Mesh(LEADERBOARD_WIDTH, LEADERBOARD_HEIGHT, 0xFFFFFFFF);
     pMeshBtn = Sprite_Mesh(1.0f, 1.0f);                                                                                     // build standard button mesh
     pMeshExitBtn = Rect_Mesh(EXIT_WIDTH, EXIT_HEIGHT, 0xFFFFFFFF);                                                          // build exit button mesh
     pMeshSettingsBtn = Rect_Mesh(SETTINGS_WIDTH, SETTINGS_HEIGHT, 0xFFFFFFFF);                                              // build settings button mesh
+    pMeshLeaderboardBtn = Rect_Mesh(LEADERBOARD_WIDTH, LEADERBOARD_HEIGHT, 0xFFFFFFFF);                                              // build settings button mesh
+
 
     pMeshLeftArrow = Spritesheet_Mesh(1.0f, 1.0f, 0.0f, 0.0f, 0.5f, 0.5f);                                                  // slice left arrow mesh
     pMeshRightArrow = Spritesheet_Mesh(1.0f, 1.0f, 0.0f, 0.5f, 0.5f, 1.0f);                                                 // slice right arrow mesh
@@ -466,8 +497,13 @@ void Main_Menu_Init()
 *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
 void Main_Menu_Update()
 {
+
     winW = (float)AEGfxGetWindowWidth();                                                                                    // store window width
     winH = (float)AEGfxGetWindowHeight();                                                                                   // store window height
+
+    float dt = (float)AEFrameRateControllerGetFrameTime();
+    if (dt > 0.1f) dt = 0.01667f;                                                                                           // dt clamp
+    BackgroundParallex::MenuParallax_Update(dt);
 
     LOGO_Y = winH * 0.35f;                                                                                                  // set logo Y pos
     PLAY_BTN_Y = winH * 0.05f;                                                                                              // set play button Y pos
@@ -489,6 +525,9 @@ void Main_Menu_Update()
     SETTINGS_BTN_X = winW * -0.35f;                                                                                         // set settings X pos
     SETTINGS_BTN_Y = winH * -0.4f;                                                                                          // set settings Y pos
 
+    LEADERBOARD_BTN_X = winW * 0.35f;
+    LEADERBOARD_BTN_Y = winH * -0.4f;
+
     LEFTARROW_BTN_X = winH * -0.12f;                                                                                        // set left arrow X pos
     LEFTARROW_BTN_Y = PLAY_BTN_Y - 85.0f;                                                                                   // set left arrow Y pos
 
@@ -496,7 +535,8 @@ void Main_Menu_Update()
     RIGHTARROW_BTN_Y = PLAY_BTN_Y - 90.0f;                                                                                  // set right arrow Y pos
 
     AEGfxSetCamPosition(0.0f, 0.0f);                                                                                        // reset camera explicitly
-    AEGfxSetBackgroundColor(0.0f, 0.0f, 0.0f);                                                                              // clear screen to black
+    AEGfxSetBackgroundColor(0.53f, 0.81f, 0.92f);                                                                              // clear screen to black
+
 
     float camY = 0.0f;                                                                                                      // initialize camera Y variable
     float textNdcOffset = 0.0f;                                                                                             // initialize text offset variable
@@ -510,6 +550,7 @@ void Main_Menu_Update()
 
         camY = winH * bounce;                                                                                               // apply bounce to world camera
         AEGfxSetCamPosition(0.0f, camY);                                                                                    // set camera
+
 
         textNdcOffset = -(2.0f * bounce);                                                                                   // manually apply bounce to NDC
 
@@ -546,8 +587,33 @@ void Main_Menu_Update()
 
     AEGfxSetCamPosition(0.0f, camY);                                                                                        // lock camera to frame pos
 
+    float vCamY = 0.0f;
+    if (isTransitioningToName) {
+        vCamY = winH * ScreenTransitions::EaseOutExpo(ScreenTransitions::result);
+    }
+    else if (isTransitioningBack) {
+        vCamY = winH * (1.0f - ScreenTransitions::EaseOutExpo(ScreenTransitions::result));
+    }
+    else if (isEnteringName) {
+        vCamY = winH; // Keep the background scrolled down while in the sub-menu!
+    }
+    
+    BackgroundParallex::MenuParallax_Draw(vCamY);
+
     // --- RENDER AND INPUT LOGIC ---
-    if (inSettings)                                                                                                         // process settings UI
+    if (inLeaderboard)
+    {
+        Draw_Main_Menu(0.0f); // Keep the menu rendered in the background
+
+        // Display the board based on the currently toggled mode
+        if (selected_mode == "ZEN") {
+            Leaderboard_System::Display_ZenLeaderboard(inLeaderboard);
+        }
+        else if (selected_mode == "TIME") {
+            Leaderboard_System::Display_TimeLeaderboard(inLeaderboard);
+        }
+    }
+    else if (inSettings)                                                                                                         // process settings UI
     {
         if (SysSettings::DisplaySettings() == false)                                                                        // run settings loop
         {
@@ -580,6 +646,7 @@ void Main_Menu_Update()
 *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
 void Main_Menu_Exit()
 {
+    BackgroundParallex::MenuParallax_Exit();
     ScreenTransitions::isTransitioning = false;                                                                             // safety clean transition
     AEGfxSetCamPosition(0.0f, 0.0f);                                                                                        // safety reset camera
 
@@ -614,6 +681,11 @@ void Main_Menu_Exit()
         AEGfxMeshFree(pMeshRightArrow);                                                                                     // dealloc memory
         pMeshRightArrow = nullptr;                                                                                          // strip pointer
     }
+    if (pMeshLeaderboardBtn)
+    {
+        AEGfxMeshFree(pMeshLeaderboardBtn);                                                                                     // dealloc memory
+        pMeshRightArrow = nullptr;
+    }
 
     // Free Textures
     if (pTexPlay)
@@ -631,4 +703,8 @@ void Main_Menu_Exit()
         AEGfxTextureUnload(pTexArrows);                                                                                     // unload from graphics
         pTexArrows = nullptr;                                                                                               // strip pointer
     }
+    /*if (pTexLeaderboard) {
+        AEGfxTextureUnload(pTexLeaderboard);
+        pTexLeaderboard = nullptr;
+    }*/
 }

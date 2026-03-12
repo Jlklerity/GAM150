@@ -20,7 +20,11 @@
     <ClCompile Include="src\Particles.cpp" />
     <ClCompile Include="src\Weather.cpp" />
     <ClCompile Include="src\ScreenTransition.cpp" />
+<<<<<<< HEAD
     <ClCompile Include="src\BackgroundParallex.cpp" />
+=======
+    <ClCompile Include="src\Boss.cpp" />
+>>>>>>> ef41f6f4027a9646c72d1a699bd704c3e6709d95
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\Enemy.h" />
@@ -41,7 +45,11 @@
     <ClInclude Include="src\Particles.h" />
     <ClInclude Include="src\Weather.h" />
     <ClInclude Include="src\ScreenTransition.h" />
+<<<<<<< HEAD
     <ClInclude Include="src\BackgroundParallex.h" />
+=======
+    <ClInclude Include="src\Boss.h" />
+>>>>>>> ef41f6f4027a9646c72d1a699bd704c3e6709d95
   </ItemGroup>
   <ItemGroup>
     <Image Include="Assets\characterSheet.png" />

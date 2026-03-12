@@ -1,5 +1,6 @@
 #pragma once
 #include <vector>
+#include "Enemy.h"   // EnemySystem::Enemy_Killed, Data::Enemy, Data::EnemyArea, EnemyConfig
 
 /**
  * @file PowerUp.h
@@ -53,9 +54,10 @@ namespace PowerUpSystem
      * @param dt           Delta time in seconds.
      * @param enemy_pool   Enemy pool used by Lightning activation.
      * @param enemy_area   Enemy play area - landing y used as the drop floor.
+     * @param health       Player health
      */
     void Update(float dt, std::vector<Data::Enemy>& enemy_pool,
-        const Data::EnemyArea& enemy_area);
+        const Data::EnemyArea& enemy_area, Data::Health& health);
 
     /**
      * @brief No-op stub retained for link compatibility with game.cpp.
