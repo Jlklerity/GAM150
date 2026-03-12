@@ -1,21 +1,21 @@
 /*!
-    @file           Enemy.cpp
-    @author         Wong Zi Yuan (w.ziyuan@digipen.edu)
-    @course         CSD1451
-    @section        A
-    *//*_________________________________________________________________________________________________________________________________________________________________________________________________*/
+@file           Enemy.cpp
+@author         Wong Zi Yuan (w.ziyuan@digipen.edu)
+@course         CSD1451
+@section        A
+*//*_________________________________________________________________________________________________________________________________________________________________________________________________*/
 
-#include "Enemy.h"      // Enemy API
+#include "Enemy.h"
 #include "PowerUp.h"
 
-    /*
-    @namespace      EnemyConfig
-    @brief          Central location for all enemy-related tuning values and gameplay constants.
+/*
+@namespace      EnemyConfig
+@brief          Central location for all enemy-related tuning values and gameplay constants.
 
-    This namespace groups the configuration constants used by the enemy, difficulty, spawning, and lane
-    systems. Keeping these values in one place makes it easy to tweak pacing, spacing, and visuals without
-    touching the core gameplay code.
-    *//*_________________________________________________________________________________________________________________________________________________________________________________________________*/
+This namespace groups the configuration constants used by the enemy, difficulty, spawning, and lane
+systems. Keeping these values in one place makes it easy to tweak pacing, spacing, and visuals without
+touching the core gameplay code.
+*//*_________________________________________________________________________________________________________________________________________________________________________________________________*/
 namespace EnemyConfig
 {
     // Enemy pool sizing and safety limits
@@ -70,8 +70,6 @@ namespace Utility
     @params         value (float), minimum (float), maximum (float)
     @brief          Clamps a float value to a given inclusive range.
 
-    @usage          Utility_Lerp, Difficulty_Add, Difficulty_GetEnemyFallSpeed, Health_Add, Enemy_Update, Enemy_SpawnFromPool
-
     This function returns 'minimum' if 'value' is below the range, 'maximum' if it is above the range,
     or the original 'value' if it is already within [minimum, maximum].
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
@@ -87,8 +85,6 @@ namespace Utility
     @params         a (float), to (float), t (float)
     @brief          Linearly interpolates between two float values.
 
-    @usage          Difficulty_GetEnemyFallSpeed, Enemy_GetLaneX, Debug_DrawEnemyLaneLines
-
     This function blends from 'a' to 'b' using 't' as the interpolation factor.
     't' is clamped to [0, 1], where 0 returns 'a', 1 returns 'b', and values in-between return a mix.
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
@@ -102,8 +98,6 @@ namespace Utility
     @function       Utility_RandInt
     @params         minimum (float), maximum_inclusive (float)
     @brief          Returns a random integer within an inclusive range.
-
-    @usage          Word_PickRandom, Difficulty_GetRandomWordLength, Enemy_SpawnFromPool
 
     This function generates a uniformly distributed integer in [minimum, maximum_inclusive].
     If the range is invalid (maximum_inclusive < minimum), it safely returns 'minimum'.
@@ -119,8 +113,6 @@ namespace Utility
     @function       Convert_WorldToNdc
     @params         world_x (float), world_y (float), ndc_x (float&), ndc_y (float&)
     @brief          Converts world-space pixel coordinates into normalized device coordinates (NDC).
-
-    @usage          Enemy_DrawWord
 
     This function maps a position given in world pixels to NDC space, where the window center is (0, 0)
     and the visible range is typically -1..1 on each axis. The result is written to 'ndc_x' and 'ndc_y'.
@@ -139,8 +131,6 @@ namespace Utility
     @params         a_center_x (float), a_center_y (float), a_half_width (float), a_half_height (float)
                     b_center_x (float), b_center_y (float), b_half_width (float), b_half_height (float)
     @brief          Tests whether two axis-aligned bounding boxes (AABBs) overlap.
-
-    @usage          Enemy_IsSpawnSpotFree
 
     This function performs an AABB overlap test using the centers and half-extents of two rectangles.
     It returns true if the rectangles intersect (including touching edges), otherwise false.
@@ -169,8 +159,6 @@ namespace Utility
     @params         s (std::string&)
     @brief          Converts all characters in a string to uppercase.
 
-    @usage          Word_LoadFromFile
-
     This function modifies the input string directly by uppercasing each character using 'std::toupper'.
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
     void String_ToUpperInPlace(std::string& s)
@@ -195,8 +183,6 @@ namespace Word
     @function       Word_LoadFromFile
     @params         file_path (const char*), expected_length (int)
     @brief          Loads words from a text file and filters them by a specific length.
-
-    @usage          Word_LoadAll
 
     This function reads whitespace-separated words from the file at 'file_path', keeps only words whose
     length matches 'expected_length', converts them to uppercase, and returns them as a vector.
@@ -226,10 +212,8 @@ namespace Word
     @params         word_bank (Data::WordBank&)
     @brief          Loads all word lists (3 to 8 letters) into the WordBank.
 
-    @usage          Game_InitEngine
-
     This function populates the WordBank by loading words from the corresponding asset files for each
-    supported length (3-8). If any file fails to load or results in an empty list, a small fallback
+    supported length (3 to 8). If any file fails to load or results in an empty list, a small fallback
     set is assigned so the game can still run.
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
     void Word_LoadAll(Data::WordBank& word_bank)
@@ -254,10 +238,8 @@ namespace Word
     @params         word_bank (const Data::WordBank&), word_length (int)
     @brief          Returns the word list that matches the requested word length.
 
-    @usage          Enemy_PickUniqueWord
-
     This function selects and returns a const reference to the appropriate word vector inside 'word_bank'
-    based on 'word_length' (3-8). If the length is not 3-7, it defaults to returning the 8-letter list.
+    based on 'word_length' (3 to 8). If the length is not 3 to 7, it defaults to returning the 8-letter list.
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
     const std::vector<std::string>& Word_GetListByLength(const Data::WordBank& word_bank, int word_length)
     {
@@ -273,8 +255,6 @@ namespace Word
     @function       Word_PickRandom
     @params         words (const std::vector<std::string>&)
     @brief          Picks and returns a random word from a list.
-
-    @usage          Enemy_PickUniqueWord
 
     This function returns a randomly selected string from 'words'.
     If the list is empty, it returns a placeholder string ("????") to avoid crashes.
@@ -308,9 +288,7 @@ namespace Graphics
     @params         word_length (int)
     @brief          Returns the enemy sprite texture that matches a given word length.
 
-    @usage          Enemy_Draw
-
-    This function clamps 'word_length' to the supported range (3-8) and returns the corresponding
+    This function clamps 'word_length' to the supported range (3 to 8) and returns the corresponding
     texture from the enemy texture table. It is used to select the correct enemy sprite based on
     the length of the word assigned to that enemy.
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
@@ -325,8 +303,6 @@ namespace Graphics
     @function       Graphics_SetColorState
     @params         alpha_value (float)
     @brief          Configures the graphics pipeline for solid-color rendering with transparency.
-
-    @usage          Debug_DrawEnemyAreaBox, Debug_DrawEnemyLaneLines
 
     This function switches the renderer to color mode, enables alpha blending, and applies the requested
     transparency value. It also resets the multiply/add color modifiers to neutral so debug shapes draw
@@ -345,8 +321,6 @@ namespace Graphics
     @function       Graphics_SetSpriteState
     @brief          Configures the graphics pipeline for drawing textured sprites.
 
-    @usage          Enemy_Draw
-
     This function switches the renderer to texture mode, enables alpha blending, resets transparency
     to fully opaque, and clears any color multiply/add modifiers so sprites render normally.
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
@@ -363,8 +337,6 @@ namespace Graphics
     @function       Mesh_BuildSpriteQuad
     @params         uv_width (float), uv_height (float), color_value (u32)
     @brief          Builds and returns a unit quad mesh with the given UV size and vertex color.
-
-    @usage          Game_LoadMeshes
 
     This function creates a centered 1x1 quad (from -0.5 to 0.5 in both axes) made of two triangles.
     The UVs span [0..uv_width] and [0..uv_height], allowing sprite sheets or partial textures.
@@ -392,8 +364,6 @@ namespace Graphics
     @params         color_value (u32)
     @brief          Builds and returns a centered unit rectangle mesh for solid-color rendering.
 
-    @usage          Game_LoadMeshes
-
     This function creates a 1x1 rectangle (from -0.5 to 0.5 in both axes) made of two triangles with a
     constant vertex color and dummy UVs. It is intended for drawing colored shapes such as UI bars and
     debug rectangles by scaling it to the desired size at render time.
@@ -420,9 +390,7 @@ namespace Graphics
     @params         mesh (AEGfxVertexList*), position_x (float), position_y (float), scale_x (float), scale_y (float), rotation_radians (float)
     @brief          Draws a mesh at a given position with scale and rotation.
 
-    @usage          Enemy_Draw, Debug_DrawEnemyAreaBox, Debug_DrawEnemyLaneLines
-
-    This function builds a 2D transform (scale -> rotate -> translate), applies it to the renderer,
+    This function builds a 2D transform (scale then rotate then translate), applies it to the renderer,
     and draws the provided mesh using triangle mode.
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
     void Draw_DrawMeshAt(AEGfxVertexList* mesh, float position_x, float position_y, float scale_x, float scale_y, float rotation_radians)
@@ -457,8 +425,6 @@ namespace DifficultySystem
     @function       Difficulty_Get
     @brief          Returns the current difficulty value.
 
-    @usage          Debug_DrawDifficultyTopRight
-
     This function provides read-only access to the internal difficulty variable so other systems
     (such as debug UI) can display or use the current difficulty level.
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
@@ -466,6 +432,13 @@ namespace DifficultySystem
         return difficulty_value;                                                                                            // read difficulty value
     }
 
+    /*
+    @function       Difficulty_Reset
+    @brief          Resets the current difficulty value back to zero.
+
+    This function sets the internal difficulty value to 0.0, returning the game to its starting
+    difficulty level. It is called when restarting a level or entering the game from the main menu.
+    *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
     void Difficulty_Reset() {
         difficulty_value = 0.0f;
     }
@@ -474,8 +447,6 @@ namespace DifficultySystem
     @function       Difficulty_Add
     @params         amount (float)
     @brief          Adjusts the current difficulty value and clamps it to a valid range.
-
-    @usage          Difficulty_UpdateOverTime, wWinMain
 
     This function adds a signed amount to the internal difficulty value, then clamps it between 0 and
     DIFFICULTY_MAX to prevent the difficulty from going negative or exceeding the configured cap.
@@ -491,8 +462,6 @@ namespace DifficultySystem
     @params         dt (float)
     @brief          Increases difficulty gradually over time.
 
-    @usage          wWinMain
-
     This function ramps the difficulty based on elapsed time by adding a fixed rate
     (DIFFICULTY_RAMP_PER_SECOND) scaled by delta time.
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
@@ -504,8 +473,6 @@ namespace DifficultySystem
     /*
     @function       Difficulty_GetSpawnIntervalSeconds
     @brief          Calculates the current enemy spawn interval based on difficulty.
-
-    @usage          Debug_DrawDifficultyTopRight, wWinMain
 
     This function reduces the spawn interval as difficulty increases, making enemies spawn more often.
     The interval is clamped so it never goes below RANDOM_SPAWN_INTERVAL_MIN_SECONDS.
@@ -522,8 +489,6 @@ namespace DifficultySystem
     /*
     @function       Difficulty_GetUnlockedMaxWordLength
     @brief          Returns the maximum word length currently unlocked by the difficulty value.
-
-    @usage          Difficulty_GetRandomWordLength, Debug_DrawDifficultyTopRight
 
     This function maps the current difficulty into tiers that gradually unlock longer words.
     As difficulty increases, the allowed maximum word length increases from 3 up to 8.
@@ -543,8 +508,6 @@ namespace DifficultySystem
     @function       Difficulty_GetRandomWordLength
     @brief          Returns a random word length based on the current difficulty.
 
-    @usage          wWinMain
-
     This function chooses a random word length between 3 and the currently unlocked maximum word length
     (determined by difficulty). It is used to vary enemy word lengths while still respecting the
     difficulty progression.
@@ -561,9 +524,7 @@ namespace DifficultySystem
     @params         word_length (int)
     @brief          Computes an enemy's fall speed based on current difficulty and word length.
 
-    @usage          Enemy_SpawnFromPool
-
-    This function starts from a base fall speed, increases it with difficulty, then applies a word-length
+    This function starts from a base fall speed, increases it with difficulty, then applies a word length
     multiplier (shorter words fall faster, longer words fall slower). The multiplier effect ramps in as
     difficulty increases, so early gameplay stays gentler while later gameplay becomes more punishing.
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
@@ -592,11 +553,19 @@ namespace DifficultySystem
 @namespace      HealthSystem
 @brief          Manages player health updates and clamping.
 
-This namespace contains helper functions for modifying the player's health safely, ensuring the
+This namespace contains helper functions for modifying the player health safely, ensuring the
 current health value stays within a valid range (0 to max).
 *//*_________________________________________________________________________________________________________________________________________________________________________________________________*/
 namespace HealthSystem
 {
+    /*
+    @function       Health_Init
+    @params         health (Data::Health&)
+    @brief          Sets the current health back to its maximum value.
+
+    This function resets health_current to health_max, restoring the player to full health.
+    It is called when entering the game or restarting a level.
+    *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
     void Health_Init(Data::Health& health) {
         health.health_current = health.health_max;
     }
@@ -605,8 +574,6 @@ namespace HealthSystem
     @function       Health_Add
     @params         h (Data::Health&), amount (float)
     @brief          Adds (or subtracts) health and clamps the result to a valid range.
-
-    @usage          Enemy_Update, wWinMain
 
     This function applies a signed health change to 'h.health_current' and then clamps it between
     0 and 'h.health_max' to prevent underflow or overflow.
@@ -634,8 +601,6 @@ namespace Animation
     @params         anim (Data::SpriteAnim&)
     @brief          Recomputes and writes the UV x/y offsets from the current frame index and row.
 
-    @usage          Animation_SetFrame, Animation_Update
-
     This function calculates the column from the current frame index, reads the current row index,
     and updates the UV coordinates on the animation struct. It is called whenever the frame changes
     to keep the UV offsets in sync with the sprite sheet layout.
@@ -653,8 +618,6 @@ namespace Animation
     @params         anim (Data::SpriteAnim&), frame_index (int)
     @brief          Forces the animation to a specific frame and updates the UV coordinates.
 
-    @usage          Enemy_Killed
-
     This function directly sets the current animation frame index (typically to show a specific pose, like
     a death frame), then recalculates the sprite sheet UV offsets based on the current column and the
     selected animation row.
@@ -669,8 +632,6 @@ namespace Animation
     @function       Animation_Update
     @params         anim (Data::SpriteAnim&), dt (float)
     @brief          Advances a sprite animation and updates its UV coordinates.
-
-    @usage          Enemy_Update
 
     This function accumulates delta time, advances the animation frame when the frame duration is reached,
     wraps the frame index back to 0 when it exceeds the number of frames, and then updates the sprite sheet
@@ -695,7 +656,7 @@ namespace Animation
 
 /*
 @namespace      EnemySystem
-@brief          Manages enemy spawning, updating, and rendering using a pooled lane-based system.
+@brief          Manages enemy spawning, updating, and rendering using a pooled lane based system.
 
 This namespace contains the core logic for enemies: picking unique words, finding safe spawn positions,
 creating enemies from a pool, updating movement/state (including death drops and health damage), resolving
@@ -707,8 +668,6 @@ namespace EnemySystem
     @function       Enemy_IsWordInUse
     @params         pool (const std::vector<Data::Enemy>&), word_text (const std::string&), include_hidden_words (bool)
     @brief          Checks if a word is already assigned to any active enemy in the pool.
-
-    @usage          Enemy_PickUniqueWord
 
     This function scans all active enemies and returns true if any of them already use the given word.
     If include_hidden_words is true, it also checks the hidden second word on shielded enemies.
@@ -736,8 +695,6 @@ namespace EnemySystem
     @params         word_length (int), bank (const Data::WordBank&), pool (const std::vector<Data::Enemy>&), include_hidden_words (bool)
     @brief          Picks a random word of the given length that is not already used by any active enemy.
 
-    @usage          Enemy_SpawnFromPool
-
     This function randomly picks words from the word bank and keeps trying until it finds one that
     is not already in use. Returns an empty string if no unique word is found within the attempt limit.
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
@@ -760,8 +717,6 @@ namespace EnemySystem
     @function       Enemy_PickUniqueWordRandomLength
     @params         min_len (int), max_len (int), bank (const Data::WordBank&), pool (const std::vector<Data::Enemy>&), include_hidden_words (bool), max_tries_total (int)
     @brief          Picks a unique word with a random length chosen between min_len and max_len.
-
-    @usage          Enemy_SpawnFriendlyFromPool, Enemy_SpawnShieldedFromPool
 
     This function picks a random word length each attempt and tries to find a unique word of that
     length. It keeps trying up to max_tries_total times. Returns an empty string if nothing is found.
@@ -787,8 +742,6 @@ namespace EnemySystem
     @params         word (const std::string&)
     @brief          Calculates the half-width of a word in world pixels for spacing checks.
 
-    @usage          Enemy_SpawnFromPool
-
     This function measures the rendered width of 'word' using the current font and TEXT_SCALE, then converts
     that screen-space size into world pixels. It is used to keep spawned enemies (and their text) within
     usable horizontal bounds and to help avoid overlaps.
@@ -809,8 +762,6 @@ namespace EnemySystem
     @params         lane_id (int), usable_min_x (float), usable_max_x (float)
     @brief          Computes the world X position for a given lane index.
 
-    @usage          Enemy_SpawnFromPool
-
     This function maps a lane id into the usable horizontal range and returns the
     corresponding X coordinate.
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
@@ -824,8 +775,6 @@ namespace EnemySystem
     @function       Enemy_IsLaneSpawnYFree
     @params         lane_id (int), spawn_y (float), pool (const std::vector<Data::Enemy>&)
     @brief          Checks whether a lane has enough vertical space to spawn a new enemy at the spawn line.
-
-    @usage          Enemy_SpawnFromPool
 
     This function scans all active enemies in the specified lane and finds the closest enemy below the
     spawn line (smallest positive gap). It returns true only if the nearest gap is at least
@@ -852,8 +801,6 @@ namespace EnemySystem
     @function       Enemy_Create
     @params         area (const Data::EnemyArea&), word_length (int), word_text (const std::string&), fall_speed (float), lane_id (int)
     @brief          Creates and initializes a new enemy instance with the provided spawn settings.
-
-    @usage          Enemy_SpawnFromPool
 
     This function constructs a Data::Enemy with its starting position at the spawn line, assigns its word
     (text and length), fall speed, and lane id, and resets all state flags, timers, and animation fields to
@@ -892,8 +839,6 @@ namespace EnemySystem
     @params         e (Data::Enemy&)
     @brief          Breaks the shield on a shielded enemy and switches it to its second word.
 
-    @usage          wWinMain
-
     This function removes the shield from a shielded enemy. It swaps in the hidden second word,
     updates the word length, and resets the animation to the unshielded row of the sprite sheet.
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
@@ -921,9 +866,7 @@ namespace EnemySystem
     /*
     @function       Enemy_Killed
     @params         e (Data::Enemy&)
-    @brief          Marks an enemy as killed and switches it into the death-drop state.
-
-    @usage          wWinMain
+    @brief          Marks an enemy as killed and switches it into the death drop state.
 
     This function safely transitions an active enemy into a dying state (only once). It clears the landed
     flag so the enemy can drop off-screen, and marks damage as already handled so a killed enemy will not
@@ -970,8 +913,6 @@ namespace EnemySystem
     @function       Enemy_Update
     @params         e (Data::Enemy&), area (const Data::EnemyArea&), dt (float), health (Data::Health&)
     @brief          Updates an enemy's animation, movement, and state transitions for the current frame.
-
-    @usage          wWinMain
 
     This function handles both the normal falling behaviour and the dying "death drop" behaviour. It updates
     animation frames, moves the enemy downward, clamps it within the enemy area, applies landing damage once,
@@ -1130,8 +1071,6 @@ namespace EnemySystem
     @params         pool (std::vector<Data::Enemy>&), area (const Data::EnemyArea&)
     @brief          Enforces minimum vertical spacing between enemies within each lane.
 
-    @usage          wWinMain
-
     This function groups active, non-dying enemies by lane, sorts them by Y position (lowest first),
     and then adjusts positions so each enemy is at least ENEMY_LANE_MIN_GAP_PX above the one below it.
     Adjusted positions are clamped to the top of the enemy area to keep enemies within bounds.
@@ -1183,8 +1122,6 @@ namespace EnemySystem
     @params         meshes (const Data::Meshes&), e (const Data::Enemy&)
     @brief          Renders the enemy sprite at its current position using the correct texture and animation frame.
 
-    @usage          wWinMain
-
     This function skips inactive enemies, sets the render state for textured sprites, selects the enemy
     texture based on enemy type (friendly/shield/normal), applies the current animation UV offset, and draws the
     enemy quad scaled to ENEMY_SIZE_PX. Shield enemies use a separate mesh built for 3-row UV cutting.
@@ -1229,8 +1166,6 @@ namespace EnemySystem
     @params         e (const Data::Enemy&)
     @brief          Draws the enemy's word centered on the enemy in screen space.
 
-    @usage          wWinMain
-
     This function converts the enemy's world position to NDC coordinates, measures the rendered text size,
     then offsets the draw position so the word is centered over the enemy sprite. It skips drawing if the
     enemy is inactive, the font is missing, or the enemy has no assigned word.
@@ -1259,8 +1194,6 @@ namespace EnemySystem
     @params         spawn_x (float), spawn_y (float), pool (const std::vector<Data::Enemy>&), half_size_with_padding (float)
     @brief          Checks whether a proposed spawn position would overlap any active enemy.
 
-    @usage          Enemy_SpawnFromPool
-
     This function tests the candidate spawn AABB against all active enemies in the pool using
     Utility::Collision_Overlap. It returns true if no overlaps are found, and false if the new enemy
     would collide with an existing one (including padding).
@@ -1287,8 +1220,6 @@ namespace EnemySystem
     @function       Enemy_FindSpawnLane
     @params         pool (const std::vector<Data::Enemy>&), area (const Data::EnemyArea&), overlap_half (float), usable_min_x (float), usable_max_x (float), out_chosen_x (float&), out_chosen_lane (int&)
     @brief          Searches for a free lane and x position to spawn an enemy at the spawn line.
-
-    @usage          Enemy_SpawnFromPool, Enemy_SpawnFriendlyFromPool, Enemy_SpawnShieldedFromPool
 
     This function first tries random lanes up to MAX_SPAWN_TRIES, then falls back to scanning all lanes
     in order. Returns true if a valid lane was found, false otherwise. The chosen x and lane index are
@@ -1335,9 +1266,7 @@ namespace EnemySystem
     /*
     @function       Enemy_SpawnFromPool
     @params         pool (std::vector<Data::Enemy>&), free_slots (std::deque<int>&), area (const Data::EnemyArea&), bank (const Data::WordBank&), word_length (int)
-    @brief          Spawns a new enemy into an available pool slot using lane-based, non-overlapping placement.
-
-    @usage          wWinMain
+    @brief          Spawns a new enemy into an available pool slot using lane based, non overlapping placement.
 
     This function pulls a free enemy slot, selects a unique word of the requested length, computes safe
     horizontal bounds based on sprite size and word width, then searches for a valid lane position at the
@@ -1390,9 +1319,7 @@ namespace EnemySystem
     /*
     @function       Enemy_SpawnFriendlyFromPool
     @params         pool (std::vector<Data::Enemy>&), free_slots (std::deque<int>&), area (const Data::EnemyArea&), bank (const Data::WordBank&), min_word_len (int), max_word_len (int), speed_multiplier (float);
-    @brief          Spawns a friendly enemy into an available pool slot using lane-based placement.
-
-    @usage          wWinMain
+    @brief          Spawns a friendly enemy into an available pool slot using lane based placement.
 
     This function works the same as Enemy_SpawnFromPool but creates a friendly enemy. Friendly
     enemies do not damage the player when they land. The speed_multiplier scales the fall speed.
@@ -1449,13 +1376,10 @@ namespace EnemySystem
         Animation::Animation_SetFrame(e.enemy_animation, 0);                                                                // update UV coords to match the new row and frame
     }
 
-
     /*
     @function       Enemy_SpawnShieldedFromPool
     @params         pool (std::vector<Data::Enemy>&), free_slots (std::deque<int>&), area (const Data::EnemyArea&), bank (const Data::WordBank&), min_word_len (int), max_word_len (int), speed_multiplier (float);
-    @brief          Spawns a shielded enemy into an available pool slot using lane-based placement.
-
-    @usage          wWinMain
+    @brief          Spawns a shielded enemy into an available pool slot using lane based placement.
 
     This function spawns a shielded enemy that needs two words to defeat. It picks two unique
     words: the first is shown while the shield is up, the second is revealed after the shield breaks.
@@ -1541,8 +1465,6 @@ namespace UiSystem
     @params         meshes (const Data::Meshes&), area (const Data::EnemyArea&)
     @brief          Draws a semi-transparent debug rectangle showing the enemy movement/spawn area.
 
-    @usage          wWinMain
-
     This function computes the bounding box of the enemy area from 'area', then renders a tinted,
     semi-transparent rectangle using the debug mesh. It helps visualize where enemies are allowed
     to spawn, fall, and land.
@@ -1573,8 +1495,6 @@ namespace UiSystem
     @function       Debug_DrawEnemyLaneLines
     @params         meshes (const Data::Meshes&), area (const Data::EnemyArea&)
     @brief          Draws vertical debug lines to visualize each enemy lane inside the enemy area.
-
-    @usage          wWinMain
 
     This function renders one vertical line per lane across the enemy area height, using distinct colors
     to make lanes easy to tell apart. It helps debug lane placement, spawn positions, and spacing rules.
@@ -1626,13 +1546,11 @@ namespace UiSystem
     /*
     @function       Debug_DrawDifficultyTopRight
     @params         show (bool), auto_spawn_on (bool), health (const Data::Health&)
-    @brief          Draws a debug HUD line showing health, difficulty, spawn pacing, and word-length unlocks.
-
-    @usage          wWinMain
+    @brief          Draws a debug HUD line showing health, difficulty, spawn pacing, and word length unlocks.
 
     This function prints a single line of diagnostic text near the top-right area of the screen, including
-    current/max HP, the current difficulty value, the current spawn interval, whether auto-spawn is enabled,
-    and the unlocked word-length range.
+    current/max HP, the current difficulty value, the current spawn interval, whether auto spawn is enabled,
+    and the unlocked word length range.
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
     void Debug_DrawDifficultyTopRight(bool show, bool auto_spawn_on, const Data::Health& health)
     {
@@ -1698,8 +1616,6 @@ namespace EnemyManage
     @params         bank (Data::WordBank&)
     @brief          Initializes the engine, window settings, random seed, word data, and font resources.
 
-    @usage          wWinMain
-
     This function boots the AE engine and creates the game window, sets the window title, seeds the random
     number generator, loads all word lists into the provided WordBank, and loads the font used for rendering
     enemy words and debug text.
@@ -1718,13 +1634,10 @@ namespace EnemyManage
         AE_ASSERT_MESG(Graphics::font_id >= 0, "Failed to load font: Assets/Pixel-Game.otf");                               // stop if font fails
     }
 
-
     /*
     @function       EnemyManage_LoadMeshes
     @params         enemy_anim (const Data::SpriteAnim&)
     @brief          Loads enemy textures and builds the meshes needed for rendering.
-
-    @usage          wWinMain
 
     This function loads the enemy sprite textures for word lengths 3 through 8, builds the textured quad
     mesh used to draw animated enemy sprites (using the sprite sheet UV frame size from 'enemy_anim'),
@@ -1796,9 +1709,7 @@ namespace EnemyManage
     @params         meshes (Data::Meshes&)
     @brief          Releases all loaded meshes, textures, and font resources used by the game.
 
-    @usage          wWinMain
-
-    This function frees the mesh objects stored in 'meshes', unloads all enemy textures (3-8) from the
+    This function frees the mesh objects stored in 'meshes', unloads all enemy textures (3 to 8) from the
     Graphics texture table, and destroys the loaded font. It also resets pointers/handles back to safe
     defaults to prevent dangling references.
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
@@ -1836,9 +1747,7 @@ namespace EnemyManage
     /*
     @function       EnemyPool_Free
     @params         pool (std::vector<Data::Enemy>&), free_slots (std::deque<int>&)
-    @brief          Deactivates all enemies in the pool and rebuilds the free-slot queue.
-
-    @usage          Game.cpp
+    @brief          Deactivates all enemies in the pool and rebuilds the free slot queue.
 
     Every slot is reset to a clean inactive state regardless of enemy type (normal, friendly,
     shielded). The free_slots queue is rebuilt from scratch so the pool is ready for re-init

@@ -46,7 +46,7 @@ namespace
     constexpr float THAW_DUR = 1.2f;   // fade-out duration (THAWING phase)
 
     // ---- Spacebar break-free mechanic ----
-    constexpr int   SPACES_NEEDED = 25;       // presses to escape
+    constexpr int   SPACES_NEEDED = 15;       // presses to escape
 
     // ---- Particle counts ----
     constexpr int   AMBIENT_COUNT = 80;       // gentle ambient snowflakes
@@ -117,7 +117,7 @@ namespace
     constexpr float LUNGE_SPEED_MUL = 3.5f;
 
     // Dark storm overlay max alpha
-    constexpr float STORM_OVL_ALPHA_MAX = 0.45f;
+    constexpr float STORM_OVL_ALPHA_MAX = 0.25f;
 
     // Storm overlay colour (dark grey-purple)
     constexpr float STORM_OVL_R = 0.10f;
