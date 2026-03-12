@@ -92,7 +92,7 @@ void DisplayScore() {
 void Shop_Init() {
 
 	isTransitioningIn = true;
-	shopUiOffsetX = AEGfxGetWindowWidth(); // Start the UI completely off-screen to the right
+	shopUiOffsetX = (float)AEGfxGetWindowWidth(); // Start the UI completely off-screen to the right
 	ScreenTransitions::ScreenTransition_Init(); // Restart the timer for the arrival pan
 
 	winW = (float)AEGfxGetWindowWidth();
