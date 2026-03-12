@@ -1,4 +1,4 @@
-/**
+ï»¿/**
  * @file PowerUp.cpp
  * @author Azfar
  * @brief Power-up system - sky drops activated by number keys 1/2/3.
@@ -21,6 +21,7 @@
 #include "PowerUp.h"
 #include "MeshTemplates.h"
 #include "MeshRenderer.h"
+#include "Particles.h"
 
 #include "AEEngine.h"
 #include "AEGraphics.h"
@@ -42,7 +43,7 @@ namespace
     // Drop tuning
     // ----------------------------------------------------------------
     constexpr int   MAX_SLOTS = 3;        // 3 simultaneous drops max
-    constexpr float DROP_SIZE = 150.0f;   // matches ENEMY_SIZE_PX
+    constexpr float DROP_SIZE = 100.0f;   // matches ENEMY_SIZE_PX
     constexpr float DROP_HALF = DROP_SIZE * 0.5f;
     constexpr float DROP_SPAWN_X_MARGIN = 80.0f; // keep drops away from screen edges
 
@@ -53,9 +54,9 @@ namespace
     // ----------------------------------------------------------------
     // Effect durations
     // ----------------------------------------------------------------
-    constexpr float SHIELD_DURATION = 5.0f;
+    constexpr float SHIELD_DURATION = 10.0f;
     constexpr float SLOW_DURATION = 5.0f;
-    constexpr float SLOW_SCALE = 0.4f;  // 40% game speed during slow
+    constexpr float SLOW_SCALE = 0.6f;  // 40% game speed during slow
 
     // ----------------------------------------------------------------
     // Per-slot drop state
@@ -95,8 +96,45 @@ namespace
     static AEGfxTexture* g_texShield = nullptr;
     static AEGfxTexture* g_texSlow = nullptr;
 
-    // Last enemy area passed to Update — lets DebugSpawn use correct bounds
+    // Last enemy area passed to Update ï¿½ lets DebugSpawn use correct bounds
     static Data::EnemyArea s_lastEnemyArea{};
+
+    // ----------------------------------------------------------------
+    // Lightning strike animation
+    // ----------------------------------------------------------------
+    constexpr int   STRIKE_FRAME_COUNT = 5;
+    constexpr float STRIKE_FRAME_TIME = 0.16f;              // seconds per frame (~12 fps)
+    constexpr float STRIKE_UV_W = 1.0f / STRIKE_FRAME_COUNT; // 0.2 per frame
+    constexpr float STRIKE_DISPLAY_W = 400.0f;
+    constexpr float STRIKE_DISPLAY_H = 800.0f;
+
+    struct LightningStrike
+    {
+        bool  active = false;
+        float x = 0.0f;
+        float y = 0.0f;
+        int   frame = 0;
+        float frameTimer = 0.0f;
+    };
+
+    static LightningStrike  g_strikes[MAX_SLOTS];
+    static AEGfxTexture* g_texStrike = nullptr;
+    static AEGfxVertexList* g_strikeMesh = nullptr;  // single-frame-width UV quad
+
+    // Spawn strikes at left, centre, and right of the screen
+    static void SpawnThreeStrikes()
+    {
+        constexpr float LEFT_X = -500.0f;
+        constexpr float CENTRE_X = 0.0f;
+        constexpr float RIGHT_X = 500.0f;
+        constexpr float STRIKE_Y = 0.0f;  // vertical centre of screen
+
+        // We need 3 slots - expand pool if needed by reusing from index 0
+        // g_strikes has MAX_SLOTS entries; spawn each directly by index
+        g_strikes[0] = { true, LEFT_X,   STRIKE_Y, 0, 0.0f };
+        g_strikes[1] = { true, CENTRE_X, STRIKE_Y, 0, 0.0f };
+        g_strikes[2] = { true, RIGHT_X,  STRIKE_Y, 0, 0.0f };
+    }
 
     // ----------------------------------------------------------------
     // Helpers
@@ -195,6 +233,12 @@ namespace
         for (Data::Enemy& e : pool)
             if (e.enemy_is_active && !e.enemy_is_dying)
                 EnemySystem::Enemy_Killed(e, health);
+
+        // Play three strike animations (left, centre, right)
+        SpawnThreeStrikes();
+
+        // Strong screen shake for impact
+        Particles_TriggerShake(0.5f, 20.0f);
     }
 
     static void Activate(PowerUpSystem::PowerType type, std::vector<Data::Enemy>& pool, Data::Health& health)
@@ -220,14 +264,22 @@ namespace PowerUpSystem
         if (g_mesh) { AEGfxMeshFree(g_mesh); g_mesh = nullptr; }
         g_mesh = Sprite_Mesh(1.0f, 1.0f);  // full UV (no atlas slicing needed)
 
-        // Load sprite textures — gracefully handle missing assets
-        g_texLightning = AEGfxTextureLoad("Assets/powerup_lightning.png");
-        g_texShield = AEGfxTextureLoad("Assets/powerup_shield.png");
-        g_texSlow = AEGfxTextureLoad("Assets/powerup_slow.png");
+        // Load sprite textures â€” gracefully handle missing assets
+        g_texLightning = AEGfxTextureLoad("Assets/lightningpowerup.png");
+        g_texShield = AEGfxTextureLoad("Assets/shieldpowerup.png");
+        g_texSlow = AEGfxTextureLoad("Assets/slowpowerup.png");
+        g_texStrike = AEGfxTextureLoad("Assets/lightningstrike.png");
+
+        // Single-frame UV quad: UV width = 1/5 of the sheet, full height
+        if (g_strikeMesh) { AEGfxMeshFree(g_strikeMesh); g_strikeMesh = nullptr; }
+        g_strikeMesh = Sprite_Mesh(STRIKE_UV_W, 1.0f);
 
         // Reset slots
         for (int i = 0; i < MAX_SLOTS; ++i)
+        {
             g_slots[i].active = false;
+            g_strikes[i].active = false;
+        }
 
         // Reset timers
         g_spawnTimer = 0.0f;
@@ -240,9 +292,11 @@ namespace PowerUpSystem
     void Free()
     {
         if (g_mesh) { AEGfxMeshFree(g_mesh);              g_mesh = nullptr; }
+        if (g_strikeMesh) { AEGfxMeshFree(g_strikeMesh);        g_strikeMesh = nullptr; }
         if (g_texLightning) { AEGfxTextureUnload(g_texLightning); g_texLightning = nullptr; }
         if (g_texShield) { AEGfxTextureUnload(g_texShield);    g_texShield = nullptr; }
         if (g_texSlow) { AEGfxTextureUnload(g_texSlow);      g_texSlow = nullptr; }
+        if (g_texStrike) { AEGfxTextureUnload(g_texStrike);    g_texStrike = nullptr; }
     }
 
     // ----------------------------------------------------------------
@@ -286,6 +340,22 @@ namespace PowerUpSystem
             TrySpawnDrop(enemy_area);
         }
 
+        // ---- Advance lightning strike animations ----
+        for (int i = 0; i < MAX_SLOTS; ++i)
+        {
+            LightningStrike& s = g_strikes[i];
+            if (!s.active) continue;
+
+            s.frameTimer += dt;
+            if (s.frameTimer >= STRIKE_FRAME_TIME)
+            {
+                s.frameTimer -= STRIKE_FRAME_TIME;
+                ++s.frame;
+                if (s.frame >= STRIKE_FRAME_COUNT)
+                    s.active = false;  // animation finished
+            }
+        }
+
         // ---- Move drops + key input + floor check ----
         // Key codes for 1, 2, 3
         const int keys[MAX_SLOTS] = { AEVK_1, AEVK_2, AEVK_3 };
@@ -298,14 +368,14 @@ namespace PowerUpSystem
             // Fall
             d.y -= d.fallSpeed * dt;
 
-            // Floor reached — disappear without activating
+            // Floor reached ï¿½ disappear without activating
             if (d.y - DROP_HALF <= enemy_area.area_landing_y)
             {
                 d.active = false;
                 continue;
             }
 
-            // Number key press — activate and consume the drop
+            // Number key press ï¿½ activate and consume the drop
             if (AEInputCheckTriggered(static_cast<u8>(keys[i])))
             {
                 d.active = false;
@@ -347,6 +417,26 @@ namespace PowerUpSystem
     {
         if (!g_mesh) return;
 
+        // ---- Lightning strike animations ----
+        if (g_strikeMesh && g_texStrike)
+        {
+            for (int i = 0; i < MAX_SLOTS; ++i)
+            {
+                const LightningStrike& s = g_strikes[i];
+                if (!s.active) continue;
+
+                float uOffset = s.frame * STRIKE_UV_W;
+
+                AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
+                AEGfxSetBlendMode(AE_GFX_BM_BLEND);
+                AEGfxSetTransparency(1.0f);
+                AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);
+                AEGfxTextureSet(g_texStrike, uOffset, 0.0f);
+                Mesh_Renderer(g_strikeMesh, s.x, s.y, STRIKE_DISPLAY_W, STRIKE_DISPLAY_H, 0.0f);
+            }
+        }
+
+        // ---- Falling drops ----
         for (int i = 0; i < MAX_SLOTS; ++i)
         {
             const Drop& d = g_slots[i];
@@ -378,14 +468,15 @@ namespace PowerUpSystem
                 AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);
             }
 
-            // ---- Slot number label centred on sprite ----
+            // ---- Slot number label above the sprite ----
             if (Graphics::font_id >= 0)
             {
                 char numBuf[4];
                 std::snprintf(numBuf, sizeof(numBuf), "%d", i + 1);
 
                 float nx, ny;
-                WorldToNDC(d.x, d.y, nx, ny);
+                // Offset world Y to the top edge of the sprite, then a small gap above it
+                WorldToNDC(d.x, d.y + DROP_HALF + 10.0f, nx, ny);
 
                 float tw = 0.0f, th = 0.0f;
                 AEGfxGetPrintSize(Graphics::font_id, numBuf, 0.6f, &tw, &th);
@@ -396,7 +487,7 @@ namespace PowerUpSystem
                     nx - tw * 0.5f,
                     ny - th * 0.5f,
                     0.6f,
-                    0.0f, 0.0f, 0.0f, // black text
+                    1.0f, 1.0f, 1.0f, // white text
                     1.0f);
             }
         }
@@ -406,28 +497,67 @@ namespace PowerUpSystem
         {
             float iconX = -SCREEN_HALF_W + 40.0f;  // anchored to left edge
             float iconY = -SCREEN_HALF_H + 40.0f;  // anchored to bottom edge
-            float iconSize = 32.0f;
-            float gap = 44.0f;
+            float iconSize = 48.0f;
+            float gap = 56.0f;
+
+            // Helper lambda to draw one active-effect icon with sprite + timer text
+            auto DrawIcon = [&](AEGfxTexture* tex, float r, float gb, float b, float remaining)
+                {
+                    // Fade out as effect nears expiry
+                    float alpha = (remaining < 1.5f) ? (0.4f + 0.6f * (remaining / 1.5f)) : 1.0f;
+
+                    if (tex)
+                    {
+                        AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
+                        AEGfxSetBlendMode(AE_GFX_BM_BLEND);
+                        AEGfxSetTransparency(alpha);
+                        AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);
+                        AEGfxTextureSet(tex, 0.0f, 0.0f);
+                        Mesh_Renderer(g_mesh, iconX, iconY, iconSize, iconSize, 0.0f);
+                    }
+                    else
+                    {
+                        // Fallback coloured quad if texture is missing
+                        AEGfxSetRenderMode(AE_GFX_RM_COLOR);
+                        AEGfxSetBlendMode(AE_GFX_BM_BLEND);
+                        AEGfxSetTransparency(alpha);
+                        AEGfxSetColorToMultiply(r, gb, b, 1.0f);
+                        Mesh_Renderer(g_mesh, iconX, iconY, iconSize, iconSize, 0.0f);
+                    }
+
+                    // Draw remaining time below the icon
+                    if (Graphics::font_id >= 0)
+                    {
+                        char timeBuf[8];
+                        std::snprintf(timeBuf, sizeof(timeBuf), "%.1fs", remaining);
+
+                        float nx, ny;
+                        WorldToNDC(iconX, iconY - iconSize * 0.5f - 8.0f, nx, ny);
+
+                        float tw = 0.0f, th = 0.0f;
+                        AEGfxGetPrintSize(Graphics::font_id, timeBuf, 0.4f, &tw, &th);
+
+                        AEGfxSetRenderMode(AE_GFX_RM_COLOR);
+                        AEGfxSetBlendMode(AE_GFX_BM_BLEND);
+                        AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);
+                        AEGfxPrint(Graphics::font_id, timeBuf,
+                            nx - tw * 0.5f,
+                            ny - th * 0.5f,
+                            0.4f,
+                            1.0f, 1.0f, 1.0f,
+                            alpha);
+                    }
+
+                    iconX += gap;
+                };
 
             if (g_shieldRemaining > 0.0f)
-            {
-                AEGfxSetRenderMode(AE_GFX_RM_COLOR);
-                AEGfxSetBlendMode(AE_GFX_BM_BLEND);
-                AEGfxSetTransparency(1.0f);
-                AEGfxSetColorToMultiply(0.2f, 1.0f, 0.4f, 1.0f);
-                Mesh_Renderer(g_mesh, iconX, iconY, iconSize, iconSize, 0.0f);
-                iconX += gap;
-            }
+                DrawIcon(g_texShield, 0.2f, 1.0f, 0.4f, g_shieldRemaining);
 
             if (g_slowRemaining > 0.0f)
-            {
-                AEGfxSetRenderMode(AE_GFX_RM_COLOR);
-                AEGfxSetBlendMode(AE_GFX_BM_BLEND);
-                AEGfxSetTransparency(1.0f);
-                AEGfxSetColorToMultiply(0.6f, 0.2f, 1.0f, 1.0f);
-                Mesh_Renderer(g_mesh, iconX, iconY, iconSize, iconSize, 0.0f);
-            }
+                DrawIcon(g_texSlow, 0.6f, 0.2f, 1.0f, g_slowRemaining);
 
+            AEGfxSetTransparency(1.0f);
             AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);
         }
     }

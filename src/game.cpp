@@ -16,6 +16,7 @@
 #include "Pause.h"
 #include "Weather.h"
 #include "Boss.h"
+#include "LaserBeam.h"
 
 
 namespace {
@@ -152,8 +153,9 @@ void Game_Init()
     Particles_Init();
     Weather_Init();
 
+    LaserBeam_Init();
+    LaserBeam_SetOrigin(spriteX + 75.0f, spriteY);
 }
-
 
 void Game_Update()
 {
@@ -251,6 +253,7 @@ void Game_Update()
         PowerUpSystem::Update(dt, enemy_pool, enemy_area, health);
         Particles_Update(dt);
         Weather_Update(dt, enemy_pool);
+        LaserBeam_Update(dt);
         // mouse click -> convert to world coords
         if (AEInputCheckTriggered(AEVK_LBUTTON))
         {
@@ -345,9 +348,10 @@ render_only:
         EnemySystem::Enemy_DrawWord(enemy_pool[(size_t)di]);                                                                // draw enemy word
     }
 
-    BossSystem::Boss_Draw(meshes);  
+    BossSystem::Boss_Draw(meshes);
 
     Particles_Draw();
+    LaserBeam_Draw();
 
     UiSystem::Debug_DrawDifficultyTopRight(is_difficulty_debug_visible, is_random_spawning_enabled, health);                // draw debug difficulty ui with health
     /*_______________________________________________________________________________________________________________________________________________________________________________________________*/
@@ -392,6 +396,7 @@ void Game_Exit()
     PowerUpSystem::Free();
     Particles_Free();
     Weather_Exit();
+    LaserBeam_Free();
     DebugConsole::Exit();
 
     if (playerMesh) {
