@@ -105,8 +105,8 @@ namespace
     constexpr int   STRIKE_FRAME_COUNT = 5;
     constexpr float STRIKE_FRAME_TIME = 0.16f;              // seconds per frame (~12 fps)
     constexpr float STRIKE_UV_W = 1.0f / STRIKE_FRAME_COUNT; // 0.2 per frame
-    constexpr float STRIKE_DISPLAY_W = 200.0f;
-    constexpr float STRIKE_DISPLAY_H = 400.0f;
+    constexpr float STRIKE_DISPLAY_W = 400.0f;
+    constexpr float STRIKE_DISPLAY_H = 800.0f;
 
     struct LightningStrike
     {
