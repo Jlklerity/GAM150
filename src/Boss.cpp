@@ -1,16 +1,24 @@
 /*!
 @file           Boss.cpp
-@author         (implementer)
+@author         Wong Zi Yuan (w.ziyuan@digipen.edu)
 @course         CSD1451
 @section        A
 *//*_________________________________________________________________________________________________________________________________________________________________________________________________*/
 
 #include "Boss.h"
-#include "AEEngine.h"                                                                                                       // Alpha Engine graphics and utility API
+#include "AEEngine.h"
 
 /*
 @namespace      BossConfig
-@brief          Central location for all boss-related tuning values.
+@brief          Tuning constants that control every aspect of boss behavior and pacing.
+
+Every number that affects how the boss plays is defined here: how long between spawns, how fast
+the boss moves, how many words the player must type to win, the shortest and longest word lengths,
+how much bigger the boss sprite is, how long the red hit tint lasts, the minimum and maximum wait
+between flash attacks, how long the flash overlay fades, the minion cap, the time between minion
+waves, how many minions arrive per wave, how long the entrance cutscene runs, and the fixed
+vertical position the boss holds during the fight. Changing any value here adjusts gameplay feel
+without touching the core boss logic.
 *//*_________________________________________________________________________________________________________________________________________________________________________________________________*/
 namespace BossConfig
 {
@@ -34,15 +42,30 @@ namespace BossConfig
 /*___________________________________________________________________________________________________________________________________________________________________________________________________*/
 
 /*
-All state private to the boss system.  Nothing in this block is visible outside Boss.cpp.
+@namespace      Anonymous
+@brief          Private state variables used only inside Boss.cpp.
+
+Nothing in this block is visible outside Boss.cpp. All mutable boss state lives here, including
+the state machine value, all timers, the movement direction, the word counter, the reserved pool
+slot index, the current kill word string, the kill word visibility flag, the hit tint timer,
+the animation row, the flash timers, and the three asset pointers.
 *//*_________________________________________________________________________________________________________________________________________________________________________________________________*/
 namespace
 {
-    // state machine
+    /*
+    @enum           BossState
+    @brief          Tracks which phase the boss is currently in during its lifecycle.
+
+    The boss passes through these values in order each wave. INACTIVE is the default before the
+    60 second timer fires and after the boss has been fully cleaned up. WAITING holds spawning
+    blocked while regular enemies finish dying. CUTSCENE plays the slide in animation and freezes
+    gameplay. ACTIVE runs the full fight loop. DEAD exists for exactly one frame to let all systems
+    settle before returning to INACTIVE.
+    */
     enum class BossState
     {
         INACTIVE,                                                                                                           // boss has not triggered yet or has been fully cleaned up after death
-        WAITING,                                                                                                            // 60 second mark was hit and we are waiting for the screen to clear
+        WAITING,                                                                                                            // 60 second mark was hit and the system is waiting for the screen to clear
         CUTSCENE,                                                                                                           // boss is sliding onto screen and gameplay is frozen
         ACTIVE,                                                                                                             // boss is alive, moving, spawning minions and showing its kill word
         DEAD                                                                                                                // boss was just defeated and will clean up this frame
@@ -67,8 +90,6 @@ namespace
     std::string boss_current_word;                                                                                          // the word the player must type to damage the boss right now
 
     // targeting lock
-    // While minions are alive the kill-word enemy is hidden and not targetable.
-    // We track whether it is currently injected so we can re-inject on the frame the last minion dies.
     bool        boss_kill_word_in_pool = false;                                                                             // true when the kill word is visible and targetable by the player
 
     // cutscene
@@ -83,16 +104,21 @@ namespace
     float       boss_flash_active_timer = 0.0f;                                                                             // counts down while the white flash overlay is still visible
 
     // assets
-    AEGfxTexture* boss_texture = nullptr;                                                                                  // boss sprite sheet texture
-    AEGfxVertexList* boss_sprite_mesh = nullptr;                                                                           // mesh built to match the boss sprite sheet UV layout
-    AEGfxVertexList* boss_flash_mesh = nullptr;                                                                            // full screen rectangle used to draw the flash overlay
+    AEGfxTexture* boss_texture = nullptr;                                                                                   // boss sprite sheet texture
+    AEGfxVertexList* boss_sprite_mesh = nullptr;                                                                            // mesh built to match the boss sprite sheet UV layout
+    AEGfxVertexList* boss_flash_mesh = nullptr;                                                                             // full screen rectangle used to draw the flash overlay
 
     // helpers
 
     /*
     @function       Boss_CountActiveMinions
-    @brief          Returns how many pool enemies are active and alive (excluding the boss kill-word slot).
-    Counts MINION-type enemies spawned by the boss, plus any stray NORMAL enemies still on screen.
+    @params         pool (const std::vector<Data::Enemy>&)
+    @brief          Returns how many pool enemies are active and alive, excluding the boss kill word slot.
+
+    Every slot in the pool is checked. The boss kill word slot is always skipped so it is never
+    counted as a minion. Slots that are inactive or already in the dying state are also skipped
+    because a dying enemy cannot block the player from reaching the kill word. The remaining count
+    is what the spawning logic and the targeting lock use to decide what to show.
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
     int Boss_CountActiveMinions(const std::vector<Data::Enemy>& pool)
     {
@@ -101,7 +127,7 @@ namespace
         {
             if (!pool[(size_t)i].enemy_is_active) continue;                                                                 // skip slots that are not in use
             if (boss_pool_slot >= 0 && i == boss_pool_slot) continue;                                                       // skip the boss kill word slot so it is never counted as a minion
-            if (pool[(size_t)i].enemy_is_dying) continue;                                                                   // skip enemies that are already dying since they cannot block the kill word
+            if (pool[(size_t)i].enemy_is_dying) continue;                                                                   // skip enemies that are already dying since dying enemies cannot block the kill word
             count++;                                                                                                        // this enemy counts as a live minion
         }
         return count;                                                                                                       // return the total number of live minions found
@@ -109,8 +135,12 @@ namespace
 
     /*
     @function       Boss_PoolIsClear
-    @brief          Returns true when all regular (non-boss) enemies are inactive or in the dying state.
-    We wait for this before spawning the boss so the screen is clear for the cutscene.
+    @params         pool (const std::vector<Data::Enemy>&)
+    @brief          Returns true when all regular enemies are inactive or in the dying state.
+
+    Every slot in the pool is checked except the boss kill word slot. If a slot is active and not
+    dying then a live enemy is still on screen and the function returns false. When no such slot
+    exists the screen is considered clear and the boss entrance cutscene can safely begin.
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
     bool Boss_PoolIsClear(const std::vector<Data::Enemy>& pool)
     {
@@ -125,7 +155,12 @@ namespace
 
     /*
     @function       Boss_PickFlashCooldown
-    @brief          Returns a random float in [BOSS_FLASH_INTERVAL_MIN, BOSS_FLASH_INTERVAL_MAX].
+    @brief          Returns a random wait time in seconds for the next flash attack.
+
+    The min and max interval constants are converted to integer centiseconds so
+    Utility_RandInt can pick a whole number in that range. The result is then divided
+    by 100 to convert back to seconds. This gives a smooth spread of wait times across
+    the full allowed range each time the function is called.
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
     float Boss_PickFlashCooldown()
     {
@@ -137,8 +172,13 @@ namespace
 
     /*
     @function       Boss_InjectKillWord
-    @brief          Reveals the kill-word by restoring enemy_word_text so Typing.cpp can target it.
-    enemy_is_active stays true at all times while the boss owns the slot.
+    @params         pool (std::vector<Data::Enemy>&)
+    @brief          Reveals the kill word by restoring word text on the reserved slot.
+
+    The stored kill word string is written back into the reserved pool slot so Typing.cpp can see
+    and target it. The enemy_is_active flag stays true at all times while the boss owns the slot
+    because setting it to false would allow game.cpp to recycle the slot on that same frame.
+    Nothing happens if the slot index is invalid or the kill word is already visible.
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
     void Boss_InjectKillWord(std::vector<Data::Enemy>& pool)
     {
@@ -155,8 +195,13 @@ namespace
 
     /*
     @function       Boss_RemoveKillWord
-    @brief          Deactivates the kill-word enemy so Typing.cpp cannot see or target it.
-    Does NOT push the slot back into free_slots -- we hold it exclusively for the boss.
+    @params         pool (std::vector<Data::Enemy>&)
+    @brief          Hides the kill word so Typing.cpp cannot see or target it.
+
+    The word text on the reserved slot is cleared so the typing system skips over it. The slot
+    is not returned to free_slots because the boss holds ownership for the entire fight. The
+    enemy_is_active flag stays true throughout. Nothing happens if the slot is invalid or the
+    kill word is already hidden.
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
     void Boss_RemoveKillWord(std::vector<Data::Enemy>& pool)
     {
@@ -173,9 +218,13 @@ namespace
 
     /*
     @function       Boss_SwapKillWord
-    @brief          Picks a new unique word and updates the kill-word slot -- mirrors Enemy_BreakShield.
+    @params         pool (std::vector<Data::Enemy>&), bank (const Data::WordBank&)
+    @brief          Picks a new unique word and updates the kill word slot with it.
 
-    Modelled directly on Enemy_BreakShield: swap the word text on the live slot and update the length.
+    Enemy_PickUniqueWordRandomLength is asked for a fresh word that is not already on screen.
+    If no unique word can be found the old kill word is kept as a fallback so the slot is never
+    left empty. The new word is stored in boss_current_word and, if the kill word slot is currently
+    visible, the pool slot is updated immediately so the player sees the change right away.
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
     void Boss_SwapKillWord(std::vector<Data::Enemy>& pool, const Data::WordBank& bank)
     {
@@ -201,14 +250,24 @@ namespace
 
 /*
 @namespace      BossSystem
-@brief          Public boss API implementation.
+@brief          Public functions that manage the entire boss lifecycle.
+
+All public functions here match the call sites in game.cpp. The namespace handles spawn timing,
+the pool clear wait, the entrance cutscene, boss movement, minion wave spawning, kill word pool
+injection and removal, hit feedback, flash attack timing, sprite drawing, and defeat cleanup.
+All internal state lives in the anonymous namespace above and is not visible outside Boss.cpp.
 *//*_________________________________________________________________________________________________________________________________________________________________________________________________*/
 namespace BossSystem
 {
     /*
     @function       Boss_Init
     @params         meshes (Data::Meshes&), bank (const Data::WordBank&)
-    @brief          Loads boss texture and mesh; resets all boss state.
+    @brief          Loads the boss texture, builds the boss sprite mesh, and resets all boss state.
+
+    Assets/bossEnemy.png is loaded and a sprite quad is built using 2 rows and 6 columns to match
+    the sheet layout. A plain white unit rectangle is also built for the flash overlay. Every state
+    variable including timers, counters, and flags is then set back to its default inactive value.
+    This function must be called once after EnemyManage_LoadMeshes so the base meshes are ready.
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
     void Boss_Init(Data::Meshes& /*meshes*/, const Data::WordBank& /*bank*/)
     {
@@ -230,7 +289,7 @@ namespace BossSystem
         // Build full screen flash overlay mesh
         boss_flash_mesh = Graphics::Mesh_BuildUnitRect(0xFFFFFFFF);                                                         // plain white unit rectangle that covers the whole screen
 
-        // Reset all state variables to their starting values
+        // reset all state variables to starting values
         boss_state = BossState::INACTIVE;                                                                                   // boss starts inactive
         boss_cycle_timer_seconds = 0.0f;                                                                                    // reset the spawn cycle clock
         boss_cutscene_timer_seconds = 0.0f;                                                                                 // reset the cutscene countdown
@@ -249,8 +308,13 @@ namespace BossSystem
 
     /*
     @function       Boss_Free
-    @params         meshes (Data::Meshes&), free_slots (std::deque<int>&)
-    @brief          Unloads boss texture and mesh; returns reserved pool slot if boss was active.
+    @params         meshes (Data::Meshes&), free_slots (std::deque<int>&), pool (std::vector<Data::Enemy>&)
+    @brief          Unloads the boss texture and frees the boss meshes without touching other shared meshes.
+
+    Only the resources that Boss_Init created are released. If the boss had a reserved kill word
+    slot when this function was called, that slot is marked inactive and returned to free_slots so
+    no orphaned active slot remains after a restart or level exit. Null checks are performed before
+    every free so the function is safe to call even if Boss_Init never completed.
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
     void Boss_Free(Data::Meshes& /*meshes*/, std::deque<int>& free_slots, std::vector<Data::Enemy>& pool)
     {
@@ -278,7 +342,7 @@ namespace BossSystem
         {
             pool[(size_t)boss_pool_slot].enemy_is_active = false;                                                           // deactivate the slot before giving it back
             free_slots.push_back(boss_pool_slot);                                                                           // return the slot index to the free list
-            boss_pool_slot = -1;                                                                                            // clear the reservation so we no longer reference it
+            boss_pool_slot = -1;                                                                                            // clear the reservation so nothing references the slot anymore
         }
 
         boss_state = BossState::INACTIVE;                                                                                   // mark the boss as fully inactive
@@ -288,12 +352,17 @@ namespace BossSystem
 
     /*
     @function       Boss_Update
-    @params         pool, free_slots, area, bank, dt, boss_spawning_blocked
-    @brief          Full per-frame boss tick.
+    @params         pool (std::vector<Data::Enemy>&), free_slots (std::deque<int>&), area (const Data::EnemyArea&), bank (const Data::WordBank&), dt (float), boss_spawning_blocked (bool&)
+    @brief          Full per frame boss tick covering timing, state transitions, movement, and minion management.
+
+    This function owns the 60 second spawn trigger, the pool clear wait, the cutscene countdown,
+    boss movement, minion wave spawning, the targeting lock that hides or shows the kill word
+    based on whether minions are alive, hit tint decay, and flash attack timing. The
+    boss_spawning_blocked flag is set to true from the moment the 60 second mark is hit until
+    the boss is fully defeated so the caller can stop regular enemy spawning during the entire
+    boss event.
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
-    void Boss_Update(std::vector<Data::Enemy>& pool, std::deque<int>& free_slots,
-        const Data::EnemyArea& area, const Data::WordBank& bank,
-        float dt, bool& boss_spawning_blocked)
+    void Boss_Update(std::vector<Data::Enemy>& pool, std::deque<int>& free_slots, const Data::EnemyArea& area, const Data::WordBank& bank, float dt, bool& boss_spawning_blocked)
     {
         // Flash attack timer runs every frame while the boss is active.
         // The caller already skips this function when the game is paused.
@@ -334,7 +403,7 @@ namespace BossSystem
         // WAITING state
         case BossState::WAITING:
         {
-            boss_spawning_blocked = true;                                                                                   // keep normal spawning blocked while we wait
+            boss_spawning_blocked = true;                                                                                   // keep normal spawning blocked during the wait
 
             if (Boss_PoolIsClear(pool))                                                                                     // check if all regular enemies are gone
             {
@@ -447,7 +516,7 @@ namespace BossSystem
 
                         // Return the slot to the free pool
                         free_slots.push_back(boss_pool_slot);                                                               // give the slot index back so it can be reused
-                        boss_pool_slot = -1;                                                                                // clear our reference to it
+                        boss_pool_slot = -1;                                                                                // clear the stored slot reference
 
                         boss_cycle_timer_seconds = 0.0f;                                                                    // reset the spawn cycle clock for the next boss wave
                         boss_spawning_blocked = false;                                                                      // allow normal enemy spawning to resume
@@ -504,7 +573,7 @@ namespace BossSystem
             }
 
             // Minion spawning, send a wave every BOSS_MINION_SPAWN_INTERVAL_SECONDS
-            if (minion_count < BossConfig::BOSS_MINION_CAP)                                                                 // only spawn if we are under the minion limit
+            if (minion_count < BossConfig::BOSS_MINION_CAP)                                                                 // only spawn if the minion count is under the cap
             {
                 boss_minion_spawn_timer += dt;                                                                              // count up toward the next wave trigger
                 if (boss_minion_spawn_timer >= BossConfig::BOSS_MINION_SPAWN_INTERVAL_SECONDS)                              // check if enough time has passed for a new wave
@@ -543,7 +612,14 @@ namespace BossSystem
     /*
     @function       Boss_Draw
     @params         meshes (const Data::Meshes&)
-    @brief          Renders the boss sprite, kill-word label, BOSS X / 50 counter, and cutscene overlay.
+    @brief          Renders the boss sprite, hit tint, kill word label, and progress counter.
+
+    The boss sprite is drawn at the current position using the correct sprite sheet row. A red
+    tint is applied while the hit tint timer is active and fades back to white as it counts down.
+    During the cutscene a dark overlay and a warning banner are drawn on top of the sprite. When
+    the boss is active and the kill word is visible, the word is printed centered above the sprite.
+    The BOSS X of Y progress counter is also printed while the boss is in the active state.
+    Nothing is drawn when the boss is inactive or waiting.
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
     void Boss_Draw(const Data::Meshes& meshes)
     {
@@ -555,7 +631,7 @@ namespace BossSystem
         if (!boss_texture || !boss_sprite_mesh) return;                                                                     // assets are missing so there is nothing to draw
 
         // Draw the boss sprite first so all overlays and text appear on top of it.
-        // During the cutscene we use boss_cutscene_y, otherwise we use the fixed fight position.
+        // During the cutscene boss_cutscene_y is used, otherwise the fixed fight position is used.
         float draw_y = (boss_state == BossState::CUTSCENE) ? boss_cutscene_y : BossConfig::BOSS_POSITION_Y;                 // pick the correct Y depending on whether the cutscene is playing
 
         float sprite_base = EnemyConfig::ENEMY_SIZE_PX * BossConfig::BOSS_SPRITE_SCALE;                                     // base size of the boss in pixels
@@ -662,7 +738,12 @@ namespace BossSystem
     /*
     @function       Boss_DrawFlashOverlay
     @params         meshes (const Data::Meshes&)
-    @brief          Draws the white full-screen flash overlay when active.
+    @brief          Renders a white full screen overlay when a flash attack is in progress.
+
+    A white rectangle scaled to fill the entire window is drawn with alpha calculated from
+    how much time is left on the flash timer. The dedicated flash mesh is used when available
+    and the debug box mesh is used as a fallback. Nothing is drawn when the flash timer is at
+    zero or below.
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
     void Boss_DrawFlashOverlay(const Data::Meshes& meshes)
     {
@@ -676,7 +757,7 @@ namespace BossSystem
 
         AEGfxSetRenderMode(AE_GFX_RM_COLOR);                                                                                // switch to solid colour mode for the overlay
         AEGfxSetBlendMode(AE_GFX_BM_BLEND);                                                                                 // use alpha blending so the flash fades smoothly
-        AEGfxSetTransparency(alpha);                                                                                        // set the overlay opacity based on how far through the fade we are
+        AEGfxSetTransparency(alpha);                                                                                        // set the overlay opacity based on how far the fade has progressed
         AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);                                                                    // use white multiply so the overlay stays white
         AEGfxSetColorToAdd(1.0f, 1.0f, 1.0f, 0.0f);                                                                         // add white on top to make the flash extra bright
 
@@ -693,7 +774,11 @@ namespace BossSystem
 
     /*
     @function       Boss_GetKillWordSlot
-    @brief          Returns the pool slot index reserved for the boss kill-word enemy, or -1 if none.
+    @brief          Returns the pool slot index reserved for the boss kill word enemy, or -1 if none.
+
+    This function gives read only access to the slot index the boss holds in the enemy pool.
+    A return value of -1 means the boss does not currently own a slot, which is the case when
+    the boss is inactive or has not yet been triggered for the current wave.
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
     int Boss_GetKillWordSlot()
     {
@@ -702,7 +787,11 @@ namespace BossSystem
 
     /*
     @function       Boss_IsActive
-    @brief          Returns true while the boss should be freezing gameplay (CUTSCENE or ACTIVE).
+    @brief          Returns true while the boss is on screen and part of gameplay.
+
+    True is returned during both the entrance cutscene and the main fight phase. Callers use
+    this to pause normal enemy spawning and freeze regular gameplay logic while the boss event
+    is running. False is returned in all other states including INACTIVE, WAITING, and DEAD.
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
     bool Boss_IsActive()
     {
@@ -711,7 +800,11 @@ namespace BossSystem
 
     /*
     @function       Boss_ForceSpawn
-    @brief          Skips the 60-second timer and immediately triggers the boss spawn sequence.
+    @brief          Immediately triggers the boss spawn sequence, bypassing the 60 second timer.
+
+    The cycle timer is set to the spawn interval threshold so the next Boss_Update call moves
+    the state from INACTIVE to WAITING and then proceeds normally through pool clear, cutscene,
+    and ACTIVE. Nothing happens if the boss is already active or in any state other than INACTIVE.
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
     void Boss_ForceSpawn()
     {
