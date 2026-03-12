@@ -29,7 +29,7 @@ namespace BossConfig
     const int   BOSS_WORD_MIN_LEN = 3;                                                                                      // shortest word the boss or its minions can use
     const int   BOSS_WORD_MAX_LEN = 8;                                                                                      // longest word the boss or its minions can use
     const float BOSS_SPRITE_SCALE = 1.2f;                                                                                   // how much bigger the boss sprite is compared to a normal enemy
-    const float BOSS_SPRITE_W_RATIO = 1.5f;                                                                                 // makes the boss sprite wider than it is tall
+    const float BOSS_SPRITE_W_RATIO = 1.0f;                                                                                 // makes the boss sprite wider than it is tall
     const float BOSS_HIT_TINT_DURATION_SECONDS = 0.18f;                                                                     // how long the boss flashes red after being hit
     const float BOSS_FLASH_INTERVAL_MIN_SECONDS = 8.0f;                                                                     // shortest possible wait before the next screen flash attack
     const float BOSS_FLASH_INTERVAL_MAX_SECONDS = 18.0f;                                                                    // longest possible wait before the next screen flash attack
@@ -62,7 +62,7 @@ namespace
     blocked while regular enemies finish dying. CUTSCENE plays the slide in animation and freezes
     gameplay. ACTIVE runs the full fight loop. DEAD exists for exactly one frame to let all systems
     settle before returning to INACTIVE.
-    */
+    *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
     enum class BossState
     {
         INACTIVE,                                                                                                           // boss has not triggered yet or has been fully cleaned up after death
@@ -685,9 +685,7 @@ namespace BossSystem
         float uv_y = (float)boss_anim_row * uv_row_height;                                                                  // calculate the V offset for the current animation row
 
         AEGfxTextureSet(boss_texture, 0.0f, uv_y);                                                                          // bind the boss texture and scroll to the correct row
-        Graphics::Draw_DrawMeshAt(boss_sprite_mesh,                                                                         // draw the boss sprite at its current position
-            boss_position_x, draw_y,
-            sprite_w, sprite_h, 0.0f);
+        Graphics::Draw_DrawMeshAt(boss_sprite_mesh, boss_position_x, draw_y, -(sprite_w * boss_dir), sprite_h, 0.0f);          // draw the boss sprite at its current position
 
         AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);                                                                    // reset colour multiply to white so nothing else is tinted
 
