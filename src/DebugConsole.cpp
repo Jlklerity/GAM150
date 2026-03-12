@@ -12,9 +12,9 @@ game.cpp only calls Init / Update / Render / Exit / IsOpen.
 #include "MeshRenderer.h"
 #include "MeshTemplates.h"
 #include "Enemy.h"
-#include "Boss.h"
 #include "PowerUp.h"
 #include "Weather.h"
+#include "Boss.h"
 
 #include <string>
 #include <vector>
@@ -442,10 +442,10 @@ namespace DebugConsole
             s_inputBuf[0] = '\0';
             s_cursorTimer = 0.0f;
             s_cursorVisible = true;
-            // Pre-fill '/' so the player sees it immediately
-            s_inputBuf[s_inputLen++] = '/';
+            s_inputBuf[s_inputLen++] = '/';                                 // pre-fill '/' so player sees it immediately
             s_inputBuf[s_inputLen] = '\0';
-            return; // consume the '/' keypress
+            *s_pDifficultyVisible = true;                                   // auto-show difficulty HUD when console opens
+            return;                                                         // consume the '/' keypress
         }
 
         if (!s_isOpen) return;
@@ -473,6 +473,7 @@ namespace DebugConsole
             s_isOpen = false;
             s_inputLen = 0;
             s_inputBuf[0] = '\0';
+            *s_pDifficultyVisible = false;                                  // hide difficulty HUD when console closes
             return;
         }
 
@@ -493,7 +494,7 @@ namespace DebugConsole
             }
 
             ExecuteCommand(cmd);                                            // non-empty = run command and stay open
-            s_inputLen = 1;                                                 // reset input buffer back to just '/'
+            s_inputLen = 1;                                                 // reset buffer back to just '/'
             s_inputBuf[0] = '/';
             s_inputBuf[1] = '\0';
             s_scrollOffset = 0;                                             // snap history to bottom after command
