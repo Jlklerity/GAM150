@@ -7,6 +7,7 @@
 
 #include "Boss.h"
 #include "AEEngine.h"
+#include <unordered_set>                                                                                                        // for boss_used_words history tracking
 
 /*
 @namespace      BossConfig
@@ -48,7 +49,7 @@ namespace BossConfig
 Nothing in this block is visible outside Boss.cpp. All mutable boss state lives here, including
 the state machine value, all timers, the movement direction, the word counter, the reserved pool
 slot index, the current kill word string, the kill word visibility flag, the hit tint timer,
-the animation row, the flash timers, and the three asset pointers.
+the animation row, the flash timers, the three asset pointers, and the used word history set.
 *//*_________________________________________________________________________________________________________________________________________________________________________________________________*/
 namespace
 {
@@ -102,6 +103,9 @@ namespace
     // flash attack
     float       boss_flash_cooldown_timer = 0.0f;                                                                           // how many seconds until the next flash attack triggers
     float       boss_flash_active_timer = 0.0f;                                                                             // counts down while the white flash overlay is still visible
+
+    // word history
+    std::unordered_set<std::string> boss_used_words{};                                                                      // tracks every kill word used this fight to prevent repeats
 
     // assets
     AEGfxTexture* boss_texture = nullptr;                                                                                   // boss sprite sheet texture
@@ -219,23 +223,32 @@ namespace
     /*
     @function       Boss_SwapKillWord
     @params         pool (std::vector<Data::Enemy>&), bank (const Data::WordBank&)
-    @brief          Picks a new unique word and updates the kill word slot with it.
+    @brief          Picks a new unique word not previously used this fight and updates the kill word slot.
 
-    Enemy_PickUniqueWordRandomLength is asked for a fresh word that is not already on screen.
-    If no unique word can be found the old kill word is kept as a fallback so the slot is never
-    left empty. The new word is stored in boss_current_word and, if the kill word slot is currently
-    visible, the pool slot is updated immediately so the player sees the change right away.
+    Enemy_PickUniqueWordRandomLength is called repeatedly until a word is found that is not in
+    boss_used_words. The loop is capped at MAX_WORD_TRIES attempts to avoid an infinite loop if
+    the word bank is nearly exhausted. If no unused word can be found the old kill word is kept
+    as a fallback. The chosen word is recorded in boss_used_words so it cannot be picked again
+    this fight. If the kill word slot is currently visible the pool slot is updated immediately.
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
     void Boss_SwapKillWord(std::vector<Data::Enemy>& pool, const Data::WordBank& bank)
     {
-        std::string new_word = EnemySystem::Enemy_PickUniqueWordRandomLength(                                               // ask the enemy system for a fresh word not already on screen
-            BossConfig::BOSS_WORD_MIN_LEN,
-            BossConfig::BOSS_WORD_MAX_LEN,
-            bank, pool, true,
-            EnemyConfig::MAX_WORD_TRIES);
+        std::string new_word;
+        int tries = 0;                                                                                                      // track how many attempts have been made
+        do
+        {
+            new_word = EnemySystem::Enemy_PickUniqueWordRandomLength(                                                       // ask the enemy system for a fresh word not already on screen
+                BossConfig::BOSS_WORD_MIN_LEN,
+                BossConfig::BOSS_WORD_MAX_LEN,
+                bank, pool, true,
+                EnemyConfig::MAX_WORD_TRIES);
+            ++tries;
+        } while (!new_word.empty() && boss_used_words.count(new_word) && tries < EnemyConfig::MAX_WORD_TRIES);             // retry if the word was already used this fight
 
-        if (new_word.empty()) new_word = boss_current_word;                                                                 // if no unique word was found keep the old one as a fallback
+        if (new_word.empty() || boss_used_words.count(new_word))
+            new_word = boss_current_word;                                                                                   // fallback: keep the old word if the bank is truly exhausted
 
+        boss_used_words.insert(new_word);                                                                                   // record this word so it cannot be picked again this fight
         boss_current_word = new_word;                                                                                       // store the chosen word as the new current kill word
 
         if (boss_kill_word_in_pool && boss_pool_slot >= 0 && boss_pool_slot < (int)pool.size())                             // only update the slot if the kill word is currently visible
@@ -266,8 +279,9 @@ namespace BossSystem
 
     Assets/bossEnemy.png is loaded and a sprite quad is built using 2 rows and 6 columns to match
     the sheet layout. A plain white unit rectangle is also built for the flash overlay. Every state
-    variable including timers, counters, and flags is then set back to its default inactive value.
-    This function must be called once after EnemyManage_LoadMeshes so the base meshes are ready.
+    variable including timers, counters, flags, and the used word history is then set back to its
+    default inactive value. This function must be called once after EnemyManage_LoadMeshes so the
+    base meshes are ready.
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
     void Boss_Init(Data::Meshes& /*meshes*/, const Data::WordBank& /*bank*/)
     {
@@ -304,6 +318,7 @@ namespace BossSystem
         boss_flash_cooldown_timer = Boss_PickFlashCooldown();                                                               // set a random wait time for the first flash attack
         boss_flash_active_timer = 0.0f;                                                                                     // no flash overlay visible
         boss_anim_row = 0;                                                                                                  // start on the alive animation row
+        boss_used_words.clear();                                                                                            // clear the word history so nothing carries over
     }
 
     /*
@@ -348,6 +363,7 @@ namespace BossSystem
         boss_state = BossState::INACTIVE;                                                                                   // mark the boss as fully inactive
         boss_kill_word_in_pool = false;                                                                                     // clear the kill word visibility flag
         boss_current_word.clear();                                                                                          // clear the kill word text
+        boss_used_words.clear();                                                                                            // clear the word history on exit
     }
 
     /*
@@ -413,6 +429,9 @@ namespace BossSystem
                 boss_pool_slot = free_slots.front();                                                                        // grab the first available slot index
                 free_slots.pop_front();                                                                                     // remove it from the free list so nothing else can use it
 
+                // Clear word history for this new fight
+                boss_used_words.clear();                                                                                    // reset history so words from a previous fight can appear again
+
                 // Pick the first kill word for this fight
                 boss_current_word = EnemySystem::Enemy_PickUniqueWordRandomLength(                                          // ask the enemy system for a fresh unique word
                     BossConfig::BOSS_WORD_MIN_LEN,
@@ -421,6 +440,7 @@ namespace BossSystem
                     EnemyConfig::MAX_WORD_TRIES);
 
                 if (boss_current_word.empty()) boss_current_word = "BOSS";                                                  // use BOSS as a fallback if no unique word could be found
+                boss_used_words.insert(boss_current_word);                                                                  // record the first kill word in the history
 
                 // Set up the kill word enemy in the reserved slot.
                 // enemy_has_landed and enemy_did_damage are both true so Enemy_Update
@@ -531,7 +551,7 @@ namespace BossSystem
                         kw.enemy_word_length = 0;                                                                           // clear the length to match the empty text
                         boss_kill_word_in_pool = false;                                                                     // mark the kill word as hidden
 
-                        Boss_SwapKillWord(pool, bank);                                                                      // pick a fresh word and update the slot
+                        Boss_SwapKillWord(pool, bank);                                                                      // pick a fresh non-repeated word and update the slot
 
                         // Show the new word right away if no minions are alive
                         if (Boss_CountActiveMinions(pool) == 0)                                                             // check if there are any minions on screen
@@ -549,10 +569,16 @@ namespace BossSystem
                 Boss_RemoveKillWord(pool);                                                                                  // hide the kill word until all minions are gone
 
             // Move the kill word slot to always follow the boss position
-            if (boss_pool_slot >= 0 && boss_pool_slot < (int)pool.size())                                                   // make sure the slot index is still valid
+            // Y is offset to sit above the top edge of the sprite so Typing_DrawEnemyWords
+            // places the text correctly, matching the same calculation used in the original Boss_Draw.
+            if (boss_pool_slot >= 0 && boss_pool_slot < (int)pool.size())
             {
+                float boss_half = (EnemyConfig::ENEMY_SIZE_PX * BossConfig::BOSS_SPRITE_SCALE) * 0.5f;                      // half the boss sprite height in world space
+                float normal_half = EnemyConfig::ENEMY_SIZE_PX * 0.5f;                                                      // half the enemy sprite height in world space
+                float extra = 2.5f * (boss_half - normal_half);                                                             // xxx
+
                 pool[(size_t)boss_pool_slot].enemy_position_x = boss_position_x;                                            // keep the kill word enemy locked to the boss X position
-                pool[(size_t)boss_pool_slot].enemy_position_y = BossConfig::BOSS_POSITION_Y;                                // keep the kill word enemy locked to the boss Y position
+                pool[(size_t)boss_pool_slot].enemy_position_y = BossConfig::BOSS_POSITION_Y + extra;                        // place text anchor above the top edge of the sprite
             }
 
             // Boss movement, bounce left and right within the play area
@@ -612,13 +638,14 @@ namespace BossSystem
     /*
     @function       Boss_Draw
     @params         meshes (const Data::Meshes&)
-    @brief          Renders the boss sprite, hit tint, kill word label, and progress counter.
+    @brief          Renders the boss sprite, hit tint, cutscene overlay, and progress counter.
 
     The boss sprite is drawn at the current position using the correct sprite sheet row. A red
     tint is applied while the hit tint timer is active and fades back to white as it counts down.
-    During the cutscene a dark overlay and a warning banner are drawn on top of the sprite. When
-    the boss is active and the kill word is visible, the word is printed centered above the sprite.
-    The BOSS X of Y progress counter is also printed while the boss is in the active state.
+    During the cutscene a dark overlay and a warning banner are drawn on top of the sprite. The
+    BOSS X of Y progress counter is printed while the boss is in the active state. The kill word
+    text is no longer drawn here — Typing_DrawEnemyWords in game.cpp handles it via the pool slot
+    so it gets the same green typed prefix and black suffix as regular enemy words.
     Nothing is drawn when the boss is inactive or waiting.
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
     void Boss_Draw(const Data::Meshes& meshes)
@@ -693,32 +720,9 @@ namespace BossSystem
             }
         }
 
-        // Draw the kill word label above the boss when it is active and visible
-        if (boss_state == BossState::ACTIVE && boss_kill_word_in_pool && !boss_current_word.empty())                        // only draw when the kill word is currently shown to the player
-        {
-            if (Graphics::font_id >= 0)                                                                                     // check that a font is loaded
-            {
-                // Position the label a fixed distance above the top of the boss sprite
-                float sprite_half = sprite_h * 0.5f;                                                                        // half the sprite height in world space
-                float label_world_y = BossConfig::BOSS_POSITION_Y + sprite_half + 20.0f;                                    // 20 pixels above the top edge of the sprite
-
-                float ndc_x = 0.0f, ndc_y = 0.0f;                                                                           // will hold the converted screen space coordinates
-                Utility::Convert_WorldToNdc(boss_position_x, label_world_y, ndc_x, ndc_y);                                  // convert the world position to normalized device coordinates
-
-                float text_w = 0.0f, text_h = 0.0f;                                                                         // will hold the measured text dimensions
-                AEGfxGetPrintSize(Graphics::font_id, boss_current_word.c_str(),                                             // measure the kill word text size
-                    EnemyConfig::TEXT_SCALE, &text_w, &text_h);
-
-                float draw_x = ndc_x - (text_w * 0.5f);                                                                     // offset left by half the text width to centre it on the boss
-                float draw_label_y = ndc_y;                                                                                 // use the converted Y directly with no extra offset
-
-                AEGfxSetBlendMode(AE_GFX_BM_BLEND);                                                                         // use blending so the text draws cleanly
-                AEGfxPrint(Graphics::font_id, boss_current_word.c_str(),                                                    // print the kill word above the boss
-                    draw_x, draw_label_y,
-                    EnemyConfig::TEXT_SCALE,
-                    0.0f, 0.0f, 0.0f, 1.0f);
-            }
-        }
+        // Kill word text is drawn by Typing_DrawEnemyWords in game.cpp via the pool slot.
+        // That function applies the green typed prefix and black untyped suffix automatically,
+        // so no manual AEGfxPrint call for the kill word is needed here.
 
         // Draw the BOSS X of Y progress counter while the boss is alive
         if (boss_state == BossState::ACTIVE && Graphics::font_id >= 0)                                                      // only draw when the boss is in the active fighting state

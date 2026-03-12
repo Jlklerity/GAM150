@@ -348,7 +348,8 @@ render_only:
         EnemySystem::Enemy_DrawWord(enemy_pool[(size_t)di]);                                                                // draw enemy word
     }
 
-    BossSystem::Boss_Draw(meshes);
+    BossSystem::Boss_Draw(meshes);  
+    Typing_DrawEnemyWords(enemy_pool);                                                                                      // draw the boss sprite, kill word label and progress counter
 
     Particles_Draw();
     LaserBeam_Draw();
