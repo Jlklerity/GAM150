@@ -4,6 +4,8 @@
 #include "MeshRenderer.h"
 #include "Leaderboard.h"
 #include "Enemy.h"
+#include "ScreenTransition.h"
+#include "BackgroundParallex.h"
 #include <AEEngine.h>
 
 
@@ -61,6 +63,10 @@ namespace {
 	float SKIN_ITEM_X[3];
 	float SKIN_ITEM_Y;
 	int SCORE_AMOUNT;
+
+	bool isTransitioningIn = false;
+	bool isTransitioningOut = false;
+	float shopUiOffsetX = 0.0f;
 }
 
 
@@ -80,10 +86,15 @@ void DisplayScore() {
 	std::snprintf(s, sizeof(s), "SCORE: %d", SCORE_AMOUNT);    // format score line
 
 	AEGfxSetBlendMode(AE_GFX_BM_BLEND);  
-	AEGfxPrint(Graphics::font_id, s, textX, textY, 1.0f, 1, 1, 1, 1);
+	AEGfxPrint(Graphics::font_id, s, textX + shopUiOffsetX, textY, 1.0f, 1, 1, 1, 1);
 }
 
 void Shop_Init() {
+
+	isTransitioningIn = true;
+	shopUiOffsetX = AEGfxGetWindowWidth(); // Start the UI completely off-screen to the right
+	ScreenTransitions::ScreenTransition_Init(); // Restart the timer for the arrival pan
+
 	winW = (float)AEGfxGetWindowWidth();
 	winH = (float)AEGfxGetWindowHeight();
 	
@@ -149,8 +160,12 @@ void Shop_Init() {
 void Shop_Update(){
 
 	AEGfxSetCamPosition(0.0f, 0.0f);
-	AEGfxSetBackgroundColor(0.0f, 0.0f, 0.0f);
+	AEGfxSetBackgroundColor(0.53f, 0.81f, 0.92f);
 
+	
+	float dt = (float)AEFrameRateControllerGetFrameTime();
+	if (dt > 0.1f) dt = 0.01667f;
+	BackgroundParallax::MenuParallax_Update(dt);
 
 	s32 mouseX, mouseY;
 	AEInputGetCursorPosition(&mouseX, &mouseY);
@@ -161,14 +176,38 @@ void Shop_Update(){
 	worldX = (float)mouseX - (winW * 0.5f);
 	worldY = (winH * 0.5f) - (float)mouseY;
 
-	if (AEInputCheckCurr(AEVK_ESCAPE)) gGameStateNext = GS_MAIN_MENU;
+	if (isTransitioningIn)
+	{
+		ScreenTransitions::ScreenTransition_Update(dt);
 
-	if (AEInputCheckTriggered(AEVK_LBUTTON)) {
+		float smoothPan = ScreenTransitions::EaseOutExpo(ScreenTransitions::result);
+
+		// Slide from the right side towards 0
+		shopUiOffsetX = winW * (1.0f - smoothPan);
+
+		BackgroundParallax::MenuParallax_SetPanOffset(-0.2f - (0.2f * smoothPan));
+
+		if (ScreenTransitions::result >= 0.3f)
+		{
+			shopUiOffsetX = 0.0f;  
+			isTransitioningIn = false;
+			BackgroundParallax::MenuParallax_SetPanOffset(-0.4f); // Lock securely to center
+		}
+	}
+	BackgroundParallax::MenuParallax_Draw(0.0f);
+
+	if (!isTransitioningIn && AEInputCheckTriggered(AEVK_ESCAPE)) {
+		isTransitioningOut = true;
+		ScreenTransitions::ScreenTransition_Init();
+	}
+
+	if (!isTransitioningIn && AEInputCheckTriggered(AEVK_LBUTTON)) {
 		// Check Back Button
 		if (worldX >= BACK_BTN_X - (BACK_BTN_WIDTH * 0.5f) && worldX <= BACK_BTN_X + (BACK_BTN_WIDTH * 0.5f) &&
 			worldY >= BACK_BTN_Y - (BACK_BTN_HEIGHT * 0.5f) && worldY <= BACK_BTN_Y + (BACK_BTN_HEIGHT * 0.5f))
 		{
-			gGameStateNext = GS_MAIN_MENU;
+			isTransitioningOut = true;
+			ScreenTransitions::ScreenTransition_Init();
 		}
 
 		// --- CHECK BACKGROUND SELECTION ---
@@ -196,6 +235,26 @@ void Shop_Update(){
 			}
 		}
 	}
+
+	if (isTransitioningOut)
+	{
+		ScreenTransitions::ScreenTransition_Update(dt);
+		float smoothPan = ScreenTransitions::EaseOutExpo(ScreenTransitions::result);
+
+		// Slide the Shop UI out to the right
+		shopUiOffsetX = winW * smoothPan;
+		// Pan the background backwards 
+		BackgroundParallax::MenuParallax_SetPanOffset(-0.4f + (0.2f * smoothPan));
+
+		if (ScreenTransitions::result >= 0.3f)
+		{
+
+			isTransitioningOut = false;
+			BackgroundParallax::MenuParallax_SetPanOffset(0.2f);
+			gGameStateNext = GS_MAIN_MENU; 
+		}
+	}
+
 	if (pTexShopBg)
 	{
 		AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
@@ -204,7 +263,7 @@ void Shop_Update(){
 		AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);
 
 		AEGfxTextureSet(pTexShopBg, 0.0f, 0.0f);
-		Mesh_Renderer(pShop, SHOP_BG_X, SHOP_BG_Y, SHOP_BG_WIDTH, SHOP_BG_HEIGHT, 0.0f);
+		Mesh_Renderer(pShop, SHOP_BG_X + shopUiOffsetX, SHOP_BG_Y, SHOP_BG_WIDTH, SHOP_BG_HEIGHT, 0.0f);
 	}
 
 	// Draw the 3 Background Options
@@ -217,13 +276,13 @@ void Shop_Update(){
 				AEGfxSetColorToMultiply(0.3f, 0.3f, 0.3f, 1.0f); // Dark (Locked)
 			}
 			AEGfxTextureSet(pTexBgOptions[i], 0.0f, 0.0f);
-			Mesh_Renderer(pMeshBgItem, BG_ITEM_X[i], BG_ITEM_Y, BG_ITEM_WIDTH * 0.7f, BG_ITEM_HEIGHT * 0.7f, 0.0f);
+			Mesh_Renderer(pMeshBgItem, BG_ITEM_X[i] + shopUiOffsetX, BG_ITEM_Y, BG_ITEM_WIDTH * 0.7f, BG_ITEM_HEIGHT * 0.7f, 0.0f);
 
 			// Only draw the gold item frame if THIS background is the equipped one
 			if (gShopBgID == i && pTexBgFrame) {
 				AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);
 				AEGfxTextureSet(pTexBgFrame, 0.0f, 0.0f);
-				Mesh_Renderer(pMeshBgItem, BG_ITEM_X[i], BG_ITEM_Y, BG_ITEM_WIDTH * 0.7f, BG_ITEM_HEIGHT * 0.7f, 0.0f);
+				Mesh_Renderer(pMeshBgItem, SKIN_ITEM_X[i] + shopUiOffsetX, BG_ITEM_Y, BG_ITEM_WIDTH * 0.7f, BG_ITEM_HEIGHT * 0.7f, 0.0f);
 			}
 
 			if ((SCORE_AMOUNT < BG_UNLOCK[i]) && Graphics::font_id >= 0) {
@@ -238,7 +297,7 @@ void Shop_Update(){
 				float textNdcX = (BG_ITEM_X[i] / (winW * 0.5f)) - (textW * 0.5f);
 				float textNdcY = (BG_ITEM_Y / (winH * 0.5f)) - 0.025f;				
 				AEGfxSetBlendMode(AE_GFX_BM_BLEND);
-				AEGfxPrint(Graphics::font_id, priceStr, textNdcX, textNdcY, textScale, 1.0f, 1.0f, 1.0f, 1.0f);
+				AEGfxPrint(Graphics::font_id, priceStr, textNdcX + shopUiOffsetX, textNdcY, textScale, 1.0f, 1.0f, 1.0f, 1.0f);
 			}
 		}
 	}
@@ -253,7 +312,7 @@ void Shop_Update(){
 				AEGfxSetColorToMultiply(0.3f, 0.3f, 0.3f, 1.0f); // Dark (Locked)
 			}
 			AEGfxTextureSet(pTexSkinOptions[i], 0.0f, 0.0f);
-			Mesh_Renderer(pMeshSkinItem, SKIN_ITEM_X[i], SKIN_ITEM_Y, SKIN_ITEM_WIDTH, SKIN_ITEM_HEIGHT, 0.0f);
+			Mesh_Renderer(pMeshSkinItem, SKIN_ITEM_X[i] + shopUiOffsetX, SKIN_ITEM_Y, SKIN_ITEM_WIDTH, SKIN_ITEM_HEIGHT, 0.0f);
 
 		
 			if (gShopSkinID == i && pTexItemFrame) {
@@ -261,7 +320,7 @@ void Shop_Update(){
 				AEGfxTextureSet(pTexItemFrame, 0.0f, 0.0f);
 				float frameScale = 0.65f;
 
-				Mesh_Renderer(pMeshSkinItem, SKIN_ITEM_X[i] - 10.0f, SKIN_ITEM_Y + 60.0f, SKIN_ITEM_WIDTH * frameScale, SKIN_ITEM_HEIGHT * frameScale, 0.0f);
+				Mesh_Renderer(pMeshSkinItem, SKIN_ITEM_X[i] - 10.0f + shopUiOffsetX, SKIN_ITEM_Y + 60.0f, SKIN_ITEM_WIDTH * frameScale, SKIN_ITEM_HEIGHT * frameScale, 0.0f);
 			}
 
 			if ((SCORE_AMOUNT < SKIN_UNLOCK[i]) && Graphics::font_id >= 0) {
@@ -275,7 +334,7 @@ void Shop_Update(){
 				float textNdcX = (SKIN_ITEM_X[i] / (winW * 0.5f)) - (textW * 0.5f); 
 				float textNdcY = ((SKIN_ITEM_Y + 60.0f) / (winH * 0.5f)) - 0.025f;
 				AEGfxSetBlendMode(AE_GFX_BM_BLEND);
-				AEGfxPrint(Graphics::font_id, priceStr, textNdcX, textNdcY, textScale, 1.0f, 1.0f, 1.0f, 1.0f);  
+				AEGfxPrint(Graphics::font_id, priceStr, textNdcX + shopUiOffsetX, textNdcY, textScale, 1.0f, 1.0f, 1.0f, 1.0f);
 			}
 		}
 	}
@@ -286,13 +345,18 @@ void Shop_Update(){
 		AEGfxSetBlendMode(AE_GFX_BM_BLEND);
 		AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);
 		AEGfxTextureSet(pTexBack, 0.0f, 0.0f);
-		Mesh_Renderer(pBack, BACK_BTN_X, BACK_BTN_Y, BACK_BTN_WIDTH, BACK_BTN_HEIGHT, 0.0f);
+		Mesh_Renderer(pBack, BACK_BTN_X + shopUiOffsetX, BACK_BTN_Y, BACK_BTN_WIDTH, BACK_BTN_HEIGHT, 0.0f);
 	}
 
 	DisplayScore();
 }
 
 void Shop_Exit(){
+
+	if (gGameStateNext != GS_MAIN_MENU) {
+		BackgroundParallax::MenuParallax_Exit();
+	}
+
 	if (pTexShopBg) {
 		AEGfxTextureUnload(pTexShopBg);
 		pTexShopBg = nullptr;

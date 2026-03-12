@@ -9,11 +9,9 @@ namespace ScreenTransitions {
 
     extern bool isTransitioning;
     extern float currTimer;
-    extern const float TOTALTIMER;
     extern float result;
-    extern float currPosY;
-    extern float startPosY;
-    extern float targetPosY;
+
+    void ScreenTransition_SetTime(float targetTime);
 
 	float EaseOutExpo(float x);
 
