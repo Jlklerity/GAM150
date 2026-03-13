@@ -98,8 +98,9 @@ void Game_Init()
     DifficultySystem::Difficulty_Reset();
     //player
     playerTexture1 = AEGfxTextureLoad("Assets/characterSheet.png");
-    playerTexture2 = AEGfxTextureLoad("Assets/characterSheet.png");//for ltr when we have more player skins
     AE_ASSERT_MESG(playerTexture1, "Failed to load characterSheet!");
+    playerTexture2 = AEGfxTextureLoad("Assets/character2Sheet.png"); 
+    AE_ASSERT_MESG(playerTexture1, "Failed to load character2Sheet!");
 
     if (playerMesh != nullptr) AEGfxMeshFree(playerMesh);
     playerMesh = Sprite_Mesh(SPRITE_UV_WIDTH, SPRITE_UV_HEIGHT);
@@ -251,7 +252,6 @@ render_only:
     AEGfxTexture* activePlayer = (gShopSkinID == 0) ? playerTexture1 : playerTexture2;
     AEGfxTextureSet(activePlayer, uvOffsetX, uvOffsetY);
 
-    if (gShopSkinID == 1) AEGfxSetColorToMultiply(1.0f, 0.6f, 0.6f, 1.0f); // change player skin color
     Mesh_Renderer(playerMesh, spriteX, spriteY, 150.0f, 150.0f, 0.0f);
 
     // Render typing letters 

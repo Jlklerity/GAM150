@@ -215,8 +215,10 @@ void GameTimeMode_Init()
 
     // ---- Player textures and sprite mesh ----
     playerTexture1 = AEGfxTextureLoad("Assets/characterSheet.png");
-    playerTexture2 = AEGfxTextureLoad("Assets/characterSheet.png");        // placeholder for alt skin slot
     AE_ASSERT_MESG(playerTexture1, "Failed to load characterSheet!");
+    playerTexture2 = AEGfxTextureLoad("Assets/character2Sheet.png");         
+    AE_ASSERT_MESG(playerTexture1, "Failed to load character2Sheet!");
+
 
     if (playerMesh) AEGfxMeshFree(playerMesh);                             // free old mesh if restarting
     playerMesh = Sprite_Mesh(SPRITE_UV_WIDTH, SPRITE_UV_HEIGHT);           // build sprite sheet mesh
@@ -397,7 +399,7 @@ render_only:
     AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);
     AEGfxTexture* activePlayer = (gShopSkinID == 0) ? playerTexture1 : playerTexture2; // pick skin based on shop selection
     AEGfxTextureSet(activePlayer, uvOffsetX, uvOffsetY);
-    if (gShopSkinID == 1) AEGfxSetColorToMultiply(1.0f, 0.6f, 0.6f, 1.0f); // tint alt skin pink
+ 
     Mesh_Renderer(playerMesh, SPRITE_X, SPRITE_Y, 150.0f, 150.0f, 0.0f);
 
     Typing_Render();                                                        // draw the current typed buffer on screen
