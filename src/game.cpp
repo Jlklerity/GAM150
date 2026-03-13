@@ -180,7 +180,6 @@ void Game_Update()
         DifficultySystem::Difficulty_UpdateOverTime(dt);                                                                              // increase difficulty over time
         BossSystem::Boss_Update(enemy_pool, free_slot_queue, enemy_area, word_bank, dt, boss_spawning_blocked);                       // run boss logic for this frame
         GameEnemyBoss::Update(dt, enemy_pool, free_slot_queue, enemy_area, word_bank, health, boss_spawning_blocked, is_random_spawning_enabled, random_spawn_timer_seconds);
-        EnemySystem::Enemy_ResolveLaneStacking(enemy_pool, enemy_area);                                                               // fix spacing in lanes
         /*_______________________________________________________________________________________________________________________________________________________________________________________________*/
 
         PowerUpSystem::Update(dt, enemy_pool, enemy_area, health);
@@ -261,7 +260,7 @@ render_only:
     /*
     @overview   Draw enemies and debug overlays
     @author     Wong Zi Yuan (w.ziyuan@digipen.edu)
-        *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
+    *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
     GameEnemyBoss::Draw(meshes, enemy_pool, is_enemy_area_box_visible, enemy_area);
     Particles_Draw();
     LaserBeam_Draw();

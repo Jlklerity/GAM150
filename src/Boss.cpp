@@ -7,7 +7,7 @@
 
 #include "Boss.h"
 #include "AEEngine.h"
-#include <unordered_set>                                                                                                        // for boss_used_words history tracking
+#include <unordered_set>                                                                                                    // for boss_used_words history tracking
 
 /*
 @namespace      BossConfig
@@ -97,8 +97,12 @@ namespace
     float       boss_cutscene_y = 0.0f;                                                                                     // vertical position of the boss sprite during the slide-in animation
     float       boss_hit_tint_timer = 0.0f;                                                                                 // counts down from BOSS_HIT_TINT_DURATION_SECONDS after each hit
 
-    // sprite row
+    // sprite animation
     int         boss_anim_row = 0;                                                                                          // which row of the sprite sheet to draw, 0 is alive and 1 is death
+    int         boss_anim_col = 0;                                                                                          // current frame column on the sprite sheet
+    float       boss_anim_timer = 0.0f;                                                                                     // counts up toward the next frame
+    const float BOSS_ANIM_FRAME_DURATION = 0.12f;                                                                           // seconds per frame for the alive animation
+    const float BOSS_ANIM_DEATH_FRAME_DURATION = 0.45f;                                                                     // seconds per frame for the death animation
 
     // flash attack
     float       boss_flash_cooldown_timer = 0.0f;                                                                           // how many seconds until the next flash attack triggers
@@ -243,7 +247,7 @@ namespace
                 bank, pool, true,
                 EnemyConfig::MAX_WORD_TRIES);
             ++tries;
-        } while (!new_word.empty() && boss_used_words.count(new_word) && tries < EnemyConfig::MAX_WORD_TRIES);             // retry if the word was already used this fight
+        } while (!new_word.empty() && boss_used_words.count(new_word) && tries < EnemyConfig::MAX_WORD_TRIES);              // retry if the word was already used this fight
 
         if (new_word.empty() || boss_used_words.count(new_word))
             new_word = boss_current_word;                                                                                   // fallback: keep the old word if the bank is truly exhausted
@@ -318,6 +322,8 @@ namespace BossSystem
         boss_flash_cooldown_timer = Boss_PickFlashCooldown();                                                               // set a random wait time for the first flash attack
         boss_flash_active_timer = 0.0f;                                                                                     // no flash overlay visible
         boss_anim_row = 0;                                                                                                  // start on the alive animation row
+        boss_anim_col = 0;                                                                                                  // start on the first frame column
+        boss_anim_timer = 0.0f;                                                                                             // reset the animation frame timer
         boss_used_words.clear();                                                                                            // clear the word history so nothing carries over
     }
 
@@ -403,234 +409,269 @@ namespace BossSystem
         switch (boss_state)
         {
             // INACTIVE state
-        case BossState::INACTIVE:
-        {
-            boss_cycle_timer_seconds += dt;                                                                                 // count up each frame toward the spawn trigger time
-
-            if (boss_cycle_timer_seconds >= BossConfig::BOSS_SPAWN_INTERVAL_SECONDS)                                        // check if the spawn timer has reached the threshold
+            case BossState::INACTIVE:
             {
-                // 60 second mark reached, block regular enemy spawning right away
-                boss_spawning_blocked = true;                                                                               // stop normal enemies from spawning so the screen can clear
-                boss_state = BossState::WAITING;                                                                            // move to the waiting state until the screen is empty
-            }
-            break;
-        }
+                boss_cycle_timer_seconds += dt;                                                                             // count up each frame toward the spawn trigger time
 
-        // WAITING state
-        case BossState::WAITING:
-        {
-            boss_spawning_blocked = true;                                                                                   // keep normal spawning blocked during the wait
-
-            if (Boss_PoolIsClear(pool))                                                                                     // check if all regular enemies are gone
-            {
-                // Reserve a pool slot for the boss kill word enemy
-                if (free_slots.empty()) break;                                                                              // no free slot available yet so keep waiting
-
-                boss_pool_slot = free_slots.front();                                                                        // grab the first available slot index
-                free_slots.pop_front();                                                                                     // remove it from the free list so nothing else can use it
-
-                // Clear word history for this new fight
-                boss_used_words.clear();                                                                                    // reset history so words from a previous fight can appear again
-
-                // Pick the first kill word for this fight
-                boss_current_word = EnemySystem::Enemy_PickUniqueWordRandomLength(                                          // ask the enemy system for a fresh unique word
-                    BossConfig::BOSS_WORD_MIN_LEN,
-                    BossConfig::BOSS_WORD_MAX_LEN,
-                    bank, pool, true,
-                    EnemyConfig::MAX_WORD_TRIES);
-
-                if (boss_current_word.empty()) boss_current_word = "BOSS";                                                  // use BOSS as a fallback if no unique word could be found
-                boss_used_words.insert(boss_current_word);                                                                  // record the first kill word in the history
-
-                // Set up the kill word enemy in the reserved slot.
-                // enemy_has_landed and enemy_did_damage are both true so Enemy_Update
-                // never tries to move it or deal landing damage.
-                Data::Enemy kill_word_enemy{};                                                                              // create a blank enemy struct to fill in
-                kill_word_enemy.enemy_is_active = true;                                                                     // keep this slot active permanently so game.cpp never recycles it
-                kill_word_enemy.enemy_has_landed = true;                                                                    // pretend it has already landed to stop Enemy_Update from moving it
-                kill_word_enemy.enemy_did_damage = true;                                                                    // pretend damage was already applied to stop landing damage
-                kill_word_enemy.enemy_is_dying = false;                                                                     // it is not dying
-                kill_word_enemy.enemy_type = Data::EnemyType::NORMAL;                                                       // treat it as a normal enemy type for drawing purposes
-                kill_word_enemy.enemy_word_text = "";                                                                       // start hidden, Boss_InjectKillWord will reveal it later
-                kill_word_enemy.enemy_word_length = 0;                                                                      // length matches the empty hidden text
-                kill_word_enemy.enemy_word_text_alt.clear();                                                                // no alternate word needed
-                kill_word_enemy.enemy_shield_intact = false;                                                                // no shield on this slot
-                kill_word_enemy.enemy_fall_speed_units_per_second = 0.0f;                                                   // this slot never falls
-                kill_word_enemy.enemy_lane_id = -1;                                                                         // not assigned to any lane
-                kill_word_enemy.enemy_position_x = 0.0f;                                                                    // start centred, Boss_Update will move it each frame
-                kill_word_enemy.enemy_position_y = BossConfig::BOSS_POSITION_Y;                                             // place it at the boss fixed Y position
-                kill_word_enemy.enemy_animation.animation_row_index = 0;                                                    // start on the first animation row
-                kill_word_enemy.enemy_animation.animation_frame_index = 0;                                                  // start on the first animation frame
-                kill_word_enemy.enemy_animation.animation_timer_seconds = 0.0f;                                             // reset the frame timer
-                kill_word_enemy.enemy_animation.animation_uv_x = 0.0f;                                                      // reset the UV offset X
-                kill_word_enemy.enemy_animation.animation_uv_y = 0.0f;                                                      // reset the UV offset Y
-                kill_word_enemy.enemy_death_row_index = 1;                                                                  // row 1 is the death animation row
-
-                pool[(size_t)boss_pool_slot] = kill_word_enemy;                                                             // write the prepared enemy into the reserved pool slot
-                boss_kill_word_in_pool = false;                                                                             // kill word is not visible yet, cutscene comes first
-
-                // Start the entrance cutscene, boss slides in from above the screen
-                boss_cutscene_timer_seconds = BossConfig::BOSS_CUTSCENE_DURATION_SECONDS;                                   // set how long the cutscene lasts
-                boss_cutscene_y = 600.0f;                                                                                   // start the boss sprite well above the visible area
-                boss_position_x = 0.0f;                                                                                     // start the boss centred horizontally
-                boss_dir = 1.0f;                                                                                            // boss will move right first
-                boss_words_typed = 0;                                                                                       // reset the word counter for this new fight
-                boss_minion_spawn_timer = 0.0f;                                                                             // reset the minion wave timer
-                boss_hit_tint_timer = 0.0f;                                                                                 // clear any leftover hit tint
-                boss_flash_cooldown_timer = Boss_PickFlashCooldown();                                                       // pick a random wait before the first flash attack
-                boss_flash_active_timer = 0.0f;                                                                             // no flash overlay at the start
-
-                boss_state = BossState::CUTSCENE;                                                                           // move to the cutscene state
-            }
-            break;
-        }
-
-        // CUTSCENE state
-        case BossState::CUTSCENE:
-        {
-            boss_spawning_blocked = true;                                                                                   // keep normal enemy spawning blocked during the cutscene
-            // Gameplay is frozen by the caller through the Boss_IsActive check
-
-            boss_cutscene_timer_seconds -= dt;                                                                              // count down the cutscene timer each frame
-
-            // Slide the boss from off screen at the top down to its normal fight position
-            float progress = 1.0f - (boss_cutscene_timer_seconds / BossConfig::BOSS_CUTSCENE_DURATION_SECONDS);             // 0 at the start and 1 at the end of the cutscene
-            progress = Utility::Utility_Clamp(progress, 0.0f, 1.0f);                                                        // clamp so it never goes outside the 0 to 1 range
-            boss_cutscene_y = Utility::Utility_Lerp(600.0f, BossConfig::BOSS_POSITION_Y, progress);                         // smoothly move from the top entry position to the fight position
-
-            if (boss_cutscene_timer_seconds <= 0.0f)                                                                        // check if the cutscene has finished
-            {
-                // Cutscene is over, snap to final position and begin the fight
-                boss_cutscene_y = BossConfig::BOSS_POSITION_Y;                                                              // lock the boss to its exact fight position
-                Boss_InjectKillWord(pool);                                                                                  // reveal the kill word so the player can start typing
-                boss_state = BossState::ACTIVE;                                                                             // switch to the active fighting state
-            }
-            break;
-        }
-
-        // ACTIVE state
-        case BossState::ACTIVE:
-        {
-            boss_spawning_blocked = true;                                                                                   // keep normal enemy spawning blocked while the boss is alive
-
-            // Check if Typing.cpp just matched the kill word this frame.
-            // When Typing.cpp calls Enemy_Killed on this slot it sets enemy_is_dying to true.
-            if (boss_pool_slot >= 0 && boss_pool_slot < (int)pool.size())                                                   // make sure the slot index is still valid
-            {
-                Data::Enemy& kw = pool[(size_t)boss_pool_slot];                                                             // get a reference to the kill word enemy slot
-                if (kw.enemy_is_dying)                                                                                      // check if the player just typed the kill word
+                if (boss_cycle_timer_seconds >= BossConfig::BOSS_SPAWN_INTERVAL_SECONDS)                                    // check if the spawn timer has reached the threshold
                 {
-                    // A hit was registered. Cancel dying immediately so Enemy_Update
-                    // cannot start dropping this slot away from BOSS_POSITION_Y.
-                    kw.enemy_is_dying = false;                                                                              // cancel the dying state so Enemy_Update ignores this slot
-                    kw.enemy_has_landed = true;                                                                             // restore the guard that keeps Enemy_Update from moving the slot
+                    // 60 second mark reached, block regular enemy spawning right away
+                    boss_spawning_blocked = true;                                                                           // stop normal enemies from spawning so the screen can clear
+                    boss_state = BossState::WAITING;                                                                        // move to the waiting state until the screen is empty
+                }
+                break;
+            }
 
-                    boss_words_typed++;                                                                                     // count this as one successful hit on the boss
-                    boss_hit_tint_timer = BossConfig::BOSS_HIT_TINT_DURATION_SECONDS;                                       // start the red flash to show the boss was hit
+            // WAITING state
+            case BossState::WAITING:
+            {
+                boss_spawning_blocked = true;                                                                               // keep normal spawning blocked during the wait
 
-                    if (boss_words_typed >= BossConfig::BOSS_WORDS_TO_DEFEAT)                                               // check if the boss has taken enough hits to die
+                if (Boss_PoolIsClear(pool))                                                                                 // check if all regular enemies are gone
+                {
+                    // Reserve a pool slot for the boss kill word enemy
+                    if (free_slots.empty()) break;                                                                          // no free slot available yet so keep waiting
+
+                    boss_pool_slot = free_slots.front();                                                                    // grab the first available slot index
+                    free_slots.pop_front();                                                                                 // remove it from the free list so nothing else can use it
+
+                    // Clear word history for this new fight
+                    boss_used_words.clear();                                                                                // reset history so words from a previous fight can appear again
+
+                    // Pick the first kill word for this fight
+                    boss_current_word = EnemySystem::Enemy_PickUniqueWordRandomLength(                                      // ask the enemy system for a fresh unique word
+                        BossConfig::BOSS_WORD_MIN_LEN,
+                        BossConfig::BOSS_WORD_MAX_LEN,
+                        bank, pool, true,
+                        EnemyConfig::MAX_WORD_TRIES);
+
+                    if (boss_current_word.empty()) boss_current_word = "BOSS";                                              // use BOSS as a fallback if no unique word could be found
+                    boss_used_words.insert(boss_current_word);                                                              // record the first kill word in the history
+
+                    // Set up the kill word enemy in the reserved slot.
+                    // enemy_has_landed and enemy_did_damage are both true so Enemy_Update
+                    // never tries to move it or deal landing damage.
+                    Data::Enemy kill_word_enemy{};                                                                          // create a blank enemy struct to fill in
+                    kill_word_enemy.enemy_is_active = true;                                                                 // keep this slot active permanently so game.cpp never recycles it
+                    kill_word_enemy.enemy_has_landed = true;                                                                // pretend it has already landed to stop Enemy_Update from moving it
+                    kill_word_enemy.enemy_did_damage = true;                                                                // pretend damage was already applied to stop landing damage
+                    kill_word_enemy.enemy_is_dying = false;                                                                 // it is not dying
+                    kill_word_enemy.enemy_type = Data::EnemyType::NORMAL;                                                   // treat it as a normal enemy type for drawing purposes
+                    kill_word_enemy.enemy_word_text = "";                                                                   // start hidden, Boss_InjectKillWord will reveal it later
+                    kill_word_enemy.enemy_word_length = 0;                                                                  // length matches the empty hidden text
+                    kill_word_enemy.enemy_word_text_alt.clear();                                                            // no alternate word needed
+                    kill_word_enemy.enemy_shield_intact = false;                                                            // no shield on this slot
+                    kill_word_enemy.enemy_fall_speed_units_per_second = 0.0f;                                               // this slot never falls
+                    kill_word_enemy.enemy_lane_id = -1;                                                                     // not assigned to any lane
+                    kill_word_enemy.enemy_position_x = 0.0f;                                                                // start centred, Boss_Update will move it each frame
+                    kill_word_enemy.enemy_position_y = BossConfig::BOSS_POSITION_Y;                                         // place it at the boss fixed Y position
+                    kill_word_enemy.enemy_animation.animation_row_index = 0;                                                // start on the first animation row
+                    kill_word_enemy.enemy_animation.animation_frame_index = 0;                                              // start on the first animation frame
+                    kill_word_enemy.enemy_animation.animation_timer_seconds = 0.0f;                                         // reset the frame timer
+                    kill_word_enemy.enemy_animation.animation_uv_x = 0.0f;                                                  // reset the UV offset X
+                    kill_word_enemy.enemy_animation.animation_uv_y = 0.0f;                                                  // reset the UV offset Y
+                    kill_word_enemy.enemy_death_row_index = 1;                                                              // row 1 is the death animation row
+
+                    pool[(size_t)boss_pool_slot] = kill_word_enemy;                                                         // write the prepared enemy into the reserved pool slot
+                    boss_kill_word_in_pool = false;                                                                         // kill word is not visible yet, cutscene comes first
+
+                    // Start the entrance cutscene, boss slides in from above the screen
+                    boss_cutscene_timer_seconds = BossConfig::BOSS_CUTSCENE_DURATION_SECONDS;                               // set how long the cutscene lasts
+                    boss_cutscene_y = 600.0f;                                                                               // start the boss sprite well above the visible area
+                    boss_position_x = 0.0f;                                                                                 // start the boss centred horizontally
+                    boss_dir = 1.0f;                                                                                        // boss will move right first
+                    boss_words_typed = 0;                                                                                   // reset the word counter for this new fight
+                    boss_minion_spawn_timer = 0.0f;                                                                         // reset the minion wave timer
+                    boss_hit_tint_timer = 0.0f;                                                                             // clear any leftover hit tint
+                    boss_flash_cooldown_timer = Boss_PickFlashCooldown();                                                   // pick a random wait before the first flash attack
+                    boss_flash_active_timer = 0.0f;                                                                         // no flash overlay at the start
+
+                    boss_state = BossState::CUTSCENE;                                                                       // move to the cutscene state
+                }
+                break;
+            }
+
+            // CUTSCENE state
+            case BossState::CUTSCENE:
+            {
+                boss_spawning_blocked = true;                                                                               // keep normal enemy spawning blocked during the cutscene
+                // Gameplay is frozen by the caller through the Boss_IsActive check
+
+                boss_cutscene_timer_seconds -= dt;                                                                          // count down the cutscene timer each frame
+
+                // Slide the boss from off screen at the top down to its normal fight position
+                float progress = 1.0f - (boss_cutscene_timer_seconds / BossConfig::BOSS_CUTSCENE_DURATION_SECONDS);         // 0 at the start and 1 at the end of the cutscene
+                progress = Utility::Utility_Clamp(progress, 0.0f, 1.0f);                                                    // clamp so it never goes outside the 0 to 1 range
+                boss_cutscene_y = Utility::Utility_Lerp(600.0f, BossConfig::BOSS_POSITION_Y, progress);                     // smoothly move from the top entry position to the fight position
+
+                boss_anim_timer += dt;                                                                                      // count up toward the next animation frame
+                if (boss_anim_timer >= BOSS_ANIM_FRAME_DURATION)                                                            // check if enough time has passed to advance the frame
+                {
+                    boss_anim_timer = 0.0f;                                                                                 // reset the frame timer for the next frame
+                    boss_anim_col = (boss_anim_col + 1) % 6;                                                                // advance to the next column and loop back after the last frame
+                }
+
+                if (boss_cutscene_timer_seconds <= 0.0f)                                                                    // check if the cutscene has finished
+                {
+                    // Cutscene is over, snap to final position and begin the fight
+                    boss_cutscene_y = BossConfig::BOSS_POSITION_Y;                                                          // lock the boss to its exact fight position
+
+                    // set correct position before revealing the word
+                    if (boss_pool_slot >= 0 && boss_pool_slot < (int)pool.size())                                           // only update if the slot is valid
                     {
-                        // Boss is defeated, clean up the slot and end the fight
-                        kw.enemy_is_active = false;                                                                         // deactivate the kill word slot
-                        boss_kill_word_in_pool = false;                                                                     // mark the kill word as no longer visible
-
-                        // Return the slot to the free pool
-                        free_slots.push_back(boss_pool_slot);                                                               // give the slot index back so it can be reused
-                        boss_pool_slot = -1;                                                                                // clear the stored slot reference
-
-                        boss_cycle_timer_seconds = 0.0f;                                                                    // reset the spawn cycle clock for the next boss wave
-                        boss_spawning_blocked = false;                                                                      // allow normal enemy spawning to resume
-                        boss_anim_row = 1;                                                                                  // switch to the death animation row on the sprite sheet
-                        boss_state = BossState::DEAD;                                                                       // move to the dead state
-                        break;
+                        float boss_half = (EnemyConfig::ENEMY_SIZE_PX * BossConfig::BOSS_SPRITE_SCALE) * 0.5f;              // half the boss sprite height in world space
+                        float normal_half = EnemyConfig::ENEMY_SIZE_PX * 0.5f;                                              // half a normal enemy sprite height in world space
+                        float extra = 2.5f * (boss_half - normal_half);                                                     // vertical offset to push the kill word text above the taller boss sprite
+                        pool[(size_t)boss_pool_slot].enemy_position_x = boss_position_x;                                    // lock the kill word to the boss horizontal position before it becomes visible
+                        pool[(size_t)boss_pool_slot].enemy_position_y = BossConfig::BOSS_POSITION_Y + extra;                // lock the kill word to the correct vertical position before it becomes visible
                     }
-                    else
+
+                    Boss_InjectKillWord(pool);                                                                              // reveal the kill word so the player can start typing
+                    boss_state = BossState::ACTIVE;                                                                         // switch to the active fighting state
+                }
+                break;
+            }
+
+            // ACTIVE state
+            case BossState::ACTIVE:
+            {
+                boss_spawning_blocked = true;                                                                               // keep normal enemy spawning blocked while the boss is alive
+
+                // Check if Typing.cpp just matched the kill word this frame.
+                // When Typing.cpp calls Enemy_Killed on this slot it sets enemy_is_dying to true.
+                if (boss_pool_slot >= 0 && boss_pool_slot < (int)pool.size())                                               // make sure the slot index is still valid
+                {
+                    Data::Enemy& kw = pool[(size_t)boss_pool_slot];                                                         // get a reference to the kill word enemy slot
+                    if (kw.enemy_is_dying)                                                                                  // check if the player just typed the kill word
                     {
-                        // Boss survived, swap in a new kill word for the next hit
-                        kw.enemy_word_text = "";                                                                            // hide the old word immediately using empty text
-                        kw.enemy_word_length = 0;                                                                           // clear the length to match the empty text
-                        boss_kill_word_in_pool = false;                                                                     // mark the kill word as hidden
+                        // A hit was registered. Cancel dying immediately so Enemy_Update
+                        // cannot start dropping this slot away from BOSS_POSITION_Y.
+                        kw.enemy_is_dying = false;                                                                          // cancel the dying state so Enemy_Update ignores this slot
+                        kw.enemy_has_landed = true;                                                                         // restore the guard that keeps Enemy_Update from moving the slot
 
-                        Boss_SwapKillWord(pool, bank);                                                                      // pick a fresh non-repeated word and update the slot
+                        boss_words_typed++;                                                                                 // count this as one successful hit on the boss
+                        boss_hit_tint_timer = BossConfig::BOSS_HIT_TINT_DURATION_SECONDS;                                   // start the red flash to show the boss was hit
 
-                        // Show the new word right away if no minions are alive
-                        if (Boss_CountActiveMinions(pool) == 0)                                                             // check if there are any minions on screen
-                            Boss_InjectKillWord(pool);                                                                      // no minions so reveal the new kill word immediately
+                        if (boss_words_typed >= BossConfig::BOSS_WORDS_TO_DEFEAT)                                           // check if the boss has taken enough hits to die
+                        {
+                            // Boss is defeated, clean up the slot and end the fight
+                            kw.enemy_is_active = false;                                                                     // deactivate the kill word slot
+                            boss_kill_word_in_pool = false;                                                                 // mark the kill word as no longer visible
+
+                            // Return the slot to the free pool
+                            free_slots.push_back(boss_pool_slot);                                                           // give the slot index back so it can be reused
+                            boss_pool_slot = -1;                                                                            // clear the stored slot reference
+
+                            boss_cycle_timer_seconds = 0.0f;                                                                // reset the spawn cycle clock for the next boss wave
+                            boss_spawning_blocked = false;                                                                  // allow normal enemy spawning to resume
+                            boss_anim_row = 1;                                                                              // switch to the death animation row on the sprite sheet
+                            boss_state = BossState::DEAD;                                                                   // move to the dead state
+                            break;
+                        }
+                        else
+                        {
+                            // Boss survived, swap in a new kill word for the next hit
+                            kw.enemy_word_text = "";                                                                        // hide the old word immediately using empty text
+                            kw.enemy_word_length = 0;                                                                       // clear the length to match the empty text
+                            boss_kill_word_in_pool = false;                                                                 // mark the kill word as hidden
+
+                            Boss_SwapKillWord(pool, bank);                                                                  // pick a fresh non-repeated word and update the slot
+
+                            // Show the new word right away if no minions are alive
+                            if (Boss_CountActiveMinions(pool) == 0)                                                         // check if there are any minions on screen
+                                Boss_InjectKillWord(pool);                                                                  // no minions so reveal the new kill word immediately
+                        }
                     }
                 }
-            }
 
-            // Targeting lock: show the kill word only when no minions are alive
-            int minion_count = Boss_CountActiveMinions(pool);                                                               // count how many minions are currently on screen
+                // Targeting lock: show the kill word only when no minions are alive
+                int minion_count = Boss_CountActiveMinions(pool);                                                           // count how many minions are currently on screen
 
-            if (minion_count == 0 && !boss_kill_word_in_pool)                                                               // no minions and kill word is hidden
-                Boss_InjectKillWord(pool);                                                                                  // reveal the kill word since the screen is clear
-            else if (minion_count > 0 && boss_kill_word_in_pool)                                                            // minions are alive and kill word is visible
-                Boss_RemoveKillWord(pool);                                                                                  // hide the kill word until all minions are gone
+                if (minion_count == 0 && !boss_kill_word_in_pool)                                                           // no minions and kill word is hidden
+                    Boss_InjectKillWord(pool);                                                                              // reveal the kill word since the screen is clear
+                else if (minion_count > 0 && boss_kill_word_in_pool)                                                        // minions are alive and kill word is visible
+                    Boss_RemoveKillWord(pool);                                                                              // hide the kill word until all minions are gone
 
-            // Move the kill word slot to always follow the boss position
-            // Y is offset to sit above the top edge of the sprite so Typing_DrawEnemyWords
-            // places the text correctly, matching the same calculation used in the original Boss_Draw.
-            if (boss_pool_slot >= 0 && boss_pool_slot < (int)pool.size())
-            {
-                float boss_half = (EnemyConfig::ENEMY_SIZE_PX * BossConfig::BOSS_SPRITE_SCALE) * 0.5f;                      // half the boss sprite height in world space
-                float normal_half = EnemyConfig::ENEMY_SIZE_PX * 0.5f;                                                      // half the enemy sprite height in world space
-                float extra = 2.5f * (boss_half - normal_half);                                                             // xxx
-
-                pool[(size_t)boss_pool_slot].enemy_position_x = boss_position_x;                                            // keep the kill word enemy locked to the boss X position
-                pool[(size_t)boss_pool_slot].enemy_position_y = BossConfig::BOSS_POSITION_Y + extra;                        // place text anchor above the top edge of the sprite
-            }
-
-            // Boss movement, bounce left and right within the play area
-            boss_position_x += boss_dir * BossConfig::BOSS_MOVE_SPEED * dt;                                                 // move the boss horizontally based on its speed and direction
-
-            float boss_half = (EnemyConfig::ENEMY_SIZE_PX * BossConfig::BOSS_SPRITE_SCALE *                                 // calculate how wide half the boss sprite is in world space
-                BossConfig::BOSS_SPRITE_W_RATIO) * 0.5f;
-
-            if (boss_position_x + boss_half >= area.area_max_x)                                                             // check if the right edge of the boss hit the right boundary
-            {
-                boss_position_x = area.area_max_x - boss_half;                                                              // push the boss back inside the right boundary
-                boss_dir = -1.0f;                                                                                           // reverse direction to move left
-            }
-            else if (boss_position_x - boss_half <= area.area_min_x)                                                        // check if the left edge of the boss hit the left boundary
-            {
-                boss_position_x = area.area_min_x + boss_half;                                                              // push the boss back inside the left boundary
-                boss_dir = 1.0f;                                                                                            // reverse direction to move right
-            }
-
-            // Minion spawning, send a wave every BOSS_MINION_SPAWN_INTERVAL_SECONDS
-            if (minion_count < BossConfig::BOSS_MINION_CAP)                                                                 // only spawn if the minion count is under the cap
-            {
-                boss_minion_spawn_timer += dt;                                                                              // count up toward the next wave trigger
-                if (boss_minion_spawn_timer >= BossConfig::BOSS_MINION_SPAWN_INTERVAL_SECONDS)                              // check if enough time has passed for a new wave
+                // Move the kill word slot to always follow the boss position
+                // Y is offset to sit above the top edge of the sprite so Typing_DrawEnemyWords
+                // places the text correctly, matching the same calculation used in the original Boss_Draw.
+                if (boss_pool_slot >= 0 && boss_pool_slot < (int)pool.size())
                 {
-                    boss_minion_spawn_timer = 0.0f;                                                                         // reset the wave timer
+                    float boss_half = (EnemyConfig::ENEMY_SIZE_PX * BossConfig::BOSS_SPRITE_SCALE) * 0.5f;                  // half the boss sprite height in world space
+                    float normal_half = EnemyConfig::ENEMY_SIZE_PX * 0.5f;                                                  // half the enemy sprite height in world space
+                    float extra = 2.5f * (boss_half - normal_half);                                                         // vertical offset to push the kill word text above the taller boss sprite
 
-                    int wave = BossConfig::BOSS_MINION_WAVE_SIZE;                                                           // how many minions to try spawning this wave
-                    int current = Boss_CountActiveMinions(pool);                                                            // check the current live minion count before spawning
-                    for (int w = 0; w < wave && current < BossConfig::BOSS_MINION_CAP; ++w)                                 // loop through each spawn slot in the wave
+                    pool[(size_t)boss_pool_slot].enemy_position_x = boss_position_x;                                        // keep the kill word enemy locked to the boss X position
+                    pool[(size_t)boss_pool_slot].enemy_position_y = BossConfig::BOSS_POSITION_Y + extra;                    // place text anchor above the top edge of the sprite
+                }
+
+                // Boss movement, bounce left and right within the play area
+                boss_position_x += boss_dir * BossConfig::BOSS_MOVE_SPEED * dt;                                             // move the boss horizontally based on its speed and direction
+
+                float boss_half = (EnemyConfig::ENEMY_SIZE_PX * BossConfig::BOSS_SPRITE_SCALE *                             // calculate how wide half the boss sprite is in world space
+                    BossConfig::BOSS_SPRITE_W_RATIO) * 0.5f;
+
+                if (boss_position_x + boss_half >= area.area_max_x)                                                         // check if the right edge of the boss hit the right boundary
+                {
+                    boss_position_x = area.area_max_x - boss_half;                                                          // push the boss back inside the right boundary
+                    boss_dir = -1.0f;                                                                                       // reverse direction to move left
+                }
+                else if (boss_position_x - boss_half <= area.area_min_x)                                                    // check if the left edge of the boss hit the left boundary
+                {
+                    boss_position_x = area.area_min_x + boss_half;                                                          // push the boss back inside the left boundary
+                    boss_dir = 1.0f;                                                                                        // reverse direction to move right
+                }
+
+                // Minion spawning, send a wave every BOSS_MINION_SPAWN_INTERVAL_SECONDS
+                if (minion_count < BossConfig::BOSS_MINION_CAP)                                                             // only spawn if the minion count is under the cap
+                {
+                    boss_minion_spawn_timer += dt;                                                                          // count up toward the next wave trigger
+                    if (boss_minion_spawn_timer >= BossConfig::BOSS_MINION_SPAWN_INTERVAL_SECONDS)                          // check if enough time has passed for a new wave
                     {
-                        int len = Utility::Utility_RandInt(BossConfig::BOSS_WORD_MIN_LEN, BossConfig::BOSS_WORD_MAX_LEN);   // pick a random word length for this minion
-                        int before_spawn = Boss_CountActiveMinions(pool);                                                   // snapshot the count before attempting the spawn
-                        EnemySystem::Enemy_SpawnFromPool(pool, free_slots, area, bank, len);                                // try to spawn one minion into a free pool slot
-                        if (Boss_CountActiveMinions(pool) > before_spawn)                                                   // check if the spawn actually succeeded
-                            ++current;                                                                                      // only advance the counter when a real spawn happened
+                        boss_minion_spawn_timer = 0.0f;                                                                     // reset the wave timer
+
+                        int wave = BossConfig::BOSS_MINION_WAVE_SIZE;                                                       // how many minions to try spawning this wave
+                        int current = Boss_CountActiveMinions(pool);                                                        // check the current live minion count before spawning
+                        for (int w = 0; w < wave && current < BossConfig::BOSS_MINION_CAP; ++w)                             // loop through each spawn slot in the wave
+                        {
+                            int len = Utility::Utility_RandInt(BossConfig::BOSS_WORD_MIN_LEN, BossConfig::BOSS_WORD_MAX_LEN);
+                            int before_spawn = Boss_CountActiveMinions(pool);                                               // snapshot the count before attempting the spawn
+                            EnemySystem::Enemy_SpawnFromPool(pool, free_slots, area, bank, len);                            // try to spawn one minion into a free pool slot
+                            if (Boss_CountActiveMinions(pool) > before_spawn)                                               // check if the spawn actually succeeded
+                                ++current;                                                                                  // only advance the counter when a real spawn happened
+                        }
                     }
                 }
+
+                boss_anim_timer += dt;                                                                                      // count up toward the next animation frame
+                if (boss_anim_timer >= BOSS_ANIM_FRAME_DURATION)                                                            // check if enough time has passed to advance the frame
+                {
+                    boss_anim_timer = 0.0f;                                                                                 // reset the frame timer for the next frame
+                    boss_anim_col = (boss_anim_col + 1) % 6;                                                                // advance to the next column and loop back after the last frame
+                }
+
+                break;
             }
 
-            break;
-        }
-
-        // DEAD state
-        case BossState::DEAD:
-        {
-            // One frame pause to let all systems settle before going back to inactive
-            boss_spawning_blocked = false;                                                                                  // allow normal enemy spawning to resume
-            boss_anim_row = 0;                                                                                              // reset the animation row ready for the next boss wave
-            boss_state = BossState::INACTIVE;                                                                               // return to inactive so the cycle timer can start again
-            break;
-        }
+            // DEAD state
+            case BossState::DEAD:
+            {
+                boss_spawning_blocked = false;                                                                              // allow normal enemy spawning to resume
+                boss_anim_timer += dt;                                                                                      // count up toward the next death animation frame
+                if (boss_anim_timer >= BOSS_ANIM_DEATH_FRAME_DURATION)                                                      // check if enough time has passed to advance the death frame
+                {
+                    boss_anim_timer = 0.0f;                                                                                 // reset the frame timer for the next frame
+                    if (boss_anim_col < 5)                                                                                  // check if the death animation has reached the last frame
+                        boss_anim_col++;                                                                                    // advance to the next death frame
+                    else                                                                                                    // last frame reached so the death animation is finished
+                    {
+                        boss_anim_row = 0;                                                                                  // reset the row ready for the next boss wave
+                        boss_anim_col = 0;                                                                                  // reset the column ready for the next boss wave
+                        boss_state = BossState::INACTIVE;                                                                   // return to inactive so the cycle timer can start again
+                    }
+                }
+                break;
+            }
 
         } // end switch
     }
@@ -684,8 +725,11 @@ namespace BossSystem
         const float uv_row_height = 1.0f / 2.0f;                                                                            // each row takes up half the texture height since there are 2 rows
         float uv_y = (float)boss_anim_row * uv_row_height;                                                                  // calculate the V offset for the current animation row
 
-        AEGfxTextureSet(boss_texture, 0.0f, uv_y);                                                                          // bind the boss texture and scroll to the correct row
-        Graphics::Draw_DrawMeshAt(boss_sprite_mesh, boss_position_x, draw_y, -(sprite_w * boss_dir), sprite_h, 0.0f);          // draw the boss sprite at its current position
+        const float uv_col_width = 1.0f / 6.0f;                                                                             // each column takes up one sixth of the texture width
+        float uv_x = (float)boss_anim_col * uv_col_width;                                                                   // calculate the U offset for the current animation frame column
+        AEGfxTextureSet(boss_texture, uv_x, uv_y);                                                                          // bind the texture scrolled to the correct frame position
+
+        Graphics::Draw_DrawMeshAt(boss_sprite_mesh, boss_position_x, draw_y, -(sprite_w * boss_dir), sprite_h, 0.0f);       // draw the boss sprite at its current position
 
         AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);                                                                    // reset colour multiply to white so nothing else is tinted
 
