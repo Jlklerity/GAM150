@@ -2,6 +2,7 @@
 #include "MeshRenderer.h"
 #include "MeshTemplates.h"
 #include <AEEngine.h>
+
 namespace {
 
     struct ParallaxLayer {

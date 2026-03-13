@@ -23,6 +23,7 @@
     <ClCompile Include="src\Boss.cpp" />
     <ClCompile Include="src\BackgroundParallex.cpp" />
     <ClCompile Include="src\LaserBeam.cpp" />
+    <ClCompile Include="src\GameEnemyBoss.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\Enemy.h" />
@@ -46,6 +47,7 @@
     <ClInclude Include="src\Boss.h" />
     <ClInclude Include="src\BackgroundParallex.h" />
     <ClInclude Include="src\LaserBeam.h" />
+    <ClInclude Include="src\GameEnemyBoss.h" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="Assets\characterSheet.png" />

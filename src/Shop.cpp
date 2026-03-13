@@ -144,7 +144,8 @@ void Shop_Init() {
 	// Load Skin Options (Using a placeholder for now)
 	pTexSkinOptions[0] = AEGfxTextureLoad("Assets/skin1.png");
 	AE_ASSERT_MESG(pTexSkinOptions, "Failed to load skin1.png");
-	pTexSkinOptions[1] = pTexSkinOptions[0]; // TODO: Change to skin1.png later
+	pTexSkinOptions[1] = AEGfxTextureLoad("Assets/skin2.png");
+	AE_ASSERT_MESG(pTexSkinOptions, "Failed to load skin2.png");
 	pTexSkinOptions[2] = pTexSkinOptions[0]; // TODO: Change to skin2.png later
 
 
