@@ -299,8 +299,7 @@ void Game_Exit()
     @author     Wong Zi Yuan (w.ziyuan@digipen.edu)
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
     BossSystem::Boss_Free(meshes, free_slot_queue, enemy_pool);                                                             // unload boss assets and return the reserved pool slot
-    EnemyManage::EnemyPool_Free(enemy_pool, free_slot_queue);                                                               // deactivate all enemy slots and rebuild the free slot queue
-    EnemyManage::EnemyManage_FreeMeshes(meshes);                                                                            // unload all enemy textures and meshes from memory
+    EnemyManage::EnemyManage_Free(meshes, enemy_pool, free_slot_queue);                                                     // free enemy pool and meshes
     /*_______________________________________________________________________________________________________________________________________________________________________________________________*/
 
     Typing_Exit();

@@ -56,7 +56,7 @@ namespace GameEnemyBoss
         bool is_random_spawning_enabled, float& random_spawn_timer_seconds)
     {
         if (boss_spawning_blocked)                                                                                          // check if the boss is preventing normal spawns
-            random_spawn_timer_seconds = 0.0f;                                                                              // reset the spawn timer so no enemy spawns while boss is active
+            random_spawn_timer_seconds = 0.0f;                                                                              // reset timer so enemies don't spawn immediately after boss dies
 
         if (is_random_spawning_enabled && !boss_spawning_blocked)                                                           // only spawn normal enemies when spawning is on and boss is not active
         {

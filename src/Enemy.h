@@ -887,27 +887,17 @@ namespace EnemyManage
     Data::Meshes EnemyManage_LoadMeshes(const Data::SpriteAnim& enemy_anim);
 
     /*
-    @function       EnemyManage_FreeMeshes
-    @params         meshes (Data::Meshes&)
-    @brief          Releases all loaded meshes, textures, and font resources used by the game.
+    @function       EnemyManage_Free
+    @params         meshes (Data::Meshes&), pool (std::vector<Data::Enemy>&), free_slots (std::deque<int>&)
+    @brief          Deactivates all enemies in the pool, rebuilds the free slot queue, and releases
+                    all loaded meshes, textures, and font resources used by the game.
 
-    This function frees the mesh objects stored in 'meshes', unloads all enemy textures (3 to 8) from the
-    Graphics texture table, and destroys the loaded font. It also resets pointers/handles back to safe
-    defaults to prevent dangling references.
+    Every slot is reset to a clean inactive state regardless of enemy type (normal, friendly,
+    shielded). The free_slots queue is rebuilt from scratch so the pool is ready for re-init
+    without needing a full resize. Mesh pointers are reset back to safe defaults to prevent
+    dangling references.
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
-    void EnemyManage_FreeMeshes(Data::Meshes& meshes);
-
-    /*
-    @function       EnemyPool_Free
-    @params         pool (std::vector<Data::Enemy>&), free_slots (std::deque<int>&)
-    @brief          Deactivates all enemies in the pool and rebuilds the free slot queue.
-
-    Iterates every slot regardless of enemy type (normal, friendly, shielded).  Marks each slot
-    inactive, clears its word and state, then pushes its index back into free_slots so the pool
-    is ready for a clean re-init without a full resize.  The boss slot must already have been
-    returned by Boss_Free before this is called.
-    *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
-    void EnemyPool_Free(std::vector<Data::Enemy>& pool, std::deque<int>& free_slots);
+    void EnemyManage_Free(Data::Meshes& meshes, std::vector<Data::Enemy>& pool, std::deque<int>& free_slots);
 
 } // EnemyManage namespace end
 /*___________________________________________________________________________________________________________________________________________________________________________________________________*/

@@ -1705,75 +1705,61 @@ namespace EnemyManage
     }
 
     /*
-    @function       EnemyManage_FreeMeshes
-    @params         meshes (Data::Meshes&)
-    @brief          Releases all loaded meshes, textures, and font resources used by the game.
-
-    This function frees the mesh objects stored in 'meshes', unloads all enemy textures (3 to 8) from the
-    Graphics texture table, and destroys the loaded font. It also resets pointers/handles back to safe
-    defaults to prevent dangling references.
-    *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
-    void EnemyManage_FreeMeshes(Data::Meshes& meshes)
-    {
-        if (meshes.debug_box_mesh) AEGfxMeshFree(meshes.debug_box_mesh);                                                    // free debug mesh
-        if (meshes.enemy_sprite_mesh) AEGfxMeshFree(meshes.enemy_sprite_mesh);                                              // free enemy mesh
-        if (meshes.shield_sprite_mesh) AEGfxMeshFree(meshes.shield_sprite_mesh);                                            // free shield mesh
-        if (meshes.friendly_sprite_mesh) AEGfxMeshFree(meshes.friendly_sprite_mesh);                                        // free friendly mesh
-
-        meshes = {};                                                                                                        // reset mesh pointers to defaults
-
-        for (int i = 3; i <= 8; ++i)                                                                                        // loop through enemy texture slots
-        {
-            if (Graphics::enemy_textures[i])                                                                                // check if texture exists
-            {
-                AEGfxTextureUnload(Graphics::enemy_textures[i]);                                                            // unload texture
-                Graphics::enemy_textures[i] = nullptr;                                                                      // clear pointer
-            }
-        }
-
-        if (Graphics::friendly_texture) AEGfxTextureUnload(Graphics::friendly_texture);                                     // unload princess npc texture
-        Graphics::friendly_texture = nullptr;                                                                               // clear pointer
-
-        if (Graphics::shield_texture) AEGfxTextureUnload(Graphics::shield_texture);                                         // unload shield enemy texture
-        Graphics::shield_texture = nullptr;                                                                                 // clear pointer
-
-        if (Graphics::font_id >= 0)                                                                                         // check if font exists
-        {
-            AEGfxDestroyFont(Graphics::font_id);                                                                            // destroy font
-            Graphics::font_id = -1;                                                                                         // reset font id
-        }
-    }
-
-    /*
-    @function       EnemyPool_Free
-    @params         pool (std::vector<Data::Enemy>&), free_slots (std::deque<int>&)
-    @brief          Deactivates all enemies in the pool and rebuilds the free slot queue.
+    @function       EnemyManage_Free
+    @params         meshes (Data::Meshes&), pool (std::vector<Data::Enemy>&), free_slots (std::deque<int>&)
+    @brief          Deactivates all enemies in the pool, rebuilds the free slot queue, and releases
+                    all loaded meshes, textures, and font resources used by the game.
 
     Every slot is reset to a clean inactive state regardless of enemy type (normal, friendly,
     shielded). The free_slots queue is rebuilt from scratch so the pool is ready for re-init
-    without needing a full resize.
+    without needing a full resize. Mesh pointers are reset back to safe defaults to prevent
+    dangling references.
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
-    void EnemyPool_Free(std::vector<Data::Enemy>& pool, std::deque<int>& free_slots)
+    void EnemyManage_Free(Data::Meshes& meshes, std::vector<Data::Enemy>& pool, std::deque<int>& free_slots)
     {
-        free_slots.clear();                                                                                                 // discard any stale indices
+        free_slots.clear();                                                                                                     // discard any stale indices
 
         for (int i = 0; i < (int)pool.size(); ++i)
         {
             Data::Enemy& e = pool[(size_t)i];
+            e.enemy_is_active = false;                                                                                          // mark slot inactive
+            e.enemy_is_dying = false;                                                                                           // clear dying flag
+            e.enemy_has_landed = false;                                                                                         // clear landed flag
+            e.enemy_did_damage = false;                                                                                         // clear damage flag
+            e.enemy_word_text.clear();                                                                                          // clear word text
+            e.enemy_word_text_alt.clear();                                                                                      // clear alternate word text
+            e.enemy_word_length = 0;                                                                                            // reset word length
+            e.enemy_lane_id = -1;                                                                                               // reset lane assignment
+            e.enemy_shield_intact = false;                                                                                      // clear shield flag
+            e.enemy_dying_linger_timer_seconds = 0.0f;                                                                          // reset linger timer
+            free_slots.push_back(i);                                                                                            // return slot to the free queue
+        }
 
-            // Clear all state regardless of type
-            e.enemy_is_active = false;
-            e.enemy_is_dying = false;
-            e.enemy_has_landed = false;
-            e.enemy_did_damage = false;
-            e.enemy_word_text.clear();
-            e.enemy_word_text_alt.clear();
-            e.enemy_word_length = 0;
-            e.enemy_lane_id = -1;
-            e.enemy_shield_intact = false;
-            e.enemy_dying_linger_timer_seconds = 0.0f;
+        if (meshes.debug_box_mesh) AEGfxMeshFree(meshes.debug_box_mesh);                                                        // free debug mesh
+        if (meshes.enemy_sprite_mesh) AEGfxMeshFree(meshes.enemy_sprite_mesh);                                                  // free enemy mesh
+        if (meshes.shield_sprite_mesh) AEGfxMeshFree(meshes.shield_sprite_mesh);                                                // free shield mesh
+        if (meshes.friendly_sprite_mesh) AEGfxMeshFree(meshes.friendly_sprite_mesh);                                            // free friendly mesh
+        meshes = {};                                                                                                            // reset mesh pointers to defaults
 
-            free_slots.push_back(i);                                                                                        // return slot to the free queue
+        for (int i = 3; i <= 8; ++i)                                                                                            // loop through enemy texture slots
+        {
+            if (Graphics::enemy_textures[i])                                                                                    // check if texture exists
+            {
+                AEGfxTextureUnload(Graphics::enemy_textures[i]);                                                                // unload texture
+                Graphics::enemy_textures[i] = nullptr;                                                                          // clear pointer
+            }
+        }
+
+        if (Graphics::friendly_texture) AEGfxTextureUnload(Graphics::friendly_texture);                                         // unload princess npc texture
+        Graphics::friendly_texture = nullptr;                                                                                   // clear pointer
+
+        if (Graphics::shield_texture) AEGfxTextureUnload(Graphics::shield_texture);                                             // unload shield enemy texture
+        Graphics::shield_texture = nullptr;                                                                                     // clear pointer
+
+        if (Graphics::font_id >= 0)                                                                                             // check if font exists
+        {
+            AEGfxDestroyFont(Graphics::font_id);                                                                                // destroy font
+            Graphics::font_id = -1;                                                                                             // reset font id
         }
     }
 } // EnemyManage namespace end
