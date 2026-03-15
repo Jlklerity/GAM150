@@ -238,12 +238,11 @@ namespace
         float cursorX = startX + len * (w + spacing);
 
         // Draw a thin rectangle as cursor
-        // You'll need a simple "white quad" mesh or use AEGfx primitives.
         AEGfxSetRenderMode(AE_GFX_RM_COLOR);
         AEGfxSetBlendMode(AE_GFX_BM_BLEND);
         AEGfxSetTransparency(1.0f);
 
-        // make cursor thin; height ~ 70% of letter height
+        // make cursor thin
         float cw = 8.0f;
         float ch = h * 0.7f;
 
@@ -255,7 +254,7 @@ namespace
         AEGfxSetBlendColor(1.0f, 1.0f, 1.0f, 1.0f);
 
 
-        Mesh_Renderer(letterQuad /*or a plain quad*/, cursorX, y, cw, ch, 0.0f);
+        Mesh_Renderer(letterQuad, cursorX, y, cw, ch, 0.0f);
     }
 
     const char* Typing_GetText()
@@ -446,9 +445,11 @@ void Typing_DrawEnemyWords(const std::vector<Data::Enemy>& enemy_pool)
 
 
 
-
-
+// main typing logic, called every frame from game update
+// handles input, target locking, submission and enemy killing
 void Typing_UpdateAndApplyToEnemies(std::vector<Data::Enemy>& enemy_pool, Data::Score& score, Data::Health& health) {
+
+
     Typing_Update(); //call typing update logic, basicallly pushing whatever is typed to the buffer
     bool submitted = KeyPressedOnce(AEVK_RETURN);    // check for enter
 
@@ -477,6 +478,7 @@ void Typing_UpdateAndApplyToEnemies(std::vector<Data::Enemy>& enemy_pool, Data::
         s_debugCorrect = false;
         s_debugTarget.clear();
         //
+        
         //if (s_targetIndex < 0)  s_targetIndex = EnemySystem::Enemy_FindBestTargetByPrefix(enemy_pool, typed_buffer);
         bool correct = false; //for shake
 

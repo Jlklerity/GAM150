@@ -396,7 +396,7 @@ namespace DebugConsole
 
         for (int i = 0; i < 256; ++i) s_prevKeys[i] = false;
 
-        // Build a 1x1 unit quad for drawing panels (reused for all backgrounds)
+        // 1x1 quad for drawing 
         s_pPanelMesh = Rect_Mesh(1.0f, 1.0f, 0xFFFFFFFF);
     }
 
@@ -404,22 +404,22 @@ namespace DebugConsole
     {
         float dt = (float)AEFrameRateControllerGetFrameTime();
 
-        //  Toggle console open / close with '/' key 
-        // AEVK_SLASH = 0xBF on Windows virtual key
-        if (KeyTriggered(AEVK_SLASH) && !s_isOpen)
+        //  Toggle console open / 
+        // AEVK_SLASH = 0xBF 
+        if (KeyTriggered(AEVK_SLASH) && !s_isOpen) //if console not open + / presed
         {
             s_isOpen = true;
             s_inputLen = 0;
             s_inputBuf[0] = '\0';
             s_cursorTimer = 0.0f;
             s_cursorVisible = true;
-            s_inputBuf[s_inputLen++] = '/';                                 // pre-fill '/' so player sees it immediately
+            s_inputBuf[s_inputLen++] = '/';                                 // pre-fill / 
             s_inputBuf[s_inputLen] = '\0';
             *s_pDifficultyVisible = true;                                   // auto-show difficulty HUD when console opens
-            return;                                                         // consume the '/' keypress
+            return;                                                         // consume the /
         }
 
-        if (!s_isOpen) return;
+        if (!s_isOpen) return; // if console not open returb
 
         //  Cursor blink 
         s_cursorTimer += dt;
@@ -528,7 +528,7 @@ namespace DebugConsole
         {
             float panelY = s_isOpen ? HISTORY_PANEL_Y : -HALF_H + INPUT_BAR_H + HISTORY_PANEL_H * 0.5f + 4.0f;
 
-            DrawPanel(0.0f, panelY, SCREEN_W, HISTORY_PANEL_H, 0.0f, 0.0f, 0.0f, 0.65f);
+			DrawPanel(0.0f, panelY, SCREEN_W, HISTORY_PANEL_H, 0.0f, 0.0f, 0.0f, 0.65f); // history panel background
 
             //  Draw history lines 
             // s_scrollOffset=0 means show the newest VISIBLE_LINES entries
@@ -540,21 +540,33 @@ namespace DebugConsole
             float textScale = 0.38f;
             float lineStartY = panelY + (HISTORY_PANEL_H * 0.5f) - 4.0f; // top of panel
 
+            // loop through each visible line slot in the history panel
             for (int line = 0; line < VISIBLE_LINES; ++line)
             {
+                // calculate which history entry maps to this row
                 int entryIdx = topIdx + line;
+
+                // skip if out of bounds (<8)
                 if (entryIdx < 0 || entryIdx >= totalEntries) continue;
 
+                // grab the history entry at this index
                 const HistoryEntry& entry = s_history[(size_t)entryIdx];
 
+                // calculate world Y position for this row, gg downward each line
                 float worldY = lineStartY - (line * HISTORY_LINE_H) - HISTORY_LINE_H * 0.5f;
-                float ny = WorldYtoNDC(worldY);
-                float nx = WorldXtoNDC(-HALF_W + 12.0f); // left margin
 
+                // convert to NDC for print
+                float ny = WorldYtoNDC(worldY);
+
+                
+                float nx = WorldXtoNDC(-HALF_W + 12.0f);
+
+                // pick red for errors, white for normal output
                 float r = entry.isError ? 1.0f : 1.0f;
                 float g = entry.isError ? 0.2f : 1.0f;
                 float b = entry.isError ? 0.2f : 1.0f;
 
+                // draw the text at the calculated position and color
                 DrawText(entry.text.c_str(), nx, ny, textScale, r, g, b);
             }
 
