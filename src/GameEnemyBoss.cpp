@@ -69,11 +69,11 @@ namespace GameEnemyBoss
                 int roll = Utility::Utility_RandInt(0, 99);                                                                 // roll to decide which enemy type to spawn
                 int max_len = DifficultySystem::Difficulty_GetUnlockedMaxWordLength();                                      // get longest word allowed at current difficulty
 
-                if (roll < 15)                                                                                              // 15% chance: spawn a friendly enemy
+                if (roll < 10)                                                                                              // 10% chance: spawn a friendly enemy
                     EnemySystem::Enemy_SpawnFriendlyFromPool(enemy_pool, free_slot_queue, enemy_area, word_bank, 3, max_len, 1.15f);
-                else if (roll < 30)                                                                                         // 15% chance: spawn a shielded enemy
+                else if (roll < 30)                                                                                         // 30% chance: spawn a shielded enemy
                     EnemySystem::Enemy_SpawnShieldedFromPool(enemy_pool, free_slot_queue, enemy_area, word_bank, 3, max_len, 1.05f);
-                else                                                                                                        // 70% chance: spawn a normal enemy
+                else                                                                                                        // 60% chance: spawn a normal enemy
                 {
                     int len = DifficultySystem::Difficulty_GetRandomWordLength();                                           // pick random word length within current difficulty range
                     EnemySystem::Enemy_SpawnFromPool(enemy_pool, free_slot_queue, enemy_area, word_bank, len);
