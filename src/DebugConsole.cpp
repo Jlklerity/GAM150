@@ -20,12 +20,10 @@ game.cpp only calls Init / Update / Render / Exit / IsOpen.
 #include <vector>
 #include <sstream>
 
-// ---------------------------------------------------------------------------
 // Internal state
-// ---------------------------------------------------------------------------
 namespace
 {
-    // ---- Game state references (set in Init) ----
+    //  Game state references (set in init) 
     bool* s_pEnemyAreaVisible = nullptr;
     bool* s_pAutoSpawn = nullptr;
     bool* s_pDifficultyVisible = nullptr;
@@ -35,14 +33,14 @@ namespace
     Data::EnemyArea* s_pEnemyArea = nullptr;
     Data::WordBank* s_pWordBank = nullptr;
 
-    // ---- Console open/close ----
+    //  Console open/close 
     bool s_isOpen = false;
 
-    // ---- Input buffer ----
+    //  Input buffer 
     static char     s_inputBuf[64]{};
     static int      s_inputLen = 0;
 
-    // ---- History ----
+    //  History 
     struct HistoryEntry
     {
         std::string text;
@@ -54,14 +52,14 @@ namespace
     static const int VISIBLE_LINES = 8;    // lines shown at once
     static int s_scrollOffset = 0;    // 0 = bottom (most recent)
 
-    // ---- Cursor blink ----
+    //  Cursor blink 
     static float s_cursorTimer = 0.0f;
     static bool  s_cursorVisible = true;
 
-    // ---- Rendering ----
+    //  Rendering 
     static AEGfxVertexList* s_pPanelMesh = nullptr; // reusable quad for background panels
 
-    // ---- Layout constants (world space, 1600x900 window) ----
+    //  Layout constants (world space, 1600x900 ) 
     static const float SCREEN_W = 1600.0f;
     static const float SCREEN_H = 900.0f;
     static const float HALF_W = SCREEN_W * 0.5f;
@@ -73,7 +71,7 @@ namespace
     static const float HISTORY_PANEL_H = VISIBLE_LINES * HISTORY_LINE_H + 8.0f;
     static const float HISTORY_PANEL_Y = INPUT_BAR_Y + INPUT_BAR_H * 0.5f + HISTORY_PANEL_H * 0.5f + 2.0f;
 
-    // ---- Key-repeat state (independent from Typing.cpp) ----
+    //  check if key held (independent from typing.cpp) 
     static bool s_prevKeys[256]{};
 
     bool KeyTriggered(int key)
@@ -85,9 +83,7 @@ namespace
         return triggered;
     }
 
-    // ---------------------------------------------------------------------------
     // History helpers
-    // ---------------------------------------------------------------------------
     void PushHistory(const std::string& text, bool isError = false)
     {
         s_history.push_back({ text, isError });
@@ -96,9 +92,7 @@ namespace
         s_scrollOffset = 0; // snap back to bottom on new entry
     }
 
-    // ---------------------------------------------------------------------------
     // Command parsing helpers
-    // ---------------------------------------------------------------------------
     std::vector<std::string> Tokenise(const std::string& line)
     {
         std::vector<std::string> tokens;
@@ -117,15 +111,13 @@ namespace
         return true;
     }
 
-    // ---------------------------------------------------------------------------
     // Command execution
-    // ---------------------------------------------------------------------------
     void ExecuteCommand(const std::string& raw)
     {
         // Echo the typed command into history (white)
         PushHistory("> " + raw, false);
 
-        // Strip leading '/' if present
+        // Strip leading '/' 
         std::string line = raw;
         if (!line.empty() && line[0] == '/') line = line.substr(1);
 
@@ -134,9 +126,7 @@ namespace
 
         const std::string& cmd = tokens[0];
 
-        // ------------------------------------------------------------------
         // /spawn [3-8]   -- spawn an enemy of the given word length
-        // ------------------------------------------------------------------
         if (IEquals(cmd, "spawn"))
         {
             if (tokens.size() < 2)
@@ -171,9 +161,6 @@ namespace
                 return;
             }
 
-            //int len = std::stoi(tokens[1]);
-           // int max_len = DifficultySystem::Difficulty_GetUnlockedMaxWordLength();
-
             // /spawn [3-8]
             int len = 0;
             try
@@ -195,9 +182,7 @@ namespace
             return;                                                         // must return or falls through to unknown command
         }
 
-        // ------------------------------------------------------------------
         // /health add    -- add 10 hp
-        // ------------------------------------------------------------------
         if (IEquals(cmd, "health"))
         {
             if (tokens.size() < 2)
@@ -217,9 +202,7 @@ namespace
             return;
         }
 
-        // ------------------------------------------------------------------
         // /difficulty up | down | show
-        // ------------------------------------------------------------------
         if (IEquals(cmd, "difficulty"))
         {
             if (tokens.size() < 2)
@@ -251,9 +234,7 @@ namespace
             return;
         }
 
-        // ------------------------------------------------------------------
-        // /debugbox      -- toggle enemy area debug box
-        // ------------------------------------------------------------------
+        // /debugbox - toggle enemy area debug box
         if (IEquals(cmd, "debugbox"))
         {
             *s_pEnemyAreaVisible = !*s_pEnemyAreaVisible;
@@ -261,9 +242,7 @@ namespace
             return;
         }
 
-        // ------------------------------------------------------------------
-        // /autospawn     -- toggle automatic enemy spawning
-        // ------------------------------------------------------------------
+        // /autospawn - toggle automatic enemy spawning
         if (IEquals(cmd, "autospawn"))
         {
             *s_pAutoSpawn = !*s_pAutoSpawn;
@@ -271,9 +250,7 @@ namespace
             return;
         }
 
-        // ------------------------------------------------------------------
-        // /help          -- list all commands
-        // ------------------------------------------------------------------
+        // /help - list all commands
         if (IEquals(cmd, "help"))
         {
             PushHistory("/spawn [3-8]         - spawn enemy by word length", false);
@@ -293,9 +270,7 @@ namespace
             return;
         }
 
-        // ------------------------------------------------------------------
         // /powerup lightning | shield | slow | force spawn a power up drop
-        // ------------------------------------------------------------------
         if (IEquals(cmd, "powerup"))
         {
             if (tokens.size() < 2)
@@ -325,9 +300,7 @@ namespace
             return;
         }
 
-        // ------------------------------------------------------------------
         // /weather snow | thunder   -- force-trigger a weather event
-        // ------------------------------------------------------------------
         if (IEquals(cmd, "weather"))
         {
             if (tokens.size() < 2)
@@ -352,17 +325,17 @@ namespace
             return; // azfar code end
         }
 
-        // ------------------------------------------------------------------
+       
         // Unknown command
-        // ------------------------------------------------------------------
         PushHistory("Unknown command: /" + cmd + "  (try /help)", true);
     }
 
-    // ---------------------------------------------------------------------------
+
+
     // Rendering helpers
     // ---------------------------------------------------------------------------
 
-    // Draw a solid-color quad in world space
+    // Draw a solid color quad in world space
     void DrawPanel(float x, float y, float w, float h, float r, float g, float b, float a)
     {
         if (!s_pPanelMesh) return;
@@ -390,9 +363,7 @@ namespace
 
 } // anonymous namespace
 
-// ---------------------------------------------------------------------------
 // public stuff
-// ---------------------------------------------------------------------------
 namespace DebugConsole
 {
     void Init(
@@ -433,7 +404,7 @@ namespace DebugConsole
     {
         float dt = (float)AEFrameRateControllerGetFrameTime();
 
-        // ---- Toggle console open / close with '/' key ----
+        //  Toggle console open / close with '/' key 
         // AEVK_SLASH = 0xBF on Windows virtual key
         if (KeyTriggered(AEVK_SLASH) && !s_isOpen)
         {
@@ -450,7 +421,7 @@ namespace DebugConsole
 
         if (!s_isOpen) return;
 
-        // ---- Cursor blink ----
+        //  Cursor blink 
         s_cursorTimer += dt;
         if (s_cursorTimer >= 0.5f)
         {
@@ -458,7 +429,7 @@ namespace DebugConsole
             s_cursorVisible = !s_cursorVisible;
         }
 
-        // ---- Scroll history with mouse wheel ----
+        //  Scroll history with mouse wheel 
         {
             s32 wheel = 0;
             AEInputMouseWheelDelta(&wheel);
@@ -467,7 +438,7 @@ namespace DebugConsole
             if (wheel < 0) s_scrollOffset = (s_scrollOffset - 1 > 0) ? s_scrollOffset - 1 : 0;                 // scroll down (newer)
         }
 
-        // ---- Escape closes without submitting ----
+        //  Escape closes without submitting 
         if (KeyTriggered(AEVK_ESCAPE))
         {
             s_isOpen = false;
@@ -477,7 +448,7 @@ namespace DebugConsole
             return;
         }
 
-        // ---- Enter submits ----
+        //  Enter submits 
         if (KeyTriggered(AEVK_RETURN))
         {
             std::string cmd(s_inputBuf);
@@ -501,7 +472,7 @@ namespace DebugConsole
             return;
         }
 
-        // ---- Backspace ----
+        //  Backspace 
         if (KeyTriggered(AEVK_BACK))
         {
             // Don't let player delete the leading '/'
@@ -512,7 +483,7 @@ namespace DebugConsole
             return;
         }
 
-        // ---- Letter keys A-Z ----
+        //  Letter keys A-Z 
         if (s_inputLen < (int)sizeof(s_inputBuf) - 2) // leave room for null
         {
             for (int k = AEVK_A; k <= AEVK_Z; ++k)
@@ -525,8 +496,8 @@ namespace DebugConsole
                 }
             }
 
-            // ---- Digit keys 0-9 ----
-            // Alpha Engine AEVK_0 .. AEVK_9 = 0x30 .. 0x39
+            //  Digit keys 0-9 
+            // Alpha Engine AEVK_0 - AEVK_9 = 0x30 - 0x39
             for (int k = AEVK_0; k <= AEVK_9; ++k)
             {
                 if (KeyTriggered(k))
@@ -537,7 +508,7 @@ namespace DebugConsole
                 }
             }
 
-            // ---- Space ----
+            //  Space 
             if (KeyTriggered(AEVK_SPACE))
             {
                 s_inputBuf[s_inputLen++] = ' ';
@@ -552,16 +523,14 @@ namespace DebugConsole
         // Input bar only visible when open
         bool hasHistory = !s_history.empty();
 
-        // ---- Draw history panel background ----
+        //  Draw history panel background 
         if (s_isOpen && hasHistory)
         {
-            float panelY = s_isOpen
-                ? HISTORY_PANEL_Y
-                : -HALF_H + INPUT_BAR_H + HISTORY_PANEL_H * 0.5f + 4.0f;
+            float panelY = s_isOpen ? HISTORY_PANEL_Y : -HALF_H + INPUT_BAR_H + HISTORY_PANEL_H * 0.5f + 4.0f;
 
             DrawPanel(0.0f, panelY, SCREEN_W, HISTORY_PANEL_H, 0.0f, 0.0f, 0.0f, 0.65f);
 
-            // ---- Draw history lines ----
+            //  Draw history lines 
             // s_scrollOffset=0 means show the newest VISIBLE_LINES entries
             int totalEntries = (int)s_history.size();
             // The bottom of the visible window in history index terms:
@@ -589,7 +558,7 @@ namespace DebugConsole
                 DrawText(entry.text.c_str(), nx, ny, textScale, r, g, b);
             }
 
-            // ---- Scroll indicators ----
+            //  Scroll indicators 
             int maxScroll = (totalEntries - VISIBLE_LINES > 0) ? totalEntries - VISIBLE_LINES : 0;
             if (s_scrollOffset < maxScroll) // can scroll up (older entries above)
             {
@@ -603,13 +572,13 @@ namespace DebugConsole
             }
         }
 
-        // ---- Draw input bar (only when open) ----
+        //  Draw input bar (only when open) 
         if (!s_isOpen) return;
 
         // Background bar
         DrawPanel(0.0f, INPUT_BAR_Y, SCREEN_W, INPUT_BAR_H, 0.08f, 0.08f, 0.08f, 0.92f);
 
-        // Thin accent line above the bar
+        // Thin line above the bar
         DrawPanel(0.0f, INPUT_BAR_Y + INPUT_BAR_H * 0.5f + 1.0f, SCREEN_W, 2.0f, 0.4f, 0.8f, 0.4f, 1.0f);
 
         // Input text + cursor
