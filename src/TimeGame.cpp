@@ -446,7 +446,7 @@ render_only:
 
 void GameTimeMode_Exit()
 {
-    EnemyManage::EnemyManage_FreeMeshes(meshes);                           // free all enemy sprite meshes and textures
+    EnemyManage::EnemyManage_Free(meshes, enemy_pool, free_slot_queue);     // free enemy pool and meshes
 
     Typing_Exit();
     Leaderboard_System::Free();
