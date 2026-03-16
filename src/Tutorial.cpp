@@ -64,7 +64,7 @@ static const char* STAGE_MESSAGES[STAGE_COUNT] =
     "Build a typing streak!\nType 5 words correctly\nto grow your flame!",
     "Power ups fall from the\nsky! Press the NUMBER\nshown to activate!\nMore types await in game...",
     "Blizzards can freeze you!\nMash SPACEBAR to break\nfree when frozen!\nMore weather events await...",
-    "After 60 seconds a BOSS\nappears! Type its word\nto defeat it.\nGood luck - go play!"
+    "After 60 seconds a BOSS\nappears! Type its words\nto deal damage.\nGood luck - go play!"
 };
 
 static const char* STAGE_OBJECTIVES[STAGE_COUNT] =
@@ -271,6 +271,7 @@ namespace
     void DrawSpeechBubble(bool objectiveMet)
     {
         if (!s_rectMesh || Graphics::font_id < 0) return;
+        if (s_stage < 0 || s_stage >= STAGE_COUNT) return; 
 
         // Gold border
         AEGfxSetRenderMode(AE_GFX_RM_COLOR);
