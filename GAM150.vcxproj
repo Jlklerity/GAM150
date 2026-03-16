@@ -34,6 +34,7 @@
     <ClCompile Include="src\ScreenTransition.cpp" />
     <ClCompile Include="src\Settings.cpp" />
     <ClCompile Include="src\Shop.cpp" />
+    <ClCompile Include="src\SoundManager.cpp" />
     <ClCompile Include="src\StreakSystem.cpp" />
     <ClCompile Include="src\TimeGame.cpp" />
     <ClCompile Include="src\Tutorial.cpp" />
@@ -63,6 +64,7 @@
     <ClInclude Include="src\ScreenTransition.h" />
     <ClInclude Include="src\Settings.h" />
     <ClInclude Include="src\Shop.h" />
+    <ClInclude Include="src\SoundManager.h" />
     <ClInclude Include="src\StreakSystem.h" />
     <ClInclude Include="src\TimeGame.h" />
     <ClInclude Include="src\Tutorial.h" />

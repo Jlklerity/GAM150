@@ -6,6 +6,7 @@
 #include "Enemy.h"
 #include "ScreenTransition.h"
 #include "BackgroundParallex.h"
+#include "SoundManager.h"
 #include <AEEngine.h>
 
 
@@ -207,6 +208,7 @@ void Shop_Update(){
 		if (worldX >= BACK_BTN_X - (BACK_BTN_WIDTH * 0.5f) && worldX <= BACK_BTN_X + (BACK_BTN_WIDTH * 0.5f) &&
 			worldY >= BACK_BTN_Y - (BACK_BTN_HEIGHT * 0.5f) && worldY <= BACK_BTN_Y + (BACK_BTN_HEIGHT * 0.5f))
 		{
+			SoundManager::PlayClickBtnSfx();
 			isTransitioningOut = true;
 			ScreenTransitions::ScreenTransition_Init();
 		}
@@ -215,6 +217,7 @@ void Shop_Update(){
 		for (int i = 0; i < 3; i++) {
 			if (worldX >= BG_ITEM_X[i] - (BG_ITEM_WIDTH * 0.5f) && worldX <= BG_ITEM_X[i] + (BG_ITEM_WIDTH * 0.5f) &&
 				worldY >= BG_ITEM_Y - (BG_ITEM_HEIGHT * 0.5f) && worldY <= BG_ITEM_Y + (BG_ITEM_HEIGHT * 0.5f)) {
+				SoundManager::PlayClickBtnSfx();
 				if (SCORE_AMOUNT >= BG_UNLOCK[i]) {
 					gShopBgID = i; 
 				}
@@ -230,6 +233,7 @@ void Shop_Update(){
 
 			if (worldX >= hitBoxX - (hitBoxW * 0.5f) && worldX <= hitBoxX + (hitBoxW * 0.5f) &&
 				worldY >= hitBoxY - (hitBoxH * 0.5f) && worldY <= hitBoxY + (hitBoxH * 0.5f)) {
+				SoundManager::PlayClickBtnSfx();
 				if (SCORE_AMOUNT >= SKIN_UNLOCK[i]) {
 					gShopSkinID = i;
 				}

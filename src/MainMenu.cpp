@@ -18,8 +18,9 @@
 #include "Settings.h"
 #include "ScreenTransition.h"
 #include "BackgroundParallex.h"
-#include <iostream>
 #include "ParallaxZoom.h"
+#include "SoundManager.h"
+#include <iostream>
 
 /*
 @namespace      Anonymous (Main Menu State)
@@ -272,6 +273,7 @@ void Main_Menu_Input()
         if (worldX >= 0.0f - (PLAY_HITBOX_WIDTH * 0.5f) && worldX <= 0.0f + (PLAY_HITBOX_WIDTH * 0.5f) &&
             worldY >= PLAY_BTN_Y - (PLAY_HITBOX_HEIGHT * 0.5f) && worldY <= PLAY_BTN_Y + (PLAY_HITBOX_HEIGHT * 0.5f))
         {
+            SoundManager::PlayClickBtnSfx();
             isTransitioningToName = true;                                                                                   // set forward transition flag
             ScreenTransitions::ScreenTransition_Init();                                                                     // start drop animation
         }
@@ -279,6 +281,7 @@ void Main_Menu_Input()
         else if (worldX >= 0.0f - (SHOP_HITBOX_WIDTH * 0.5f) && worldX <= 0.0f + (SHOP_HITBOX_WIDTH * 0.5f) &&
             worldY >= SHOP_BTN_Y - (SHOP_HITBOX_HEIGHT * 0.5f) && worldY <= SHOP_BTN_Y + (SHOP_HITBOX_HEIGHT * 0.5f))
         {
+            SoundManager::PlayClickBtnSfx();
             transitioningToShop = true;
             ScreenTransitions::ScreenTransition_Init();                                                                     // Start the transition timer
         }
@@ -286,36 +289,42 @@ void Main_Menu_Input()
         else if (worldX >= 0.0f - (EXIT_WIDTH * 0.5f) && worldX <= 0.0f + (EXIT_WIDTH * 0.5f) &&
             worldY >= EXIT_BTN_Y - (EXIT_HEIGHT * 0.5f) && worldY <= EXIT_BTN_Y + (EXIT_HEIGHT * 0.5f))
         {
+            SoundManager::PlayClickBtnSfx();
             gGameStateNext = GS_QUIT;                                                                                       // queue application quit
         }
         // --- Check Settings Button ---
         else if (worldX >= SETTINGS_BTN_X - (SETTINGS_WIDTH * 0.5f) && worldX <= SETTINGS_BTN_X + (SETTINGS_WIDTH * 0.5f) &&
             worldY >= SETTINGS_BTN_Y - (SETTINGS_HEIGHT * 0.5f) && worldY <= SETTINGS_BTN_Y + (SETTINGS_HEIGHT * 0.5f))
         {
+            SoundManager::PlayClickBtnSfx();
             inSettings = true;                                                                                              // toggle settings overlay
         }
         // --- Check Left Arrow Button ---
         else if (worldX >= LEFTARROW_BTN_X - (LEFTARROW_WIDTH * 0.5f) && worldX <= LEFTARROW_BTN_X + (LEFTARROW_WIDTH * 0.5f) &&
             worldY >= LEFTARROW_BTN_Y - (LEFTARROW_HEIGHT * 0.5f) && worldY <= LEFTARROW_BTN_Y + (LEFTARROW_HEIGHT * 0.5f))
         {
+            SoundManager::PlayClickBtnSfx();
             selected_mode = (selected_mode == "ZEN") ? "TIME" : "ZEN";                                                      // toggle game mode
         }
         // --- Check Right Arrow Button ---
         else if (worldX >= RIGHTARROW_BTN_X - (RIGHTARROW_WIDTH * 0.5f) && worldX <= RIGHTARROW_BTN_X + (RIGHTARROW_WIDTH * 0.5f) &&
             worldY >= RIGHTARROW_BTN_Y - (RIGHTARROW_HEIGHT * 0.5f) && worldY <= RIGHTARROW_BTN_Y + (RIGHTARROW_HEIGHT * 0.5f))
         {
+            SoundManager::PlayClickBtnSfx();
             selected_mode = (selected_mode == "ZEN") ? "TIME" : "ZEN";                                                      // toggle game mode
         }
         // --- Check Leaderboard Button ---
         else if (worldX >= LEADERBOARD_BTN_X - (LEADERBOARD_WIDTH * 0.5f) && worldX <= LEADERBOARD_BTN_X + (LEADERBOARD_WIDTH * 0.5f) &&
             worldY >= LEADERBOARD_BTN_Y - (LEADERBOARD_HEIGHT * 0.5f) && worldY <= LEADERBOARD_BTN_Y + (LEADERBOARD_HEIGHT * 0.5f))
         {
+            SoundManager::PlayClickBtnSfx();
             inLeaderboard = true; // Open the overlay!                                                                                             
         }
         // --- Check Tutorial Button ---
         else if (worldX >= 0.0f - (TUTORIAL_HITBOX_WIDTH * 0.5f) && worldX <= 0.0f + (TUTORIAL_HITBOX_WIDTH * 0.5f) &&
             worldY >= TUTORIAL_BTN_Y - (TUTORIAL_HITBOX_HEIGHT * 0.5f) && worldY <= TUTORIAL_BTN_Y + (TUTORIAL_HITBOX_HEIGHT * 0.5f))
         {
+            SoundManager::PlayClickBtnSfx();
             isZoomingToGame = true;
             ParallaxZoom::Start(GS_TUTORIAL);
         }
@@ -359,6 +368,7 @@ void Main_Menu_EnterName(float worldYOffset, float ndcYOffset, bool allowInput)
             {
                 // DO NOT call ScreenTransitions::ScreenTransition_Init() here
                 // that shared timer interferes with the back-transition logic
+                SoundManager::PlayClickBtnSfx();
                 isEnteringName = false;
                 isZoomingToGame = true;
                 int zoomTarget = (selected_mode == "TIME") ? GS_GAME_TIMEMODE : GS_GAME;
@@ -368,6 +378,7 @@ void Main_Menu_EnterName(float worldYOffset, float ndcYOffset, bool allowInput)
             else if (worldX >= EXITNAME_BTN_X - (EXITNAME_WIDTH * 0.5f) && worldX <= EXITNAME_BTN_X + (EXITNAME_WIDTH * 0.5f) &&
                 worldY >= EXITNAME_BTN_Y - (EXITNAME_HEIGHT * 0.5f) && worldY <= EXITNAME_BTN_Y + (EXITNAME_HEIGHT * 0.5f))
             {
+                SoundManager::PlayClickBtnSfx();
                 isTransitioningBack = true;                                                                                 // trigger reverse transition
                 ScreenTransitions::ScreenTransition_Init();                                                                 // start transition
                 isEnteringName = false;                                                                                     // leave sub-state
@@ -506,7 +517,13 @@ void Main_Menu_Init()
     Leaderboard_System::Init();
     Leaderboard_System::Read_ZenLeaderboard();
     Leaderboard_System::Read_TimeLeaderboard();
-
+    
+    
+    if (gGameStatePrev != GS_SHOP)
+    {
+        SoundManager::Init();
+        SoundManager::PlayBackgroundMusic();
+    }
 
     BackgroundParallax::MenuParallax_Init();
 
@@ -775,8 +792,10 @@ void Main_Menu_Update()
 *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
 void Main_Menu_Exit()
 {
+    
     if (gGameStateNext != GS_SHOP) {
         BackgroundParallax::MenuParallax_Exit();
+        SoundManager::Exit();
     }
     ScreenTransitions::isTransitioning = false;                                                                             // safety clean transition
     AEGfxSetCamPosition(0.0f, 0.0f);                                                                                        // safety reset camera

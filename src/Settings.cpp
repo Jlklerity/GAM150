@@ -2,6 +2,7 @@
 #include "MainMenu.h"
 #include "MeshTemplates.h"
 #include "MeshRenderer.h"
+#include "SoundManager.h"
 #include <AEEngine.h>
 
 namespace {
@@ -16,7 +17,12 @@ namespace SysSettings {
 			pSettingsMeshOverlay = Sprite_Mesh(1.0f, 1.0f);
 			isInit = true;
 		}
-
+		// ... inside update/input logic ...
+		//if (/* User clicked Volume UP button */)
+		//{
+		//	currentVolume += 0.1f;
+		//	SoundManager::SetMasterVolume(currentVolume);
+		//}
 		float winW = (float)AEGfxGetWindowWidth();
 		float winH = (float)AEGfxGetWindowHeight();
 

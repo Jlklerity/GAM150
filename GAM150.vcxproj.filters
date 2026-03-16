@@ -29,6 +29,7 @@
     <ClCompile Include="src\GameClouds.cpp" />
     <ClCompile Include="src\StreakSystem.cpp" />
     <ClCompile Include="src\Tutorial.cpp" />
+    <ClCompile Include="src\SoundManager.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\Enemy.h" />
@@ -58,6 +59,7 @@
     <ClInclude Include="src\GameClouds.h" />
     <ClInclude Include="src\StreakSystem.h" />
     <ClInclude Include="src\Tutorial.h" />
+    <ClInclude Include="src\SoundManager.h" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="Assets\characterSheet.png" />
