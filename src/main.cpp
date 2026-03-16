@@ -22,7 +22,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 
 
 	int gGameRunning = 1;
-	
+	//_CrtSetBreakAlloc(61465);
 	AESysInit(hInstance, nCmdShow, 1600, 900, 1, 60, false, nullptr);
 
 	AESysSetWindowTitle("Revenge of YK");

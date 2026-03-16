@@ -39,6 +39,7 @@ namespace
     AEGfxVertexList* pMeshLeaderboardBtn = nullptr;
     AEGfxVertexList* pMeshEnterName = nullptr;
     AEGfxVertexList* pMeshBackName = nullptr;
+    AEGfxVertexList* pMeshTutorialBtn = nullptr;
 
     AEGfxTexture* pTexPlay = nullptr;                                                                                       // play button texture
     AEGfxTexture* pTexShop = nullptr;                                                                                       // shop button texture
@@ -48,6 +49,7 @@ namespace
     AEGfxTexture* pTexLogo = nullptr;
     AEGfxTexture* pTexEnterName = nullptr;
     AEGfxTexture* pTexBackName = nullptr;
+    AEGfxTexture* pTexTutorial = nullptr;
     // ---------------------------------------------------------------------------
     // WINDOW & CURSOR DATA
     // ---------------------------------------------------------------------------
@@ -89,6 +91,11 @@ namespace
     const float SETTINGS_WIDTH = 96.0f;                                                                                    // width of settings button
     const float SETTINGS_HEIGHT = 96.0f;                                                                                    // height of settings button
 
+    const float TUTORIAL_WIDTH = 240.0f;
+    const float TUTORIAL_HEIGHT = 240.0f;
+    const float TUTORIAL_HITBOX_WIDTH = 200.0f;
+    const float TUTORIAL_HITBOX_HEIGHT = 95.0f;
+
     const float LEFTARROW_WIDTH = 80.0f;                                                                                    // width of left arrow
     const float LEFTARROW_HEIGHT = 80.0f;                                                                                   // height of left arrow
     const float RIGHTARROW_WIDTH = 80.0f;                                                                                   // width of right arrow
@@ -117,6 +124,7 @@ namespace
     float RIGHTARROW_BTN_Y;                                                                                                 // Y pos for right arrow
     float LEADERBOARD_BTN_X;
     float LEADERBOARD_BTN_Y;
+    float TUTORIAL_BTN_Y;
 
     // ---------------------------------------------------------------------------
     // STATE & LOGIC VARIABLES
@@ -209,6 +217,15 @@ void Draw_Main_Menu(float textNdcOffset)
         Mesh_Renderer(pMeshBtn, 0.0f + uiOffsetX, SHOP_BTN_Y, SHOP_WIDTH, SHOP_HEIGHT, 0.0f);                                           // render shop button
     }
 
+    if (pTexTutorial)
+    {
+        AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
+        AEGfxSetBlendMode(AE_GFX_BM_BLEND);
+        AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);
+        AEGfxTextureSet(pTexTutorial, 0.0f, 0.0f);
+        Mesh_Renderer(pMeshBtn, 0.0f + uiOffsetX, TUTORIAL_BTN_Y, TUTORIAL_WIDTH, TUTORIAL_HEIGHT, 0.0f);
+    }
+
     // Draw Leaderboard Button
     if (pTexLeaderboard)
     {
@@ -224,9 +241,10 @@ void Draw_Main_Menu(float textNdcOffset)
         AEGfxTextureSet(pTexSettings, 0.0f, 0.0f);
         Mesh_Renderer(pMeshSettingsBtn, SETTINGS_BTN_X + uiOffsetX, SETTINGS_BTN_Y, SETTINGS_WIDTH, SETTINGS_HEIGHT, 0.0f);
     }
+
     // Draw Exit Buttons
     AEGfxSetRenderMode(AE_GFX_RM_COLOR);                                                                                    // swap back to color mode
-    Mesh_Renderer(pMeshExitBtn, 0.0f + uiOffsetX, EXIT_BTN_Y, 1.0f, 1.0f, 0.0f);                                                        // render exit button
+    Mesh_Renderer(pMeshExitBtn, 0.0f + uiOffsetX, EXIT_BTN_Y, 1.0f, 1.0f, 0.0f);                                           // render exit button
 }
 
 /*
@@ -243,7 +261,7 @@ void Main_Menu_Input()
     worldY = (winH * 0.5f) - (float)mouseY;                                                                                 // convert screen Y to world Y
 
     if (selected_mode == "") selected_mode = "ZEN";                                                                         // default mode safety check
-    
+
     if (!isTransitioningToName && !transitioningToShop && !isReturningFromShop && AEInputCheckTriggered(AEVK_ESCAPE))
     {
         gGameStateNext = GS_QUIT;
@@ -294,6 +312,13 @@ void Main_Menu_Input()
         {
             inLeaderboard = true; // Open the overlay!                                                                                             
         }
+        // --- Check Tutorial Button ---
+        else if (worldX >= 0.0f - (TUTORIAL_HITBOX_WIDTH * 0.5f) && worldX <= 0.0f + (TUTORIAL_HITBOX_WIDTH * 0.5f) &&
+            worldY >= TUTORIAL_BTN_Y - (TUTORIAL_HITBOX_HEIGHT * 0.5f) && worldY <= TUTORIAL_BTN_Y + (TUTORIAL_HITBOX_HEIGHT * 0.5f))
+        {
+            isZoomingToGame = true;
+            ParallaxZoom::Start(GS_TUTORIAL);
+        }
     }
 }
 
@@ -327,7 +352,7 @@ void Main_Menu_EnterName(float worldYOffset, float ndcYOffset, bool allowInput)
     {
         if (AEInputCheckTriggered(AEVK_LBUTTON))                                                                            // check left click
         {
-           // --- Check Enter Game Button ---
+            // --- Check Enter Game Button ---
             if ((!player_name.empty()) && (selected_mode != "") &&
                 (worldX >= ENTERGAME_BTN_X - (EXITNAME_WIDTH * 0.5f) && worldX <= ENTERGAME_BTN_X + (EXITNAME_WIDTH * 0.5f) &&
                     worldY >= ENTERGAME_BTN_Y - (ENTERGAME_HEIGHT * 0.5f) && worldY <= ENTERGAME_BTN_Y + (ENTERGAME_HEIGHT * 0.5f)))
@@ -496,11 +521,11 @@ void Main_Menu_Init()
 
     pTexLogo = AEGfxTextureLoad("Assets/title.png");
     AE_ASSERT_MESG(pTexLogo, "Failed to load title.png");
-    
+
     pTexLeaderboard = AEGfxTextureLoad("Assets/leaderboardt.png");
     AE_ASSERT_MESG(pTexLeaderboard, "Failed to load leaderboardt.png")                                                  // check texture success
 
-    pTexPlay = AEGfxTextureLoad("Assets/play.png");                                                                         // load play texture
+        pTexPlay = AEGfxTextureLoad("Assets/play.png");                                                                         // load play texture
     AE_ASSERT_MESG(pTexPlay, "Failed to load play.png");                                                                    // check texture success
 
     pTexShop = AEGfxTextureLoad("Assets/shop.png");                                                                         // load shop texture
@@ -518,12 +543,12 @@ void Main_Menu_Init()
     pTexSettings = AEGfxTextureLoad("Assets/settingshover.png");
     AE_ASSERT_MESG(pTexSettings, "Failed to load settingshover.png");
 
-    pMeshLeaderboardBtn = Rect_Mesh(LEADERBOARD_WIDTH, LEADERBOARD_HEIGHT, 0xFFFFFFFF);
+    pTexTutorial = AEGfxTextureLoad("Assets/tutorial.png");
+    AE_ASSERT_MESG(pTexTutorial, "Failed to load tutorial.png");
+
     pMeshLogo = Sprite_Mesh(1.0f, 1.0f);                                                            // build logo  
     pMeshBtn = Sprite_Mesh(1.0f, 1.0f);                                                                                     // build standard button mesh
     pMeshExitBtn = Rect_Mesh(EXIT_WIDTH, EXIT_HEIGHT, 0xFFFFFFFF);                                                          // build exit button mesh
-    pMeshSettingsBtn = Rect_Mesh(SETTINGS_WIDTH, SETTINGS_HEIGHT, 0xFFFFFFFF);                                              // build settings button mesh
-    pMeshLeaderboardBtn = Rect_Mesh(LEADERBOARD_WIDTH, LEADERBOARD_HEIGHT, 0xFFFFFFFF);                                              // build settings button mesh
     pMeshEnterName = Sprite_Mesh(1.0f, 1.0f);
     pMeshBackName = Sprite_Mesh(1.0f, 1.0f);
     pMeshLeaderboardBtn = Sprite_Mesh(1.0f, 1.0f);
@@ -531,6 +556,7 @@ void Main_Menu_Init()
     pMeshLeftArrow = Spritesheet_Mesh(1.0f, 1.0f, 0.0f, 0.0f, 0.5f, 0.5f);                                                  // slice left arrow mesh
     pMeshRightArrow = Spritesheet_Mesh(1.0f, 1.0f, 0.0f, 0.5f, 0.5f, 1.0f);                                                 // slice right arrow mesh
     pMeshSettingsBtn = Spritesheet_Mesh(1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.5f);
+    pMeshTutorialBtn = Sprite_Mesh(1.0f, 1.0f);
 
     // just came from the Shop, set up the arrival animation
     if (gGameStatePrev == GS_SHOP) {
@@ -596,9 +622,10 @@ void Main_Menu_Update()
     }
 
     LOGO_Y = winH * 0.35f;                                                                                                  // set logo Y pos
-    PLAY_BTN_Y = winH * 0.05f;                                                                                              // set play button Y pos
-    SHOP_BTN_Y = winH * -0.15f;                                                                                             // set shop button Y pos
-    EXIT_BTN_Y = winH * -0.35f;                                                                                             // set exit button Y pos
+    PLAY_BTN_Y = winH * 0.15f;                                                                                              // set play button Y pos
+    TUTORIAL_BTN_Y = winH * -0.09f;                                                                                         // set tutorial button Y pos
+    SHOP_BTN_Y = winH * -0.25f;                                                                                             // set shop button Y pos
+    EXIT_BTN_Y = winH * -0.43f;                                                                                             // set exit button Y pos
 
     EXITNAME_BTN_Y = winH * -0.35f;                                                                                         // set exit name Y pos
     EXITNAME_BTN_X = winW * -0.35f;                                                                                         // set exit name X pos
@@ -788,7 +815,18 @@ void Main_Menu_Exit()
     if (pMeshLeaderboardBtn)
     {
         AEGfxMeshFree(pMeshLeaderboardBtn);                                                                                     // dealloc memory
-        pMeshRightArrow = nullptr;
+        pMeshLeaderboardBtn = nullptr;
+    }
+
+    if (pMeshEnterName)
+    {
+        AEGfxMeshFree(pMeshEnterName);
+        pMeshEnterName = nullptr;
+    }
+    if (pMeshBackName)
+    {
+        AEGfxMeshFree(pMeshBackName);
+        pMeshBackName = nullptr;
     }
 
     // Free Textures
@@ -827,6 +865,16 @@ void Main_Menu_Exit()
         AEGfxTextureUnload(pTexSettings);
         pTexSettings = nullptr;
     }
+    if (pTexTutorial) {
+        AEGfxTextureUnload(pTexTutorial);
+        pTexTutorial = nullptr;
+    }
+    if (pMeshTutorialBtn) {
+        AEGfxMeshFree(pMeshTutorialBtn);
+        pMeshTutorialBtn = nullptr;
+    }
     ParallaxZoom::Reset();
     isZoomingToGame = false;
+    Leaderboard_System::Free();
+
 }

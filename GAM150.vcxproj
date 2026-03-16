@@ -13,9 +13,11 @@
   <ItemGroup>
     <ClCompile Include="src\BackgroundParallex.cpp" />
     <ClCompile Include="src\Boss.cpp" />
+    <ClCompile Include="src\DeathTransition.cpp" />
     <ClCompile Include="src\DebugConsole.cpp" />
     <ClCompile Include="src\Enemy.cpp" />
     <ClCompile Include="src\Game.cpp" />
+    <ClCompile Include="src\GameClouds.cpp" />
     <ClCompile Include="src\GameEnemyBoss.cpp" />
     <ClCompile Include="src\GameOver.cpp" />
     <ClCompile Include="src\GameStateManager.cpp" />
@@ -32,16 +34,20 @@
     <ClCompile Include="src\ScreenTransition.cpp" />
     <ClCompile Include="src\Settings.cpp" />
     <ClCompile Include="src\Shop.cpp" />
+    <ClCompile Include="src\StreakSystem.cpp" />
     <ClCompile Include="src\TimeGame.cpp" />
+    <ClCompile Include="src\Tutorial.cpp" />
     <ClCompile Include="src\Typing.cpp" />
     <ClCompile Include="src\Weather.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\BackgroundParallex.h" />
     <ClInclude Include="src\Boss.h" />
+    <ClInclude Include="src\DeathTransition.h" />
     <ClInclude Include="src\DebugConsole.h" />
     <ClInclude Include="src\Enemy.h" />
     <ClInclude Include="src\Game.h" />
+    <ClInclude Include="src\GameClouds.h" />
     <ClInclude Include="src\GameEnemyBoss.h" />
     <ClInclude Include="src\GameOver.h" />
     <ClInclude Include="src\GameStateManager.h" />
@@ -57,7 +63,9 @@
     <ClInclude Include="src\ScreenTransition.h" />
     <ClInclude Include="src\Settings.h" />
     <ClInclude Include="src\Shop.h" />
+    <ClInclude Include="src\StreakSystem.h" />
     <ClInclude Include="src\TimeGame.h" />
+    <ClInclude Include="src\Tutorial.h" />
     <ClInclude Include="src\Typing.h" />
     <ClInclude Include="src\Weather.h" />
   </ItemGroup>

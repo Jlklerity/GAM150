@@ -9,7 +9,7 @@
 #include "LaserBeam.h"
 #include <cstring>
 #include <iostream>
-
+#include "StreakSystem.h"
 
 
 
@@ -71,7 +71,7 @@ namespace UiSystem
         std::snprintf(s, sizeof(s), "SCORE: %d", score.score_value);    // format score line
 
         AEGfxSetBlendMode(AE_GFX_BM_BLEND);  // enable blending for text
-        AEGfxPrint(Graphics::font_id, s, -0.95f, 0.90f, 0.55f, 1, 1, 1, 1); // draw score at top-left-ish
+        AEGfxPrint(Graphics::font_id, s, -0.95f, 0.90f, 0.55f, 1.0f, 0.85f, 0.1f, 1.0f); // draw score at top-left-ish
 
     }
 }
@@ -279,14 +279,16 @@ namespace
 // load letter spritesheet, create quad for single tile, clear typed array n reset keyboard hist
 void Typing_Init()
 {
-    lettersTex = AEGfxTextureLoad("Assets/lettersheet-Sheet.png"); // load
+    if (lettersTex) { AEGfxTextureUnload(lettersTex); lettersTex = nullptr; }
+    if (letterQuad) { AEGfxMeshFree(letterQuad);      letterQuad = nullptr; }
+
+    lettersTex = AEGfxTextureLoad("Assets/lettersheet-Sheet.png");
     AE_ASSERT_MESG(lettersTex, "Failed to load letters spritesheet!");
 
-    letterQuad = Sprite_Mesh(UV_W, UV_H); // create quad
+    letterQuad = Sprite_Mesh(UV_W, UV_H);
 
-    ClearTyped(); // clear
-
-    for (int i = 0; i < 256; ++i) prevKey[i] = false; // clear prevKey so can type immediately
+    ClearTyped();
+    for (int i = 0; i < 256; ++i) prevKey[i] = false;
 }
 
 
@@ -505,7 +507,7 @@ void Typing_UpdateAndApplyToEnemies(std::vector<Data::Enemy>& enemy_pool, Data::
                 else if (target.enemy_type == Data::EnemyType::SHIELDED && target.enemy_shield_intact)
                 {
                     EnemySystem::Enemy_BreakShield(target);                                                     // row 0 to row 1, swap to word2
-                    score.score_value += target.enemy_word_length * 10;                                         // reward
+                    score.score_value += (int)(target.enemy_word_length * 10 * StreakSystem::GetMultiplier());
                 }
                 // -------------------------
                 // NORMAL enemy OR shielded after shield broken: kill + gain score
@@ -514,11 +516,12 @@ void Typing_UpdateAndApplyToEnemies(std::vector<Data::Enemy>& enemy_pool, Data::
                 {
                     LaserBeam_Fire(target.enemy_position_x, target.enemy_position_y); // fire laser to enemy
                     EnemySystem::Enemy_Killed(target, health);                                                  // kill
-                    score.score_value += target.enemy_word_length * 10;                                         // reward
+                    score.score_value += (int)(target.enemy_word_length * 10 * StreakSystem::GetMultiplier());
                 }
 
                 s_debugCorrect = true;
                 correct = true; // no shake
+                StreakSystem::OnWordCorrect();
             }
         }
 
@@ -526,6 +529,7 @@ void Typing_UpdateAndApplyToEnemies(std::vector<Data::Enemy>& enemy_pool, Data::
         {
             s_shakeText = typed_buffer;           // store what is typed
             s_shakeTextTime = s_shakeTextDuration;
+            StreakSystem::OnStreakReset();
         }
 
 

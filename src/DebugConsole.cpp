@@ -6,7 +6,8 @@ All console state, input handling, command parsing, and rendering lives here.
 game.cpp only calls Init / Update / Render / Exit / IsOpen.
 */
 
-#define NOMINMAX  // min max taiji
+#pragma warning(disable: 26426)
+#define NOMINMAX
 #include "DebugConsole.h"
 #include "AEEngine.h"
 #include "MeshRenderer.h"
@@ -195,12 +196,17 @@ namespace
                 HealthSystem::Health_Add(*s_pHealth, 10.0f);
                 PushHistory("Added 10 HP. Current: " + std::to_string((int)s_pHealth->health_current), false);
             }
+            else if (IEquals(tokens[1], "die")) {
+                s_pHealth->health_current = 0;
+                PushHistory("Player killed.", false);
+            }
             else
             {
                 PushHistory("Unknown health subcommand. Try: /health add", true);
             }
             return;
         }
+
 
         // /difficulty up | down | show
         if (IEquals(cmd, "difficulty"))
@@ -257,6 +263,7 @@ namespace
             PushHistory("/spawn friendly      - spawn a friendly enemy", false);
             PushHistory("/spawn shield        - spawn a shielded enemy", false);
             PushHistory("/health add          - add 10 HP", false);
+            PushHistory("/health die          - kills player", false);
             PushHistory("/difficulty up       - increase difficulty by 1", false);
             PushHistory("/difficulty down     - decrease difficulty by 1", false);
             PushHistory("/difficulty show     - toggle difficulty HUD", false);
@@ -267,6 +274,7 @@ namespace
             PushHistory("/powerup slow        - force-spawn TimeSlow drop", false);
             PushHistory("/weather snow        - trigger blizzard event", false);
             PushHistory("/weather thunder     - trigger thunderstorm event", false);
+
             return;
         }
 
@@ -396,7 +404,7 @@ namespace DebugConsole
 
         for (int i = 0; i < 256; ++i) s_prevKeys[i] = false;
 
-        // 1x1 quad for drawing 
+        if (s_pPanelMesh) { AEGfxMeshFree(s_pPanelMesh); s_pPanelMesh = nullptr; }
         s_pPanelMesh = Rect_Mesh(1.0f, 1.0f, 0xFFFFFFFF);
     }
 

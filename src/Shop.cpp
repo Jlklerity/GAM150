@@ -381,7 +381,10 @@ void Shop_Exit(){
 		pTexSkinOptions[0] = nullptr;
 
 	}
-
+	if (pTexSkinOptions[1]) {
+		AEGfxTextureUnload(pTexSkinOptions[1]);
+		pTexSkinOptions[1] = nullptr;
+	}
 	if (pTexBack) {
 		AEGfxTextureUnload(pTexBack);
 		pTexBack = nullptr;

@@ -117,10 +117,6 @@ namespace BackgroundParallax{
     }
 
     void MenuParallax_Exit() {
-
-        if (fullScreenMesh != nullptr) {
-            return;
-        }
         if (fullScreenMesh) {
             AEGfxMeshFree(fullScreenMesh);
             fullScreenMesh = nullptr;

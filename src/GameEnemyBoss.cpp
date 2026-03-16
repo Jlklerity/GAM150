@@ -9,6 +9,7 @@
 #include "AEEngine.h"
 #include "Typing.h"
 #include "Particles.h"
+#include "StreakSystem.h"
 /*
 @namespace      GameEnemyBoss
 @brief          Owns all enemy pool and boss state and exposes lifecycle functions to Game.cpp.
@@ -98,7 +99,7 @@ namespace GameEnemyBoss
                 if (!was_damage_done)                                                                                       // enemy was killed by the player before landing
                     Particles_SpawnDamageImpact(e.enemy_position_x, e.enemy_position_y);                                    // spawn damage hit effect
                 else                                                                                                        // enemy landed and dealt damage
-                    Particles_SpawnKillImpact(e.enemy_position_x, e.enemy_position_y, e.enemy_word_length);                 // spawn landing impact effect
+                    Particles_SpawnKillImpact(e.enemy_position_x, e.enemy_position_y, e.enemy_word_length);     
             }
         }
 

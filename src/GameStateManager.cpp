@@ -3,6 +3,7 @@
 #include "game.h"
 #include "Shop.h"
 #include "TimeGame.h"
+#include "Tutorial.h"
 #include <AEEngine.h>
 
 //define global variables
@@ -70,7 +71,11 @@ void GSM_Update()
 			gGameStateUpdate = nullptr;
 			gGameStateExit = nullptr;
 			break;
-
+		case GS_TUTORIAL:
+			gGameStateInit = Tutorial_Init;
+			gGameStateUpdate = Tutorial_Update;
+			gGameStateExit = Tutorial_Exit;
+			break;
 		case GS_RESTART:
 			// switches immediately back to the previous state 
 			gGameStateNext = gGameStatePrev;

@@ -270,6 +270,17 @@ namespace PowerUpSystem
         g_texSlow = AEGfxTextureLoad("Assets/slowpowerup.png");
         g_texStrike = AEGfxTextureLoad("Assets/lightningstrike.png");
 
+        if (g_texLightning) { AEGfxTextureUnload(g_texLightning); g_texLightning = nullptr; }
+        if (g_texShield) { AEGfxTextureUnload(g_texShield);    g_texShield = nullptr; }
+        if (g_texSlow) { AEGfxTextureUnload(g_texSlow);      g_texSlow = nullptr; }
+        if (g_texStrike) { AEGfxTextureUnload(g_texStrike);    g_texStrike = nullptr; }
+
+        g_texLightning = AEGfxTextureLoad("Assets/lightningpowerup.png");
+        g_texShield = AEGfxTextureLoad("Assets/shieldpowerup.png");
+        g_texSlow = AEGfxTextureLoad("Assets/slowpowerup.png");
+        g_texStrike = AEGfxTextureLoad("Assets/lightningstrike.png");
+
+
         // Single-frame UV quad: UV width = 1/5 of the sheet, full height
         if (g_strikeMesh) { AEGfxMeshFree(g_strikeMesh); g_strikeMesh = nullptr; }
         g_strikeMesh = Sprite_Mesh(STRIKE_UV_W, 1.0f);

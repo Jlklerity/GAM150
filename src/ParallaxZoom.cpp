@@ -52,8 +52,8 @@ namespace ParallaxZoom
         s_targetState = targetState;
         s_switched = false;
 
-        float winW = (float)AEGfxGetWindowWidth();
-        float winH = (float)AEGfxGetWindowHeight();
+        //float winW = (float)AEGfxGetWindowWidth();
+        //float winH = (float)AEGfxGetWindowHeight();
 
         if (!s_fadeMesh)  s_fadeMesh = Rect_Mesh(1.0f, 1.0f, 0xFFFFFFFF);
         if (!s_layerMesh) s_layerMesh = Rect_Mesh(1.0f, 1.0f, 0xFFFFFFFF); // 1x1, scaled in Draw

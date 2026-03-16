@@ -18,7 +18,9 @@
 #include "Boss.h"
 #include "LaserBeam.h"
 #include "GameEnemyBoss.h"
-
+#include "DeathTransition.h"
+#include "GameClouds.h"
+#include "StreakSystem.h"
 
 namespace {
     //avatar mesh and texture
@@ -96,6 +98,20 @@ void Game_Init()
     isPaused = false;
     isDead = false;
     DifficultySystem::Difficulty_Reset();
+
+    if (bgTexture1) { AEGfxTextureUnload(bgTexture1); bgTexture1 = nullptr; }
+    if (bgTexture2) { AEGfxTextureUnload(bgTexture2); bgTexture2 = nullptr; }
+    if (bgMesh) { AEGfxMeshFree(bgMesh);          bgMesh = nullptr; }
+
+    GameClouds::Exit();
+    LaserBeam_Free();
+    StreakSystem::Exit();
+    DeathTransition::Reset();
+
+
+    if (playerTexture1) { AEGfxTextureUnload(playerTexture1); playerTexture1 = nullptr; }
+    if (playerTexture2) { AEGfxTextureUnload(playerTexture2); playerTexture2 = nullptr; }
+
     //player
     playerTexture1 = AEGfxTextureLoad("Assets/characterSheet.png");
     AE_ASSERT_MESG(playerTexture1, "Failed to load characterSheet!");
@@ -118,7 +134,7 @@ void Game_Init()
     /*_______________________________________________________________________________________________________________________________________________________________________________________________*/
 
     bgMesh = Rect_Mesh(1.0f, 1.0f, 0xFFFFFFFF);
-
+    GameClouds::Init();
     Typing_Init();
     Leaderboard_System::Init();
     //Shop_Init();
@@ -139,6 +155,8 @@ void Game_Init()
 
     LaserBeam_Init();
     LaserBeam_SetOrigin(spriteX + 75.0f, spriteY);
+    StreakSystem::Init();
+    DeathTransition::Reset();
 }
 
 void Game_Update()
@@ -161,10 +179,15 @@ void Game_Update()
     // ------------------------------------------------------------------------
     // 2. GAMEPLAY LOGIC (Run only when active)
     // ------------------------------------------------------------------------
-    if (health.health_current == 0) isDead = 1; //check if player is dead
+    if (health.health_current == 0 && !isDead)
+    {
+        isDead = true;
+        DeathTransition::Start();
+    }
 
     if (!isPaused && !isDead)
     {
+        float healthBefore = health.health_current; // for pf streak
         float dt = (float)AEFrameRateControllerGetFrameTime();                                               // read delta time for this frame
         if (dt > 0.1f)
         {
@@ -173,6 +196,7 @@ void Game_Update()
         }
         dt *= PowerUpSystem::GetTimeScale(); // azfar code
 
+        GameClouds::Update(dt);
         /*
         @overview   Boss update and enemy spawning
         @author     Wong Zi Yuan (w.ziyuan@digipen.edu)
@@ -186,6 +210,7 @@ void Game_Update()
         Particles_Update(dt);
         Weather_Update(dt, enemy_pool);
         LaserBeam_Update(dt);
+        StreakSystem::Update(dt);
         // mouse click -> convert to world coords
         if (AEInputCheckTriggered(AEVK_LBUTTON))
         {
@@ -221,6 +246,8 @@ void Game_Update()
             uvOffsetX = col * SPRITE_UV_WIDTH;
             uvOffsetY = row * SPRITE_UV_HEIGHT;
         }
+        if (health.health_current < healthBefore)
+            StreakSystem::OnStreakReset();
     }
 
 
@@ -232,64 +259,78 @@ void Game_Update()
 render_only:
     //DebugConsole::Render(); // draw console on top of everything
     //background
-    AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
-    AEGfxSetBlendMode(AE_GFX_BM_NONE);
-    AEGfxSetTransparency(1.0f);
-    AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f); // Reset Color
+    //if (!DeathTransition::IsActive())
+   // {
+        AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
+        AEGfxSetBlendMode(AE_GFX_BM_NONE);
+        AEGfxSetTransparency(1.0f);
+        AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f); // Reset Color
 
-    AEGfxTexture* activeBg = (gShopBgID == 0) ? bgTexture1 : bgTexture2;
-    AEGfxTextureSet(activeBg, 0.0f, 0.0f);
-    //// Optional tint for demo purposes if textures are identical
-    //if (gShopBgID == 1) AEGfxSetColorToMultiply(0.5f, 0.5f, 0.7f, 1.0f); // change background color
-    Mesh_Renderer(bgMesh, 0.0f, 0.0f, 1600.0f, 900.0f, 0.0f);
+        // Only draw world if not in death transition
 
-    //player
-    AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
-    AEGfxSetBlendMode(AE_GFX_BM_BLEND);
-    AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);
+        AEGfxTexture* activeBg = (gShopBgID == 0) ? bgTexture1 : bgTexture2;
+        AEGfxTextureSet(activeBg, 0.0f, 0.0f);
+        Mesh_Renderer(bgMesh, 0.0f, 0.0f, 1600.0f, 900.0f, 0.0f);
 
-    AEGfxTexture* activePlayer = (gShopSkinID == 0) ? playerTexture1 : playerTexture2;
-    AEGfxTextureSet(activePlayer, uvOffsetX, uvOffsetY);
+        GameClouds::Draw();
 
-    Mesh_Renderer(playerMesh, spriteX, spriteY, 150.0f, 150.0f, 0.0f);
+        //player
+        AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
+        AEGfxSetBlendMode(AE_GFX_BM_BLEND);
+        AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);
 
-    // Render typing letters 
+        AEGfxTexture* activePlayer = (gShopSkinID == 0) ? playerTexture1 : playerTexture2;
+        AEGfxTextureSet(activePlayer, uvOffsetX, uvOffsetY);
 
-    Typing_Render();
 
-    /*
-    @overview   Draw enemies and debug overlays
-    @author     Wong Zi Yuan (w.ziyuan@digipen.edu)
-    *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
-    GameEnemyBoss::Draw(meshes, enemy_pool, is_enemy_area_box_visible, enemy_area);
-    Particles_Draw();
-    LaserBeam_Draw();
+        Mesh_Renderer(playerMesh, spriteX, spriteY, 150.0f, 150.0f, 0.0f);
+        StreakSystem::Draw();
 
-    UiSystem::Debug_DrawDifficultyTopRight(is_difficulty_debug_visible, is_random_spawning_enabled, health);                // draw debug difficulty ui with health
-    /*_______________________________________________________________________________________________________________________________________________________________________________________________*/
+        // Render typing letters 
 
-    UiSystem::Ui_DrawScoreAndTyped(score); // draw score and typed buffer
+        Typing_Render();
 
-    PowerUpSystem::Draw(); // azfar code
+        /*
+        @overview   Draw enemies and debug overlays
+        @author     Wong Zi Yuan (w.ziyuan@digipen.edu)
+        *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
+        GameEnemyBoss::Draw(meshes, enemy_pool, is_enemy_area_box_visible, enemy_area);
+        Particles_Draw();
+        LaserBeam_Draw();
 
-    Weather_Draw();
+        UiSystem::Debug_DrawDifficultyTopRight(is_difficulty_debug_visible, is_random_spawning_enabled, health);                // draw debug difficulty ui with health
+        /*_______________________________________________________________________________________________________________________________________________________________________________________________*/
 
-    UiSystem::Ui_DrawHealthBar(health, meshes); // jeremy code
+        UiSystem::Ui_DrawScoreAndTyped(score); // draw score and typed buffer
 
-    /*
-    @overview   Boss flash overlay draw
-    @author     Wong Zi Yuan (w.ziyuan@digipen.edu)
-    *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
-    BossSystem::Boss_DrawFlashOverlay(meshes);                                                                              // draw the white flash overlay on top of everything else
-    /*_______________________________________________________________________________________________________________________________________________________________________________________________*/
+        PowerUpSystem::Draw(); // azfar code
 
-    // PAUSE OVERLAY
-    UiPauseMenu::Check_Paused(isPaused, isDead, bgMesh);
+        Weather_Draw();
 
+        UiSystem::Ui_DrawHealthBar(health, meshes); // jeremy code
+
+        /*
+        @overview   Boss flash overlay draw
+        @author     Wong Zi Yuan (w.ziyuan@digipen.edu)
+        *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
+        BossSystem::Boss_DrawFlashOverlay(meshes);                                                                              // draw the white flash overlay on top of everything else
+        /*_______________________________________________________________________________________________________________________________________________________________________________________________*/
+
+        // PAUSE OVERLAY
+        UiPauseMenu::Check_Paused(isPaused, isDead, bgMesh);
+   // }
     // Game Over & Leaderboard OVERLAY
-    UiGameOver::Check_IfDead(isDead, isGameOver, openLeaderboard, bgMesh, temp_name, score);
-
+    if (isDead)
+    {
+        float _dt = (float)AEFrameRateControllerGetFrameTime();
+        AEGfxTexture* deathPlayer = (gShopSkinID == 0) ? playerTexture1 : playerTexture2;
+        DeathTransition::Update(_dt);
+        DeathTransition::Draw(playerMesh, deathPlayer, uvOffsetX, uvOffsetY); // deathPlayer not activePlayer
+        if (DeathTransition::IsComplete())
+            UiGameOver::Check_IfDead(isDead, isGameOver, openLeaderboard, bgMesh, temp_name, score);
+    }
     DebugConsole::Render();
+
 }
 
 void Game_Exit()
@@ -309,6 +350,9 @@ void Game_Exit()
     Weather_Exit();
     LaserBeam_Free();
     DebugConsole::Exit();
+    DeathTransition::Reset();
+    GameClouds::Exit();
+    StreakSystem::Exit();
 
     if (playerMesh) {
         AEGfxMeshFree(playerMesh);
