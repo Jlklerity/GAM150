@@ -480,7 +480,7 @@ void Typing_UpdateAndApplyToEnemies(std::vector<Data::Enemy>& enemy_pool, Data::
         s_debugCorrect = false;
         s_debugTarget.clear();
         //
-        
+
         //if (s_targetIndex < 0)  s_targetIndex = EnemySystem::Enemy_FindBestTargetByPrefix(enemy_pool, typed_buffer);
         bool correct = false; //for shake
 
@@ -500,6 +500,7 @@ void Typing_UpdateAndApplyToEnemies(std::vector<Data::Enemy>& enemy_pool, Data::
                     LaserBeam_Fire(target.enemy_position_x, target.enemy_position_y); // fire laser to enemy
                     EnemySystem::Enemy_Killed(target, health);                                                  // kill friendly
                     if (health.health_current < 0) health.health_current = 0;                                   // clamp
+                    StreakSystem::OnWordCorrectAt(target.enemy_position_x, target.enemy_position_y);
                 }
                 // -------------------------
                 // SHIELDED NPC: first word breaks shield, second word kills
@@ -517,11 +518,11 @@ void Typing_UpdateAndApplyToEnemies(std::vector<Data::Enemy>& enemy_pool, Data::
                     LaserBeam_Fire(target.enemy_position_x, target.enemy_position_y); // fire laser to enemy
                     EnemySystem::Enemy_Killed(target, health);                                                  // kill
                     score.score_value += (int)(target.enemy_word_length * 10 * StreakSystem::GetMultiplier());
+                    StreakSystem::OnWordCorrectAt(target.enemy_position_x, target.enemy_position_y);
                 }
 
                 s_debugCorrect = true;
                 correct = true; // no shake
-                StreakSystem::OnWordCorrect();
             }
         }
 

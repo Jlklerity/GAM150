@@ -1,5 +1,3 @@
-
-
 #include "StreakSystem.h"
 #include "MeshTemplates.h"
 #include "MeshRenderer.h"
@@ -18,13 +16,20 @@ static const float FLAME_BASE_H = 40.0f;
 
 namespace
 {
-    int   s_streak      = 0;
-    float s_bobTimer    = 0.0f;  // for gentle up/down bob animation
-    float s_scaleTimer  = 0.0f;  // for pop animation on streak increment
-    float s_popScale    = 1.0f;  // current pop scale
+    int   s_streak = 0;
+    float s_bobTimer = 0.0f;
+    float s_scaleTimer = 0.0f;
+    float s_popScale = 1.0f;
 
-    AEGfxVertexList* s_flameMesh    = nullptr;
-    AEGfxVertexList* s_counterMesh  = nullptr;
+    // Floating +1 popup at kill position
+    float s_floatTimer = 0.0f;
+    float s_floatX = 0.0f;   // kill world X
+    float s_floatY = 0.0f;   // current world Y (moves up)
+    bool  s_floatActive = false;
+    static const float FLOAT_DURATION = 0.8f;
+    static const float FLOAT_SPEED = 70.0f; // world units per second upward
+
+    AEGfxVertexList* s_flameMesh = nullptr;
 
     // Returns tier 0-4 based on streak
     int GetTier()
@@ -36,7 +41,7 @@ namespace
         return 0;
     }
 
-    // Flame color per tier: no flame, yellow, orange, orange-red, red
+    // Flame color per tier
     void GetFlameColor(int tier, float& r, float& g, float& b)
     {
         switch (tier)
@@ -58,7 +63,7 @@ namespace
         case 2: return 1.5f;
         case 3: return 2.2f;
         case 4: return 3.0f;
-        default: return 0.0f; // no flame at tier 0
+        default: return 0.0f;
         }
     }
 }
@@ -67,10 +72,14 @@ namespace StreakSystem
 {
     void Init()
     {
-        s_streak     = 0;
-        s_bobTimer   = 0.0f;
+        s_streak = 0;
+        s_bobTimer = 0.0f;
         s_scaleTimer = 0.0f;
-        s_popScale   = 1.0f;
+        s_popScale = 1.0f;
+        s_floatTimer = 0.0f;
+        s_floatX = 0.0f;
+        s_floatY = 0.0f;
+        s_floatActive = false;
 
         if (!s_flameMesh)
             s_flameMesh = Rect_Mesh(1.0f, 1.0f, 0xFFFFFFFF);
@@ -78,14 +87,23 @@ namespace StreakSystem
 
     void Update(float dt)
     {
-        s_bobTimer += dt * 3.0f; // bob speed
-        if (s_bobTimer > 6.2832f) s_bobTimer -= 6.2832f; // wrap 2*PI
+        s_bobTimer += dt * 3.0f;
+        if (s_bobTimer > 6.2832f) s_bobTimer -= 6.2832f;
 
-        // Pop scale decays back to 1.0 after streak increment
+        // Pop scale decays back to 1.0
         if (s_popScale > 1.0f)
         {
             s_popScale -= dt * 4.0f;
             if (s_popScale < 1.0f) s_popScale = 1.0f;
+        }
+
+        // Floating text moves up and fades
+        if (s_floatActive)
+        {
+            s_floatTimer += dt;
+            s_floatY += FLOAT_SPEED * dt;
+            if (s_floatTimer >= FLOAT_DURATION)
+                s_floatActive = false;
         }
     }
 
@@ -94,50 +112,67 @@ namespace StreakSystem
         if (!s_flameMesh) return;
 
         int tier = GetTier();
-        if (tier == 0) return; // no flame below streak 5
-
-        float sizeMul = GetSizeMultiplier(tier) * s_popScale;
-        float w = FLAME_BASE_W * sizeMul;
-        float h = FLAME_BASE_H * sizeMul;
-
-        // Gentle bob
-        float bob = sinf(s_bobTimer) * 4.0f;
 
         float r, g, b;
         GetFlameColor(tier, r, g, b);
 
-        // -------------------------------------------------------
-        // PLACEHOLDER FLAME - replace with sprite draw later
-        // Draw a simple tapered rect as flame placeholder
-        // -------------------------------------------------------
-        AEGfxSetRenderMode(AE_GFX_RM_COLOR);
-        AEGfxSetBlendMode(AE_GFX_BM_BLEND);
-        AEGfxSetTransparency(0.9f);
-        AEGfxSetColorToMultiply(r, g, b, 1.0f);
-        Mesh_Renderer(s_flameMesh, FLAME_X, FLAME_Y + bob, w, h, 0.0f);
-
-        // Inner brighter core
-        AEGfxSetTransparency(1.0f);
-        AEGfxSetColorToMultiply(1.0f, 1.0f, 0.8f, 1.0f);
-        Mesh_Renderer(s_flameMesh, FLAME_X, FLAME_Y + bob - h * 0.1f, w * 0.4f, h * 0.5f, 0.0f);
-        // -------------------------------------------------------
-        // END PLACEHOLDER - sprite goes here when ready
-        // -------------------------------------------------------
-
-        // Draw streak counter above the flame
-        if (Graphics::font_id >= 0 && s_streak > 0)
+        // Draw flame if tier > 0
+        if (tier > 0)
         {
-            std::string streakStr = std::to_string(s_streak) + "x";
-            float tw, th;
-            AEGfxGetPrintSize(Graphics::font_id, streakStr.c_str(), 0.5f, &tw, &th);
+            // Flame pulse: popScale also applied to flame size
+            float sizeMul = GetSizeMultiplier(tier) * s_popScale;
+            float w = FLAME_BASE_W * sizeMul;
+            float h = FLAME_BASE_H * sizeMul;
+            float bob = sinf(s_bobTimer) * 4.0f;
 
-            float winH = (float)AEGfxGetWindowHeight();
-            float ndcX = (FLAME_X / (800.0f)) - tw * 0.5f;
-            float ndcY = ((FLAME_Y + bob + h * 0.7f) / (winH * 0.5f));
-
+            // Outer flame
+            AEGfxSetRenderMode(AE_GFX_RM_COLOR);
             AEGfxSetBlendMode(AE_GFX_BM_BLEND);
-            AEGfxPrint(Graphics::font_id, streakStr.c_str(),
-                       ndcX, ndcY, 0.5f, r, g * 0.8f, b, 1.0f);
+            AEGfxSetTransparency(0.9f);
+            AEGfxSetColorToMultiply(r, g, b, 1.0f);
+            Mesh_Renderer(s_flameMesh, FLAME_X, FLAME_Y + bob, w, h, 0.0f);
+
+            // Inner brighter core
+            AEGfxSetTransparency(1.0f);
+            AEGfxSetColorToMultiply(1.0f, 1.0f, 0.8f, 1.0f);
+            Mesh_Renderer(s_flameMesh, FLAME_X, FLAME_Y + bob - h * 0.1f, w * 0.4f, h * 0.5f, 0.0f);
+
+            // Streak counter above flame
+            if (Graphics::font_id >= 0 && s_streak > 0)
+            {
+                std::string streakStr = std::to_string(s_streak) + "x";
+                float tw, th;
+                AEGfxGetPrintSize(Graphics::font_id, streakStr.c_str(), 0.5f, &tw, &th);
+
+                float winH = (float)AEGfxGetWindowHeight();
+                float ndcX = (FLAME_X / 800.0f) - tw * 0.5f;
+                float ndcY = ((FLAME_Y + bob + h * 0.7f) / (winH * 0.5f));
+
+                AEGfxSetBlendMode(AE_GFX_BM_BLEND);
+                AEGfxPrint(Graphics::font_id, streakStr.c_str(),
+                    ndcX, ndcY, 0.5f, r, g * 0.8f, b, 1.0f);
+            }
+        }
+
+        // Floating "+1" popup at kill position
+        if (s_floatActive && Graphics::font_id >= 0)
+        {
+            float alpha = 1.0f - (s_floatTimer / FLOAT_DURATION);
+            float winW = (float)AEGfxGetWindowWidth();
+            float winH = (float)AEGfxGetWindowHeight();
+
+            std::string popStrStr = "x" + std::to_string(s_streak);
+            const char* popStr = popStrStr.c_str();
+            float tw, th;
+            AEGfxGetPrintSize(Graphics::font_id, popStr, 0.6f, &tw, &th);
+
+            float ndcX = (s_floatX / (winW * 0.5f)) - tw * 0.5f;
+            float ndcY = (s_floatY / (winH * 0.5f));
+
+            // Draw with flame tier color
+            AEGfxSetBlendMode(AE_GFX_BM_BLEND);
+            AEGfxPrint(Graphics::font_id, popStr,
+                ndcX, ndcY, 0.6f, 1.0f, 0.9f, 0.2f, alpha); // bright yellow-white
         }
     }
 
@@ -154,13 +189,24 @@ namespace StreakSystem
     void OnWordCorrect()
     {
         s_streak++;
-        s_popScale = 1.4f; // pop animation on increment
+        s_popScale = 1.6f;
+    }
+
+    void OnWordCorrectAt(float x, float y)
+    {
+        s_streak++;
+        s_popScale = 1.6f;
+        s_floatActive = true;
+        s_floatTimer = 0.0f;
+        s_floatX = x;
+        s_floatY = y + 20.0f; // start slightly above enemy
     }
 
     void OnStreakReset()
     {
-        s_streak   = 0;
+        s_streak = 0;
         s_popScale = 1.0f;
+        s_floatActive = false;
     }
 
     int GetStreak()

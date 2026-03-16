@@ -84,6 +84,7 @@ namespace
     TutorialStage s_stage = STAGE_BASIC_TYPING;
     bool          s_objectiveMet = false;
     bool          s_stageStarted = false;
+    bool          s_readyClicked = false;
     float         s_stageTimer = 0.0f;
     bool          s_isPaused = false;
     bool          s_isFading = false;
@@ -261,6 +262,7 @@ namespace
         s_stage = stage;
         s_objectiveMet = false;
         s_stageStarted = false;
+        s_readyClicked = false;
         s_stageTimer = 0.0f;
         s_streakWordIdx = 0;
         ResetPool();
@@ -271,7 +273,7 @@ namespace
     void DrawSpeechBubble(bool objectiveMet)
     {
         if (!s_rectMesh || Graphics::font_id < 0) return;
-        if (s_stage < 0 || s_stage >= STAGE_COUNT) return; 
+        if (s_stage < 0 || s_stage >= STAGE_COUNT) return;
 
         // Gold border
         AEGfxSetRenderMode(AE_GFX_RM_COLOR);
@@ -352,9 +354,39 @@ namespace
             AEGfxSetBlendMode(AE_GFX_BM_BLEND);
             AEGfxPrint(Graphics::font_id, btnLabel, bndcX, bndcY, 0.48f, 1.0f, 1.0f, 1.0f, 1.0f);
         }
+        // READY button - shown before stage has started
+        else if (!s_readyClicked && s_stage != STAGE_BOSS_WARNING)
+        {
+            const char* readyLabel = "READY >";
+            AEGfxSetRenderMode(AE_GFX_RM_COLOR);
+            AEGfxSetBlendMode(AE_GFX_BM_BLEND);
+            AEGfxSetTransparency(1.0f);
+            AEGfxSetColorToMultiply(0.6f, 0.3f, 0.0f, 1.0f);
+            Mesh_Renderer(s_rectMesh, NEXT_BTN_X, NEXT_BTN_Y, NEXT_BTN_W, NEXT_BTN_H, 0.0f);
+
+            float bw, bh;
+            AEGfxGetPrintSize(Graphics::font_id, readyLabel, 0.48f, &bw, &bh);
+            float bndcX = (NEXT_BTN_X / (s_winW * 0.5f)) - bw * 0.5f;
+            float bndcY = (NEXT_BTN_Y / (s_winH * 0.5f)) - bh * 0.5f;
+            AEGfxSetBlendMode(AE_GFX_BM_BLEND);
+            AEGfxPrint(Graphics::font_id, readyLabel, bndcX, bndcY, 0.48f, 1.0f, 1.0f, 1.0f, 1.0f);
+        }
     }
 
     bool NextButtonClicked()
+    {
+        if (!AEInputCheckTriggered(AEVK_LBUTTON)) return false;
+        s32 mx, my;
+        AEInputGetCursorPosition(&mx, &my);
+        float wx = (float)mx - s_winW * 0.5f;
+        float wy = s_winH * 0.5f - (float)my;
+        return (wx >= NEXT_BTN_X - NEXT_BTN_W * 0.5f &&
+            wx <= NEXT_BTN_X + NEXT_BTN_W * 0.5f &&
+            wy >= NEXT_BTN_Y - NEXT_BTN_H * 0.5f &&
+            wy <= NEXT_BTN_Y + NEXT_BTN_H * 0.5f);
+    }
+
+    bool ReadyButtonClicked()
     {
         if (!AEInputCheckTriggered(AEVK_LBUTTON)) return false;
         s32 mx, my;
@@ -478,107 +510,132 @@ void Tutorial_Update()
 
     if (!s_isPaused && !s_objectiveMet)
     {
+        // Handle READY button click
+        if (!s_readyClicked && s_stage != STAGE_BOSS_WARNING)
+        {
+            if (ReadyButtonClicked())
+                s_readyClicked = true;
+        }
+
         switch (s_stage)
         {
             // Stage 1: Basic typing - kill the enemy
         case STAGE_BASIC_TYPING:
-            if (!s_stageStarted) { SpawnNormalEnemy("CAT"); s_stageStarted = true; }
-            Typing_UpdateAndApplyToEnemies(s_pool, s_score, s_health);
-            UpdateEnemies(dt, true);
-            if (!AnyEnemyActive() && s_stageStarted && s_stageTimer > 0.5f)
-                s_objectiveMet = true;
+            if (s_readyClicked && !s_stageStarted) { SpawnNormalEnemy("CAT"); s_stageStarted = true; }
+            if (s_stageStarted)
+            {
+                Typing_UpdateAndApplyToEnemies(s_pool, s_score, s_health);
+                UpdateEnemies(dt, true);
+                if (!AnyEnemyActive() && s_stageTimer > 0.5f)
+                    s_objectiveMet = true;
+            }
             break;
 
             // Stage 2: Enemy lands on purpose - no typing allowed
         case STAGE_KILL_BEFORE_LANDING:
-            if (!s_stageStarted) { SpawnNormalEnemy("OUCH"); s_stageStarted = true; }
-            UpdateEnemies(dt, false);
-            if (!AnyEnemyActive() && s_stageStarted && s_stageTimer > 0.5f)
-                s_objectiveMet = true;
+            if (s_readyClicked && !s_stageStarted) { SpawnNormalEnemy("OUCH"); s_stageStarted = true; }
+            if (s_stageStarted)
+            {
+                UpdateEnemies(dt, false);
+                if (!AnyEnemyActive() && s_stageTimer > 0.5f)
+                    s_objectiveMet = true;
+            }
             break;
 
             // Stage 3: Friendly NPC
         case STAGE_FRIENDLY:
-            if (!s_stageStarted) { SpawnFriendlyEnemy("BIRD"); s_stageStarted = true; }
-            Typing_UpdateAndApplyToEnemies(s_pool, s_score, s_health);
-            UpdateEnemies(dt, true);
-            if (!AnyEnemyActive() && s_stageStarted && s_stageTimer > 0.5f)
-                s_objectiveMet = true;
+            if (s_readyClicked && !s_stageStarted) { SpawnFriendlyEnemy("BIRD"); s_stageStarted = true; }
+            if (s_stageStarted)
+            {
+                Typing_UpdateAndApplyToEnemies(s_pool, s_score, s_health);
+                UpdateEnemies(dt, true);
+                if (!AnyEnemyActive() && s_stageTimer > 0.5f)
+                    s_objectiveMet = true;
+            }
             break;
 
             // Stage 4: Shielded enemy
         case STAGE_SHIELDED:
-            if (!s_stageStarted) { SpawnShieldedEnemy("ICE", "FIRE"); s_stageStarted = true; }
-            Typing_UpdateAndApplyToEnemies(s_pool, s_score, s_health);
-            UpdateEnemies(dt, true);
-            if (!AnyEnemyActive() && s_stageStarted && s_stageTimer > 0.5f)
-                s_objectiveMet = true;
+            if (s_readyClicked && !s_stageStarted) { SpawnShieldedEnemy("ICE", "FIRE"); s_stageStarted = true; }
+            if (s_stageStarted)
+            {
+                Typing_UpdateAndApplyToEnemies(s_pool, s_score, s_health);
+                UpdateEnemies(dt, true);
+                if (!AnyEnemyActive() && s_stageTimer > 0.5f)
+                    s_objectiveMet = true;
+            }
             break;
 
-            // Stage 5: Streak of 5 - enemies hover, player types them down
+            // Stage 5: Streak of 5 - staggered spawns
         case STAGE_STREAK:
         {
-            if (!s_stageStarted) { s_stageStarted = true; Typing_Init(); }
+            if (s_readyClicked && !s_stageStarted) { s_stageStarted = true; Typing_Init(); }
 
-            if (!AnyEnemyActive() && s_stageTimer > 0.3f)
+            if (s_stageStarted)
             {
-                SpawnStreakEnemy(s_streakWords[s_streakWordIdx % 7]);
-                s_streakWordIdx++;
-                s_stageTimer = 0.0f;
-            }
-
-            Typing_UpdateAndApplyToEnemies(s_pool, s_score, s_health);
-
-            // Run Enemy_Update with dt so dying animation completes properly
-            for (int i = 0; i < (int)s_pool.size(); ++i)
-            {
-                Data::Enemy& e = s_pool[(size_t)i];
-                if (!e.enemy_is_active) continue;
-                bool was_active = e.enemy_is_active;
-                bool was_damage_done = e.enemy_did_damage;
-                EnemySystem::Enemy_Update(e, s_enemyArea, dt, s_health);
-                if (was_active && !e.enemy_is_active)
+                if (!AnyEnemyActive() && s_stageTimer > 0.3f)
                 {
-                    s_freeSlots.push_back(i);
-                    if (!was_damage_done) // typed kill - laser + particles
+                    SpawnStreakEnemy(s_streakWords[s_streakWordIdx % 7]);
+                    s_streakWordIdx++;
+                    s_stageTimer = 0.0f;
+                }
+
+                Typing_UpdateAndApplyToEnemies(s_pool, s_score, s_health);
+
+                for (int i = 0; i < (int)s_pool.size(); ++i)
+                {
+                    Data::Enemy& e = s_pool[(size_t)i];
+                    if (!e.enemy_is_active) continue;
+                    bool was_active = e.enemy_is_active;
+                    bool was_damage_done = e.enemy_did_damage;
+                    EnemySystem::Enemy_Update(e, s_enemyArea, dt, s_health);
+                    if (was_active && !e.enemy_is_active)
                     {
-                        Particles_SpawnDamageImpact(e.enemy_position_x, e.enemy_position_y);
-                        LaserBeam_Fire(e.enemy_position_x, e.enemy_position_y);
-                    }
-                    else // landed - restore health, no laser
-                    {
-                        HealthSystem::Health_Init(s_health);
-                        Particles_SpawnKillImpact(e.enemy_position_x, e.enemy_position_y, e.enemy_word_length);
+                        s_freeSlots.push_back(i);
+                        if (!was_damage_done)
+                        {
+                            Particles_SpawnDamageImpact(e.enemy_position_x, e.enemy_position_y);
+                            LaserBeam_Fire(e.enemy_position_x, e.enemy_position_y);
+                        }
+                        else
+                        {
+                            HealthSystem::Health_Init(s_health);
+                            Particles_SpawnKillImpact(e.enemy_position_x, e.enemy_position_y, e.enemy_word_length);
+                        }
                     }
                 }
-            }
 
-            if (StreakSystem::GetStreak() >= 5 && !AnyEnemyActive())
-                s_objectiveMet = true;
+                if (StreakSystem::GetStreak() >= 5 && !AnyEnemyActive())
+                    s_objectiveMet = true;
+            }
             break;
         }
 
-        // Stage 6: Power up - force spawn high up
+        // Stage 6: Power up - spawn on READY
         case STAGE_POWERUP:
-            if (!s_stageStarted)
+            if (s_readyClicked && !s_stageStarted)
             {
-                // Call Update once first to seed s_lastEnemyArea inside PowerUpSystem
                 PowerUpSystem::Update(0.0f, s_pool, s_enemyArea, s_health);
                 PowerUpSystem::DebugSpawn(PowerUpSystem::PowerType::TimeSlow);
                 s_stageStarted = true;
             }
-            PowerUpSystem::Update(dt, s_pool, s_enemyArea, s_health);
-            if (PowerUpSystem::GetTimeScale() < 1.0f || PowerUpSystem::IsShieldActive())
-                s_objectiveMet = true;
+            if (s_stageStarted)
+            {
+                PowerUpSystem::Update(dt, s_pool, s_enemyArea, s_health);
+                if (PowerUpSystem::GetTimeScale() < 1.0f || PowerUpSystem::IsShieldActive())
+                    s_objectiveMet = true;
+            }
             break;
 
-            // Stage 7: Weather - mash SPACEBAR to escape blizzard
+            // Stage 7: Weather - trigger on READY
         case STAGE_WEATHER:
-            if (!s_stageStarted) { Weather_ForceEvent(0); s_stageStarted = true; }
-            Weather_Update(dt, s_pool);
-            // Wait until player has been frozen first, then check if they escaped
-            if (s_stageStarted && s_stageTimer > 3.0f && !Weather_IsPlayerFrozen())
-                s_objectiveMet = true;
+            if (s_readyClicked && !s_stageStarted) { Weather_ForceEvent(0); s_stageStarted = true; }
+            if (s_stageStarted)
+            {
+                Weather_Update(dt, s_pool);
+                if (s_stageTimer > 3.0f && !Weather_IsPlayerFrozen())
+                    s_objectiveMet = true;
+            }
             break;
 
             // Stage 8: Boss warning - informational only
