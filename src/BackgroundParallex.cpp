@@ -133,4 +133,37 @@ namespace BackgroundParallax{
             }
         }
     }
+
+    int MenuParallax_GetLayerCount()
+    {
+        return NUM_LAYERS;
+    }
+
+    AEGfxTexture* MenuParallax_GetLayerTexture(int index)
+    {
+        if (index < 0 || index >= NUM_LAYERS) return nullptr;
+        return bgLayers[index].texture;
+    }
+
+    float MenuParallax_GetLayerDepth(int index)
+    {
+        if (index < 0 || index >= NUM_LAYERS) return 0.0f;
+        return bgLayers[index].depthFactor;
+    }
+
+    float MenuParallax_GetLayerUOffset(int index)
+    {
+        if (index < 0 || index >= NUM_LAYERS) return 0.0f;
+        return bgLayers[index].uOffset;
+    }
+
+    float MenuParallax_GetManualPanOffset()
+    {
+        return manualPanOffset;
+    }
 }
+
+
+
+
+

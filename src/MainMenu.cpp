@@ -19,6 +19,7 @@
 #include "ScreenTransition.h"
 #include "BackgroundParallex.h"
 #include <iostream>
+#include "ParallaxZoom.h"
 
 /*
 @namespace      Anonymous (Main Menu State)
@@ -136,6 +137,8 @@ namespace
     float uiOffsetX = 0.0f;
     float cursorTimer = 0.0f;                                                                                               // timer for text cursor blink
 
+
+    bool isZoomingToGame = false;
 } // Anonymous namespace end
 /*___________________________________________________________________________________________________________________________________________________________________________________________________*/
 
@@ -324,15 +327,17 @@ void Main_Menu_EnterName(float worldYOffset, float ndcYOffset, bool allowInput)
     {
         if (AEInputCheckTriggered(AEVK_LBUTTON))                                                                            // check left click
         {
-            // --- Check Enter Game Button ---
+           // --- Check Enter Game Button ---
             if ((!player_name.empty()) && (selected_mode != "") &&
                 (worldX >= ENTERGAME_BTN_X - (EXITNAME_WIDTH * 0.5f) && worldX <= ENTERGAME_BTN_X + (EXITNAME_WIDTH * 0.5f) &&
                     worldY >= ENTERGAME_BTN_Y - (ENTERGAME_HEIGHT * 0.5f) && worldY <= ENTERGAME_BTN_Y + (ENTERGAME_HEIGHT * 0.5f)))
             {
-                ScreenTransitions::ScreenTransition_Init();                                                                 // start transition
-                isEnteringName = false;                                                                                     // leave sub-state
-                if (selected_mode == "ZEN") gGameStateNext = GS_GAME;                                                       // queue zen mode
-                else if (selected_mode == "TIME") gGameStateNext = GS_GAME_TIMEMODE;                                        // queue time mode
+                // DO NOT call ScreenTransitions::ScreenTransition_Init() here
+                // that shared timer interferes with the back-transition logic
+                isEnteringName = false;
+                isZoomingToGame = true;
+                int zoomTarget = (selected_mode == "TIME") ? GS_GAME_TIMEMODE : GS_GAME;
+                ParallaxZoom::Start(zoomTarget);
             }
             // --- Check Exit Name Button ---
             else if (worldX >= EXITNAME_BTN_X - (EXITNAME_WIDTH * 0.5f) && worldX <= EXITNAME_BTN_X + (EXITNAME_WIDTH * 0.5f) &&
@@ -682,7 +687,16 @@ void Main_Menu_Update()
     else if (isEnteringName) {
         vCamY = winH; // Keep the background scrolled down while in the sub-menu!
     }
-    
+
+    // Zoom transition runs exclusively - skip all normal drawing while active
+    if (isZoomingToGame)
+    {
+        ParallaxZoom::Update(dt);
+        ParallaxZoom::Draw(0.0f);   // <-- always draw from neutral position
+        if (!ParallaxZoom::IsActive()) isZoomingToGame = false;
+        return;
+    }
+
     BackgroundParallax::MenuParallax_Draw(vCamY);
 
     // --- RENDER AND INPUT LOGIC ---
@@ -708,6 +722,9 @@ void Main_Menu_Update()
     else if (isEnteringName)                                                                                                // process entering name state
     {
         Main_Menu_EnterName(0.0f, 0.0f, true);                                                                              // normal input and draw
+    }
+    else if (isZoomingToGame) {
+        vCamY = winH;
     }
     else if (isTransitioningToName || isTransitioningBack)                                                                  // process transition states
     {
@@ -810,4 +827,6 @@ void Main_Menu_Exit()
         AEGfxTextureUnload(pTexSettings);
         pTexSettings = nullptr;
     }
+    ParallaxZoom::Reset();
+    isZoomingToGame = false;
 }
