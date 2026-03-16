@@ -287,7 +287,7 @@ namespace BossSystem
     default inactive value. This function must be called once after EnemyManage_LoadMeshes so the
     base meshes are ready.
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
-    void Boss_Init(Data::Meshes& /*meshes*/, const Data::WordBank& /*bank*/)
+    void Boss_Init(Data::Meshes&, const Data::WordBank&)
     {
         // Load boss texture
         boss_texture = AEGfxTextureLoad("Assets/bossEnemy.png");                                                            // load the boss sprite sheet from disk
@@ -337,7 +337,7 @@ namespace BossSystem
     no orphaned active slot remains after a restart or level exit. Null checks are performed before
     every free so the function is safe to call even if Boss_Init never completed.
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
-    void Boss_Free(Data::Meshes& /*meshes*/, std::deque<int>& free_slots, std::vector<Data::Enemy>& pool)
+    void Boss_Free(Data::Meshes&, std::deque<int>& free_slots, std::vector<Data::Enemy>& pool)
     {
         if (boss_sprite_mesh)                                                                                               // only free the mesh if it was actually created
         {
