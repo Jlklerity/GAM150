@@ -337,7 +337,8 @@ void Main_Menu_Input()
             SoundManager::PlayClickBtnSfx();
             inLeaderboard = true; // Open the overlay!                                                                                             
         }
-        
+        // --- Check Tutorial Button ---
+
         else if (worldX >= 0.0f - (TUTORIAL_HITBOX_WIDTH * 0.5f) && worldX <= 0.0f + (TUTORIAL_HITBOX_WIDTH * 0.5f) &&
             worldY >= TUTORIAL_BTN_Y - (TUTORIAL_HITBOX_HEIGHT * 0.5f) && worldY <= TUTORIAL_BTN_Y + (TUTORIAL_HITBOX_HEIGHT * 0.5f))
         {
@@ -350,7 +351,7 @@ void Main_Menu_Input()
             worldY >= CREDITS_BTN_Y - (CREDITS_HEIGHT * 0.5f) && worldY <= CREDITS_BTN_Y + (CREDITS_HEIGHT * 0.5f))
         {
             SoundManager::PlayClickBtnSfx();
-            gGameStateNext = GS_CREDITS;  
+            gGameStateNext = GS_CREDITS;
         }
     }
 }
@@ -535,38 +536,20 @@ void Main_Menu_EnterName(float worldYOffset, float ndcYOffset, bool allowInput)
 *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
 void Main_Menu_Init()
 {
-    if (pMeshLogo) { AEGfxMeshFree(pMeshLogo);          pMeshLogo = nullptr; }
-    if (pMeshBtn) { AEGfxMeshFree(pMeshBtn);           pMeshBtn = nullptr; }
-    if (pMeshExitBtn) { AEGfxMeshFree(pMeshExitBtn);       pMeshExitBtn = nullptr; }
-    if (pMeshSettingsBtn) { AEGfxMeshFree(pMeshSettingsBtn);   pMeshSettingsBtn = nullptr; }
-    if (pMeshLeftArrow) { AEGfxMeshFree(pMeshLeftArrow);     pMeshLeftArrow = nullptr; }
-    if (pMeshRightArrow) { AEGfxMeshFree(pMeshRightArrow);    pMeshRightArrow = nullptr; }
-    if (pMeshLeaderboardBtn) { AEGfxMeshFree(pMeshLeaderboardBtn); pMeshLeaderboardBtn = nullptr; }
-    if (pMeshEnterName) { AEGfxMeshFree(pMeshEnterName);     pMeshEnterName = nullptr; }
-    if (pMeshBackName) { AEGfxMeshFree(pMeshBackName);      pMeshBackName = nullptr; }
-    if (pMeshCreditsBtn) { AEGfxMeshFree(pMeshCreditsBtn);    pMeshCreditsBtn = nullptr; }
-    if (pMeshTutorialBtn) { AEGfxMeshFree(pMeshTutorialBtn);   pMeshTutorialBtn = nullptr; }
-
-    if (pTexPlay) { AEGfxTextureUnload(pTexPlay);        pTexPlay = nullptr; }
-    if (pTexShop) { AEGfxTextureUnload(pTexShop);        pTexShop = nullptr; }
-    if (pTexArrows) { AEGfxTextureUnload(pTexArrows);      pTexArrows = nullptr; }
-    if (pTexLogo) { AEGfxTextureUnload(pTexLogo);        pTexLogo = nullptr; }
-    if (pTexEnterName) { AEGfxTextureUnload(pTexEnterName);   pTexEnterName = nullptr; }
-    if (pTexBackName) { AEGfxTextureUnload(pTexBackName);    pTexBackName = nullptr; }
-    if (pTexLeaderboard) { AEGfxTextureUnload(pTexLeaderboard); pTexLeaderboard = nullptr; }
-    if (pTexSettings) { AEGfxTextureUnload(pTexSettings);    pTexSettings = nullptr; }
-    if (pTexTutorial) { AEGfxTextureUnload(pTexTutorial);    pTexTutorial = nullptr; }
-    if (pTexCredits) { AEGfxTextureUnload(pTexCredits);     pTexCredits = nullptr; }
-
     uiOffsetX = 0.0f;
     transitioningToShop = false;
     inLeaderboard = false;
     Leaderboard_System::Init();
     Leaderboard_System::Read_ZenLeaderboard();
     Leaderboard_System::Read_TimeLeaderboard();
-    
-    
-    SoundManager::Init();
+
+
+    if (gGameStatePrev != GS_SHOP)
+        if (gGameStatePrev != GS_SHOP && gGameStatePrev != GS_CREDITS)
+        {
+            SoundManager::Init();
+            SoundManager::PlayBackgroundMusic();
+        }
 
     BackgroundParallax::MenuParallax_Init();
 
@@ -715,7 +698,7 @@ void Main_Menu_Update()
     RIGHTARROW_BTN_X = winH * 0.12f;                                                                                        // set right arrow X pos
     RIGHTARROW_BTN_Y = PLAY_BTN_Y - 90.0f;                                                                                  // set right arrow Y pos
 
-    CREDITS_BTN_X = winW * 0.23f; 
+    CREDITS_BTN_X = winW * 0.23f;
     CREDITS_BTN_Y = winH * -0.4f;
 
     AEGfxSetCamPosition(0.0f, 0.0f);                                                                                        // reset camera explicitly
@@ -842,124 +825,123 @@ void Main_Menu_Update()
 *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
 void Main_Menu_Exit()
 {
-    SysSettings::Settings_Exit();
-    if (gGameStateNext != GS_SHOP && gGameStateNext != GS_CREDITS) {
-        BackgroundParallax::MenuParallax_Exit();
-        if (Graphics::font_id >= 0)
-        {
-            AEGfxDestroyFont(Graphics::font_id);
-            Graphics::font_id = -1;
+
+    if (gGameStateNext != GS_SHOP) {
+        if (gGameStateNext != GS_SHOP && gGameStateNext != GS_CREDITS) {
+            BackgroundParallax::MenuParallax_Exit();
+            SoundManager::Exit();
         }
-        
-    }
-    SoundManager::Exit();
-    ScreenTransitions::isTransitioning = false;                                                                             // safety clean transition
-    AEGfxSetCamPosition(0.0f, 0.0f);                                                                                        // safety reset camera
+        ScreenTransitions::isTransitioning = false;                                                                             // safety clean transition
+        AEGfxSetCamPosition(0.0f, 0.0f);                                                                                        // safety reset camera
 
-    // Free Meshes
-    if (pMeshLogo)
-    {
-        AEGfxMeshFree(pMeshLogo);                                                                                           // dealloc memory
-        pMeshLogo = nullptr;                                                                                                // strip pointer
-    }
-    if (pMeshBtn)
-    {
-        AEGfxMeshFree(pMeshBtn);                                                                                            // dealloc memory
-        pMeshBtn = nullptr;                                                                                                 // strip pointer
-    }
-    if (pMeshExitBtn)
-    {
-        AEGfxMeshFree(pMeshExitBtn);                                                                                        // dealloc memory
-        pMeshExitBtn = nullptr;                                                                                             // strip pointer
-    }
-    if (pMeshSettingsBtn)
-    {
-        AEGfxMeshFree(pMeshSettingsBtn);                                                                                    // dealloc memory
-        pMeshSettingsBtn = nullptr;                                                                                         // strip pointer
-    }
-    if (pMeshLeftArrow)
-    {
-        AEGfxMeshFree(pMeshLeftArrow);                                                                                      // dealloc memory
-        pMeshLeftArrow = nullptr;                                                                                           // strip pointer
-    }
-    if (pMeshRightArrow)
-    {
-        AEGfxMeshFree(pMeshRightArrow);                                                                                     // dealloc memory
-        pMeshRightArrow = nullptr;                                                                                          // strip pointer
-    }
-    if (pMeshLeaderboardBtn)
-    {
-        AEGfxMeshFree(pMeshLeaderboardBtn);                                                                                     // dealloc memory
-        pMeshLeaderboardBtn = nullptr;
-    }
+        // Free Meshes
+        if (pMeshLogo)
+        {
+            AEGfxMeshFree(pMeshLogo);                                                                                           // dealloc memory
+            pMeshLogo = nullptr;                                                                                                // strip pointer
+        }
+        if (pMeshBtn)
+        {
+            AEGfxMeshFree(pMeshBtn);                                                                                            // dealloc memory
+            pMeshBtn = nullptr;                                                                                                 // strip pointer
+        }
+        if (pMeshExitBtn)
+        {
+            AEGfxMeshFree(pMeshExitBtn);                                                                                        // dealloc memory
+            pMeshExitBtn = nullptr;                                                                                             // strip pointer
+        }
+        if (pMeshSettingsBtn)
+        {
+            AEGfxMeshFree(pMeshSettingsBtn);                                                                                    // dealloc memory
+            pMeshSettingsBtn = nullptr;                                                                                         // strip pointer
+        }
+        if (pMeshLeftArrow)
+        {
+            AEGfxMeshFree(pMeshLeftArrow);                                                                                      // dealloc memory
+            pMeshLeftArrow = nullptr;                                                                                           // strip pointer
+        }
+        if (pMeshRightArrow)
+        {
+            AEGfxMeshFree(pMeshRightArrow);                                                                                     // dealloc memory
+            pMeshRightArrow = nullptr;                                                                                          // strip pointer
+        }
+        if (pMeshLeaderboardBtn)
+        {
+            AEGfxMeshFree(pMeshLeaderboardBtn);                                                                                     // dealloc memory
+            pMeshLeaderboardBtn = nullptr;
+        }
 
-    if (pMeshEnterName)
-    {
-        AEGfxMeshFree(pMeshEnterName);
-        pMeshEnterName = nullptr;
-    }
-    if (pMeshBackName)
-    {
-        AEGfxMeshFree(pMeshBackName);
-        pMeshBackName = nullptr;
-    }
-    if (pMeshCreditsBtn)
-    {
-        AEGfxMeshFree(pMeshCreditsBtn);
-        pMeshCreditsBtn = nullptr;
-    }
-    if (pMeshTutorialBtn) {
-        AEGfxMeshFree(pMeshTutorialBtn);
-        pMeshTutorialBtn = nullptr;
-    }
+        if (pMeshEnterName)
+        {
+            AEGfxMeshFree(pMeshEnterName);
+            pMeshEnterName = nullptr;
+        }
+        if (pMeshBackName)
+        {
+            AEGfxMeshFree(pMeshBackName);
+            pMeshBackName = nullptr;
+        }
+        if (pMeshCreditsBtn)
+        {
+            AEGfxMeshFree(pMeshCreditsBtn);
+            pMeshCreditsBtn = nullptr;
+        }
+        if (pMeshTutorialBtn) {
+            AEGfxMeshFree(pMeshTutorialBtn);
+            pMeshTutorialBtn = nullptr;
+        }
 
-    // Free Textures
-    if (pTexPlay)
-    {
-        AEGfxTextureUnload(pTexPlay);                                                                                       // unload from graphics
-        pTexPlay = nullptr;                                                                                                 // strip pointer
+        // Free Textures
+        if (pTexPlay)
+        {
+            AEGfxTextureUnload(pTexPlay);                                                                                       // unload from graphics
+            pTexPlay = nullptr;                                                                                                 // strip pointer
+        }
+        if (pTexShop)
+        {
+            AEGfxTextureUnload(pTexShop);                                                                                       // unload from graphics
+            pTexShop = nullptr;                                                                                                 // strip pointer
+        }
+        if (pTexArrows)
+        {
+            AEGfxTextureUnload(pTexArrows);                                                                                     // unload from graphics
+            pTexArrows = nullptr;                                                                                               // strip pointer
+        }
+        if (pTexLogo) {
+            AEGfxTextureUnload(pTexLogo);                                                                                     // unload from graphics
+            pTexLogo = nullptr;                                                                                               // strip pointer
+        }
+        if (pTexEnterName) {
+            AEGfxTextureUnload(pTexEnterName);                                                                                     // unload from graphics
+            pTexEnterName = nullptr;
+        }
+        if (pTexBackName) {
+            AEGfxTextureUnload(pTexBackName);                                                                                     // unload from graphics
+            pTexBackName = nullptr;
+        }
+        if (pTexLeaderboard) {
+            AEGfxTextureUnload(pTexLeaderboard);
+            pTexLeaderboard = nullptr;
+        }
+        if (pTexSettings) {
+            AEGfxTextureUnload(pTexSettings);
+            pTexSettings = nullptr;
+        }
+        if (pTexTutorial) {
+            AEGfxTextureUnload(pTexTutorial);
+            pTexTutorial = nullptr;
+        }
+        if (pMeshTutorialBtn) {
+            AEGfxMeshFree(pMeshTutorialBtn);
+            pMeshTutorialBtn = nullptr;
+            if (pTexCredits)
+            {
+                AEGfxTextureUnload(pTexCredits);
+                pTexCredits = nullptr;
+            }
+            ParallaxZoom::Reset();
+            isZoomingToGame = false;
+            Leaderboard_System::Free();
+        }
     }
-    if (pTexShop)
-    {
-        AEGfxTextureUnload(pTexShop);                                                                                       // unload from graphics
-        pTexShop = nullptr;                                                                                                 // strip pointer
-    }
-    if (pTexArrows)
-    {
-        AEGfxTextureUnload(pTexArrows);                                                                                     // unload from graphics
-        pTexArrows = nullptr;                                                                                               // strip pointer
-    }
-    if (pTexLogo) {
-        AEGfxTextureUnload(pTexLogo);                                                                                     // unload from graphics
-        pTexLogo = nullptr;                                                                                               // strip pointer
-    }
-    if (pTexEnterName) {
-        AEGfxTextureUnload(pTexEnterName);                                                                                     // unload from graphics
-        pTexEnterName = nullptr;
-    }
-    if (pTexBackName) {
-        AEGfxTextureUnload(pTexBackName);                                                                                     // unload from graphics
-        pTexBackName = nullptr;
-    }
-    if (pTexLeaderboard) {
-        AEGfxTextureUnload(pTexLeaderboard);
-        pTexLeaderboard = nullptr;
-    }
-    if (pTexSettings) {
-        AEGfxTextureUnload(pTexSettings);
-        pTexSettings = nullptr;
-    }
-    if (pTexTutorial) {
-        AEGfxTextureUnload(pTexTutorial);
-        pTexTutorial = nullptr;
-    }
-    if (pTexCredits)
-    {
-        AEGfxTextureUnload(pTexCredits);
-        pTexCredits = nullptr;
-    }
-    ParallaxZoom::Reset();
-    isZoomingToGame = false;
-    Leaderboard_System::Free();
-
 }
