@@ -36,6 +36,13 @@ namespace GameEnemyBoss
         bool is_random_spawning_enabled, float& random_spawn_timer_seconds);
 
     /*
+    @function       Free
+    @brief          Releases enemy/boss owned runtime state and clears pool containers.
+    *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
+        void Free(Data::Meshes& meshes, std::vector<Data::Enemy>& enemy_pool,
+            std::deque<int>& free_slot_queue, bool& boss_spawning_blocked);
+
+    /*
     @function       Draw
     @brief          Draws enemy sprites, enemy words, the boss sprite, and all typed-word highlights.
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/

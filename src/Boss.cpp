@@ -294,6 +294,36 @@ namespace
         pool[(size_t)boss_pool_slot].enemy_orbit_initialised = true;                                                         // prevent the orbit system from displacing the kill word above its anchor
     }
 
+    /*
+    @function       Boss_ReleaseAssets
+    @brief          Frees all GPU assets created by Boss_Init and clears their pointers.
+
+    This helper centralizes the cleanup for the boss texture, sprite mesh, and flash mesh so
+    Boss_Init can safely rebuild assets without leaking old ones and Boss_Free can reuse the
+    exact same cleanup path. Each pointer is checked before freeing so the helper is safe to
+    call even if Boss_Init never completed.
+    *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
+    void Boss_ReleaseAssets()
+    {
+        if (boss_sprite_mesh)                                                                                               // only free the mesh if it was actually created
+        {
+            AEGfxMeshFree(boss_sprite_mesh);                                                                                // release the boss sprite mesh from GPU memory
+            boss_sprite_mesh = nullptr;                                                                                     // clear the pointer so it cannot be freed again
+        }
+
+        if (boss_flash_mesh)                                                                                                // only free the flash mesh if it was actually created
+        {
+            AEGfxMeshFree(boss_flash_mesh);                                                                                 // release the flash overlay mesh from GPU memory
+            boss_flash_mesh = nullptr;                                                                                      // clear the pointer so it cannot be freed again
+        }
+
+        if (boss_texture)                                                                                                   // only unload the texture if it was actually loaded
+        {
+            AEGfxTextureUnload(boss_texture);                                                                               // unload the boss texture from GPU memory
+            boss_texture = nullptr;                                                                                         // clear the pointer so it cannot be unloaded again
+        }
+    }
+
 } // anonymous namespace end
 /*___________________________________________________________________________________________________________________________________________________________________________________________________*/
 
@@ -321,6 +351,12 @@ namespace BossSystem
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
     void Boss_Init(Data::Meshes&, const Data::WordBank&)
     {
+        // Release old boss assets first so repeated Boss_Init calls cannot leak them.
+        Boss_ReleaseAssets();
+
+        // If a pool slot is still reserved here then the caller skipped Boss_Free.
+        AE_ASSERT_MESG(boss_pool_slot == -1, "Boss_Init called while boss still owns a pool slot. Call Boss_Free first.");
+
         // Load boss texture
         boss_texture = AEGfxTextureLoad("Assets/bossEnemy.png");                                                            // load the boss sprite sheet from disk
         AE_ASSERT_MESG(boss_texture, "Failed to load: Assets/bossEnemy.png");                                               // crash with a message if the file was not found
@@ -381,23 +417,7 @@ namespace BossSystem
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
     void Boss_Free(Data::Meshes&, std::deque<int>& free_slots, std::vector<Data::Enemy>& pool)
     {
-        if (boss_sprite_mesh)                                                                                               // only free the mesh if it was actually created
-        {
-            AEGfxMeshFree(boss_sprite_mesh);                                                                                // release the boss sprite mesh from GPU memory
-            boss_sprite_mesh = nullptr;                                                                                     // clear the pointer so it cannot be freed again
-        }
-
-        if (boss_flash_mesh)                                                                                                // only free the flash mesh if it was actually created
-        {
-            AEGfxMeshFree(boss_flash_mesh);                                                                                 // release the flash overlay mesh from GPU memory
-            boss_flash_mesh = nullptr;                                                                                      // clear the pointer so it cannot be freed again
-        }
-
-        if (boss_texture)                                                                                                   // only unload the texture if it was actually loaded
-        {
-            AEGfxTextureUnload(boss_texture);                                                                               // unload the boss texture from GPU memory
-            boss_texture = nullptr;                                                                                         // clear the pointer so it cannot be unloaded again
-        }
+        Boss_ReleaseAssets();
 
         // Return the reserved kill word slot so it is not lost when the game restarts or exits.
         // The slot is marked inactive first so no other system thinks it is still in use.
