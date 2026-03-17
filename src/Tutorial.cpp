@@ -437,6 +437,22 @@ void Tutorial_Init()
     AEGfxSetCamPosition(0.0f, 0.0f);
     AEGfxSetBackgroundColor(0.53f, 0.81f, 0.92f);
 
+    Typing_Exit();
+    PowerUpSystem::Free();
+    Weather_Exit();
+    Particles_Free();
+    StreakSystem::Exit();
+    BackgroundParallax::MenuParallax_Exit();
+    GameClouds::Exit();
+    LaserBeam_Free();
+    EnemyManage::EnemyManage_Free(s_meshes, s_pool, s_freeSlots);
+
+    if (s_bgTex) { AEGfxTextureUnload(s_bgTex); s_bgTex = nullptr; }
+    if (s_bgMesh) { AEGfxMeshFree(s_bgMesh); s_bgMesh = nullptr; }
+    if (s_playerTex) { AEGfxTextureUnload(s_playerTex); s_playerTex = nullptr; }
+    if (s_playerMesh) { AEGfxMeshFree(s_playerMesh); s_playerMesh = nullptr; }
+    if (s_rectMesh) { AEGfxMeshFree(s_rectMesh); s_rectMesh = nullptr; }
+
     s_rectMesh = Rect_Mesh(1.0f, 1.0f, 0xFFFFFFFF);
     s_playerTex = AEGfxTextureLoad("Assets/characterSheet.png");
     s_playerMesh = Sprite_Mesh(SPRITE_UV_W, SPRITE_UV_H);

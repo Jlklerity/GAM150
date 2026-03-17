@@ -20,6 +20,17 @@ namespace GameClouds
 {
     void Init()
     {
+        if (s_cloudTex)
+        {
+            AEGfxTextureUnload(s_cloudTex);
+            s_cloudTex = nullptr;
+        }
+
+        if (s_cloudMesh)
+        {
+            AEGfxMeshFree(s_cloudMesh);
+            s_cloudMesh = nullptr;
+        }
         s_uOffset  = 0.0f;
 
         s_cloudTex = AEGfxTextureLoad("Assets/cloudextra.png");
