@@ -7,7 +7,7 @@
 
 #include "Enemy.h"
 #include "PowerUp.h"
-#include <cmath>                                                                                                             // sinf, cosf for orbit effect
+#include <cmath>
 
 /*
 @namespace      EnemyConfig
@@ -55,15 +55,13 @@ namespace EnemyConfig
     const int   ENEMY_LANE_COUNT = 8;                                                                                       // number of horizontal lanes
     const float ENEMY_LANE_MIN_GAP_PX = ENEMY_SIZE_PX + ENEMY_OVERLAP_PADDING_PX;                                           // min vertical spacing per lane
 
-    /*
-    [NEW] — letter orbit effect tuning values
-    *//*--------------------------------*/
+
+    // letter orbit effect tuning values
     const float ORBIT_RADIUS_MAX_NDC = 0.2f;                                                                                // maximum orbit radius in NDC space that letters reach at full effect
     const float ORBIT_SPEED = 2.5f;                                                                                         // how fast letters orbit in radians per second
     const float ORBIT_FADE_SPEED = 3.0f;                                                                                    // lerp speed when orbit radius fades in or out
     const float ORBIT_IDLE_DURATION_SECONDS = 3.0f;                                                                         // how long letters sit at baseline between orbits
     const int   ORBIT_SPAWN_CHANCE = 40;                                                                                    // percentage chance 0 to 99 that a spawned enemy gets the orbit effect
-    /*--------------------------------*/
 } // EnemyConfig namespace end
 /*___________________________________________________________________________________________________________________________________________________________________________________________________*/
 
@@ -945,9 +943,9 @@ namespace EnemySystem
                     e.enemy_position_y -= e.enemy_fall_speed_units_per_second * dt;                                         // fall downward
 
                     e.enemy_position_x = Utility::Utility_Clamp(e.enemy_position_x,
-                        area.area_min_x, area.area_max_x);                          // clamp x within enemy area
+                        area.area_min_x, area.area_max_x);                                                                  // clamp x within enemy area
                     e.enemy_position_y = Utility::Utility_Clamp(e.enemy_position_y,
-                        area.Area_BoxMinY(), area.Area_BoxMaxY());                  // clamp y within enemy area
+                        area.Area_BoxMinY(), area.Area_BoxMaxY());                                                          // clamp y within enemy area
 
                     if (e.enemy_position_y <= area.area_landing_y)                                                          // reached landing line
                     {
@@ -1076,16 +1074,14 @@ namespace EnemySystem
             }
         }
 
-        /*
-        [NEW] — letter orbit effect update, runs while enemy is falling and has a word
-        *//*--------------------------------*/
+        // letter orbit effect update, runs while enemy is falling and has a word
         if (!e.enemy_word_text.empty() && !e.enemy_has_landed)                                                              // only run orbit while enemy is actively falling
         {
-            if (!e.enemy_orbit_initialised)                                                                                  // first frame this enemy is active, do the random roll
+            if (!e.enemy_orbit_initialised)                                                                                 // first frame this enemy is active, do the random roll
             {
                 e.enemy_has_orbit_effect = (Utility::Utility_RandInt(0, 99) < EnemyConfig::ORBIT_SPAWN_CHANCE);             // randomly decide if this enemy gets the orbit effect
-                e.enemy_orbit_initialised = true;                                                                            // mark as initialised so the roll never happens again
-                e.enemy_orbit_phase = 0;                                                                                     // start in idle phase
+                e.enemy_orbit_initialised = true;                                                                           // mark as initialised so the roll never happens again
+                e.enemy_orbit_phase = 0;                                                                                    // start in idle phase
                 e.enemy_orbit_idle_timer = EnemyConfig::ORBIT_IDLE_DURATION_SECONDS;                                        // start with a full idle wait before first orbit
             }
 
@@ -1093,32 +1089,32 @@ namespace EnemySystem
             {
                 if (e.enemy_orbit_phase == 0)                                                                               // IDLE phase: sitting at baseline, waiting for next orbit
                 {
-                    e.enemy_orbit_idle_timer -= dt;                                                                          // count down the idle wait
+                    e.enemy_orbit_idle_timer -= dt;                                                                         // count down the idle wait
                     e.enemy_orbit_radius = Utility::Utility_Lerp(                                                           // smoothly return radius to zero while idle
                         e.enemy_orbit_radius, 0.0f, EnemyConfig::ORBIT_FADE_SPEED * dt);
 
                     if (e.enemy_orbit_idle_timer <= 0.0f)                                                                   // idle wait finished, start orbiting
                     {
-                        e.enemy_orbit_phase = 1;                                                                             // switch to ORBITING phase
-                        e.enemy_orbit_timer = 0.0f;                                                                          // reset orbit angle so the next orbit starts clean
+                        e.enemy_orbit_phase = 1;                                                                            // switch to ORBITING phase
+                        e.enemy_orbit_timer = 0.0f;                                                                         // reset orbit angle so the next orbit starts clean
                     }
                 }
                 else if (e.enemy_orbit_phase == 1)                                                                          // ORBITING phase: letters spin outward for one full rotation
                 {
-                    e.enemy_orbit_timer += dt;                                                                               // advance the orbit angle timer
+                    e.enemy_orbit_timer += dt;                                                                              // advance the orbit angle timer
 
                     e.enemy_orbit_radius = Utility::Utility_Lerp(                                                           // smoothly lerp radius up toward max
                         e.enemy_orbit_radius, EnemyConfig::ORBIT_RADIUS_MAX_NDC, EnemyConfig::ORBIT_FADE_SPEED * dt);
 
                     float full_rotation_seconds = (6.2831853f / EnemyConfig::ORBIT_SPEED);                                  // time for one full 360 degree orbit
-                    if (e.enemy_orbit_timer >= full_rotation_seconds)                                                        // one full rotation completed, start returning
+                    if (e.enemy_orbit_timer >= full_rotation_seconds)                                                       // one full rotation completed, start returning
                     {
-                        e.enemy_orbit_phase = 2;                                                                             // switch to RETURNING phase
+                        e.enemy_orbit_phase = 2;                                                                            // switch to RETURNING phase
                     }
                 }
                 else if (e.enemy_orbit_phase == 2)                                                                          // RETURNING phase: radius fades back to zero
                 {
-                    e.enemy_orbit_timer += dt;                                                                               // keep advancing timer so letters continue rotating while returning
+                    e.enemy_orbit_timer += dt;                                                                              // keep advancing timer so letters continue rotating while returning
 
                     e.enemy_orbit_radius = Utility::Utility_Lerp(                                                           // smoothly lerp radius back toward zero
                         e.enemy_orbit_radius, 0.0f, EnemyConfig::ORBIT_FADE_SPEED * dt);
@@ -1126,8 +1122,8 @@ namespace EnemySystem
                     if (e.enemy_orbit_radius < 0.001f)                                                                      // radius close enough to zero, letters are back at baseline
                     {
                         e.enemy_orbit_radius = 0.0f;                                                                        // snap cleanly to zero
-                        e.enemy_orbit_phase = 0;                                                                             // switch back to IDLE phase
-                        e.enemy_orbit_idle_timer = EnemyConfig::ORBIT_IDLE_DURATION_SECONDS;                                 // reset the 2 second idle wait
+                        e.enemy_orbit_phase = 0;                                                                            // switch back to IDLE phase
+                        e.enemy_orbit_idle_timer = EnemyConfig::ORBIT_IDLE_DURATION_SECONDS;                                // reset the 2 second idle wait
                     }
                 }
             }
@@ -1249,7 +1245,7 @@ namespace EnemySystem
         if (!e.enemy_is_active) return;                                                                                     // skip inactive enemies
         if (Graphics::font_id < 0) return;                                                                                  // skip if font missing
         if (e.enemy_word_text.empty()) return;                                                                              // skip if no text
-        if (e.enemy_is_dying) return;                                                                                       // [NEW] skip during death animation so word disappears when enemy is killed
+        if (e.enemy_is_dying) return;                                                                                       // skip during death animation so word disappears when enemy is killed
 
         float ndc_x = 0.0f, ndc_y = 0.0f;
         Utility::Convert_WorldToNdc(e.enemy_position_x, e.enemy_position_y, ndc_x, ndc_y);                                  // convert enemy position to NDC
@@ -1262,9 +1258,7 @@ namespace EnemySystem
 
         AEGfxSetBlendMode(AE_GFX_BM_BLEND);                                                                                 // enable blending for text
 
-        /*
-        [NEW] — draw each letter individually with orbit effect applied per letter
-        *//*--------------------------------*/
+        // draw each letter individually with orbit effect applied per letter
         int word_len = (int)e.enemy_word_text.size();                                                                       // number of letters in the word
         float cursor_x = draw_x;                                                                                            // tracks baseline x position as we step through letters
 
@@ -1277,17 +1271,17 @@ namespace EnemySystem
             float final_x = cursor_x;                                                                                       // default to baseline x position
             float final_y = draw_y;                                                                                         // default to baseline y position
 
-            if (e.enemy_has_orbit_effect && e.enemy_orbit_radius > 0.001f && !e.enemy_has_landed)                            // only apply orbit if assigned, radius is meaningful, and enemy is still falling
+            if (e.enemy_has_orbit_effect && e.enemy_orbit_radius > 0.001f && !e.enemy_has_landed)                           // only apply orbit if assigned, radius is meaningful, and enemy is still falling
             {
                 float angle = e.enemy_orbit_timer * EnemyConfig::ORBIT_SPEED                                                // orbit angle advances over time
-                    + (float)li * (6.2831853f / (float)word_len);                                                            // each letter is evenly spaced around the full circle
+                    + (float)li * (6.2831853f / (float)word_len);                                                           // each letter is evenly spaced around the full circle
 
                 float orbit_x = ndc_x + cosf(angle) * e.enemy_orbit_radius;                                                 // orbit x position around enemy center
                 float orbit_y = ndc_y + sinf(angle) * e.enemy_orbit_radius;                                                 // orbit y position around enemy center
 
                 float t = e.enemy_orbit_radius / EnemyConfig::ORBIT_RADIUS_MAX_NDC;                                         // blend factor 0 at baseline, 1 at full orbit
                 final_x = cursor_x + (orbit_x - cursor_x) * t;                                                              // blend between baseline and orbit x
-                final_y = draw_y + (orbit_y - draw_y) * t;                                                                // blend between baseline and orbit y
+                final_y = draw_y + (orbit_y - draw_y) * t;                                                                  // blend between baseline and orbit y
             }
 
             AEGfxPrint(Graphics::font_id, single, final_x, final_y, EnemyConfig::TEXT_SCALE, 0, 0, 0, 1);                   // draw letter in black at final blended position
@@ -1824,64 +1818,63 @@ namespace EnemyManage
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
     void EnemyManage_Free(Data::Meshes& meshes, std::vector<Data::Enemy>& pool, std::deque<int>& free_slots)
     {
-        free_slots.clear();                                                                                                     // discard any stale indices
+        free_slots.clear();                                                                                                 // discard any stale indices
 
         for (int i = 0; i < (int)pool.size(); ++i)
         {
             Data::Enemy& e = pool[(size_t)i];
-            e.enemy_is_active = false;                                                                                          // mark slot inactive
-            e.enemy_is_dying = false;                                                                                           // clear dying flag
-            e.enemy_has_landed = false;                                                                                         // clear landed flag
-            e.enemy_did_damage = false;                                                                                         // clear damage flag
-            e.enemy_word_text.clear();                                                                                          // clear word text
-            e.enemy_word_text_alt.clear();                                                                                      // clear alternate word text
-            e.enemy_word_length = 0;                                                                                            // reset word length
-            e.enemy_lane_id = -1;                                                                                               // reset lane assignment
-            e.enemy_shield_intact = false;                                                                                      // clear shield flag
-            e.enemy_dying_linger_timer_seconds = 0.0f;                                                                          // reset linger timer
-            /*
-            [NEW] — reset letter orbit effect state so pool slot is fully clean
-            *//*--------------------------------*/
+            e.enemy_is_active = false;                                                                                      // mark slot inactive
+            e.enemy_is_dying = false;                                                                                       // clear dying flag
+            e.enemy_has_landed = false;                                                                                     // clear landed flag
+            e.enemy_did_damage = false;                                                                                     // clear damage flag
+            e.enemy_word_text.clear();                                                                                      // clear word text
+            e.enemy_word_text_alt.clear();                                                                                  // clear alternate word text
+            e.enemy_word_length = 0;                                                                                        // reset word length
+            e.enemy_lane_id = -1;                                                                                           // reset lane assignment
+            e.enemy_shield_intact = false;                                                                                  // clear shield flag
+            e.enemy_dying_linger_timer_seconds = 0.0f;                                                                      // reset linger timer
+
+            // reset letter orbit effect state so pool slot is fully clean
             e.enemy_orbit_timer = 0.0f;                                                                                     // reset orbit angle timer
             e.enemy_orbit_radius = 0.0f;                                                                                    // reset orbit radius
             e.enemy_orbit_idle_timer = 0.0f;                                                                                // reset idle timer
             e.enemy_orbit_phase = 0;                                                                                        // reset to idle phase
             e.enemy_has_orbit_effect = false;                                                                               // clear orbit effect flag
-            e.enemy_orbit_initialised = false;                                                                               // clear initialised flag so next spawn re-rolls
+            e.enemy_orbit_initialised = false;                                                                              // clear initialised flag so next spawn re-rolls
             e.enemy_is_targeted = false;                                                                                    // clear targeted flag
-            /*--------------------------------*/
-            free_slots.push_back(i);                                                                                            // return slot to the free queue
+
+            free_slots.push_back(i);                                                                                        // return slot to the free queue
         }
 
-        if (meshes.debug_box_mesh) AEGfxMeshFree(meshes.debug_box_mesh);                                                        // free debug mesh
-        if (meshes.enemy_sprite_mesh) AEGfxMeshFree(meshes.enemy_sprite_mesh);                                                  // free enemy mesh
-        if (meshes.shield_sprite_mesh) AEGfxMeshFree(meshes.shield_sprite_mesh);                                                // free shield mesh
-        if (meshes.friendly_sprite_mesh) AEGfxMeshFree(meshes.friendly_sprite_mesh);                                            // free friendly mesh
-        meshes = {};                                                                                                            // reset mesh pointers to defaults
+        if (meshes.debug_box_mesh) AEGfxMeshFree(meshes.debug_box_mesh);                                                    // free debug mesh
+        if (meshes.enemy_sprite_mesh) AEGfxMeshFree(meshes.enemy_sprite_mesh);                                              // free enemy mesh
+        if (meshes.shield_sprite_mesh) AEGfxMeshFree(meshes.shield_sprite_mesh);                                            // free shield mesh
+        if (meshes.friendly_sprite_mesh) AEGfxMeshFree(meshes.friendly_sprite_mesh);                                        // free friendly mesh
+        meshes = {};                                                                                                        // reset mesh pointers to defaults
 
-        for (int i = 3; i <= 8; ++i)                                                                                            // loop through enemy texture slots
+        for (int i = 3; i <= 8; ++i)                                                                                        // loop through enemy texture slots
         {
-            if (Graphics::enemy_textures[i])                                                                                    // check if texture exists
+            if (Graphics::enemy_textures[i])                                                                                // check if texture exists
             {
-                AEGfxTextureUnload(Graphics::enemy_textures[i]);                                                                // unload texture
-                Graphics::enemy_textures[i] = nullptr;                                                                          // clear pointer
+                AEGfxTextureUnload(Graphics::enemy_textures[i]);                                                            // unload texture
+                Graphics::enemy_textures[i] = nullptr;                                                                      // clear pointer
             }
         }
 
-        if (Graphics::friendly_texture) AEGfxTextureUnload(Graphics::friendly_texture);                                         // unload princess npc texture
-        Graphics::friendly_texture = nullptr;                                                                                   // clear pointer
+        if (Graphics::friendly_texture) AEGfxTextureUnload(Graphics::friendly_texture);                                     // unload princess npc texture
+        Graphics::friendly_texture = nullptr;                                                                               // clear pointer
 
-        if (Graphics::shield_texture) AEGfxTextureUnload(Graphics::shield_texture);                                             // unload shield enemy texture
-        Graphics::shield_texture = nullptr;                                                                                     // clear pointer
+        if (Graphics::shield_texture) AEGfxTextureUnload(Graphics::shield_texture);                                         // unload shield enemy texture
+        Graphics::shield_texture = nullptr;                                                                                 // clear pointer
 
-        if (Graphics::font_id >= 0)                                                                                             // check if font exists
+        if (Graphics::font_id >= 0)                                                                                         // check if font exists
         {
-            AEGfxDestroyFont(Graphics::font_id);                                                                                // destroy font
-            Graphics::font_id = -1;                                                                                             // reset font id
+            AEGfxDestroyFont(Graphics::font_id);                                                                            // destroy font
+            Graphics::font_id = -1;                                                                                         // reset font id
         }
 
-        std::deque<int>().swap(free_slots);                                                                                     // release free_slots internal buffer
-        std::vector<Data::Enemy>().swap(pool);                                                                                  // release enemy pool internal buffer
+        std::deque<int>().swap(free_slots);                                                                                 // release free_slots internal buffer
+        std::vector<Data::Enemy>().swap(pool);                                                                              // release enemy pool internal buffer
     }
 } // EnemyManage namespace end
 /*___________________________________________________________________________________________________________________________________________________________________________________________________*/
