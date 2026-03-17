@@ -40,15 +40,15 @@ namespace
     constexpr float TRIGGER_MAX_SEC = 50.0f;   // latest
 
     // Phase durations
-    constexpr float FREEZE_IN_DUR = 1.8f;   
-    constexpr float THAW_DUR = 1.2f; 
+    constexpr float FREEZE_IN_DUR = 1.8f;
+    constexpr float THAW_DUR = 1.2f;
 
     // Spacebar break free mechanic
-    constexpr int   SPACES_NEEDED = 15;       
+    constexpr int   SPACES_NEEDED = 15;
 
     // Particle counts
-    constexpr int   AMBIENT_COUNT = 80;      
-    constexpr int   BLIZZARD_COUNT = 140;     
+    constexpr int   AMBIENT_COUNT = 80;
+    constexpr int   BLIZZARD_COUNT = 140;
 
     // Particle speed range
     constexpr float AMB_SPEED_MIN = 60.0f;
@@ -79,12 +79,12 @@ namespace
     constexpr float OVL_R = 0.55f;
     constexpr float OVL_G = 0.75f;
     constexpr float OVL_B = 1.00f;
-    constexpr float OVL_ALPHA_MAX = 0.55f; 
+    constexpr float OVL_ALPHA_MAX = 0.55f;
 
     // Progress bar dimensions (snowy)
     constexpr float BAR_W = 400.0f;
     constexpr float BAR_H = 28.0f;
-    constexpr float BAR_Y = -250.0f; 
+    constexpr float BAR_Y = -250.0f;
 
     // Flash when a space is pressed
     constexpr float FLASH_DUR = 0.08f;
@@ -171,7 +171,7 @@ namespace
     static BoltPhase s_boltPhase = BoltPhase::WAITING;
     static float     s_boltPhaseTimer = 0.0f;    // timer within current bolt phase
     static float     s_stunTimer = 0.0f;    // input stun remaining
-    static float     s_strikeFlash = 0.0f;   
+    static float     s_strikeFlash = 0.0f;
     static int       s_lungeEnemyIdx = -1;       // index of enemy currently lunging, sentinel val of -1 indicate no enemy lunging
     static float     s_lungeTimer = 0.0f;    // lunge boost duration remaining
     static float     s_lungeOrigSpeed = 0.0f;    // original speed before lunge boost
@@ -371,8 +371,11 @@ bool Weather_IsPlayerFrozen() { return s_state == WeatherState::FROZEN; }
 bool Weather_IsPlayerStunned() { return (s_activeType == WeatherType::THUNDER && s_stunTimer > 0.0f); }
 
 // Used in debugconsole
-void Weather_ForceEvent(int type)
+void Weather_ForceEvent(int type, std::vector<Data::Enemy>& enemy_pool)
 {
+    // Restore any active lunge before cancelling (prevents permanent speed boost)
+    Thunder_RestoreLunge(enemy_pool);
+
     // Cancel any active event first, reset to a clean IDLE state
     s_state = WeatherState::IDLE;
     s_phaseTimer = 0.0f;
@@ -381,8 +384,6 @@ void Weather_ForceEvent(int type)
     s_spaceWasHeld = false;
     s_stunTimer = 0.0f;
     s_strikeFlash = 0.0f;
-    s_lungeEnemyIdx = -1;
-    s_lungeTimer = 0.0f;
 
     if (type == 0)
     {
@@ -530,7 +531,7 @@ namespace
     // "SPAM SPACE TO BREAK FREE!" prompt text
     static void DrawFreezeHUD()
     {
-        if (Graphics::font_id < 0) return
+        if (Graphics::font_id < 0) return;
 
         AEGfxSetBlendMode(AE_GFX_BM_BLEND);
         // Main "FROZEN" title icy blue
@@ -670,7 +671,7 @@ namespace
     // Restore lunging enemy's original speed when lunge expires
     static void Thunder_RestoreLunge(std::vector<Data::Enemy>& enemy_pool)
     {
-        if (s_lungeEnemyIdx < 0) return;
+        if (s_lungeEnemyIdx < 0 || s_lungeEnemyIdx >= (int)enemy_pool.size()) { s_lungeEnemyIdx = -1; s_lungeTimer = 0.0f; return; }
         Data::Enemy& e = enemy_pool[(size_t)s_lungeEnemyIdx];
         // Only restore if still active (might have been killed)
         if (e.enemy_is_active) e.enemy_fall_speed_units_per_second = s_lungeOrigSpeed;
@@ -708,7 +709,7 @@ namespace
         }
 
         // Also restore lunge if struck enemy was killed mid-lunge
-        if (s_lungeEnemyIdx >= 0)
+        if (s_lungeEnemyIdx >= 0 && s_lungeEnemyIdx < (int)enemy_pool.size())
         {
             const Data::Enemy& e = enemy_pool[(size_t)s_lungeEnemyIdx];
             if (!e.enemy_is_active || e.enemy_is_dying) Thunder_RestoreLunge(enemy_pool);
