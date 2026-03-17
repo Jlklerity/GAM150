@@ -58,8 +58,8 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 	if (gGameStateExit)
 		gGameStateExit();
 
-	_CrtDumpMemoryLeaks();
-
 	// free the system
 	AESysExit();
+
+	_CrtDumpMemoryLeaks();
 }
