@@ -1879,6 +1879,9 @@ namespace EnemyManage
             AEGfxDestroyFont(Graphics::font_id);                                                                                // destroy font
             Graphics::font_id = -1;                                                                                             // reset font id
         }
+
+        std::deque<int>().swap(free_slots);                                                                                     // release free_slots internal buffer
+        std::vector<Data::Enemy>().swap(pool);                                                                                  // release enemy pool internal buffer
     }
 } // EnemyManage namespace end
 /*___________________________________________________________________________________________________________________________________________________________________________________________________*/

@@ -412,6 +412,9 @@ namespace BossSystem
         boss_current_word.clear();                                                                                          // clear the kill word text
         boss_used_words.clear();                                                                                            // clear the word history on exit
         boss_was_defeated = false;                                                                                          // clear the defeat flag on exit
+
+        std::string().swap(boss_current_word);                                                                              // release boss_current_word internal buffer
+        std::unordered_set<std::string>().swap(boss_used_words);                                                            // release boss_used_words internal buffer
     }
 
     /*

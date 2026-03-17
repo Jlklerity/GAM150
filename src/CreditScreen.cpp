@@ -113,4 +113,13 @@ namespace
 
     }
 
+    void CreditScreen_Exit()
+    {
+        if (Graphics::font_id >= 0)
+        {
+            AEGfxDestroyFont(Graphics::font_id);
+            Graphics::font_id = -1;
+        }
+    }
+
  

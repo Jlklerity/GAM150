@@ -117,15 +117,16 @@ void Game_Init()
     playerTexture1 = AEGfxTextureLoad("Assets/characterSheet.png");
     AE_ASSERT_MESG(playerTexture1, "Failed to load characterSheet!");
     playerTexture2 = AEGfxTextureLoad("Assets/character2Sheet.png");
-    AE_ASSERT_MESG(playerTexture1, "Failed to load character2Sheet!");
+    AE_ASSERT_MESG(playerTexture2, "Failed to load character2Sheet!");
 
     if (playerMesh != nullptr) AEGfxMeshFree(playerMesh);
     playerMesh = Sprite_Mesh(SPRITE_UV_WIDTH, SPRITE_UV_HEIGHT);
 
     // Background
     bgTexture1 = AEGfxTextureLoad("Assets/background.png");
-    bgTexture2 = AEGfxTextureLoad("Assets/background.png"); //for ltr when we have more bg skins
     AE_ASSERT_MESG(bgTexture1, "Failed to load background!");
+    bgTexture2 = AEGfxTextureLoad("Assets/background.png"); //for ltr when we have more bg skins
+    AE_ASSERT_MESG(bgTexture2, "Failed to load background!");
 
     /*
     @overview   Enemy and Boss
@@ -355,6 +356,8 @@ render_only:
 
 void Game_Exit()
 {
+    UiGameOver::Exit();
+
     /*
     @overview   Boss and enemy cleanup
     @author     Wong Zi Yuan (w.ziyuan@digipen.edu)

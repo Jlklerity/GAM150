@@ -11,6 +11,16 @@ namespace {
 }
 
 namespace SysSettings {
+	void Settings_Exit()
+	{
+		if (pSettingsMeshOverlay)
+		{
+			AEGfxMeshFree(pSettingsMeshOverlay);
+			pSettingsMeshOverlay = nullptr;
+		}
+		isInit = false;
+	}
+
 	bool DisplaySettings() {
 
 		if (!isInit) {

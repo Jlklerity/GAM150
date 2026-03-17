@@ -203,6 +203,12 @@ namespace
 
 void Particles_Init()
 {
+    if (g_quad_mesh)
+    {
+        AEGfxMeshFree(g_quad_mesh); // release old mesh from GPU memory
+        g_quad_mesh = nullptr;   // clear pointer before rebuilding
+    }
+
     // build a simple 1x1 unit rectangle mesh (centered at origin), reused for all draws
     AEGfxMeshStart();
 
