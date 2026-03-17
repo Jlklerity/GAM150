@@ -136,6 +136,17 @@ namespace BossSystem
     int Boss_GetKillWordSlot();
 
     /*
+    @function       Boss_GetKillWordAnchorY
+    @brief          Returns the world-space Y position the kill word slot must always be pinned to.
+
+    This value is computed once in Boss_Init from the boss sprite scale and position constants so
+    there is a single source of truth for the kill word anchor Y. Both Boss_Update and
+    GameEnemyBoss::Update read this value instead of recomputing independently, eliminating any
+    risk of the two sites diverging and causing the kill word to appear at the wrong height.
+    *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
+    float Boss_GetKillWordAnchorY();
+
+    /*
     @function       Boss_IsActive
     @brief          Returns true while the boss is alive (CUTSCENE or ACTIVE state).
 
@@ -154,6 +165,17 @@ namespace BossSystem
     Nothing happens if the boss is already active or in the process of spawning.
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
     void Boss_ForceSpawn();
+
+    /*
+    @function       Boss_WasJustDefeated
+    @brief          Returns true for exactly one call after the boss death animation finishes.
+
+    The flag is set the moment the boss transitions from DEAD to INACTIVE, meaning the full death
+    animation has played through. Reading this function also clears the flag so subsequent calls
+    return false until the next boss is defeated. game.cpp uses this single-shot signal to trigger
+    the upgrade card screen at exactly the right moment without polling every frame.
+    *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
+    bool Boss_WasJustDefeated();
 
 } // BossSystem namespace end
 /*___________________________________________________________________________________________________________________________________________________________________________________________________*/

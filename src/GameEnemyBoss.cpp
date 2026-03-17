@@ -85,7 +85,7 @@ namespace GameEnemyBoss
         for (int i = 0; i < EnemyConfig::MAX_ENEMIES; ++i)                                                                  // loop through all pool slots
         {
             Data::Enemy& e = enemy_pool[(size_t)i];                                                                         // reference enemy slot
-            bool was_active     = e.enemy_is_active;                                                                        // remember if alive before update
+            bool was_active = e.enemy_is_active;                                                                            // remember if alive before update
             bool was_damage_done = e.enemy_did_damage;                                                                      // remember if damage already applied
 
             if (BossSystem::Boss_GetKillWordSlot() >= 0 && i == BossSystem::Boss_GetKillWordSlot()) continue;               // skip the boss kill word slot
@@ -99,20 +99,18 @@ namespace GameEnemyBoss
                 if (!was_damage_done)                                                                                       // enemy was killed by the player before landing
                     Particles_SpawnDamageImpact(e.enemy_position_x, e.enemy_position_y);                                    // spawn damage hit effect
                 else                                                                                                        // enemy landed and dealt damage
-                    Particles_SpawnKillImpact(e.enemy_position_x, e.enemy_position_y, e.enemy_word_length);     
+                    Particles_SpawnKillImpact(e.enemy_position_x, e.enemy_position_y, e.enemy_word_length);
             }
         }
 
         EnemySystem::Enemy_ResolveLaneStacking(enemy_pool, enemy_area);                                                     // fix spacing in lanes
 
-        // Re-pin the boss kill word slot after lane stacking may have moved it
+        // Re-pin the boss kill word slot after lane stacking may have moved it.
+        // Y comes from Boss_GetKillWordAnchorY so this matches what Boss_Update pins to.
         int kw_slot = BossSystem::Boss_GetKillWordSlot();                                                                   // get the pool slot the boss is using for its kill word, or -1 if none
         if (kw_slot >= 0 && kw_slot < (int)enemy_pool.size())                                                               // only re-pin if the slot is valid
         {
-            float boss_half = (EnemyConfig::ENEMY_SIZE_PX * BossConfig::BOSS_SPRITE_SCALE) * 0.5f;                          // half the boss sprite height in world space
-            float normal_half = EnemyConfig::ENEMY_SIZE_PX * 0.5f;                                                          // half a normal enemy sprite height in world space
-            float extra = 2.5f * (boss_half - normal_half);                                                                 // vertical offset to push the kill word text above the taller boss sprite
-            enemy_pool[(size_t)kw_slot].enemy_position_y = BossConfig::BOSS_POSITION_Y + extra;                             // restore the correct Y so lane stacking cannot push the word out of place
+            enemy_pool[(size_t)kw_slot].enemy_position_y = BossSystem::Boss_GetKillWordAnchorY();                           // restore the correct Y so lane stacking cannot push the word out of place
         }
     }
 

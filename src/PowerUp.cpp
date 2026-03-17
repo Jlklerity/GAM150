@@ -30,6 +30,7 @@
 #include <cstdlib>
 #include <ctime>
 #include <cstdio>  // snprintf
+#include "UpgradeSystem.h"
 
 namespace
 {
@@ -96,7 +97,7 @@ namespace
     static AEGfxTexture* g_texShield = nullptr;
     static AEGfxTexture* g_texSlow = nullptr;
 
-    // Last enemy area passed to Update � lets DebugSpawn use correct bounds
+    // Last enemy area passed to Update, lets DebugSpawn use correct bounds
     static Data::EnemyArea s_lastEnemyArea{};
 
     // ----------------------------------------------------------------
@@ -246,8 +247,12 @@ namespace
         switch (type)
         {
         case PowerUpSystem::PowerType::Lightning: ActivateLightning(pool, health); break;
-        case PowerUpSystem::PowerType::Shield:    g_shieldRemaining = SHIELD_DURATION; break;
-        case PowerUpSystem::PowerType::TimeSlow:  g_slowRemaining = SLOW_DURATION;   break;
+        case PowerUpSystem::PowerType::Shield:
+            g_shieldRemaining = SHIELD_DURATION * UpgradeSystem::Upgrade_GetPowerUpDurationMultiplier();                    // scaled by upgrade duration bonus
+            break;
+        case PowerUpSystem::PowerType::TimeSlow:
+            g_slowRemaining = SLOW_DURATION * UpgradeSystem::Upgrade_GetPowerUpDurationMultiplier();                        // scaled by upgrade duration bonus
+            break;
         }
     }
 }
@@ -264,7 +269,7 @@ namespace PowerUpSystem
         if (g_mesh) { AEGfxMeshFree(g_mesh); g_mesh = nullptr; }
         g_mesh = Sprite_Mesh(1.0f, 1.0f);  // full UV (no atlas slicing needed)
 
-        // Load sprite textures — gracefully handle missing assets
+        // Load sprite textures, gracefully handle missing assets
         g_texLightning = AEGfxTextureLoad("Assets/lightningpowerup.png");
         g_texShield = AEGfxTextureLoad("Assets/shieldpowerup.png");
         g_texSlow = AEGfxTextureLoad("Assets/slowpowerup.png");
@@ -347,7 +352,13 @@ namespace PowerUpSystem
         if (g_spawnTimer >= g_nextSpawnIn)
         {
             g_spawnTimer = 0.0f;
-            g_nextSpawnIn = RandRange(g_spawnMin, g_spawnMax);
+            // Apply upgrade spawn-rate reduction: subtract the accumulated bonus seconds and clamp to 0.5s minimum
+            float reduction = UpgradeSystem::Upgrade_GetPowerUpSpawnIntervalReduction();
+            float reducedMin = g_spawnMin - reduction;
+            float reducedMax = g_spawnMax - reduction;
+            if (reducedMin < 0.5f) reducedMin = 0.5f;                                                                       // never let the interval go below 0.5 seconds
+            if (reducedMax < reducedMin) reducedMax = reducedMin;                                                           // keep max >= min after reduction
+            g_nextSpawnIn = RandRange(reducedMin, reducedMax);
             TrySpawnDrop(enemy_area);
         }
 
@@ -379,14 +390,14 @@ namespace PowerUpSystem
             // Fall
             d.y -= d.fallSpeed * dt;
 
-            // Floor reached � disappear without activating
+            // Floor reached, disappear without activating
             if (d.y - DROP_HALF <= enemy_area.area_landing_y)
             {
                 d.active = false;
                 continue;
             }
 
-            // Number key press � activate and consume the drop
+            // Number key press, activate and consume the drop
             if (AEInputCheckTriggered(static_cast<u8>(keys[i])))
             {
                 d.active = false;

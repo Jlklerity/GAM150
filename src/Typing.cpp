@@ -9,6 +9,7 @@
 #include "LaserBeam.h"
 #include <cstring>
 #include <iostream>
+#include <cmath>
 #include "StreakSystem.h"
 
 
@@ -400,41 +401,89 @@ void Typing_DrawEnemyWords(const std::vector<Data::Enemy>& enemy_pool)
 {
     if (Graphics::font_id < 0) return;                                                                                      // skip if font missing
 
-    for (int i = 0; i < (int)enemy_pool.size(); ++i)                                                                       // loop through all enemies by index so we can compare against s_targetIndex
+    for (int i = 0; i < (int)enemy_pool.size(); ++i)                                                                        // loop through all enemies by index so we can compare against s_targetIndex
     {
         const Data::Enemy& e = enemy_pool[(size_t)i];                                                                       // read enemy data
 
         if (!e.enemy_is_active) continue;                                                                                   // skip inactive enemies
         if (e.enemy_word_text.empty()) continue;                                                                            // skip if no text
+        if (e.enemy_is_dying) continue;                                                                                     // skip during death animation so word disappears when enemy is killed
 
         float ndc_x = 0.0f, ndc_y = 0.0f;
-        Utility::Convert_WorldToNdc(e.enemy_position_x, e.enemy_position_y, ndc_x, ndc_y);                                 // convert enemy world pos to NDC for text placement
+        Utility::Convert_WorldToNdc(e.enemy_position_x, e.enemy_position_y, ndc_x, ndc_y);                                  // convert enemy world pos to NDC for text placement
 
         float text_w = 0.0f, text_h = 0.0f;
-        AEGfxGetPrintSize(Graphics::font_id, e.enemy_word_text.c_str(), EnemyConfig::TEXT_SCALE, &text_w, &text_h);        // measure full word size for centering
+        AEGfxGetPrintSize(Graphics::font_id, e.enemy_word_text.c_str(), EnemyConfig::TEXT_SCALE, &text_w, &text_h);         // measure full word size for centering
 
-        float draw_x = ndc_x - (text_w * 0.5f);                                                                            // center text horizontally over enemy
-        float draw_y = ndc_y - (text_h * -2.5f);                                                                           // position text vertically above enemy
+        float draw_x = ndc_x - (text_w * 0.5f);                                                                             // center text horizontally over enemy
+        float draw_y = ndc_y - (text_h * -2.5f);                                                                            // position text vertically above enemy sprite
 
-        AEGfxSetBlendMode(AE_GFX_BM_BLEND);                                                                                // enable blending for text
+        AEGfxSetBlendMode(AE_GFX_BM_BLEND);                                                                                 // enable blending for text
 
-        if (i == s_targetIndex && typedLen > 0)                                                                             // this enemy is the current target and player has typed something
+        int word_len = (int)e.enemy_word_text.size();                                                                       // number of letters in the word
+        float cursor_x = draw_x;                                                                                            // tracks baseline x position as we step through letters
+
+        if (i == s_targetIndex && typedLen > 0)                                                                             // this enemy is targeted and player has typed something
         {
-            int split = (typedLen < (int)e.enemy_word_text.size()) ? typedLen : (int)e.enemy_word_text.size();             // clamp split to word length jic typedLen overshoots
+            int split = (typedLen < word_len) ? typedLen : word_len;                                                        // clamp split index to word length
 
-            std::string prefix = e.enemy_word_text.substr(0, (size_t)split);                                               // typed portion of the word
-            std::string suffix = e.enemy_word_text.substr((size_t)split);                                                  // remaining untyped portion
+            for (int li = 0; li < word_len; ++li)                                                                           // loop through every letter
+            {
+                char single[2] = { e.enemy_word_text[(size_t)li], '\0' };                                                   // isolate this letter
+                float lw = 0.0f, lh = 0.0f;
+                AEGfxGetPrintSize(Graphics::font_id, single, EnemyConfig::TEXT_SCALE, &lw, &lh);                            // measure letter width
 
-            float prefix_w = 0.0f, prefix_h = 0.0f;
-            AEGfxGetPrintSize(Graphics::font_id, prefix.c_str(), EnemyConfig::TEXT_SCALE, &prefix_w, &prefix_h);           // measure prefix width so suffix starts right after
+                float final_x = cursor_x;                                                                                   // default to baseline x
+                float final_y = draw_y;                                                                                     // default to baseline y
 
-            AEGfxPrint(Graphics::font_id, prefix.c_str(), draw_x, draw_y, EnemyConfig::TEXT_SCALE, 0.1f, 0.9f, 0.2f, 1); // draw typed prefix in green
-            if (!suffix.empty())
-                AEGfxPrint(Graphics::font_id, suffix.c_str(), draw_x + prefix_w, draw_y, EnemyConfig::TEXT_SCALE, 0, 0, 0, 1); // draw remaining suffix in black, offset by prefix width
+                if (e.enemy_has_orbit_effect && e.enemy_orbit_radius > 0.001f && !e.enemy_has_landed)                       // only apply orbit if assigned, radius is meaningful, and enemy is still falling
+                {
+                    float angle = e.enemy_orbit_timer * EnemyConfig::ORBIT_SPEED                                            // orbit angle advances over time
+                        + (float)li * (6.2831853f / (float)word_len);                                                       // each letter evenly spaced around the circle
+
+                    float orbit_x = ndc_x + cosf(angle) * e.enemy_orbit_radius;                                             // orbit x around enemy center
+                    float orbit_y = ndc_y + sinf(angle) * e.enemy_orbit_radius;                                             // orbit y around enemy center
+
+                    float t = e.enemy_orbit_radius / EnemyConfig::ORBIT_RADIUS_MAX_NDC;                                     // blend factor 0 at baseline, 1 at full orbit
+                    final_x = cursor_x + (orbit_x - cursor_x) * t;                                                          // blend baseline to orbit x
+                    final_y = draw_y + (orbit_y - draw_y) * t;                                                              // blend baseline to orbit y
+                }
+
+                if (li < split)                                                                                             // typed portion, draw green
+                    AEGfxPrint(Graphics::font_id, single, final_x, final_y, EnemyConfig::TEXT_SCALE, 0.1f, 0.9f, 0.2f, 1);
+                else                                                                                                        // untyped portion, draw black
+                    AEGfxPrint(Graphics::font_id, single, final_x, final_y, EnemyConfig::TEXT_SCALE, 0, 0, 0, 1);
+
+                cursor_x += lw;                                                                                             // advance baseline cursor
+            }
         }
-        else
+        else                                                                                                                // not targeted, draw all letters in black
         {
-            AEGfxPrint(Graphics::font_id, e.enemy_word_text.c_str(), draw_x, draw_y, EnemyConfig::TEXT_SCALE, 0, 0, 0, 1); // not targeted, draw full word in black
+            for (int li = 0; li < word_len; ++li)                                                                           // loop through every letter
+            {
+                char single[2] = { e.enemy_word_text[(size_t)li], '\0' };                                                   // isolate this letter
+                float lw = 0.0f, lh = 0.0f;
+                AEGfxGetPrintSize(Graphics::font_id, single, EnemyConfig::TEXT_SCALE, &lw, &lh);                            // measure letter width
+
+                float final_x = cursor_x;                                                                                   // default to baseline x
+                float final_y = draw_y;                                                                                     // default to baseline y
+
+                if (e.enemy_has_orbit_effect && e.enemy_orbit_radius > 0.001f && !e.enemy_has_landed)                       // only apply orbit if assigned, radius is meaningful, and enemy is still falling
+                {
+                    float angle = e.enemy_orbit_timer * EnemyConfig::ORBIT_SPEED                                            // orbit angle advances over time
+                        + (float)li * (6.2831853f / (float)word_len);                                                       // each letter evenly spaced around the circle
+
+                    float orbit_x = ndc_x + cosf(angle) * e.enemy_orbit_radius;                                             // orbit x around enemy center
+                    float orbit_y = ndc_y + sinf(angle) * e.enemy_orbit_radius;                                             // orbit y around enemy center
+
+                    float t = e.enemy_orbit_radius / EnemyConfig::ORBIT_RADIUS_MAX_NDC;                                     // blend factor 0 at baseline, 1 at full orbit
+                    final_x = cursor_x + (orbit_x - cursor_x) * t;                                                          // blend baseline to orbit x
+                    final_y = draw_y + (orbit_y - draw_y) * t;                                                              // blend baseline to orbit y
+                }
+
+                AEGfxPrint(Graphics::font_id, single, final_x, final_y, EnemyConfig::TEXT_SCALE, 0, 0, 0, 1);               // draw letter in black at final position
+                cursor_x += lw;                                                                                             // advance baseline cursor
+            }
         }
     }
 }
@@ -460,6 +509,8 @@ void Typing_UpdateAndApplyToEnemies(std::vector<Data::Enemy>& enemy_pool, Data::
     if (typed_buffer.empty()) //if nothing typed, unlock target and return
     {
         s_targetIndex = -1;
+        for (int i = 0; i < (int)enemy_pool.size(); ++i)
+            enemy_pool[(size_t)i].enemy_is_targeted = false; // no target, clear all targeted flags
         return;
     }
 
@@ -470,6 +521,9 @@ void Typing_UpdateAndApplyToEnemies(std::vector<Data::Enemy>& enemy_pool, Data::
 
     // if no target locked try to find one
     if (s_targetIndex < 0) s_targetIndex = EnemySystem::Enemy_FindBestTargetByPrefix(enemy_pool, typed_buffer);
+
+    for (int i = 0; i < (int)enemy_pool.size(); ++i)
+        enemy_pool[(size_t)i].enemy_is_targeted = (i == s_targetIndex);  // mark only the current target as targeted
 
     // if player pressed enter, always clear (and only kill if locked + exact match)
     if (submitted)
