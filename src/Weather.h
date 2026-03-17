@@ -40,6 +40,7 @@ bool Weather_IsPlayerStunned();  // true during brief thunder strike stun
 /**
  * @brief Debug helper: immediately triggers a weather event of the given type.
  *        Any currently active event is cancelled first.
- * @param type  0 = Snow/Blizzard, 1 = Thunderstorm
+ * @param type       0 = Snow/Blizzard, 1 = Thunderstorm
+ * @param enemy_pool reference to enemy vector (needed to restore lunge speed)
  */
-void Weather_ForceEvent(int type);
+void Weather_ForceEvent(int type, std::vector<Data::Enemy>& enemy_pool);

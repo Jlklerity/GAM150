@@ -686,7 +686,7 @@ void Tutorial_Update()
 
             // Stage 8: Weather - trigger on READY
         case STAGE_WEATHER:
-            if (s_readyClicked && !s_stageStarted) { Weather_ForceEvent(0); s_stageStarted = true; }
+            if (s_readyClicked && !s_stageStarted) { Weather_ForceEvent(0, s_pool); s_stageStarted = true; }
             if (s_stageStarted)
             {
                 Weather_Update(dt, s_pool);
