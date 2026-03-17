@@ -276,7 +276,14 @@ namespace
         e.enemy_animation.animation_columns = 6;
         e.enemy_animation.animation_rows = 2;
         e.enemy_animation.animation_frame_duration_seconds = 0.1f;
-        // enemy_orbit_initialised left false (default) so the orbit system activates on this enemy
+
+        // force orbit for tutorial
+        e.enemy_orbit_initialised = true;
+        e.enemy_has_orbit_effect = true;
+        e.enemy_orbit_phase = 0;
+        e.enemy_orbit_idle_timer = EnemyConfig::ORBIT_IDLE_DURATION_SECONDS;
+        e.enemy_orbit_radius = 0.0f;
+        e.enemy_orbit_timer = 0.0f;
     }
 
     bool AnyEnemyActive()
