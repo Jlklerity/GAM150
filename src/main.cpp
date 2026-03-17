@@ -6,6 +6,7 @@
 #include "game.h"
 #include "MainMenu.h"
 #include "Enemy.h"
+#include "SoundManager.h"
 
 // ---------------------------------------------------------------------------
 // main
@@ -30,6 +31,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 	// reset the system modules
 	AESysReset();
 	GSM_Init(GS_MAIN_MENU);
+	SoundManager::Init();   // load once, globally
 
 	// Game Loop
 	while (gGameRunning)
@@ -62,6 +64,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 		AEGfxDestroyFont(Graphics::font_id);
 		Graphics::font_id = -1;
 	}
+	SoundManager::Exit();
 
 	// free the system
 	AESysExit();

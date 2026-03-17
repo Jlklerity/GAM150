@@ -356,8 +356,7 @@ void Shop_Update(){
 	DisplayScore();
 }
 
-void Shop_Exit(){
-
+void Shop_Exit() {
 	if (gGameStateNext != GS_MAIN_MENU) {
 		BackgroundParallax::MenuParallax_Exit();
 	}
@@ -375,20 +374,32 @@ void Shop_Exit(){
 		pTexBgFrame = nullptr;
 	}
 
+	// Null out any aliases BEFORE unloading to prevent double-free
+	// Currently [1] and [2] alias [0], so clear them first
+	if (pTexBgOptions[1] == pTexBgOptions[0]) pTexBgOptions[1] = nullptr;
+	if (pTexBgOptions[2] == pTexBgOptions[0]) pTexBgOptions[2] = nullptr;
 	if (pTexBgOptions[0]) {
 		AEGfxTextureUnload(pTexBgOptions[0]);
 		pTexBgOptions[0] = nullptr;
-
 	}
+	// These will only fire if real unique textures were assigned (i.e. TODOs completed)
+	if (pTexBgOptions[1]) { AEGfxTextureUnload(pTexBgOptions[1]); pTexBgOptions[1] = nullptr; }
+	if (pTexBgOptions[2]) { AEGfxTextureUnload(pTexBgOptions[2]); pTexBgOptions[2] = nullptr; }
+
+	// Same alias-safe pattern for skin options
+	// Currently [2] aliases [0]
+	if (pTexSkinOptions[2] == pTexSkinOptions[0]) pTexSkinOptions[2] = nullptr;
 	if (pTexSkinOptions[0]) {
 		AEGfxTextureUnload(pTexSkinOptions[0]);
 		pTexSkinOptions[0] = nullptr;
-
 	}
 	if (pTexSkinOptions[1]) {
 		AEGfxTextureUnload(pTexSkinOptions[1]);
 		pTexSkinOptions[1] = nullptr;
 	}
+	// Will only fire if a real unique texture was assigned to [2]
+	if (pTexSkinOptions[2]) { AEGfxTextureUnload(pTexSkinOptions[2]); pTexSkinOptions[2] = nullptr; }
+
 	if (pTexBack) {
 		AEGfxTextureUnload(pTexBack);
 		pTexBack = nullptr;
@@ -400,12 +411,10 @@ void Shop_Exit(){
 	if (pBack) {
 		AEGfxMeshFree(pBack);
 		pBack = nullptr;
-
 	}
 	if (pMeshBgItem) {
 		AEGfxMeshFree(pMeshBgItem);
 		pMeshBgItem = nullptr;
-
 	}
 	if (pMeshSkinItem) {
 		AEGfxMeshFree(pMeshSkinItem);

@@ -65,6 +65,17 @@ namespace
 
 namespace UiGameOver
 {
+    void Exit()
+    {
+        if (s_mesh)
+        {
+            AEGfxMeshFree(s_mesh);
+            s_mesh = nullptr;
+        }
+        s_fadeInTimer = 0.0f;
+        s_initialized = false;
+    }
+
     void Check_IfDead(bool& isDead, bool& isGameOver, bool& openLeaderboard,
         AEGfxVertexList* bgMesh, std::string temp_name, const Data::Score& score)
     {

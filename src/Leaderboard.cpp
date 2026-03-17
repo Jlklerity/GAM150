@@ -33,8 +33,10 @@ namespace
 namespace Leaderboard_System
 {
 	void Init() {
-		if (overlayMesh != nullptr) {
-			return; 
+		if (overlayMesh)
+		{
+			AEGfxMeshFree(overlayMesh); // release old mesh from GPU memory
+			overlayMesh = nullptr; // clear pointer before rebuilding
 		}
 		// Create a dedicated 1x1 white mesh just for the leaderboard overlay
 		overlayMesh = Rect_Mesh(1.0f, 1.0f, 0xFFFFFFFF);
