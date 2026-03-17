@@ -11,6 +11,7 @@
 #include <iostream>
 #include <cmath>
 #include "StreakSystem.h"
+#include "Particles.h"
 
 
 
@@ -553,6 +554,7 @@ void Typing_UpdateAndApplyToEnemies(std::vector<Data::Enemy>& enemy_pool, Data::
                 {
                     LaserBeam_Fire(target.enemy_position_x, target.enemy_position_y); // fire laser to enemy
                     EnemySystem::Enemy_Killed(target, health);                                                  // kill friendly
+                    Particles_SpawnFriendlyHeal(target.enemy_position_x, target.enemy_position_y);             // play heal sprite effect
                     if (health.health_current < 0) health.health_current = 0;                                   // clamp
                     StreakSystem::OnWordCorrectAt(target.enemy_position_x, target.enemy_position_y);
                 }
@@ -562,6 +564,7 @@ void Typing_UpdateAndApplyToEnemies(std::vector<Data::Enemy>& enemy_pool, Data::
                 else if (target.enemy_type == Data::EnemyType::SHIELDED && target.enemy_shield_intact)
                 {
                     EnemySystem::Enemy_BreakShield(target);                                                     // row 0 to row 1, swap to word2
+                    Particles_SpawnShieldBreak(target.enemy_position_x, target.enemy_position_y);               // play shield break sprite effect
                     score.score_value += (int)(target.enemy_word_length * 10 * StreakSystem::GetMultiplier());
                 }
                 // -------------------------

@@ -61,3 +61,21 @@ void Particles_SpawnKillImpact(float x, float y, int word_length);
 @param      intensity   Max pixel offset per axis.
 */
 void Particles_TriggerShake(float duration, float intensity);
+
+/*
+@function   Particles_SpawnShieldBreak
+@brief      Plays the shield-break sprite sheet animation centered on the enemy.
+            Call this when a shielded enemy's shield is broken.
+@param      x   World X of the enemy.
+@param      y   World Y of the enemy.
+*/
+void Particles_SpawnShieldBreak(float x, float y);
+
+/*
+@function   Particles_SpawnFriendlyHeal
+@brief      Plays the friendly-heal sprite sheet animation centered on the enemy.
+            Call this when a friendly enemy is killed (player is healed).
+@param      x   World X of the enemy.
+@param      y   World Y of the enemy.
+*/
+void Particles_SpawnFriendlyHeal(float x, float y);
