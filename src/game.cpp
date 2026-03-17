@@ -362,8 +362,7 @@ void Game_Exit()
     @overview   Boss and enemy cleanup
     @author     Wong Zi Yuan (w.ziyuan@digipen.edu)
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
-    BossSystem::Boss_Free(meshes, free_slot_queue, enemy_pool);                                                             // unload boss assets and return the reserved pool slot
-    EnemyManage::EnemyManage_Free(meshes, enemy_pool, free_slot_queue);                                                     // free enemy pool and meshes
+    GameEnemyBoss::Free(meshes, enemy_pool, free_slot_queue, boss_spawning_blocked);                                        // unload boss assets, free enemy pool and meshes, return the reserved pool slot
     /*_______________________________________________________________________________________________________________________________________________________________________________________________*/
 
     Typing_Exit();

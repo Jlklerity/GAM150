@@ -341,12 +341,12 @@ namespace
             }
             if (IEquals(tokens[1], "snow"))
             {
-                Weather_ForceEvent(0);
+                Weather_ForceEvent(0, *s_pEnemyPool);
                 PushHistory("Triggered snow blizzard.", false);
             }
             else if (IEquals(tokens[1], "thunder"))
             {
-                Weather_ForceEvent(1);
+                Weather_ForceEvent(1, *s_pEnemyPool);
                 PushHistory("Triggered thunderstorm.", false);
             }
             else
@@ -356,7 +356,7 @@ namespace
             return; // azfar code end
         }
 
-       
+
         // Unknown command
         PushHistory("Unknown command: /" + cmd + "  (try /help)", true);
     }
@@ -559,7 +559,7 @@ namespace DebugConsole
         {
             float panelY = s_isOpen ? HISTORY_PANEL_Y : -HALF_H + INPUT_BAR_H + HISTORY_PANEL_H * 0.5f + 4.0f;
 
-			DrawPanel(0.0f, panelY, SCREEN_W, HISTORY_PANEL_H, 0.0f, 0.0f, 0.0f, 0.65f); // history panel background
+            DrawPanel(0.0f, panelY, SCREEN_W, HISTORY_PANEL_H, 0.0f, 0.0f, 0.0f, 0.65f); // history panel background
 
             //  Draw history lines 
             // s_scrollOffset=0 means show the newest VISIBLE_LINES entries
@@ -589,7 +589,7 @@ namespace DebugConsole
                 // convert to NDC for print
                 float ny = WorldYtoNDC(worldY);
 
-                
+
                 float nx = WorldXtoNDC(-HALF_W + 12.0f);
 
                 // pick red for errors, white for normal output

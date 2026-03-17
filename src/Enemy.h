@@ -60,15 +60,12 @@ namespace EnemyConfig
     extern const int   ENEMY_LANE_COUNT;                                                                                    // number of horizontal lanes
     extern const float ENEMY_LANE_MIN_GAP_PX;                                                                               // min vertical spacing per lane
 
-    /*
-    [NEW] — letter orbit effect tuning constants
-    *//*--------------------------------*/
+    // letter orbit effect tuning constants
     extern const float ORBIT_RADIUS_MAX_NDC;                                                                                // maximum orbit radius in NDC space that letters reach at full effect
     extern const float ORBIT_SPEED;                                                                                         // how fast letters orbit in radians per second
     extern const float ORBIT_FADE_SPEED;                                                                                    // lerp speed when orbit radius fades in or out
     extern const float ORBIT_IDLE_DURATION_SECONDS;                                                                         // how long letters sit at baseline between orbits
     extern const int   ORBIT_SPAWN_CHANCE;                                                                                  // percentage chance 0 to 99 that a spawned enemy gets the orbit effect
-    /*--------------------------------*/
 }
 /*___________________________________________________________________________________________________________________________________________________________________________________________________*/
 
@@ -205,17 +202,14 @@ namespace Data
 
         SpriteAnim enemy_animation{};                                                                                       // animation state for this enemy
 
-        /*
-        [NEW] — letter orbit effect state
-        *//*--------------------------------*/
+        // letter orbit effect state
         float enemy_orbit_timer = 0.0f;                                                                                     // accumulates over time to drive the orbit angle for each letter
         float enemy_orbit_radius = 0.0f;                                                                                    // current orbit radius in NDC, lerps toward max when active and toward 0 when targeted
         float enemy_orbit_idle_timer = 0.0f;                                                                                // counts down 2 seconds while letters sit at baseline between orbits
         int   enemy_orbit_phase = 0;                                                                                        // 0 = idle at baseline, 1 = orbiting outward, 2 = returning to baseline
-        bool enemy_has_orbit_effect = false;                                                                                 // true if this enemy was randomly assigned the orbit effect on spawn
-        bool enemy_orbit_initialised = false;                                                                                // true after the random roll has been performed for this slot
+        bool enemy_has_orbit_effect = false;                                                                                // true if this enemy was randomly assigned the orbit effect on spawn
+        bool enemy_orbit_initialised = false;                                                                               // true after the random roll has been performed for this slot
         bool enemy_is_targeted = false;                                                                                     // true when the player has locked onto this enemy for typing
-        /*--------------------------------*/
     };
 
     /*
