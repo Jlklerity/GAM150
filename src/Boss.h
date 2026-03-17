@@ -167,6 +167,17 @@ namespace BossSystem
     void Boss_ForceSpawn();
 
     /*
+    @function       Boss_ForceKill
+    @params         pool (std::vector<Data::Enemy>&), free_slots (std::deque<int>&)
+    @brief          Immediately kills the boss and triggers the death animation. Debug only.
+
+    Deactivates the kill word slot, returns it to the free list, and switches the boss directly
+    to the DEAD state so the death animation plays and Boss_WasJustDefeated fires normally.
+    Does nothing if the boss is not in the ACTIVE state.
+    *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
+    bool Boss_ForceKill(std::vector<Data::Enemy>& pool, std::deque<int>& free_slots);
+
+    /*
     @function       Boss_WasJustDefeated
     @brief          Returns true for exactly one call after the boss death animation finishes.
 

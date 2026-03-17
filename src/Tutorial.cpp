@@ -49,6 +49,7 @@ enum TutorialStage
     STAGE_FRIENDLY,
     STAGE_SHIELDED,
     STAGE_STREAK,
+    STAGE_ORBIT,
     STAGE_POWERUP,
     STAGE_WEATHER,
     STAGE_BOSS_WARNING,
@@ -62,6 +63,7 @@ static const char* STAGE_MESSAGES[STAGE_COUNT] =
     "That's a caged princess!\nType her word to free\nher and gain health!",
     "This enemy has a shield!\nType word 1 to break it,\nthen word 2 to finish!",
     "Build a typing streak!\nType 5 words correctly\nto grow your flame!",
+    "Some enemies orbit their\nword around them! Type\nthe word to defeat them.",
     "Power ups fall from the\nsky! Press the NUMBER\nshown to activate!\nMore types await in game...",
     "Blizzards can freeze you!\nMash SPACEBAR to break\nfree when frozen!\nMore weather events await...",
     "After 60 seconds a BOSS\nappears! Type its words\nto deal damage.\nGood luck - go play!"
@@ -74,6 +76,7 @@ static const char* STAGE_OBJECTIVES[STAGE_COUNT] =
     "Objective: Free the princess",
     "Objective: Break shield, then kill",
     "Objective: Reach a 5 word streak",
+    "Objective: Kill the orbiting enemy",
     "Objective: Activate a power up",
     "Objective: Escape the blizzard!",
     ""
@@ -183,6 +186,7 @@ namespace
         e.enemy_animation.animation_columns = 6;
         e.enemy_animation.animation_rows = 2;
         e.enemy_animation.animation_frame_duration_seconds = 0.1f;
+        e.enemy_orbit_initialised = true;                                                                                   // disable orbit so the tutorial word stays in place
     }
 
     void SpawnFriendlyEnemy(const std::string& word)
@@ -204,6 +208,7 @@ namespace
         e.enemy_animation.animation_columns = 6;
         e.enemy_animation.animation_rows = 3;
         e.enemy_animation.animation_frame_duration_seconds = 0.1f;
+        e.enemy_orbit_initialised = true;                                                                                   // disable orbit so the tutorial word stays in place
     }
 
     void SpawnShieldedEnemy(const std::string& word1, const std::string& word2)
@@ -227,6 +232,7 @@ namespace
         e.enemy_animation.animation_columns = 6;
         e.enemy_animation.animation_rows = 3;
         e.enemy_animation.animation_frame_duration_seconds = 0.1f;
+        e.enemy_orbit_initialised = true;                                                                                   // disable orbit so the tutorial word stays in place
     }
 
     void SpawnStreakEnemy(const std::string& word)
@@ -248,6 +254,36 @@ namespace
         e.enemy_animation.animation_columns = 6;
         e.enemy_animation.animation_rows = 2;
         e.enemy_animation.animation_frame_duration_seconds = 0.1f;
+        e.enemy_orbit_initialised = true;                                                                                   // disable orbit so the tutorial word stays in place
+    }
+
+    void SpawnOrbitEnemy(const std::string& word)
+    {
+        if (s_freeSlots.empty()) return;
+        int slot = s_freeSlots.front();
+        s_freeSlots.pop_front();
+        Data::Enemy& e = s_pool[(size_t)slot];
+        e = {};
+        e.enemy_is_active = true;
+        e.enemy_word_text = word;
+        e.enemy_word_length = (int)word.size();
+        e.enemy_position_x = 0.0f;
+        e.enemy_position_y = s_enemyArea.area_spawn_y;
+        e.enemy_fall_speed_units_per_second = 80.0f;
+        e.enemy_lane_id = 4;
+        e.enemy_type = Data::EnemyType::NORMAL;
+        e.enemy_death_row_index = 1;
+        e.enemy_animation.animation_columns = 6;
+        e.enemy_animation.animation_rows = 2;
+        e.enemy_animation.animation_frame_duration_seconds = 0.1f;
+
+        // force orbit for tutorial
+        e.enemy_orbit_initialised = true;
+        e.enemy_has_orbit_effect = true;
+        e.enemy_orbit_phase = 0;
+        e.enemy_orbit_idle_timer = EnemyConfig::ORBIT_IDLE_DURATION_SECONDS;
+        e.enemy_orbit_radius = 0.0f;
+        e.enemy_orbit_timer = 0.0f;
     }
 
     bool AnyEnemyActive()
@@ -407,6 +443,22 @@ void Tutorial_Init()
 
     AEGfxSetCamPosition(0.0f, 0.0f);
     AEGfxSetBackgroundColor(0.53f, 0.81f, 0.92f);
+
+    Typing_Exit();
+    PowerUpSystem::Free();
+    Weather_Exit();
+    Particles_Free();
+    StreakSystem::Exit();
+    BackgroundParallax::MenuParallax_Exit();
+    GameClouds::Exit();
+    LaserBeam_Free();
+    EnemyManage::EnemyManage_Free(s_meshes, s_pool, s_freeSlots);
+
+    if (s_bgTex) { AEGfxTextureUnload(s_bgTex); s_bgTex = nullptr; }
+    if (s_bgMesh) { AEGfxMeshFree(s_bgMesh); s_bgMesh = nullptr; }
+    if (s_playerTex) { AEGfxTextureUnload(s_playerTex); s_playerTex = nullptr; }
+    if (s_playerMesh) { AEGfxMeshFree(s_playerMesh); s_playerMesh = nullptr; }
+    if (s_rectMesh) { AEGfxMeshFree(s_rectMesh); s_rectMesh = nullptr; }
 
     s_rectMesh = Rect_Mesh(1.0f, 1.0f, 0xFFFFFFFF);
     s_playerTex = AEGfxTextureLoad("Assets/characterSheet.png");
@@ -611,7 +663,19 @@ void Tutorial_Update()
             break;
         }
 
-        // Stage 6: Power up - spawn on READY
+        // Stage 6: Orbit - show an enemy whose word orbits around it
+        case STAGE_ORBIT:
+            if (s_readyClicked && !s_stageStarted) { SpawnOrbitEnemy("SPIN"); s_stageStarted = true; }
+            if (s_stageStarted)
+            {
+                Typing_UpdateAndApplyToEnemies(s_pool, s_score, s_health);
+                UpdateEnemies(dt, true);
+                if (!AnyEnemyActive() && s_stageTimer > 0.5f)
+                    s_objectiveMet = true;
+            }
+            break;
+
+            // Stage 7: Power up - spawn on READY
         case STAGE_POWERUP:
             if (s_readyClicked && !s_stageStarted)
             {
@@ -627,9 +691,9 @@ void Tutorial_Update()
             }
             break;
 
-            // Stage 7: Weather - trigger on READY
+            // Stage 8: Weather - trigger on READY
         case STAGE_WEATHER:
-            if (s_readyClicked && !s_stageStarted) { Weather_ForceEvent(0); s_stageStarted = true; }
+            if (s_readyClicked && !s_stageStarted) { Weather_ForceEvent(0, s_pool); s_stageStarted = true; }
             if (s_stageStarted)
             {
                 Weather_Update(dt, s_pool);
@@ -638,7 +702,7 @@ void Tutorial_Update()
             }
             break;
 
-            // Stage 8: Boss warning - informational only
+            // Stage 9: Boss warning - informational only
         case STAGE_BOSS_WARNING:
             s_objectiveMet = true;
             break;
@@ -719,6 +783,7 @@ void Tutorial_Exit()
     BackgroundParallax::MenuParallax_Exit();
     GameClouds::Exit();
     LaserBeam_Free();
+
     EnemyManage::EnemyManage_Free(s_meshes, s_pool, s_freeSlots);
 
     if (s_bgTex) { AEGfxTextureUnload(s_bgTex);     s_bgTex = nullptr; }

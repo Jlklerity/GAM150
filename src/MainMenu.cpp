@@ -536,6 +536,30 @@ void Main_Menu_EnterName(float worldYOffset, float ndcYOffset, bool allowInput)
 *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
 void Main_Menu_Init()
 {
+
+    // Add at the top of Main_Menu_Init(), before any TextureLoad:
+    if (pTexLogo) { AEGfxTextureUnload(pTexLogo);        pTexLogo = nullptr; }
+    if (pTexLeaderboard) { AEGfxTextureUnload(pTexLeaderboard);  pTexLeaderboard = nullptr; }
+    if (pTexPlay) { AEGfxTextureUnload(pTexPlay);         pTexPlay = nullptr; }
+    if (pTexShop) { AEGfxTextureUnload(pTexShop);         pTexShop = nullptr; }
+    if (pTexArrows) { AEGfxTextureUnload(pTexArrows);       pTexArrows = nullptr; }
+    if (pTexEnterName) { AEGfxTextureUnload(pTexEnterName);    pTexEnterName = nullptr; }
+    if (pTexBackName) { AEGfxTextureUnload(pTexBackName);     pTexBackName = nullptr; }
+    if (pTexSettings) { AEGfxTextureUnload(pTexSettings);     pTexSettings = nullptr; }
+    if (pTexTutorial) { AEGfxTextureUnload(pTexTutorial);     pTexTutorial = nullptr; }
+    if (pTexCredits) { AEGfxTextureUnload(pTexCredits);      pTexCredits = nullptr; }
+
+    if (pMeshLogo) { AEGfxMeshFree(pMeshLogo);         pMeshLogo = nullptr; }
+    if (pMeshBtn) { AEGfxMeshFree(pMeshBtn);          pMeshBtn = nullptr; }
+    if (pMeshExitBtn) { AEGfxMeshFree(pMeshExitBtn);      pMeshExitBtn = nullptr; }
+    if (pMeshEnterName) { AEGfxMeshFree(pMeshEnterName);    pMeshEnterName = nullptr; }
+    if (pMeshBackName) { AEGfxMeshFree(pMeshBackName);     pMeshBackName = nullptr; }
+    if (pMeshLeaderboardBtn) { AEGfxMeshFree(pMeshLeaderboardBtn); pMeshLeaderboardBtn = nullptr; }
+    if (pMeshCreditsBtn) { AEGfxMeshFree(pMeshCreditsBtn);   pMeshCreditsBtn = nullptr; }
+    if (pMeshLeftArrow) { AEGfxMeshFree(pMeshLeftArrow);    pMeshLeftArrow = nullptr; }
+    if (pMeshRightArrow) { AEGfxMeshFree(pMeshRightArrow);   pMeshRightArrow = nullptr; }
+    if (pMeshSettingsBtn) { AEGfxMeshFree(pMeshSettingsBtn);  pMeshSettingsBtn = nullptr; }
+    if (pMeshTutorialBtn) { AEGfxMeshFree(pMeshTutorialBtn);  pMeshTutorialBtn = nullptr; }
     uiOffsetX = 0.0f;
     transitioningToShop = false;
     inLeaderboard = false;
@@ -930,14 +954,18 @@ void Main_Menu_Exit()
             AEGfxTextureUnload(pTexTutorial);
             pTexTutorial = nullptr;
         }
-        if (pTexCredits)
-        {
-            AEGfxTextureUnload(pTexCredits);
-            pTexCredits = nullptr;
+        if (pMeshTutorialBtn) {
+            AEGfxMeshFree(pMeshTutorialBtn);
+            pMeshTutorialBtn = nullptr;
         }
+        if (pTexCredits)
+            {
+                AEGfxTextureUnload(pTexCredits);
+                pTexCredits = nullptr;
+            }
             ParallaxZoom::Reset();
             isZoomingToGame = false;
             Leaderboard_System::Free();
-        
-    
+        }
+    }
 }

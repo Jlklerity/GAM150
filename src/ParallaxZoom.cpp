@@ -47,6 +47,16 @@ namespace ParallaxZoom
 {
     void Start(int targetState)
     {
+        if (s_fadeMesh)
+        {
+            AEGfxMeshFree(s_fadeMesh);
+            s_fadeMesh = nullptr;
+        }
+        if (s_layerMesh)
+        {
+            AEGfxMeshFree(s_layerMesh);
+            s_layerMesh = nullptr;
+        }
         s_active = true;
         s_timer = 0.0f;
         s_targetState = targetState;

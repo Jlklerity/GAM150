@@ -1,4 +1,4 @@
-#include "Particles.h"
+ï»¿#include "Particles.h"
 #include "AEEngine.h"
 #include <cmath>
 #include <cstdlib>
@@ -84,6 +84,52 @@ namespace
         float duration = 0.0f; // total flash duration (used to calculate fade)
     };
 
+    //  Sprite effect tuning
+    constexpr int   MAX_SPRITE_EFFECTS = 16;          // max simultaneous sprite-sheet effects
+    constexpr float SHIELD_BREAK_FRAME_DUR = 0.07f;   // seconds per frame for shield break
+    constexpr float FRIENDLY_HEAL_FRAME_DUR = 0.08f;  // seconds per frame for friendly heal
+    constexpr float SPRITE_EFFECT_SIZE = 150.0f;    // drawn size in pixels (matches enemy size)
+
+    // which sprite sheet to use
+    enum class SpriteEffectType { SHIELD_BREAK, FRIENDLY_HEAL };
+
+    // single sprite-sheet effect instance
+    struct SpriteEffect
+    {
+        float x, y;                  // world position (centered)
+        int   frame = 0;             // current frame index
+        int   frame_count = 4;       // total frames on the sheet
+        float timer = 0.0f;          // time accumulated on current frame
+        float frame_dur = 0.25f;     // seconds per frame
+        float alpha = 1.0f;          // overall transparency
+        SpriteEffectType type = SpriteEffectType::SHIELD_BREAK;
+        bool  active = false;        // false = free slot
+    };
+
+    SpriteEffect g_sprite_effects[MAX_SPRITE_EFFECTS]{};
+
+    AEGfxTexture* g_tex_shield_break = nullptr;   // shieldbreaksheet.png
+    AEGfxTexture* g_tex_friendly_heal = nullptr;  // friendlyeffect.png
+
+    // builds a quad mesh whose UVs cover exactly one frame of a horizontal sprite sheet.
+    // u0 = left UV edge of the frame, u1 = right UV edge (u0 + 1.0/frame_count).
+    // caller must free the returned mesh after drawing.
+    AEGfxVertexList* BuildFrameQuad(float u0, float u1)
+    {
+        AEGfxMeshStart();
+        AEGfxTriAdd(
+            -0.5f, -0.5f, 0xFFFFFFFF, u0, 1.0f,
+            0.5f, -0.5f, 0xFFFFFFFF, u1, 1.0f,
+            -0.5f, 0.5f, 0xFFFFFFFF, u0, 0.0f);
+        AEGfxTriAdd(
+            0.5f, -0.5f, 0xFFFFFFFF, u1, 1.0f,
+            0.5f, 0.5f, 0xFFFFFFFF, u1, 0.0f,
+            -0.5f, 0.5f, 0xFFFFFFFF, u0, 0.0f);
+        return AEGfxMeshEnd();
+    }
+
+    AEGfxVertexList* g_uv_quad_mesh = nullptr;   // kept for safe Free(), not used for drawing
+
     // ==============================================================
     //  State
     // ==============================================================
@@ -93,6 +139,16 @@ namespace
     FlashState   g_flash{};                      // single shared flash state
 
     AEGfxVertexList* g_quad_mesh = nullptr;      // 1x1 unit rect, reused for all particles and lines
+
+    // scans pool for first inactive sprite effect slot
+    int AllocSpriteEffect()
+    {
+        for (int i = 0; i < MAX_SPRITE_EFFECTS; ++i)
+            if (!g_sprite_effects[i].active) return i;
+        return -1;
+    }
+
+
 
     // ===========================================================
     //  Utility helpers
@@ -228,8 +284,13 @@ void Particles_Init()
     // clear all pool slots and reset shared state
     for (int i = 0; i < MAX_PARTICLES; ++i) g_particles[i].active = false;
     for (int i = 0; i < MAX_IMPACT_LINES; ++i) g_lines[i].active = false;
+    for (int i = 0; i < MAX_SPRITE_EFFECTS; ++i) g_sprite_effects[i].active = false;
     g_shake = {};
     g_flash = {};
+
+    // load on-kill sprite sheet textures
+    g_tex_shield_break = AEGfxTextureLoad("Assets/shieldbreaksheet.png");
+    g_tex_friendly_heal = AEGfxTextureLoad("Assets/friendlyeffect.png");
 }
 
 void Particles_Free()
@@ -240,6 +301,17 @@ void Particles_Free()
         AEGfxMeshFree(g_quad_mesh);
         g_quad_mesh = nullptr;
     }
+
+    // free UV quad mesh used by sprite effects
+    if (g_uv_quad_mesh)
+    {
+        AEGfxMeshFree(g_uv_quad_mesh);
+        g_uv_quad_mesh = nullptr;
+    }
+
+    // free on-kill sprite sheet textures
+    if (g_tex_shield_break) { AEGfxTextureUnload(g_tex_shield_break);  g_tex_shield_break = nullptr; }
+    if (g_tex_friendly_heal) { AEGfxTextureUnload(g_tex_friendly_heal); g_tex_friendly_heal = nullptr; }
 }
 
 void Particles_Update(float dt)
@@ -252,13 +324,37 @@ void Particles_Update(float dt)
 
         p.life -= p.decay * dt;                  // fade out over time
         if (p.life <= 0.0f) {
-            p.active = false; 
-            continue; } // dead, free slot for reuse
+            p.active = false;
+            continue;
+        } // dead, free slot for reuse
 
         p.vy -= PARTICLE_GRAVITY * dt;           // gravity pulls down each frame
         p.x += p.vx * dt;                        // move horizontally
         p.y += p.vy * dt;                        // move vertically
         p.vx *= (1.0f - (1.0f - PARTICLE_DRAG) * dt * 60.0f); //  horizontal drag
+    }
+
+    // --- Sprite effects (on-kill sheet animations) ---
+    for (int i = 0; i < MAX_SPRITE_EFFECTS; ++i)
+    {
+        SpriteEffect& se = g_sprite_effects[i];
+        if (!se.active) continue;                        // skip free slots
+
+        se.timer += dt;
+        if (se.timer >= se.frame_dur)                    // time to advance to next frame
+        {
+            se.timer -= se.frame_dur;                    // carry over excess time
+            se.frame++;
+            if (se.frame >= se.frame_count)              // all frames shown, effect is done
+            {
+                se.active = false;
+                continue;
+            }
+        }
+
+        // fade out across the last two frames for a smooth finish
+        float frames_remaining = (float)(se.frame_count - se.frame);
+        se.alpha = (frames_remaining <= 2.0f) ? (frames_remaining * 0.5f) : 1.0f;
     }
 
     // --- Impact lines ---
@@ -323,6 +419,43 @@ void Particles_Draw()
         Particle& p = g_particles[i];
         if (!p.active) continue;
         DrawQuad(p.x, p.y, p.size, p.r, p.g, p.b, p.life); // life used as alpha
+    }
+
+    // --- Sprite effects (on-kill sheet animations) ---
+    for (int i = 0; i < MAX_SPRITE_EFFECTS; ++i)
+    {
+        SpriteEffect& se = g_sprite_effects[i];
+        if (!se.active) continue;
+
+        AEGfxTexture* tex = (se.type == SpriteEffectType::SHIELD_BREAK)
+            ? g_tex_shield_break
+            : g_tex_friendly_heal;
+        if (!tex) continue;                              // texture failed to load, skip silently
+
+        // calculate UV range for the current frame only
+        float frame_w = 1.0f / (float)se.frame_count;
+        float u0 = (float)se.frame * frame_w;            // left UV edge of this frame
+        float u1 = u0 + frame_w;                         // right UV edge of this frame
+
+        // build a fresh mesh whose UVs cover exactly this frame's slice of the sheet
+        AEGfxVertexList* frame_mesh = BuildFrameQuad(u0, u1);
+        if (!frame_mesh) continue;
+
+        AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
+        AEGfxSetBlendMode(AE_GFX_BM_BLEND);
+        AEGfxSetTransparency(se.alpha);
+        AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);
+        AEGfxSetColorToAdd(0.0f, 0.0f, 0.0f, 0.0f);
+        AEGfxTextureSet(tex, 0.0f, 0.0f);               // no offset needed; UVs are baked into the mesh
+
+        AEMtx33 scale_m, trans_m, transform_m;
+        AEMtx33Scale(&scale_m, SPRITE_EFFECT_SIZE, SPRITE_EFFECT_SIZE);
+        AEMtx33Trans(&trans_m, se.x, se.y);
+        AEMtx33Concat(&transform_m, &trans_m, &scale_m);
+
+        AEGfxSetTransform(transform_m.m);
+        AEGfxMeshDraw(frame_mesh, AE_GFX_MDM_TRIANGLES);
+        AEGfxMeshFree(frame_mesh);                       // free immediately after draw
     }
 
     // --- Screen flash (drawn last so it overlays everything) ---
@@ -451,7 +584,7 @@ void Particles_SpawnKillImpact(float x, float y, int word_length)
         if (i % 2 == 0) { p.r = cr;  p.g = cg;  p.b = cb; }
         else { p.r = cr2; p.g = cg2; p.b = cb2; }
     }
-    // note: no screen shake or flash — kill is a reward event, not a punishment
+    // note: no screen shake or flash ï¿½ kill is a reward event, not a punishment
 }
 
 #pragma warning(push)
@@ -462,5 +595,39 @@ void Particles_TriggerShake(float duration, float intensity)
     g_shake.timer = duration;
     g_shake.duration = duration;
     g_shake.intensity = intensity;
+}
+
+void Particles_SpawnShieldBreak(float x, float y)
+{
+    int slot = AllocSpriteEffect();
+    if (slot < 0) return;                              // pool full, skip silently
+
+    SpriteEffect& se = g_sprite_effects[slot];
+    se.active = true;
+    se.x = x;
+    se.y = y;
+    se.frame = 0;
+    se.frame_count = 4;                                // shieldbreaksheet.png has 4 frames
+    se.timer = 0.0f;
+    se.frame_dur = SHIELD_BREAK_FRAME_DUR;
+    se.alpha = 1.0f;
+    se.type = SpriteEffectType::SHIELD_BREAK;
+}
+
+void Particles_SpawnFriendlyHeal(float x, float y)
+{
+    int slot = AllocSpriteEffect();
+    if (slot < 0) return;                              // pool full, skip silently
+
+    SpriteEffect& se = g_sprite_effects[slot];
+    se.active = true;
+    se.x = x;
+    se.y = y;
+    se.frame = 0;
+    se.frame_count = 4;                                // friendlyeffect.png has 4 frames
+    se.timer = 0.0f;
+    se.frame_dur = FRIENDLY_HEAL_FRAME_DUR;
+    se.alpha = 1.0f;
+    se.type = SpriteEffectType::FRIENDLY_HEAL;
 }
 #pragma warning(pop)

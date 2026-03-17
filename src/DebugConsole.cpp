@@ -132,7 +132,7 @@ namespace
         {
             if (tokens.size() < 2)
             {
-                PushHistory("Usage: /spawn [3-8] | friendly | shield", true);
+                PushHistory("Usage: /spawn [3-8] | friendly | shield | boss", true);
                 return;
             }
 
@@ -170,7 +170,7 @@ namespace
             }
             catch (...)
             {
-                PushHistory("Error: unknown spawn type. Use [3-8], friendly, or shield.", true);
+                PushHistory("Error: unknown spawn type. Use [3-8], friendly, shield, boss.", true);
                 return;
             }
             if (len < 3 || len > 8)
@@ -181,6 +181,27 @@ namespace
             EnemySystem::Enemy_SpawnFromPool(*s_pEnemyPool, *s_pFreeSlots, *s_pEnemyArea, *s_pWordBank, len);
             PushHistory("Spawned enemy with word length " + std::to_string(len) + ".", false);
             return;                                                         // must return or falls through to unknown command
+        }
+
+        // /kill boss - instantly kill the active boss
+        if (IEquals(cmd, "kill"))
+        {
+            if (tokens.size() < 2)
+            {
+                PushHistory("Usage: /kill boss", true);
+                return;
+            }
+
+            if (IEquals(tokens[1], "boss"))
+            {
+                BossSystem::Boss_ForceKill(*s_pEnemyPool, *s_pFreeSlots);
+                PushHistory("Boss force-killed.", false);
+            }
+            else
+            {
+                PushHistory("Unknown kill target. Try: /kill boss", true);
+            }
+            return;
         }
 
         // /health add    -- add 10 hp
@@ -262,6 +283,8 @@ namespace
             PushHistory("/spawn [3-8]         - spawn enemy by word length", false);
             PushHistory("/spawn friendly      - spawn a friendly enemy", false);
             PushHistory("/spawn shield        - spawn a shielded enemy", false);
+            PushHistory("/spawn boss          - force-spawn the boss", false);
+            PushHistory("/kill boss           - instantly kill the active boss", false);
             PushHistory("/health add          - add 10 HP", false);
             PushHistory("/health die          - kills player", false);
             PushHistory("/difficulty up       - increase difficulty by 1", false);
@@ -274,6 +297,7 @@ namespace
             PushHistory("/powerup slow        - force-spawn TimeSlow drop", false);
             PushHistory("/weather snow        - trigger blizzard event", false);
             PushHistory("/weather thunder     - trigger thunderstorm event", false);
+            PushHistory("/weather rainbow     - trigger rainbow event", false);
 
             return;
         }
@@ -313,27 +337,32 @@ namespace
         {
             if (tokens.size() < 2)
             {
-                PushHistory("Usage: /weather [snow|thunder]", true);
+                PushHistory("Usage: /weather [snow|thunder|rainbow]", true);
                 return;
             }
             if (IEquals(tokens[1], "snow"))
             {
-                Weather_ForceEvent(0);
+                Weather_ForceEvent(0, *s_pEnemyPool);
                 PushHistory("Triggered snow blizzard.", false);
             }
             else if (IEquals(tokens[1], "thunder"))
             {
-                Weather_ForceEvent(1);
+                Weather_ForceEvent(1, *s_pEnemyPool);
                 PushHistory("Triggered thunderstorm.", false);
+            }
+            else if (IEquals(tokens[1], "rainbow"))
+            {
+                Weather_ForceEvent(2, *s_pEnemyPool);
+                PushHistory("Triggered rainbow.", false);
             }
             else
             {
-                PushHistory("Unknown weather type. Use: snow | thunder", true);
+                PushHistory("Unknown weather type. Use: snow | thunder | rainbow", true);
             }
             return; // azfar code end
         }
 
-       
+
         // Unknown command
         PushHistory("Unknown command: /" + cmd + "  (try /help)", true);
     }
@@ -536,7 +565,7 @@ namespace DebugConsole
         {
             float panelY = s_isOpen ? HISTORY_PANEL_Y : -HALF_H + INPUT_BAR_H + HISTORY_PANEL_H * 0.5f + 4.0f;
 
-			DrawPanel(0.0f, panelY, SCREEN_W, HISTORY_PANEL_H, 0.0f, 0.0f, 0.0f, 0.65f); // history panel background
+            DrawPanel(0.0f, panelY, SCREEN_W, HISTORY_PANEL_H, 0.0f, 0.0f, 0.0f, 0.65f); // history panel background
 
             //  Draw history lines 
             // s_scrollOffset=0 means show the newest VISIBLE_LINES entries
@@ -566,7 +595,7 @@ namespace DebugConsole
                 // convert to NDC for print
                 float ny = WorldYtoNDC(worldY);
 
-                
+
                 float nx = WorldXtoNDC(-HALF_W + 12.0f);
 
                 // pick red for errors, white for normal output

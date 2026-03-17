@@ -199,6 +199,14 @@ namespace
 
 void GameTimeMode_Init()
 {
+
+    if (playerTexture1) { AEGfxTextureUnload(playerTexture1); playerTexture1 = nullptr; }
+    if (playerTexture2) { AEGfxTextureUnload(playerTexture2); playerTexture2 = nullptr; }
+    if (playerMesh) { AEGfxMeshFree(playerMesh);          playerMesh = nullptr; }
+
+    playerTexture1 = AEGfxTextureLoad("Assets/characterSheet.png");
+    playerTexture2 = AEGfxTextureLoad("Assets/character2Sheet.png");
+    playerMesh = Sprite_Mesh(SPRITE_UV_WIDTH, SPRITE_UV_HEIGHT);
     // ---- Reset all state so restarts start clean ----
     animTimer = 0.0f;
     animDuration = 0.1f;
@@ -494,6 +502,7 @@ void GameTimeMode_Exit()
     Particles_Free();
     Weather_Exit();
     DebugConsole::Exit();
+    UiGameOver::Exit();
 
     if (playerMesh) { AEGfxMeshFree(playerMesh);           playerMesh = nullptr; }
     if (bgMesh) { AEGfxMeshFree(bgMesh);               bgMesh = nullptr; }
