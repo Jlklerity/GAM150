@@ -65,9 +65,9 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 		Graphics::font_id = -1;
 	}
 	SoundManager::Exit();
-
+	Main_Menu_Exit();
 	// free the system
 	AESysExit();
 
-	_CrtDumpMemoryLeaks();
+	//_CrtDumpMemoryLeaks();
 }
