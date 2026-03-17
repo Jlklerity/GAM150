@@ -21,8 +21,6 @@ namespace UpgradeConfig
 
     const float UPGRADE_CARD_HOVER_SCALE = 1.3f;                                                                            // scale factor applied to the card when hovered
 
-    const float UPGRADE_CARD_FRAME_DURATION = 0.15f;                                                                        // seconds to hold each animation frame before advancing
-
     const float UPGRADE_HP_BONUS = 10.0f;                                                                                   // extra max HP granted by the health card (+10)
     const float UPGRADE_DURATION_BONUS = 1.3f;                                                                              // duration multiplier stacked per pick
     const float UPGRADE_SPAWN_REDUCTION = 2.0f;                                                                             // seconds subtracted from power-up spawn interval per pick
@@ -50,15 +48,12 @@ namespace
     };
 
     static const int  CARD_COUNT = 3;                                                                                       // always exactly three cards on screen
-    static const int  CARD_ANIM_FRAMES = 2;                                                                                 // animation frames per sprite sheet
 
-    // Each card has its own 2-column, 1-row sprite sheet (uv_w = 0.5, uv_h = 1.0)
+    // Each card has its own single-image texture (full UV: uv_w = 1.0, uv_h = 1.0)
     // Index matches the UpgradeType enum value:
     //   0 = MAX_HP           -> Assets/MaxHP.png
     //   1 = POWERUP_DURATION -> Assets/IncreasePowerDuration.png
     //   2 = POWERUP_SPAWN    -> Assets/IncreasePowerSpawn.png
-    static const float CARD_UV_FRAME_W = 0.5f;                                                                              // uv width of one animation frame
-    static const float CARD_UV_FRAME_H = 1.0f;                                                                              // uv height of one animation frame
 
     static const char* const CARD_TEXTURE_PATHS[CARD_COUNT] =
     {
@@ -71,10 +66,6 @@ namespace
     AEGfxTexture* card_textures[CARD_COUNT] = { nullptr, nullptr, nullptr };                                                // one texture per card type
     AEGfxVertexList* card_mesh = nullptr;                                                                                   // quad covering one animation frame, shared by all cards
     AEGfxVertexList* overlay_mesh = nullptr;                                                                                // unit rect for the dim overlay
-
-    // Animation state: all three cards share the same frame so they animate in sync
-    float            card_anim_timer = 0.0f;                                                                                // counts up toward the next frame
-    int              card_anim_frame = 0;                                                                                   // current animation frame index
 
     // Screen state
     bool             upgrade_screen_open = false;
@@ -180,14 +171,12 @@ namespace UpgradeSystem
             AE_ASSERT_MESG(card_textures[i], CARD_TEXTURE_PATHS[i]);                                                        // crash with the path name if the file was not found
         }
 
-        // Build the shared card quad: uv_w = 0.5 (one column of 2), uv_h = 1.0 (full height)
-        card_mesh = Graphics::Mesh_BuildSpriteQuad(CARD_UV_FRAME_W, CARD_UV_FRAME_H, 0xFFFFFFFF);
+        // Build the shared card quad: full UV (uv_w = 1.0, uv_h = 1.0) for single-image textures
+        card_mesh = Graphics::Mesh_BuildSpriteQuad(1.0f, 1.0f, 0xFFFFFFFF);
 
         // Build the full-screen overlay rectangle (scaled at draw time)
         overlay_mesh = Graphics::Mesh_BuildUnitRect(0xFFFFFFFF);
 
-        card_anim_timer = 0.0f;
-        card_anim_frame = 0;
         upgrade_screen_open = false;
         for (int i = 0; i < CARD_COUNT; ++i)
             card_is_hovered[i] = false;
@@ -229,10 +218,6 @@ namespace UpgradeSystem
     {
         if (upgrade_screen_open) return;                                                                                    // already open, do nothing
 
-        // Reset animation to frame 0 so it starts cleanly each time the screen opens
-        card_anim_timer = 0.0f;
-        card_anim_frame = 0;
-
         // Fisher-Yates shuffle of the three upgrade types across display slots
         slot_upgrade_type[0] = UpgradeType::MAX_HP;
         slot_upgrade_type[1] = UpgradeType::POWERUP_DURATION;
@@ -270,14 +255,6 @@ namespace UpgradeSystem
     {
         if (!upgrade_screen_open) return;
 
-        // Advance shared card animation timer
-        card_anim_timer += dt;
-        if (card_anim_timer >= UpgradeConfig::UPGRADE_CARD_FRAME_DURATION)
-        {
-            card_anim_timer = 0.0f;
-            card_anim_frame = (card_anim_frame + 1) % CARD_ANIM_FRAMES;                                                     // loop between frame 0 and frame 1
-        }
-
         // Convert cursor pixel position to world space
         // Window is 1600x900 with world origin at center: wx = mx - 800, wy = 450 - my
         s32 mx = 0, my = 0;
@@ -306,11 +283,11 @@ namespace UpgradeSystem
 
     /*
     @function       Upgrade_Draw
-    @brief          Draws the dim overlay and three animated cards. Hovered card draws at 1.3x.
+    @brief          Draws the dim overlay and three cards. Hovered card draws at 1.3x.
 
-    Each slot binds its own texture based on which UpgradeType is assigned to it. All cards
-    use the same animation frame UV at any given moment. Idle cards are drawn first; the hovered
-    card is drawn last so it appears on top when enlarged.
+    Each slot binds its own texture based on which UpgradeType is assigned to it. Textures are
+    single full images with no animation. Idle cards are drawn first; the hovered card is drawn
+    last so it appears on top when enlarged.
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
     void Upgrade_Draw()
     {
@@ -327,9 +304,6 @@ namespace UpgradeSystem
         Graphics::Draw_DrawMeshAt(overlay_mesh, 0.0f, 0.0f, 1600.0f, 900.0f, 0.0f);
 
         // --- Cards (2-pass: idle first, hovered on top) ---
-        // Compute current animation UV x from the shared frame index
-        float uv_x = (float)card_anim_frame * CARD_UV_FRAME_W;                                                              // frame 0 maps to uv 0.0, frame 1 to 0.5
-
         for (int pass = 0; pass < 2; ++pass)
         {
             for (int i = 0; i < CARD_COUNT; ++i)
@@ -346,8 +320,8 @@ namespace UpgradeSystem
 
                 Graphics::Graphics_SetSpriteState();
 
-                // Bind this card's own texture at the current shared animation frame
-                AEGfxTextureSet(card_textures[type_idx], uv_x, 0.0f);
+                // Bind this card's own texture at UV origin (full single image)
+                AEGfxTextureSet(card_textures[type_idx], 0.0f, 0.0f);
 
                 float cx = Slot_CenterX(i);
                 float cy = UpgradeConfig::UPGRADE_CARD_CENTER_Y;
@@ -359,44 +333,6 @@ namespace UpgradeSystem
             }
         }
 
-        // --- Labels ---
-        if (Graphics::font_id >= 0)
-        {
-            static const char* const CARD_LABELS[CARD_COUNT] =
-            {
-                "MAX HP +10",                                                                                               // UpgradeType::MAX_HP
-                "LONGER POWERUPS",                                                                                          // UpgradeType::POWERUP_DURATION
-                "FASTER POWERUPS"                                                                                           // UpgradeType::POWERUP_SPAWN_RATE
-            };
-
-            const float LABEL_SCALE = 0.55f;
-            const float LABEL_OFFSET_Y = -(UpgradeConfig::UPGRADE_CARD_H * 0.5f + 30.0f);                                   // below the base card bottom edge
-
-            AEGfxSetBlendMode(AE_GFX_BM_BLEND);
-
-            for (int i = 0; i < CARD_COUNT; ++i)
-            {
-                int type_idx = static_cast<int>(slot_upgrade_type[i]);
-                if (type_idx < 0 || type_idx >= CARD_COUNT) continue;
-
-                const char* label = CARD_LABELS[type_idx];
-
-                float text_w = 0.0f, text_h = 0.0f;
-                AEGfxGetPrintSize(Graphics::font_id, label, LABEL_SCALE, &text_w, &text_h);
-
-                float cx = Slot_CenterX(i);
-                float cy = UpgradeConfig::UPGRADE_CARD_CENTER_Y + LABEL_OFFSET_Y;
-
-                float ndc_x = 0.0f, ndc_y = 0.0f;
-                Utility::Convert_WorldToNdc(cx, cy, ndc_x, ndc_y);
-
-                float print_x = ndc_x - (text_w * 0.5f);                                                                    // center label under the card
-                float brightness = card_is_hovered[i] ? 1.0f : 0.75f;                                                       // brighter label on hovered card
-
-                AEGfxPrint(Graphics::font_id, label, print_x, ndc_y,
-                    LABEL_SCALE, brightness, brightness, brightness, 1.0f);
-            }
-        }
     }
 
     float Upgrade_GetPowerUpDurationMultiplier() { return accumulated_duration_multiplier; }
@@ -411,8 +347,6 @@ namespace UpgradeSystem
         accumulated_duration_multiplier = 1.0f;
         accumulated_spawn_reduction = 0.0f;
         upgrade_screen_open = false;
-        card_anim_timer = 0.0f;
-        card_anim_frame = 0;
         for (int i = 0; i < CARD_COUNT; ++i)
             card_is_hovered[i] = false;
     }

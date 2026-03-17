@@ -37,7 +37,7 @@ namespace BossConfig
     const int   BOSS_MINION_CAP = 10;                                                                                       // maximum number of minions allowed on screen at once
     const float BOSS_MINION_SPAWN_INTERVAL_SECONDS = 20.0f;                                                                 // how many seconds between each minion wave
     const int   BOSS_MINION_WAVE_SIZE = 5;                                                                                  // how many minions spawn in one wave
-    const float BOSS_CUTSCENE_DURATION_SECONDS = 5.0f;                                                                      // how long the boss entrance animation plays before gameplay resumes
+    const float BOSS_CUTSCENE_DURATION_SECONDS = 3.0f;                                                                      // how long the boss entrance animation plays before gameplay resumes
     const float BOSS_POSITION_Y = 120.0f;                                                                                   // the fixed vertical position where the boss sits during a fight
 } // BossConfig namespace end
 /*___________________________________________________________________________________________________________________________________________________________________________________________________*/
@@ -102,7 +102,7 @@ namespace
     int         boss_anim_col = 0;                                                                                          // current frame column on the sprite sheet
     float       boss_anim_timer = 0.0f;                                                                                     // counts up toward the next frame
     const float BOSS_ANIM_FRAME_DURATION = 0.12f;                                                                           // seconds per frame for the alive animation
-    const float BOSS_ANIM_DEATH_FRAME_DURATION = 0.45f;                                                                     // seconds per frame for the death animation
+    const float BOSS_ANIM_DEATH_FRAME_DURATION = 0.25f;                                                                     // seconds per frame for the death animation
 
     // flash attack
     float       boss_flash_cooldown_timer = 0.0f;                                                                           // how many seconds until the next flash attack triggers

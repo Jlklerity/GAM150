@@ -954,18 +954,17 @@ void Main_Menu_Exit()
             AEGfxTextureUnload(pTexTutorial);
             pTexTutorial = nullptr;
         }
-        if (pMeshTutorialBtn) {
-            AEGfxMeshFree(pMeshTutorialBtn);
-            pMeshTutorialBtn = nullptr;
-        }
+
         if (pTexCredits)
-            {
-                AEGfxTextureUnload(pTexCredits);
-                pTexCredits = nullptr;
-            }
+        {
+            AEGfxTextureUnload(pTexCredits);
+            pTexCredits = nullptr;
+        }
             ParallaxZoom::Reset();
             isZoomingToGame = false;
             Leaderboard_System::Free();
-        }
-    }
+        
+    
 }
+
+
