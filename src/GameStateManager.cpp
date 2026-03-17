@@ -4,6 +4,7 @@
 #include "Shop.h"
 #include "TimeGame.h"
 #include "Tutorial.h"
+#include "CreditScreen.h"
 #include <AEEngine.h>
 
 //define global variables
@@ -64,6 +65,11 @@ void GSM_Update()
 			gGameStateInit = Shop_Init;
 			gGameStateUpdate = Shop_Update;
 			gGameStateExit = Shop_Exit;
+			break;
+		case GS_CREDITS:
+			gGameStateInit = CreditScreen_Init;
+			gGameStateUpdate = CreditScreen_Update;
+			//gGameStateExit = CreditScreen_Exit;
 			break;
 		case GS_QUIT:
 			// will handle the actual quitting in main

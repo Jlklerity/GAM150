@@ -30,6 +30,7 @@
     <ClCompile Include="src\StreakSystem.cpp" />
     <ClCompile Include="src\Tutorial.cpp" />
     <ClCompile Include="src\SoundManager.cpp" />
+    <ClCompile Include="src\CreditScreen.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\Enemy.h" />
@@ -60,6 +61,7 @@
     <ClInclude Include="src\StreakSystem.h" />
     <ClInclude Include="src\Tutorial.h" />
     <ClInclude Include="src\SoundManager.h" />
+    <ClInclude Include="src\CreditScreen.h" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="Assets\characterSheet.png" />

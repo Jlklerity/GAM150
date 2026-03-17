@@ -22,7 +22,7 @@ namespace
     AEAudio shieldSfx;
     AEAudio slowSfx;
 
-
+    bool isAudioLoaded = false;
     float masterVolume = 1.0f; // 100%
     float bgmVolume = 0.5f; // 50%
     float sfxVolume = 0.8f; // 80%
@@ -64,11 +64,13 @@ namespace SoundManager
         AEAudioSetGroupVolume(bgmGroup, 0.5f);
         AEAudioSetGroupVolume(sfxGroup, 0.8f);
         AEAudioSetGroupVolume(ambientGroup, 0.6f);
+        isAudioLoaded = true;
     }
 
     void Exit()
     {
         // Unload individual sounds to free memory
+        if (!isAudioLoaded) return;
         AEAudioUnloadAudio(bgmTrack);
         AEAudioUnloadAudio(rainTrack);
         AEAudioUnloadAudio(snowTrack);
@@ -86,6 +88,7 @@ namespace SoundManager
         AEAudioUnloadAudioGroup(bgmGroup);
         AEAudioUnloadAudioGroup(sfxGroup);
         AEAudioUnloadAudioGroup(ambientGroup);
+        isAudioLoaded = false;
     }
 
     void PlayBackgroundMusic()

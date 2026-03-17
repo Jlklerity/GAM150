@@ -41,6 +41,7 @@ namespace
     AEGfxVertexList* pMeshEnterName = nullptr;
     AEGfxVertexList* pMeshBackName = nullptr;
     AEGfxVertexList* pMeshTutorialBtn = nullptr;
+    AEGfxVertexList* pMeshCreditsBtn = nullptr;
 
     AEGfxTexture* pTexPlay = nullptr;                                                                                       // play button texture
     AEGfxTexture* pTexShop = nullptr;                                                                                       // shop button texture
@@ -51,6 +52,7 @@ namespace
     AEGfxTexture* pTexEnterName = nullptr;
     AEGfxTexture* pTexBackName = nullptr;
     AEGfxTexture* pTexTutorial = nullptr;
+    AEGfxTexture* pTexCredits = nullptr;
     // ---------------------------------------------------------------------------
     // WINDOW & CURSOR DATA
     // ---------------------------------------------------------------------------
@@ -102,6 +104,9 @@ namespace
     const float RIGHTARROW_WIDTH = 80.0f;                                                                                   // width of right arrow
     const float RIGHTARROW_HEIGHT = 80.0f;                                                                                  // height of right arrow
 
+    const float CREDITS_WIDTH = 240.0f;
+    const float CREDITS_HEIGHT = 240.0f;
+
     // ---------------------------------------------------------------------------
     // UI POSITIONS (DYNAMIC)
     // ---------------------------------------------------------------------------
@@ -126,6 +131,8 @@ namespace
     float LEADERBOARD_BTN_X;
     float LEADERBOARD_BTN_Y;
     float TUTORIAL_BTN_Y;
+    float CREDITS_BTN_X;
+    float CREDITS_BTN_Y;
 
     // ---------------------------------------------------------------------------
     // STATE & LOGIC VARIABLES
@@ -243,9 +250,18 @@ void Draw_Main_Menu(float textNdcOffset)
         Mesh_Renderer(pMeshSettingsBtn, SETTINGS_BTN_X + uiOffsetX, SETTINGS_BTN_Y, SETTINGS_WIDTH, SETTINGS_HEIGHT, 0.0f);
     }
 
+    if (pTexCredits)
+    {
+        AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
+        AEGfxTextureSet(pTexCredits, 0.0f, 0.0f);
+        Mesh_Renderer(pMeshCreditsBtn, CREDITS_BTN_X + uiOffsetX, CREDITS_BTN_Y, CREDITS_WIDTH, CREDITS_HEIGHT, 0.0f);
+    }
+
     // Draw Exit Buttons
     AEGfxSetRenderMode(AE_GFX_RM_COLOR);                                                                                    // swap back to color mode
     Mesh_Renderer(pMeshExitBtn, 0.0f + uiOffsetX, EXIT_BTN_Y, 1.0f, 1.0f, 0.0f);                                           // render exit button
+
+
 }
 
 /*
@@ -320,13 +336,20 @@ void Main_Menu_Input()
             SoundManager::PlayClickBtnSfx();
             inLeaderboard = true; // Open the overlay!                                                                                             
         }
-        // --- Check Tutorial Button ---
+        
         else if (worldX >= 0.0f - (TUTORIAL_HITBOX_WIDTH * 0.5f) && worldX <= 0.0f + (TUTORIAL_HITBOX_WIDTH * 0.5f) &&
             worldY >= TUTORIAL_BTN_Y - (TUTORIAL_HITBOX_HEIGHT * 0.5f) && worldY <= TUTORIAL_BTN_Y + (TUTORIAL_HITBOX_HEIGHT * 0.5f))
         {
             SoundManager::PlayClickBtnSfx();
             isZoomingToGame = true;
             ParallaxZoom::Start(GS_TUTORIAL);
+        }
+        // --- Check Credits Button ---
+        else if (worldX >= CREDITS_BTN_X - (CREDITS_WIDTH * 0.5f) && worldX <= CREDITS_BTN_X + (CREDITS_WIDTH * 0.5f) &&
+            worldY >= CREDITS_BTN_Y - (CREDITS_HEIGHT * 0.5f) && worldY <= CREDITS_BTN_Y + (CREDITS_HEIGHT * 0.5f))
+        {
+            SoundManager::PlayClickBtnSfx();
+            gGameStateNext = GS_CREDITS;  
         }
     }
 }
@@ -519,7 +542,7 @@ void Main_Menu_Init()
     Leaderboard_System::Read_TimeLeaderboard();
     
     
-    if (gGameStatePrev != GS_SHOP)
+    if (gGameStatePrev != GS_SHOP && gGameStatePrev != GS_CREDITS)
     {
         SoundManager::Init();
         SoundManager::PlayBackgroundMusic();
@@ -563,12 +586,16 @@ void Main_Menu_Init()
     pTexTutorial = AEGfxTextureLoad("Assets/tutorial.png");
     AE_ASSERT_MESG(pTexTutorial, "Failed to load tutorial.png");
 
+    pTexCredits = AEGfxTextureLoad("Assets/credits.png");
+    AE_ASSERT_MESG(pTexCredits, "Failed to load credits.png");
+
     pMeshLogo = Sprite_Mesh(1.0f, 1.0f);                                                            // build logo  
     pMeshBtn = Sprite_Mesh(1.0f, 1.0f);                                                                                     // build standard button mesh
     pMeshExitBtn = Rect_Mesh(EXIT_WIDTH, EXIT_HEIGHT, 0xFFFFFFFF);                                                          // build exit button mesh
     pMeshEnterName = Sprite_Mesh(1.0f, 1.0f);
     pMeshBackName = Sprite_Mesh(1.0f, 1.0f);
     pMeshLeaderboardBtn = Sprite_Mesh(1.0f, 1.0f);
+    pMeshCreditsBtn = Sprite_Mesh(1.0f, 1.0f);
 
     pMeshLeftArrow = Spritesheet_Mesh(1.0f, 1.0f, 0.0f, 0.0f, 0.5f, 0.5f);                                                  // slice left arrow mesh
     pMeshRightArrow = Spritesheet_Mesh(1.0f, 1.0f, 0.0f, 0.5f, 0.5f, 1.0f);                                                 // slice right arrow mesh
@@ -667,6 +694,9 @@ void Main_Menu_Update()
 
     RIGHTARROW_BTN_X = winH * 0.12f;                                                                                        // set right arrow X pos
     RIGHTARROW_BTN_Y = PLAY_BTN_Y - 90.0f;                                                                                  // set right arrow Y pos
+
+    CREDITS_BTN_X = winW * 0.23f; 
+    CREDITS_BTN_Y = winH * -0.4f;
 
     AEGfxSetCamPosition(0.0f, 0.0f);                                                                                        // reset camera explicitly
     AEGfxSetBackgroundColor(0.53f, 0.81f, 0.92f);                                                                              // clear screen to black
@@ -793,7 +823,7 @@ void Main_Menu_Update()
 void Main_Menu_Exit()
 {
     
-    if (gGameStateNext != GS_SHOP) {
+    if (gGameStateNext != GS_SHOP && gGameStateNext != GS_CREDITS) {
         BackgroundParallax::MenuParallax_Exit();
         SoundManager::Exit();
     }
@@ -847,6 +877,15 @@ void Main_Menu_Exit()
         AEGfxMeshFree(pMeshBackName);
         pMeshBackName = nullptr;
     }
+    if (pMeshCreditsBtn)
+    {
+        AEGfxMeshFree(pMeshCreditsBtn);
+        pMeshCreditsBtn = nullptr;
+    }
+    if (pMeshTutorialBtn) {
+        AEGfxMeshFree(pMeshTutorialBtn);
+        pMeshTutorialBtn = nullptr;
+    }
 
     // Free Textures
     if (pTexPlay)
@@ -888,9 +927,10 @@ void Main_Menu_Exit()
         AEGfxTextureUnload(pTexTutorial);
         pTexTutorial = nullptr;
     }
-    if (pMeshTutorialBtn) {
-        AEGfxMeshFree(pMeshTutorialBtn);
-        pMeshTutorialBtn = nullptr;
+    if (pTexCredits)
+    {
+        AEGfxTextureUnload(pTexCredits);
+        pTexCredits = nullptr;
     }
     ParallaxZoom::Reset();
     isZoomingToGame = false;
