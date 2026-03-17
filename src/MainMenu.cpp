@@ -542,11 +542,7 @@ void Main_Menu_Init()
     Leaderboard_System::Read_TimeLeaderboard();
     
     
-    if (gGameStatePrev != GS_SHOP && gGameStatePrev != GS_CREDITS)
-    {
-        SoundManager::Init();
-        SoundManager::PlayBackgroundMusic();
-    }
+    SoundManager::Init();
 
     BackgroundParallax::MenuParallax_Init();
 
@@ -825,7 +821,12 @@ void Main_Menu_Exit()
     
     if (gGameStateNext != GS_SHOP && gGameStateNext != GS_CREDITS) {
         BackgroundParallax::MenuParallax_Exit();
-        SoundManager::Exit();
+        
+    }
+    SoundManager::Exit();
+    if (Graphics::font_id >= 0)
+    {
+        AEGfxDestroyFont(Graphics::font_id);
     }
     ScreenTransitions::isTransitioning = false;                                                                             // safety clean transition
     AEGfxSetCamPosition(0.0f, 0.0f);                                                                                        // safety reset camera

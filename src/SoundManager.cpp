@@ -41,7 +41,11 @@ namespace SoundManager
 {
     void Init()
     {
+        if (gGameStatePrev == GS_MAIN_MENU || gGameStatePrev == GS_SHOP || gGameStatePrev == GS_CREDITS) {
+            return;
+        }
         // Create audio groups
+        if (isAudioLoaded) return;
         bgmGroup = AEAudioCreateGroup();
         sfxGroup = AEAudioCreateGroup();
         ambientGroup = AEAudioCreateGroup();
@@ -64,11 +68,20 @@ namespace SoundManager
         AEAudioSetGroupVolume(bgmGroup, 0.5f);
         AEAudioSetGroupVolume(sfxGroup, 0.8f);
         AEAudioSetGroupVolume(ambientGroup, 0.6f);
+         
+        UpdateVolumes();
         isAudioLoaded = true;
+        if (gGameStateCurr == GS_MAIN_MENU)
+        {
+            PlayBackgroundMusic();
+        }
     }
 
     void Exit()
     {
+        if (gGameStateNext == GS_MAIN_MENU || gGameStateNext == GS_SHOP || gGameStateNext == GS_CREDITS) {
+            return;
+        }
         // Unload individual sounds to free memory
         if (!isAudioLoaded) return;
         AEAudioUnloadAudio(bgmTrack);
