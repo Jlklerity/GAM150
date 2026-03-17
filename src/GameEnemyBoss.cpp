@@ -123,14 +123,13 @@ namespace GameEnemyBoss
     {
         // Boss
         boss_spawning_blocked = false;                                                                                      // reset spawn block flag back to default state
+        BossSystem::Boss_Free(meshes, free_slot_queue, enemy_pool);                                                         // unload boss assets and return the reserved pool slot
 
         // Enemy pool
         enemy_pool.clear();                                                                                                 // release pooled enemy storage
         enemy_pool.shrink_to_fit();                                                                                         // return pooled memory to the container if possible
         free_slot_queue.clear();                                                                                            // clear all cached free-slot indices
 
-        // EnemyManage::EnemyManage_ShutdownEngine();                                                                       // shut down enemy engine-owned state
-        BossSystem::Boss_Free(meshes, free_slot_queue, enemy_pool);                                                         // unload boss assets and return the reserved pool slot
         EnemyManage::EnemyManage_Free(meshes, enemy_pool, free_slot_queue);                                                 // free enemy pool and meshes
 
         meshes = Data::Meshes{};                                                                                            // reset mesh handles/state after cleanup
