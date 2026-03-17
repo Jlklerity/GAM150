@@ -40,6 +40,7 @@
     <ClCompile Include="src\TimeGame.cpp" />
     <ClCompile Include="src\Tutorial.cpp" />
     <ClCompile Include="src\Typing.cpp" />
+    <ClCompile Include="src\UpgradeSystem.cpp" />
     <ClCompile Include="src\Weather.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -71,6 +72,7 @@
     <ClInclude Include="src\TimeGame.h" />
     <ClInclude Include="src\Tutorial.h" />
     <ClInclude Include="src\Typing.h" />
+    <ClInclude Include="src\UpgradeSystem.h" />
     <ClInclude Include="src\Weather.h" />
   </ItemGroup>
   <ItemGroup>

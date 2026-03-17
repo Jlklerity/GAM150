@@ -30,7 +30,11 @@
     <ClCompile Include="src\StreakSystem.cpp" />
     <ClCompile Include="src\Tutorial.cpp" />
     <ClCompile Include="src\SoundManager.cpp" />
+<<<<<<< HEAD
     <ClCompile Include="src\CreditScreen.cpp" />
+=======
+    <ClCompile Include="src\UpgradeSystem.cpp" />
+>>>>>>> 70c192718b2ef84e1446b0b066be64d6f60864b9
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\Enemy.h" />
@@ -61,7 +65,11 @@
     <ClInclude Include="src\StreakSystem.h" />
     <ClInclude Include="src\Tutorial.h" />
     <ClInclude Include="src\SoundManager.h" />
+<<<<<<< HEAD
     <ClInclude Include="src\CreditScreen.h" />
+=======
+    <ClInclude Include="src\UpgradeSystem.h" />
+>>>>>>> 70c192718b2ef84e1446b0b066be64d6f60864b9
   </ItemGroup>
   <ItemGroup>
     <Image Include="Assets\characterSheet.png" />

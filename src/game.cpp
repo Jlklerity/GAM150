@@ -21,6 +21,7 @@
 #include "DeathTransition.h"
 #include "GameClouds.h"
 #include "StreakSystem.h"
+#include "UpgradeSystem.h"
 
 namespace {
     //avatar mesh and texture
@@ -115,7 +116,7 @@ void Game_Init()
     //player
     playerTexture1 = AEGfxTextureLoad("Assets/characterSheet.png");
     AE_ASSERT_MESG(playerTexture1, "Failed to load characterSheet!");
-    playerTexture2 = AEGfxTextureLoad("Assets/character2Sheet.png"); 
+    playerTexture2 = AEGfxTextureLoad("Assets/character2Sheet.png");
     AE_ASSERT_MESG(playerTexture1, "Failed to load character2Sheet!");
 
     if (playerMesh != nullptr) AEGfxMeshFree(playerMesh);
@@ -139,6 +140,7 @@ void Game_Init()
     Leaderboard_System::Init();
     //Shop_Init();
     PowerUpSystem::Init(); // azfar code ver 1
+    UpgradeSystem::Upgrade_Init();                                                                                          // load upgrade card assets and reset all bonuses for a fresh session
 
     DebugConsole::Init(
         is_enemy_area_box_visible,
@@ -185,7 +187,7 @@ void Game_Update()
         DeathTransition::Start();
     }
 
-    if (!isPaused && !isDead)
+    if (!isPaused && !isDead && !UpgradeSystem::Upgrade_IsScreenOpen())
     {
         float healthBefore = health.health_current; // for pf streak
         float dt = (float)AEFrameRateControllerGetFrameTime();                                               // read delta time for this frame
@@ -250,6 +252,20 @@ void Game_Update()
             StreakSystem::OnStreakReset();
     }
 
+    // Trigger upgrade screen the frame the boss death animation finishes.
+    // Runs outside the gameplay gate so it fires even on the frame the gate closes.
+    if (BossSystem::Boss_WasJustDefeated())
+        UpgradeSystem::Upgrade_TriggerScreen();
+
+    // Run upgrade input and card animation while the screen is open.
+    // Runs outside the normal gameplay gate so the cards stay interactive.
+    if (UpgradeSystem::Upgrade_IsScreenOpen())
+    {
+        float dt = (float)AEFrameRateControllerGetFrameTime();
+        if (dt > 0.1f) dt = 0.01667f;
+        UpgradeSystem::Upgrade_Update(health, dt);                                                                          // pass dt for card animation
+    }
+
 
     // ------------------------------------------------------------------------
     // 3. RENDERING (Always run so the screen doesn't go black)
@@ -261,65 +277,69 @@ render_only:
     //background
     //if (!DeathTransition::IsActive())
    // {
-        AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
-        AEGfxSetBlendMode(AE_GFX_BM_NONE);
-        AEGfxSetTransparency(1.0f);
-        AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f); // Reset Color
+    AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
+    AEGfxSetBlendMode(AE_GFX_BM_NONE);
+    AEGfxSetTransparency(1.0f);
+    AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f); // Reset Color
 
-        // Only draw world if not in death transition
+    // Only draw world if not in death transition
 
-        AEGfxTexture* activeBg = (gShopBgID == 0) ? bgTexture1 : bgTexture2;
-        AEGfxTextureSet(activeBg, 0.0f, 0.0f);
-        Mesh_Renderer(bgMesh, 0.0f, 0.0f, 1600.0f, 900.0f, 0.0f);
+    AEGfxTexture* activeBg = (gShopBgID == 0) ? bgTexture1 : bgTexture2;
+    AEGfxTextureSet(activeBg, 0.0f, 0.0f);
+    Mesh_Renderer(bgMesh, 0.0f, 0.0f, 1600.0f, 900.0f, 0.0f);
 
-        GameClouds::Draw();
+    GameClouds::Draw();
 
-        //player
-        AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
-        AEGfxSetBlendMode(AE_GFX_BM_BLEND);
-        AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);
+    //player
+    AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
+    AEGfxSetBlendMode(AE_GFX_BM_BLEND);
+    AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);
 
-        AEGfxTexture* activePlayer = (gShopSkinID == 0) ? playerTexture1 : playerTexture2;
-        AEGfxTextureSet(activePlayer, uvOffsetX, uvOffsetY);
+    AEGfxTexture* activePlayer = (gShopSkinID == 0) ? playerTexture1 : playerTexture2;
+    AEGfxTextureSet(activePlayer, uvOffsetX, uvOffsetY);
 
 
-        Mesh_Renderer(playerMesh, spriteX, spriteY, 150.0f, 150.0f, 0.0f);
-        StreakSystem::Draw();
+    Mesh_Renderer(playerMesh, spriteX, spriteY, 150.0f, 150.0f, 0.0f);
+    StreakSystem::Draw();
 
-        // Render typing letters 
+    // Render typing letters 
 
-        Typing_Render();
+    Typing_Render();
 
-        /*
-        @overview   Draw enemies and debug overlays
-        @author     Wong Zi Yuan (w.ziyuan@digipen.edu)
-        *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
-        GameEnemyBoss::Draw(meshes, enemy_pool, is_enemy_area_box_visible, enemy_area);
-        Particles_Draw();
-        LaserBeam_Draw();
+    /*
+    @overview   Draw enemies and debug overlays
+    @author     Wong Zi Yuan (w.ziyuan@digipen.edu)
+    *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
+    GameEnemyBoss::Draw(meshes, enemy_pool, is_enemy_area_box_visible, enemy_area);
+    Particles_Draw();
+    LaserBeam_Draw();
 
-        UiSystem::Debug_DrawDifficultyTopRight(is_difficulty_debug_visible, is_random_spawning_enabled, health);                // draw debug difficulty ui with health
-        /*_______________________________________________________________________________________________________________________________________________________________________________________________*/
+    UiSystem::Debug_DrawDifficultyTopRight(is_difficulty_debug_visible, is_random_spawning_enabled, health);                // draw debug difficulty ui with health
+    /*_______________________________________________________________________________________________________________________________________________________________________________________________*/
 
-        UiSystem::Ui_DrawScoreAndTyped(score); // draw score and typed buffer
+    UiSystem::Ui_DrawScoreAndTyped(score); // draw score and typed buffer
 
-        PowerUpSystem::Draw(); // azfar code
+    PowerUpSystem::Draw(); // azfar code
 
-        Weather_Draw();
+    Weather_Draw();
 
-        UiSystem::Ui_DrawHealthBar(health, meshes); // jeremy code
+    UiSystem::Ui_DrawHealthBar(health, meshes); // jeremy code
 
-        /*
-        @overview   Boss flash overlay draw
-        @author     Wong Zi Yuan (w.ziyuan@digipen.edu)
-        *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
-        BossSystem::Boss_DrawFlashOverlay(meshes);                                                                              // draw the white flash overlay on top of everything else
-        /*_______________________________________________________________________________________________________________________________________________________________________________________________*/
+    /*
+    @overview   Boss flash overlay draw
+    @author     Wong Zi Yuan (w.ziyuan@digipen.edu)
+    *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
+    BossSystem::Boss_DrawFlashOverlay(meshes);                                                                              // draw the white flash overlay on top of everything else
+    /*_______________________________________________________________________________________________________________________________________________________________________________________________*/
 
-        // PAUSE OVERLAY
-        UiPauseMenu::Check_Paused(isPaused, isDead, bgMesh);
-   // }
-    // Game Over & Leaderboard OVERLAY
+    // Draw upgrade card screen on top of the flash overlay when active
+    if (UpgradeSystem::Upgrade_IsScreenOpen())
+        UpgradeSystem::Upgrade_Draw();
+
+    // PAUSE OVERLAY
+    UiPauseMenu::Check_Paused(isPaused, isDead, bgMesh);
+    // }
+     // Game Over & Leaderboard OVERLAY
     if (isDead)
     {
         float _dt = (float)AEFrameRateControllerGetFrameTime();
@@ -346,6 +366,7 @@ void Game_Exit()
     Typing_Exit();
     Leaderboard_System::Free();
     PowerUpSystem::Free();
+    UpgradeSystem::Upgrade_Free();                                                                                          // unload upgrade card texture and meshes
     Particles_Free();
     Weather_Exit();
     LaserBeam_Free();
