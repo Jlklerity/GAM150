@@ -494,6 +494,7 @@ void GameTimeMode_Exit()
     Particles_Free();
     Weather_Exit();
     DebugConsole::Exit();
+    UiGameOver::Exit();
 
     if (playerMesh) { AEGfxMeshFree(playerMesh);           playerMesh = nullptr; }
     if (bgMesh) { AEGfxMeshFree(bgMesh);               bgMesh = nullptr; }

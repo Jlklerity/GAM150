@@ -776,6 +776,7 @@ void Tutorial_Exit()
     BackgroundParallax::MenuParallax_Exit();
     GameClouds::Exit();
     LaserBeam_Free();
+
     EnemyManage::EnemyManage_Free(s_meshes, s_pool, s_freeSlots);
 
     if (s_bgTex) { AEGfxTextureUnload(s_bgTex);     s_bgTex = nullptr; }
