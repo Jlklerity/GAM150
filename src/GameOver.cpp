@@ -17,6 +17,12 @@ namespace
 
     void EnsureMesh()
     {
+        if (s_mesh)
+        {
+            AEGfxMeshFree(s_mesh);
+            s_mesh = nullptr;
+        }
+        
         if (!s_mesh)
             s_mesh = Rect_Mesh(1.0f, 1.0f, 0xFFFFFFFF);
     }
