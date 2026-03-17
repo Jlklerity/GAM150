@@ -132,7 +132,7 @@ namespace
         {
             if (tokens.size() < 2)
             {
-                PushHistory("Usage: /spawn [3-8] | friendly | shield", true);
+                PushHistory("Usage: /spawn [3-8] | friendly | shield | boss", true);
                 return;
             }
 
@@ -170,7 +170,7 @@ namespace
             }
             catch (...)
             {
-                PushHistory("Error: unknown spawn type. Use [3-8], friendly, or shield.", true);
+                PushHistory("Error: unknown spawn type. Use [3-8], friendly, shield, boss.", true);
                 return;
             }
             if (len < 3 || len > 8)
@@ -181,6 +181,27 @@ namespace
             EnemySystem::Enemy_SpawnFromPool(*s_pEnemyPool, *s_pFreeSlots, *s_pEnemyArea, *s_pWordBank, len);
             PushHistory("Spawned enemy with word length " + std::to_string(len) + ".", false);
             return;                                                         // must return or falls through to unknown command
+        }
+
+        // /kill boss - instantly kill the active boss
+        if (IEquals(cmd, "kill"))
+        {
+            if (tokens.size() < 2)
+            {
+                PushHistory("Usage: /kill boss", true);
+                return;
+            }
+
+            if (IEquals(tokens[1], "boss"))
+            {
+                BossSystem::Boss_ForceKill(*s_pEnemyPool, *s_pFreeSlots);
+                PushHistory("Boss force-killed.", false);
+            }
+            else
+            {
+                PushHistory("Unknown kill target. Try: /kill boss", true);
+            }
+            return;
         }
 
         // /health add    -- add 10 hp
@@ -262,6 +283,8 @@ namespace
             PushHistory("/spawn [3-8]         - spawn enemy by word length", false);
             PushHistory("/spawn friendly      - spawn a friendly enemy", false);
             PushHistory("/spawn shield        - spawn a shielded enemy", false);
+            PushHistory("/spawn boss          - force-spawn the boss", false);
+            PushHistory("/kill boss           - instantly kill the active boss", false);
             PushHistory("/health add          - add 10 HP", false);
             PushHistory("/health die          - kills player", false);
             PushHistory("/difficulty up       - increase difficulty by 1", false);

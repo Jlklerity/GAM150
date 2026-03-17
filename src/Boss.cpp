@@ -291,6 +291,7 @@ namespace
         if (boss_pool_slot < 0 || boss_pool_slot >= (int)pool.size()) return;                                               // slot is not valid so there is nothing to pin
         pool[(size_t)boss_pool_slot].enemy_position_x = boss_position_x;                                                    // keep kill word locked to the current boss X
         pool[(size_t)boss_pool_slot].enemy_position_y = boss_kill_word_anchor_y;                                            // keep kill word at the precomputed anchor Y
+        pool[(size_t)boss_pool_slot].enemy_orbit_initialised = true;                                                         // prevent the orbit system from displacing the kill word above its anchor
     }
 
 } // anonymous namespace end
@@ -900,6 +901,36 @@ namespace BossSystem
     {
         if (boss_state != BossState::INACTIVE) return;                                                                      // boss is already active or spawning so ignore this call
         boss_cycle_timer_seconds = BossConfig::BOSS_SPAWN_INTERVAL_SECONDS;                                                 // set the timer to the trigger threshold so it fires next update
+    }
+
+    /*
+    @function       Boss_ForceKill
+    @params         pool (std::vector<Data::Enemy>&), free_slots (std::deque<int>&)
+    @brief          Immediately kills the boss regardless of words typed. Debug only.
+
+    Deactivates the kill word slot, returns it to the free list, resets the cycle clock, and
+    switches the boss straight to the DEAD state so the death animation plays and the upgrade
+    screen triggers normally. boss_spawning_blocked is cleared by the DEAD state on the next
+    update tick. Does nothing if the boss is not currently in the ACTIVE state.
+    *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
+    bool Boss_ForceKill(std::vector<Data::Enemy>& pool, std::deque<int>& free_slots)
+    {
+        if (boss_state != BossState::ACTIVE) return false;                                                                        // only valid while the boss is actively fighting
+
+        if (boss_pool_slot >= 0 && boss_pool_slot < (int)pool.size())                                                       // only clean up the slot if one is reserved
+        {
+            pool[(size_t)boss_pool_slot].enemy_is_active = false;                                                           // deactivate the kill word slot
+            boss_kill_word_in_pool = false;                                                                                 // mark the kill word as no longer visible
+            free_slots.push_back(boss_pool_slot);                                                                           // return the slot index to the free list
+            boss_pool_slot = -1;                                                                                            // clear the stored slot reference
+        }
+
+        boss_cycle_timer_seconds = 0.0f;                                                                                    // reset the spawn cycle clock for the next boss wave
+        boss_anim_row = 1;                                                                                                  // switch to the death animation row on the sprite sheet
+        boss_anim_col = 0;                                                                                                  // start the death animation from the first frame
+        boss_anim_timer = 0.0f;                                                                                             // reset the frame timer
+        boss_state = BossState::DEAD;                                                                                       // move to the dead state so the death animation plays and upgrade triggers
+        return true;
     }
 
     /*
