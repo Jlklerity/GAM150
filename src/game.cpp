@@ -291,6 +291,8 @@ render_only:
 
     GameClouds::Draw();
 
+    Weather_DrawBackground(); // Rainbow draws here, behind enemies
+
     //player
     AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
     AEGfxSetBlendMode(AE_GFX_BM_BLEND);

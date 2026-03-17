@@ -20,6 +20,7 @@
 #include "MeshTemplates.h"
 #include "MeshRenderer.h"
 #include "Enemy.h"        // Graphics::font_id, Data::Enemy
+#include "PowerUp.h"      // PowerUpSystem::SetDropSpawnInterval (used by Rainbow)
 #include <vector>
 #include <cstdlib>        // rand()
 #include <cmath>          // fabsf
@@ -114,6 +115,18 @@ namespace
     constexpr float STORM_OVL_G = 0.08f;
     constexpr float STORM_OVL_B = 0.18f;
 
+    // ================================================================
+    //  Rainbow constants
+    // ================================================================
+    constexpr float RAINBOW_DURATION = 15.0f;   // total event length
+    constexpr float RAINBOW_POWERUP_INTERVAL = 3.0f;  // spawn a power-up every N seconds
+    constexpr int   RAINBOW_FRAME_COUNT = 9;        // frames in the sprite sheet
+    constexpr float RAINBOW_FRAME_TIME = 0.12f;   // seconds per frame (~8 fps)
+    constexpr float RAINBOW_DISPLAY_W = 1600.0f; // stretch to full screen width
+    constexpr float RAINBOW_DISPLAY_H = 120.0f;  // height of the rainbow band
+    constexpr float RAINBOW_Y = 80.0f;   // world-space Y (mid-upper area)
+    constexpr float RAINBOW_FADE_TIME = 1.5f;    // fade-in / fade-out duration
+
     // Inline helpers
     static inline float RandF(float lo, float hi)
     {
@@ -128,7 +141,7 @@ namespace
 namespace
 {
     // Which weather event is currently active
-    enum class WeatherType { SNOW, THUNDER };
+    enum class WeatherType { SNOW, THUNDER, RAINBOW };
 
     // Weather state machine (shared by both types)
     enum class WeatherState
@@ -176,6 +189,14 @@ namespace
     static float     s_lungeTimer = 0.0f;    // lunge boost duration remaining
     static float     s_lungeOrigSpeed = 0.0f;    // original speed before lunge boost
 
+    // Rainbow state
+    static float            s_rainbowTimer = 0.0f;  // seconds remaining in event
+    static float            s_rainbowPowerupTimer = 0.0f;  // countdown to next power-up spawn
+    static int              s_rainbowFrame = 0;     // current animation frame
+    static float            s_rainbowFrameTimer = 0.0f;  // time accumulator for frame advance
+    static AEGfxTexture* s_rainbowTex = nullptr;
+    static AEGfxVertexList* s_rainbowMesh = nullptr; // single-frame UV quad
+
     // ---- Particles ----
     static Snowflake s_ambient[AMBIENT_COUNT]{};
     static Snowflake s_blizzard[BLIZZARD_COUNT]{};
@@ -214,6 +235,12 @@ namespace
     static void  Thunder_DrawHUD();
     static void  Thunder_DrawStrikeFlash();
 
+    // Rainbow helpers
+    static void  Rainbow_BuildMesh();
+    static void  Rainbow_Start();
+    static void  Rainbow_Update(float dt);
+    static void  Rainbow_DrawSprite();
+
     static void  DrawCentredText(const char* text, float ndcY, float scale,
         float r, float g, float b, float alpha);
 }
@@ -243,6 +270,16 @@ void Weather_Init()
     s_lungeTimer = 0.0f;
     s_lungeOrigSpeed = 0.0f;
 
+    // Rainbow reset – free then reload to avoid double-load on re-init
+    if (s_rainbowTex) { AEGfxTextureUnload(s_rainbowTex);  s_rainbowTex = nullptr; }
+    if (s_rainbowMesh) { AEGfxMeshFree(s_rainbowMesh);      s_rainbowMesh = nullptr; }
+    s_rainbowTimer = 0.0f;
+    s_rainbowPowerupTimer = 0.0f;
+    s_rainbowFrame = 0;
+    s_rainbowFrameTimer = 0.0f;
+    s_rainbowTex = AEGfxTextureLoad("Assets/rainbowvfx.png");
+    Rainbow_BuildMesh();
+
     ResetTriggerTimer();
 
     for (int i = 0; i < AMBIENT_COUNT; ++i)
@@ -270,8 +307,11 @@ void Weather_Update(float dt, std::vector<Data::Enemy>& enemy_pool)
         s_triggerTimer += dt;
         if (s_triggerTimer >= s_triggerTarget)
         {
-            // Randomly pick SNOW or THUNDER (50/50)
-            s_activeType = ((rand() % 2) == 0) ? WeatherType::SNOW : WeatherType::THUNDER;
+            // Randomly pick SNOW, THUNDER, or RAINBOW (1-in-3 each)
+            int pick = rand() % 3;
+            if (pick == 0)      s_activeType = WeatherType::SNOW;
+            else if (pick == 1) s_activeType = WeatherType::THUNDER;
+            else                s_activeType = WeatherType::RAINBOW;
 
             if (s_activeType == WeatherType::SNOW)
             {
@@ -279,9 +319,13 @@ void Weather_Update(float dt, std::vector<Data::Enemy>& enemy_pool)
                 s_phaseTimer = 0.0f;
                 s_spacePresses = 0;
             }
-            else
+            else if (s_activeType == WeatherType::THUNDER)
             {
                 Thunder_StartStorm();
+            }
+            else
+            {
+                Rainbow_Start();
             }
         }
     }
@@ -335,6 +379,22 @@ void Weather_Update(float dt, std::vector<Data::Enemy>& enemy_pool)
         Thunder_Update(dt, enemy_pool);
         for (int i = 0; i < RAIN_COUNT; ++i) UpdateRaindrop(s_rain[i], dt);
     }
+
+    // ================================================================
+    //  RAINBOW path
+    // ================================================================
+    if (s_activeType == WeatherType::RAINBOW && s_state != WeatherState::IDLE)
+    {
+        Rainbow_Update(dt);
+    }
+}
+
+// ----------------------------------------------------------------
+void Weather_DrawBackground()
+{
+    // Rainbow is drawn BEFORE enemies so it sits behind them in the scene
+    if (s_activeType == WeatherType::RAINBOW && s_state != WeatherState::IDLE)
+        Rainbow_DrawSprite();
 }
 
 // ----------------------------------------------------------------
@@ -349,7 +409,7 @@ void Weather_Draw()
         DrawFullscreenOverlay(OVL_R, OVL_G, OVL_B, OVL_ALPHA_MAX * intensity);
         if (s_state == WeatherState::FROZEN) { DrawFreezeHUD(); DrawProgressBar(); }
     }
-    else // THUNDER
+    else if (s_activeType == WeatherType::THUNDER)
     {
         Thunder_DrawRain();
         // Dark stormy overlay fades in over first 2 seconds of storm
@@ -359,11 +419,14 @@ void Weather_Draw()
         Thunder_DrawHUD();
         Thunder_DrawStrikeFlash();
     }
+    // RAINBOW: all drawing is done in Weather_DrawBackground() — nothing to do here
 }
 
 void Weather_Exit()
 {
-    if (s_quad) { AEGfxMeshFree(s_quad); s_quad = nullptr; }
+    if (s_quad) { AEGfxMeshFree(s_quad);             s_quad = nullptr; }
+    if (s_rainbowTex) { AEGfxTextureUnload(s_rainbowTex);  s_rainbowTex = nullptr; }
+    if (s_rainbowMesh) { AEGfxMeshFree(s_rainbowMesh);      s_rainbowMesh = nullptr; }
 }
 
 // Functions used in game.cpp to prevent certain game mechanics
@@ -392,11 +455,17 @@ void Weather_ForceEvent(int type, std::vector<Data::Enemy>& enemy_pool)
         s_state = WeatherState::FREEZING;
         s_phaseTimer = 0.0f;
     }
-    else
+    else if (type == 1)
     {
         // Force thunderstorm
         s_activeType = WeatherType::THUNDER;
         Thunder_StartStorm();
+    }
+    else
+    {
+        // Force rainbow
+        s_activeType = WeatherType::RAINBOW;
+        Rainbow_Start();
     }
 
     // Reset the trigger timer so the next random event fires on schedule after this one
@@ -778,5 +847,98 @@ namespace
     {
         if (s_strikeFlash <= 0.001f) return;
         DrawFullscreenOverlay(1.0f, 1.0f, 0.85f, s_strikeFlash * 0.75f);   // warm white/yellow flash
+    }
+
+    // ================================================================
+    //  Rainbow helpers
+    // ================================================================
+
+    // Build a single-frame UV quad: the mesh maps to UV [0, 1/FRAMES] x [0, 1].
+    // AEGfxTextureSet(tex, uvOffset, 0) scrolls to the correct frame each draw.
+    static void Rainbow_BuildMesh()
+    {
+        if (s_rainbowMesh) { AEGfxMeshFree(s_rainbowMesh); s_rainbowMesh = nullptr; }
+        constexpr float uvW = 1.0f / (float)RAINBOW_FRAME_COUNT;
+        AEGfxMeshStart();
+        AEGfxTriAdd(
+            -0.5f, -0.5f, 0xFFFFFFFF, 0.0f, 1.0f,
+            0.5f, -0.5f, 0xFFFFFFFF, uvW, 1.0f,
+            -0.5f, 0.5f, 0xFFFFFFFF, 0.0f, 0.0f);
+        AEGfxTriAdd(
+            0.5f, -0.5f, 0xFFFFFFFF, uvW, 1.0f,
+            0.5f, 0.5f, 0xFFFFFFFF, uvW, 0.0f,
+            -0.5f, 0.5f, 0xFFFFFFFF, 0.0f, 0.0f);
+        s_rainbowMesh = AEGfxMeshEnd();
+    }
+
+    // Kick off a new rainbow event
+    static void Rainbow_Start()
+    {
+        s_state = WeatherState::FREEZING; // reuse FREEZING as "active" sentinel
+        s_rainbowTimer = RAINBOW_DURATION;
+        s_rainbowPowerupTimer = RAINBOW_POWERUP_INTERVAL; // first drop spawns after 3 s
+        s_rainbowFrame = 0;
+        s_rainbowFrameTimer = 0.0f;
+    }
+
+    // Per-frame rainbow update: advance animation, trigger power-up spawns
+    static void Rainbow_Update(float dt)
+    {
+        // Count down total event duration
+        s_rainbowTimer -= dt;
+        if (s_rainbowTimer <= 0.0f)
+        {
+            // Event over — restore default power-up spawn rate and go idle
+            PowerUpSystem::SetDropSpawnInterval(15.0f, 30.0f);
+            s_state = WeatherState::IDLE;
+            ResetTriggerTimer();
+            return;
+        }
+
+        // Advance sprite sheet animation
+        s_rainbowFrameTimer += dt;
+        if (s_rainbowFrameTimer >= RAINBOW_FRAME_TIME)
+        {
+            s_rainbowFrameTimer -= RAINBOW_FRAME_TIME;
+            s_rainbowFrame = (s_rainbowFrame + 1) % RAINBOW_FRAME_COUNT;
+        }
+
+        // Every RAINBOW_POWERUP_INTERVAL seconds, force the PowerUp system to
+        // spawn a drop almost immediately by shrinking its spawn window to near-zero.
+        // The interval is restored when the rainbow event ends (or exits).
+        s_rainbowPowerupTimer -= dt;
+        if (s_rainbowPowerupTimer <= 0.0f)
+        {
+            s_rainbowPowerupTimer = RAINBOW_POWERUP_INTERVAL;
+            PowerUpSystem::SetDropSpawnInterval(0.01f, 0.05f);
+        }
+    }
+
+    // Draw the animated rainbow sprite stretched across the full screen width.
+    // Called from Weather_DrawBackground() so it renders BEHIND enemies.
+    static void Rainbow_DrawSprite()
+    {
+        if (!s_rainbowTex || !s_rainbowMesh) return;
+
+        // Compute smooth fade-in / fade-out alpha
+        float elapsed = RAINBOW_DURATION - s_rainbowTimer;
+        float fadeIn = Clamp01(elapsed / RAINBOW_FADE_TIME);
+        float fadeOut = Clamp01(s_rainbowTimer / RAINBOW_FADE_TIME);
+        float alpha = fadeIn * fadeOut;
+        if (alpha <= 0.001f) return;
+
+        // UV X-offset scrolls to the current animation frame
+        float uvOffset = (float)s_rainbowFrame / (float)RAINBOW_FRAME_COUNT;
+
+        AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
+        AEGfxSetBlendMode(AE_GFX_BM_BLEND);
+        AEGfxSetTransparency(alpha);
+        AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);
+        AEGfxTextureSet(s_rainbowTex, uvOffset, 0.0f);
+        Mesh_Renderer(s_rainbowMesh, 0.0f, RAINBOW_Y, RAINBOW_DISPLAY_W, RAINBOW_DISPLAY_H, 0.0f);
+
+        // Reset render state
+        AEGfxSetTransparency(1.0f);
+        AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);
     }
 }
