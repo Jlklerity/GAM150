@@ -821,13 +821,14 @@ void Main_Menu_Exit()
     
     if (gGameStateNext != GS_SHOP && gGameStateNext != GS_CREDITS) {
         BackgroundParallax::MenuParallax_Exit();
+        if (Graphics::font_id >= 0)
+        {
+            AEGfxDestroyFont(Graphics::font_id);
+            Graphics::font_id = -1;
+        }
         
     }
     SoundManager::Exit();
-    if (Graphics::font_id >= 0)
-    {
-        AEGfxDestroyFont(Graphics::font_id);
-    }
     ScreenTransitions::isTransitioning = false;                                                                             // safety clean transition
     AEGfxSetCamPosition(0.0f, 0.0f);                                                                                        // safety reset camera
 

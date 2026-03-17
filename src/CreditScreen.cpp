@@ -12,7 +12,7 @@ namespace
     float scrollY = 0.0f;
     float scrollSpeed = 0.35f;
 
-    std::vector<std::string> creditLines = {
+    const char* creditLines[] = {
         "GAM150 PROJECT",
         "",
         "PRODUCED BY",
@@ -31,7 +31,7 @@ namespace
         "",
         "THANK YOU FOR PLAYING!"
     };
-
+    const int numCreditLines = sizeof(creditLines) / sizeof(creditLines[0]);
 }
 
     void CreditScreen_Init()
@@ -68,7 +68,7 @@ namespace
 
         // Calculate if the credits are completely finished.
         // If the VERY LAST line of text goes off the top of the screen (1.0 is the top edge)
-        float lastLineY = scrollY - ((creditLines.size() - 1) * lineSpacing);
+        float lastLineY = scrollY - ((numCreditLines - 1) * lineSpacing);
         if (lastLineY > 1.2f)
         {
             gGameStateNext = GS_MAIN_MENU; // Auto-return when finished
@@ -80,38 +80,37 @@ namespace
         AEGfxSetCamPosition(0.0f, 0.0f);
         AEGfxSetBackgroundColor(0.0f, 0.0f, 0.0f); // Cinematic black background
 
+        // 4. Draw the Text
         if (Graphics::font_id >= 0)
         {
             AEGfxSetBlendMode(AE_GFX_BM_BLEND);
 
-            for (size_t i = 0; i < creditLines.size(); ++i)
+            // Changed to numCreditLines
+            for (int i = 0; i < numCreditLines; ++i)
             {
-                if (creditLines[i].empty()) continue; // Don't draw blank lines
+                std::string line = creditLines[i]; // Temporary string for easy checking
+                if (line.empty()) continue;
 
                 float textW = 0.0f, textH = 0.0f;
                 float scale = 1.0f;
 
-                // Measure the width of the text so we can perfectly center it
-                AEGfxGetPrintSize(Graphics::font_id, creditLines[i].c_str(), scale, &textW, &textH);
+                AEGfxGetPrintSize(Graphics::font_id, creditLines[i], scale, &textW, &textH);
                 float ndcX = 0.0f - (textW * 0.5f);
-
-                // Calculate this specific line's Y position
-                // Subsequent lines render lower down (-Y) from the main scrollY point
                 float ndcY = scrollY - (i * lineSpacing);
 
-                // OPTIMIZATION: Only draw the text if it is currently visible on the screen
                 if (ndcY > -1.2f && ndcY < 1.2f)
                 {
-                    // Tint the headers differently (optional polish!)
-                    if (creditLines[i] == "PRODUCED BY" || creditLines[i] == "PROGRAMMING" ||
-                        creditLines[i] == "ART AND AUDIO" || creditLines[i] == "SPECIAL THANKS") {
-                        AEGfxPrint(Graphics::font_id, creditLines[i].c_str(), ndcX, ndcY, scale, 1.0f, 1.0f, 0.0f, 1.0f); // Yellow
+                    if (line == "PRODUCED BY" || line == "PROGRAMMING" ||
+                        line == "ART AND AUDIO" || line == "SPECIAL THANKS") {
+                        AEGfxPrint(Graphics::font_id, creditLines[i], ndcX, ndcY, scale, 1.0f, 1.0f, 0.0f, 1.0f); // Yellow
                     }
                     else {
-                        AEGfxPrint(Graphics::font_id, creditLines[i].c_str(), ndcX, ndcY, scale, 1.0f, 1.0f, 1.0f, 1.0f); // White
+                        AEGfxPrint(Graphics::font_id, creditLines[i], ndcX, ndcY, scale, 1.0f, 1.0f, 1.0f, 1.0f); // White
                     }
                 }
             }
         }
 
     }
+
+ 

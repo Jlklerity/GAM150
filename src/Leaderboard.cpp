@@ -46,6 +46,10 @@ namespace Leaderboard_System
 			AEGfxMeshFree(overlayMesh);
 			overlayMesh = nullptr;
 		}
+		leaderboard_list.clear();
+		leaderboard_list.shrink_to_fit();
+		s_timedBoard.clear();
+		s_timedBoard.shrink_to_fit();
 	}
 
 	int GetHighestScore() {

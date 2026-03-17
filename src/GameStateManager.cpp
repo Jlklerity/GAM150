@@ -69,7 +69,6 @@ void GSM_Update()
 		case GS_CREDITS:
 			gGameStateInit = CreditScreen_Init;
 			gGameStateUpdate = CreditScreen_Update;
-			//gGameStateExit = CreditScreen_Exit;
 			break;
 		case GS_QUIT:
 			// will handle the actual quitting in main

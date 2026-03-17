@@ -29,6 +29,8 @@ namespace BackgroundParallax{
 
     void MenuParallax_Init() 
     {
+        if (fullScreenMesh) return;
+
         float winW = (float)AEGfxGetWindowWidth();                                                                                    // store window width
         float winH = (float)AEGfxGetWindowHeight();
 

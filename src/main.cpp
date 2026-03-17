@@ -58,6 +58,11 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 	if (gGameStateExit)
 		gGameStateExit();
 
+	if (Graphics::font_id >= 0) {
+		AEGfxDestroyFont(Graphics::font_id);
+		Graphics::font_id = -1;
+	}
+
 	// free the system
 	AESysExit();
 
