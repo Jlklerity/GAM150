@@ -23,9 +23,6 @@ namespace UpgradeConfig
     // Hover scale
     extern const float UPGRADE_CARD_HOVER_SCALE;                                                                            // multiplier applied to card size when the cursor is over it (e.g. 1.3)
 
-    // Card animation
-    extern const float UPGRADE_CARD_FRAME_DURATION;                                                                         // seconds each animation frame is shown before advancing to the next
-
     // Upgrade potency
     extern const float UPGRADE_HP_BONUS;                                                                                    // extra max HP granted by the health card
     extern const float UPGRADE_DURATION_BONUS;                                                                              // multiplier stacked per duration card pick (e.g. 1.3 = 30% longer per pick)
@@ -55,7 +52,7 @@ namespace UpgradeSystem
     @brief          Loads all three card textures, builds meshes, and resets all state and bonuses.
 
     Loads Assets/MaxHP.png, Assets/IncreasePowerDuration.png, and Assets/IncreasePowerSpawn.png,
-    each as a 2-column, 1-row sprite sheet (uv_w = 0.5, uv_h = 1.0). Builds a shared sprite quad
+    each as a single full-image texture (uv_w = 1.0, uv_h = 1.0). Builds a shared sprite quad
     mesh and a unit rectangle mesh for the dim overlay. Calls Upgrade_Free first so repeated calls
     on restart never leak resources.
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
@@ -88,7 +85,7 @@ namespace UpgradeSystem
     /*
     @function       Upgrade_Update
     @params         health (Data::Health&), dt (float)
-    @brief          Advances the card animation, updates hover state, and applies a clicked upgrade.
+    @brief          Updates hover state and applies a clicked upgrade.
 
     Reads the cursor position, determines which card is hovered, and on left-click applies the
     upgrade and closes the screen. The health reference is only written for the max HP card.
@@ -98,10 +95,10 @@ namespace UpgradeSystem
 
     /*
     @function       Upgrade_Draw
-    @brief          Renders the dim overlay and the three animated upgrade cards.
+    @brief          Renders the dim overlay and the three upgrade cards.
 
-    Each card uses its own texture. All cards play the same 2-frame animation in sync. The hovered
-    card is drawn at UPGRADE_CARD_HOVER_SCALE times its normal size and on top of the other cards.
+    Each card uses its own texture as a single full image. The hovered card is drawn at
+    UPGRADE_CARD_HOVER_SCALE times its normal size and on top of the other cards.
     Does nothing when the screen is not open.
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
     void Upgrade_Draw();
