@@ -281,6 +281,7 @@ void Main_Menu_Input()
 
     if (!isTransitioningToName && !transitioningToShop && !isReturningFromShop && AEInputCheckTriggered(AEVK_ESCAPE))
     {
+        SoundManager::PlayClickBtnSfx();
         gGameStateNext = GS_QUIT;
     }
     if (!isTransitioningToName && !transitioningToShop && !isReturningFromShop && AEInputCheckTriggered(AEVK_LBUTTON))                                                                                // check for left click
