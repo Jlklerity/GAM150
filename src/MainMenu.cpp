@@ -826,7 +826,6 @@ void Main_Menu_Update()
 void Main_Menu_Exit()
 {
 
-    if (gGameStateNext != GS_SHOP) {
         if (gGameStateNext != GS_SHOP && gGameStateNext != GS_CREDITS) {
             BackgroundParallax::MenuParallax_Exit();
             SoundManager::Exit();
@@ -931,17 +930,14 @@ void Main_Menu_Exit()
             AEGfxTextureUnload(pTexTutorial);
             pTexTutorial = nullptr;
         }
-        if (pMeshTutorialBtn) {
-            AEGfxMeshFree(pMeshTutorialBtn);
-            pMeshTutorialBtn = nullptr;
-            if (pTexCredits)
-            {
-                AEGfxTextureUnload(pTexCredits);
-                pTexCredits = nullptr;
-            }
+        if (pTexCredits)
+        {
+            AEGfxTextureUnload(pTexCredits);
+            pTexCredits = nullptr;
+        }
             ParallaxZoom::Reset();
             isZoomingToGame = false;
             Leaderboard_System::Free();
-        }
-    }
+        
+    
 }
