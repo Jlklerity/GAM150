@@ -49,8 +49,8 @@ namespace
     constexpr float DROP_SPAWN_X_MARGIN = 80.0f; // keep drops away from screen edges
 
     // default spawn interval range (seconds between new drops)
-    constexpr float DROP_SPAWN_MIN_DEFAULT = 6.0f;
-    constexpr float DROP_SPAWN_MAX_DEFAULT = 12.0f;
+    constexpr float DROP_SPAWN_MIN_DEFAULT = 15.0f;
+    constexpr float DROP_SPAWN_MAX_DEFAULT = 30.0f;
 
     // ----------------------------------------------------------------
     // Effect durations

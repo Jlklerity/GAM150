@@ -37,7 +37,7 @@ namespace
 
     // Trigger timing 
     constexpr float TRIGGER_MIN_SEC = 25.0f;   // earliest
-    constexpr float TRIGGER_MAX_SEC = 50.0f;   // latest
+    constexpr float TRIGGER_MAX_SEC = 30.0f;   // latest
 
     // Phase durations
     constexpr float FREEZE_IN_DUR = 1.8f;
