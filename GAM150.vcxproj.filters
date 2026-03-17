@@ -29,7 +29,11 @@
     <ClCompile Include="src\GameClouds.cpp" />
     <ClCompile Include="src\StreakSystem.cpp" />
     <ClCompile Include="src\Tutorial.cpp" />
+<<<<<<< Updated upstream
     <ClCompile Include="src\SoundManager.cpp" />
+=======
+    <ClCompile Include="src\UpgradeSystem.cpp" />
+>>>>>>> Stashed changes
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\Enemy.h" />
@@ -59,7 +63,11 @@
     <ClInclude Include="src\GameClouds.h" />
     <ClInclude Include="src\StreakSystem.h" />
     <ClInclude Include="src\Tutorial.h" />
+<<<<<<< Updated upstream
     <ClInclude Include="src\SoundManager.h" />
+=======
+    <ClInclude Include="src\UpgradeSystem.h" />
+>>>>>>> Stashed changes
   </ItemGroup>
   <ItemGroup>
     <Image Include="Assets\characterSheet.png" />
