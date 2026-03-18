@@ -505,6 +505,7 @@ void GameTimeMode_Exit()
     Weather_Exit();
     DebugConsole::Exit();
     UiGameOver::Exit();
+    SoundManager::Exit();
 
     if (playerMesh) { AEGfxMeshFree(playerMesh);           playerMesh = nullptr; }
     if (bgMesh) { AEGfxMeshFree(bgMesh);               bgMesh = nullptr; }
