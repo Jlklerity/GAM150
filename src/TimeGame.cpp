@@ -38,8 +38,7 @@ namespace
     // ---------------------------------------------------------------------------
 
     // ---- Player visuals ----
-    AEGfxTexture* playerTexture1 = nullptr;
-    AEGfxTexture* playerTexture2 = nullptr;
+    AEGfxTexture* playerTexture = nullptr;
     AEGfxVertexList* playerMesh = nullptr;
 
     // ---- Background visuals ----
@@ -201,13 +200,7 @@ namespace
 void GameTimeMode_Init()
 {
 
-    if (playerTexture1) { AEGfxTextureUnload(playerTexture1); playerTexture1 = nullptr; }
-    if (playerTexture2) { AEGfxTextureUnload(playerTexture2); playerTexture2 = nullptr; }
-    if (playerMesh) { AEGfxMeshFree(playerMesh);          playerMesh = nullptr; }
 
-    playerTexture1 = AEGfxTextureLoad("Assets/characterSheet.png");
-    playerTexture2 = AEGfxTextureLoad("Assets/character2Sheet.png");
-    playerMesh = Sprite_Mesh(SPRITE_UV_WIDTH, SPRITE_UV_HEIGHT);
     // ---- Reset all state so restarts start clean ----
     animTimer = 0.0f;
     animDuration = 0.1f;
@@ -232,19 +225,20 @@ void GameTimeMode_Init()
 
     DifficultySystem::Difficulty_Reset();
 
-    // ---- Player textures and sprite mesh ----
-    playerTexture1 = AEGfxTextureLoad("Assets/characterSheet.png");
-    AE_ASSERT_MESG(playerTexture1, "Failed to load characterSheet!");
-    playerTexture2 = AEGfxTextureLoad("Assets/character2Sheet.png");
-    AE_ASSERT_MESG(playerTexture1, "Failed to load character2Sheet!");
+   
+    if (playerTexture) { AEGfxTextureUnload(playerTexture); playerTexture = nullptr; }
 
-
-    if (playerMesh) AEGfxMeshFree(playerMesh);                             // free old mesh if restarting
-    playerMesh = Sprite_Mesh(SPRITE_UV_WIDTH, SPRITE_UV_HEIGHT);           // build sprite sheet mesh
 
     if (bgTexture1) { AEGfxTextureUnload(bgTexture1); bgTexture1 = nullptr; }
     if (bgTexture2) { AEGfxTextureUnload(bgTexture2); bgTexture2 = nullptr; }
     if (bgMesh) { AEGfxMeshFree(bgMesh); bgMesh = nullptr; }
+    if (playerMesh) { AEGfxMeshFree(playerMesh); playerMesh = nullptr; }
+
+    const char* skinPath = Shop_GetActiveSkinPath();
+    playerTexture = AEGfxTextureLoad(skinPath);
+    AE_ASSERT_MESG(playerTexture, "Failed to load player skin!");
+
+    playerMesh = Sprite_Mesh(SPRITE_UV_WIDTH, SPRITE_UV_HEIGHT);
 
     // ---- Background textures and quad mesh ----
     bgTexture1 = AEGfxTextureLoad("Assets/background.png");
@@ -436,9 +430,8 @@ render_only:
     AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
     AEGfxSetBlendMode(AE_GFX_BM_BLEND);
     AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);
-    AEGfxTexture* activePlayer = (gShopSkinID == 0) ? playerTexture1 : playerTexture2; // pick skin based on shop selection
-    AEGfxTextureSet(activePlayer, uvOffsetX, uvOffsetY);
 
+    AEGfxTextureSet(playerTexture, uvOffsetX, uvOffsetY);
     Mesh_Renderer(playerMesh, SPRITE_X, SPRITE_Y, 150.0f, 150.0f, 0.0f);
 
     Typing_Render();                                                        // draw the current typed buffer on screen
@@ -474,9 +467,8 @@ render_only:
     if (isDead)
     {
         float _dt = (float)AEFrameRateControllerGetFrameTime();
-        AEGfxTexture* deathPlayer = (gShopSkinID == 0) ? playerTexture1 : playerTexture2;
         DeathTransition::Update(_dt);
-        DeathTransition::Draw(playerMesh, deathPlayer, uvOffsetX, uvOffsetY);
+        DeathTransition::Draw(playerMesh, playerTexture, uvOffsetX, uvOffsetY);
         if (DeathTransition::IsComplete())
         {
             if (!openLeaderboard)
@@ -512,6 +504,5 @@ void GameTimeMode_Exit()
 
     if (bgTexture1) { AEGfxTextureUnload(bgTexture1);      bgTexture1 = nullptr; }
     if (bgTexture2) { AEGfxTextureUnload(bgTexture2);      bgTexture2 = nullptr; }
-    if (playerTexture1) { AEGfxTextureUnload(playerTexture1);  playerTexture1 = nullptr; }
-    if (playerTexture2) { AEGfxTextureUnload(playerTexture2);  playerTexture2 = nullptr; }
+    if (playerTexture) { AEGfxTextureUnload(playerTexture);  playerTexture = nullptr; }
 }

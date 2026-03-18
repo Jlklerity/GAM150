@@ -26,8 +26,7 @@
 
 namespace {
     //avatar mesh and texture
-    AEGfxTexture* playerTexture1 = nullptr; // Default Skin
-    AEGfxTexture* playerTexture2 = nullptr; // Alternate Skin
+    AEGfxTexture* playerTexture = nullptr; 
     AEGfxVertexList* playerMesh = nullptr;
 
     //background mesh and texture
@@ -35,8 +34,8 @@ namespace {
     AEGfxTexture* bgTexture2 = nullptr; // Alternate BG
     AEGfxVertexList* bgMesh = nullptr;
 
-    const float spriteX = -700.0f;
-    const float spriteY = -200.0f;
+    const float SPRITE_X = -700.0f;
+    const float SPRITE_Y = -200.0f;
 
     // Animation State
     float animTimer;
@@ -111,14 +110,13 @@ void Game_Init()
     SoundManager::Exit();
     DeathTransition::Reset();
 
-    if (playerTexture1) { AEGfxTextureUnload(playerTexture1); playerTexture1 = nullptr; }
-    if (playerTexture2) { AEGfxTextureUnload(playerTexture2); playerTexture2 = nullptr; }
+    if (playerTexture) { AEGfxTextureUnload(playerTexture); playerTexture = nullptr; }
+    
 
-    //player
-    playerTexture1 = AEGfxTextureLoad("Assets/characterSheet.png");
-    AE_ASSERT_MESG(playerTexture1, "Failed to load characterSheet!");
-    playerTexture2 = AEGfxTextureLoad("Assets/character2Sheet.png");
-    AE_ASSERT_MESG(playerTexture2, "Failed to load character2Sheet!");
+    //player texture
+    const char* skinPath = Shop_GetActiveSkinPath();
+    playerTexture = AEGfxTextureLoad(skinPath);
+    AE_ASSERT_MESG(playerTexture, "Failed to load player skin!");
 
     if (playerMesh != nullptr) AEGfxMeshFree(playerMesh);
     playerMesh = Sprite_Mesh(SPRITE_UV_WIDTH, SPRITE_UV_HEIGHT);
@@ -159,7 +157,7 @@ void Game_Init()
 
 
     LaserBeam_Init();
-    LaserBeam_SetOrigin(spriteX + 75.0f, spriteY);
+    LaserBeam_SetOrigin(SPRITE_X + 75.0f, SPRITE_Y);
     SoundManager::Init();
     StreakSystem::Init();
     DeathTransition::Reset();
@@ -301,11 +299,8 @@ render_only:
     AEGfxSetBlendMode(AE_GFX_BM_BLEND);
     AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);
 
-    AEGfxTexture* activePlayer = (gShopSkinID == 0) ? playerTexture1 : playerTexture2;
-    AEGfxTextureSet(activePlayer, uvOffsetX, uvOffsetY);
-
-
-    Mesh_Renderer(playerMesh, spriteX, spriteY, 150.0f, 150.0f, 0.0f);
+    AEGfxTextureSet(playerTexture, uvOffsetX, uvOffsetY);
+    Mesh_Renderer(playerMesh, SPRITE_X, SPRITE_Y, 150.0f, 150.0f, 0.0f);
     StreakSystem::Draw();
 
     // Render typing letters 
@@ -349,9 +344,8 @@ render_only:
     if (isDead)
     {
         float _dt = (float)AEFrameRateControllerGetFrameTime();
-        AEGfxTexture* deathPlayer = (gShopSkinID == 0) ? playerTexture1 : playerTexture2;
         DeathTransition::Update(_dt);
-        DeathTransition::Draw(playerMesh, deathPlayer, uvOffsetX, uvOffsetY); // deathPlayer not activePlayer
+        DeathTransition::Draw(playerMesh, playerTexture, uvOffsetX, uvOffsetY); // deathPlayer not activePlayer
         if (DeathTransition::IsComplete())
             UiGameOver::Check_IfDead(isDead, isGameOver, openLeaderboard, bgMesh, temp_name, score);
     }
@@ -404,14 +398,10 @@ void Game_Exit()
         bgTexture2 = nullptr;
     }
 
-    if (playerTexture1)
+    if (playerTexture)
     {
-        AEGfxTextureUnload(playerTexture1);
-        playerTexture1 = nullptr;
+        AEGfxTextureUnload(playerTexture);
+        playerTexture = nullptr;
     }
-    if (playerTexture2)
-    {
-        AEGfxTextureUnload(playerTexture2);
-        playerTexture2 = nullptr;
-    }
+    
 }

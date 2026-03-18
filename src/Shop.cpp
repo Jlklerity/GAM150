@@ -147,7 +147,9 @@ void Shop_Init() {
 	AE_ASSERT_MESG(pTexSkinOptions, "Failed to load skin1.png");
 	pTexSkinOptions[1] = AEGfxTextureLoad("Assets/skin2.png");
 	AE_ASSERT_MESG(pTexSkinOptions, "Failed to load skin2.png");
-	pTexSkinOptions[2] = pTexSkinOptions[0]; // TODO: Change to skin2.png later
+	pTexSkinOptions[2] = AEGfxTextureLoad("Assets/skin3.png");
+	AE_ASSERT_MESG(pTexSkinOptions, "Failed to load skin3.png");
+
 
 
 	pShop = Sprite_Mesh(1.0f, 1.0f);
@@ -354,6 +356,15 @@ void Shop_Update(){
 	}
 
 	DisplayScore();
+}
+
+const char* Shop_GetActiveSkinPath()
+{
+	if (gShopSkinID == 0) return "Assets/characterSheet.png";
+	if (gShopSkinID == 1) return "Assets/character2Sheet.png";
+	if (gShopSkinID == 2) return "Assets/catskin-Sheet.png";
+
+	return "Assets/characterSheet.png"; // Safe fallback to default skin
 }
 
 void Shop_Exit() {
