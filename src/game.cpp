@@ -185,10 +185,11 @@ void Game_Update()
     // ------------------------------------------------------------------------
     // 2. GAMEPLAY LOGIC (Run only when active)
     // ------------------------------------------------------------------------
-    if (health.health_current == 0 && !isDead)
+    if (health.health_current <= 0.0f && !isDead)
     {
         isDead = true;
         DeathTransition::Start();
+        SoundManager::PlayGameOverSfx();
     }
 
     if (!isPaused && !isDead && !UpgradeSystem::Upgrade_IsScreenOpen())

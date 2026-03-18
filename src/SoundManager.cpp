@@ -69,7 +69,7 @@ namespace SoundManager
             rainTrack = AEAudioLoadMusic("Assets/Game Sound/RAIN_GEN-HDF-19746.mp3");
             snowTrack = AEAudioLoadMusic("Assets/Game Sound/SCI-FI-WIND_GEN-HDF-20895.mp3");
             typingSfx = AEAudioLoadSound("Assets/Game Sound/COMPUTER-KEYBOARD_GEN-HDF-08220.wav");
-            gameoverSfx = AEAudioLoadSound("Assets/Game Sound/FluteComedy CTE05_42.3.mp3");
+            gameoverSfx = AEAudioLoadSound("Assets/Game Sound/FluteComedy CTE05_42.3.wav");
             playerhitSfx = AEAudioLoadSound("Assets/Game Sound/HUMAN-GRUNT_GEN-HDF-15069.wav");
             enemydeathSfx = AEAudioLoadSound("Assets/Game Sound/HORROR_GEN-HDF-14351.wav");
             clickbtnSfx = AEAudioLoadSound("Assets/Game Sound/COMPUTER-LAPTOP_GEN-HDF-08250.wav");

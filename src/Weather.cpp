@@ -498,6 +498,8 @@ void Weather_Draw()
 
 void Weather_Exit()
 {
+    SoundManager::StopSnowAmbient();
+    SoundManager::StopRainAmbient();
     if (s_quad) { AEGfxMeshFree(s_quad);             s_quad = nullptr; }
     if (s_rainbowTex) { AEGfxTextureUnload(s_rainbowTex);  s_rainbowTex = nullptr; }
     if (s_rainbowMesh) { AEGfxMeshFree(s_rainbowMesh);      s_rainbowMesh = nullptr; }

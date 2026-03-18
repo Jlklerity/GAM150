@@ -832,10 +832,7 @@ namespace BossSystem
                 "BOSS %d / %d", boss_words_typed, BossConfig::BOSS_WORDS_TO_DEFEAT);
 
             AEGfxSetBlendMode(AE_GFX_BM_BLEND);                                                                             // use blending so the text renders correctly
-            AEGfxPrint(Graphics::font_id, progress_buf,                                                                     // draw the progress counter near the top of the screen
-                -0.18f, 0.82f,
-                0.55f,
-                1.0f, 0.85f, 0.1f, 1.0f);
+            AEGfxPrint(Graphics::font_id, progress_buf, -0.1f, 0.8f, 0.55f, 0.0f, 0.0f, 0.0f, 1.0f);                        // draw the progress counter near the top of the screen
         }
     }
 

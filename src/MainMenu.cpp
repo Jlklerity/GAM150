@@ -384,31 +384,33 @@ void Main_Menu_EnterName(float worldYOffset, float ndcYOffset, bool allowInput)
 
     if (allowInput)                                                                                                         // only process input if allowed
     {
-        if (AEInputCheckTriggered(AEVK_LBUTTON))                                                                            // check left click
+        //Separate the input triggers so the Enter key doesn't care where the mouse is
+        bool enterPressed = AEInputCheckTriggered(AEVK_RETURN);
+        bool enterClicked = AEInputCheckTriggered(AEVK_LBUTTON) &&
+            (worldX >= ENTERGAME_BTN_X - (EXITNAME_WIDTH * 0.5f) && worldX <= ENTERGAME_BTN_X + (EXITNAME_WIDTH * 0.5f) &&
+                worldY >= ENTERGAME_BTN_Y - (ENTERGAME_HEIGHT * 0.5f) && worldY <= ENTERGAME_BTN_Y + (ENTERGAME_HEIGHT * 0.5f));
+
+        bool exitClicked = AEInputCheckTriggered(AEVK_LBUTTON) &&
+            (worldX >= EXITNAME_BTN_X - (EXITNAME_WIDTH * 0.5f) && worldX <= EXITNAME_BTN_X + (EXITNAME_WIDTH * 0.5f) &&
+                worldY >= EXITNAME_BTN_Y - (EXITNAME_HEIGHT * 0.5f) && worldY <= EXITNAME_BTN_Y + (EXITNAME_HEIGHT * 0.5f));
+
+        // --- Check Enter Game (Triggered by Mouse Click OR Keyboard Enter) ---
+        if ((enterPressed || enterClicked) && !player_name.empty() && selected_mode != "")
         {
-            // --- Check Enter Game Button ---
-            if ((!player_name.empty()) && (selected_mode != "") &&
-                (worldX >= ENTERGAME_BTN_X - (EXITNAME_WIDTH * 0.5f) && worldX <= ENTERGAME_BTN_X + (EXITNAME_WIDTH * 0.5f) &&
-                    worldY >= ENTERGAME_BTN_Y - (ENTERGAME_HEIGHT * 0.5f) && worldY <= ENTERGAME_BTN_Y + (ENTERGAME_HEIGHT * 0.5f)))
-            {
-                // DO NOT call ScreenTransitions::ScreenTransition_Init() here
-                // that shared timer interferes with the back-transition logic
-                SoundManager::PlayClickBtnSfx();
-                isEnteringName = false;
-                isZoomingToGame = true;
-                int zoomTarget = (selected_mode == "TIME") ? GS_GAME_TIMEMODE : GS_GAME;
-                ParallaxZoom::Start(zoomTarget);
-            }
-            // --- Check Exit Name Button ---
-            else if (worldX >= EXITNAME_BTN_X - (EXITNAME_WIDTH * 0.5f) && worldX <= EXITNAME_BTN_X + (EXITNAME_WIDTH * 0.5f) &&
-                worldY >= EXITNAME_BTN_Y - (EXITNAME_HEIGHT * 0.5f) && worldY <= EXITNAME_BTN_Y + (EXITNAME_HEIGHT * 0.5f))
-            {
-                SoundManager::PlayClickBtnSfx();
-                isTransitioningBack = true;                                                                                 // trigger reverse transition
-                ScreenTransitions::ScreenTransition_Init();                                                                 // start transition
-                isEnteringName = false;                                                                                     // leave sub-state
-                selected_mode = "ZEN";                                                                                      // default back to zen
-            }
+            SoundManager::PlayClickBtnSfx();
+            isEnteringName = false;
+            isZoomingToGame = true;
+            int zoomTarget = (selected_mode == "TIME") ? GS_GAME_TIMEMODE : GS_GAME;
+            ParallaxZoom::Start(zoomTarget);
+        }
+        // --- Check Exit Name Button (Triggered by Mouse Click) ---
+        else if (exitClicked)
+        {
+            SoundManager::PlayClickBtnSfx();
+            isTransitioningBack = true;
+            ScreenTransitions::ScreenTransition_Init();
+            isEnteringName = false;
+            selected_mode = "ZEN";
         }
 
         if (AEInputCheckTriggered(AEVK_ESCAPE))                                                                             // check escape key

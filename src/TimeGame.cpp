@@ -22,6 +22,7 @@
 #include "DeathTransition.h"
 #include "GameClouds.h"
 #include "StreakSystem.h"
+#include "SoundManager.h"
 
 #include <string>
 #include <vector>
@@ -318,6 +319,7 @@ void GameTimeMode_Update()
             {
                 isDead = true;
                 DeathTransition::Start();
+                SoundManager::PlayGameOverSfx();
             }
         }
         dt *= PowerUpSystem::GetTimeScale();                                // scale dt AFTER countdown so slow only affects enemies/typing
