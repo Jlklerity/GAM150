@@ -7,6 +7,7 @@
 
 #include "Enemy.h"
 #include "PowerUp.h"
+#include "SoundManager.h"
 #include <cmath>
 
 /*
@@ -958,7 +959,10 @@ namespace EnemySystem
                             e.enemy_is_active = false;                                                                      // remove after landing
 
                             if (!PowerUpSystem::IsShieldActive())                                                           // only damage if shield is not active
+                            {
                                 HealthSystem::Health_Add(health, -10.0f);                                                   // damage player
+                                
+                            }
                         }
                         else                                                                                                // damage already handled
                         {
@@ -1065,7 +1069,10 @@ namespace EnemySystem
                     e.enemy_is_active = false;                                                                              // remove enemy after landing
 
                     if (!PowerUpSystem::IsShieldActive())
+                    {
                         HealthSystem::Health_Add(health, -10.0f);                                                           // apply landing damage once
+                        SoundManager::PlayPlayerHitSfx();
+                    }
                 }
                 else                                                                                                        // damage already handled
                 {

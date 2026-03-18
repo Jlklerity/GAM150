@@ -12,6 +12,7 @@
 #include <cmath>
 #include "StreakSystem.h"
 #include "Particles.h"
+#include "SoundManager.h"
 
 
 
@@ -303,11 +304,14 @@ void Typing_Update()
         {
             char c = (char)('A' + (k - AEVK_A));// convert key code to actual char
             PushChar(c); // push to typed array
+            SoundManager::PlayTypingSfx();
         }
     }
 
-    if (KeyPressedOnce(AEVK_BACK)) PopChar(); // backspace
-
+    if (KeyPressedOnce(AEVK_BACK)) {
+        PopChar(); // backspace
+        SoundManager::PlayTypingSfx();
+    }
 
     float dt = (float)AEFrameRateControllerGetFrameTime();
     s_cursorTimer += dt; // add dt for cursor timer
@@ -566,6 +570,8 @@ void Typing_UpdateAndApplyToEnemies(std::vector<Data::Enemy>& enemy_pool, Data::
                     EnemySystem::Enemy_BreakShield(target);                                                     // row 0 to row 1, swap to word2
                     Particles_SpawnShieldBreak(target.enemy_position_x, target.enemy_position_y);               // play shield break sprite effect
                     score.score_value += (int)(target.enemy_word_length * 10 * StreakSystem::GetMultiplier());
+
+                    SoundManager::PlayEnemyDeathSfx();
                 }
                 // -------------------------
                 // NORMAL enemy OR shielded after shield broken: kill + gain score
@@ -576,6 +582,8 @@ void Typing_UpdateAndApplyToEnemies(std::vector<Data::Enemy>& enemy_pool, Data::
                     EnemySystem::Enemy_Killed(target, health);                                                  // kill
                     score.score_value += (int)(target.enemy_word_length * 10 * StreakSystem::GetMultiplier());
                     StreakSystem::OnWordCorrectAt(target.enemy_position_x, target.enemy_position_y);
+
+                    SoundManager::PlayEnemyDeathSfx();
                 }
 
                 s_debugCorrect = true;

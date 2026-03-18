@@ -10,7 +10,9 @@ namespace SoundManager
 
     // --- Ambient (Weather) ---
     void PlayRainAmbient();
+    void StopRainAmbient();
     void PlaySnowAmbient();
+    void StopSnowAmbient();
 
     // --- SFX ---
     void PlayGameOverSfx();
@@ -19,6 +21,7 @@ namespace SoundManager
     void PlayClickBtnSfx();
     void PlayTypingSfx();
     void PlayBossSfx();
+    void StopBossSfx();
     void PlayLightningSfx();
     void PlayShieldSfx();
     void PlaySlowSfx();

@@ -21,6 +21,7 @@
 #include "MeshRenderer.h"
 #include "Enemy.h"        // Graphics::font_id, Data::Enemy
 #include "PowerUp.h"      // PowerUpSystem::SetDropSpawnInterval (used by Rainbow)
+#include "SoundManager.h"
 #include <vector>
 #include <cstdlib>        // rand()
 #include <cmath>          // fabsf
@@ -318,6 +319,8 @@ void Weather_Update(float dt, std::vector<Data::Enemy>& enemy_pool)
                 s_state = WeatherState::FREEZING;
                 s_phaseTimer = 0.0f;
                 s_spacePresses = 0;
+
+                SoundManager::PlaySnowAmbient();
             }
             else if (s_activeType == WeatherType::THUNDER)
             {
@@ -353,7 +356,7 @@ void Weather_Update(float dt, std::vector<Data::Enemy>& enemy_pool)
             {
                 ++s_spacePresses;
                 s_flashTimer = FLASH_DUR;
-                if (s_spacePresses >= SPACES_NEEDED) { s_state = WeatherState::THAWING; s_phaseTimer = 0.0f; }
+                if (s_spacePresses >= SPACES_NEEDED) { s_state = WeatherState::THAWING; s_phaseTimer = 0.0f; SoundManager::StopSnowAmbient(); }
             }
             if (s_flashTimer > 0.0f) s_flashTimer -= dt;
         }
@@ -438,7 +441,8 @@ void Weather_ForceEvent(int type, std::vector<Data::Enemy>& enemy_pool)
 {
     // Restore any active lunge before cancelling (prevents permanent speed boost)
     Thunder_RestoreLunge(enemy_pool);
-
+    SoundManager::StopSnowAmbient();
+    SoundManager::StopRainAmbient();
     // Cancel any active event first, reset to a clean IDLE state
     s_state = WeatherState::IDLE;
     s_phaseTimer = 0.0f;
@@ -454,6 +458,7 @@ void Weather_ForceEvent(int type, std::vector<Data::Enemy>& enemy_pool)
         s_activeType = WeatherType::SNOW;
         s_state = WeatherState::FREEZING;
         s_phaseTimer = 0.0f;
+        SoundManager::PlaySnowAmbient();
     }
     else if (type == 1)
     {
@@ -708,6 +713,7 @@ namespace
         s_strikeFlash = 0.0f;
         s_lungeEnemyIdx = -1;
         s_lungeTimer = 0.0f;
+        SoundManager::PlayRainAmbient();
     }
 
     // Pick a random active enemy and apply the lunge speed boost
@@ -735,6 +741,7 @@ namespace
         // Trigger stun + white flash
         s_stunTimer = STUN_DUR;
         s_strikeFlash = 1.0f;
+        SoundManager::PlayLightningSfx();
     }
 
     // Restore lunging enemy's original speed when lunge expires
@@ -761,6 +768,7 @@ namespace
             s_strikeFlash = 0.0f;
             s_state = WeatherState::IDLE;
             ResetTriggerTimer();
+            SoundManager::StopRainAmbient();
             return;
         }
 

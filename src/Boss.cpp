@@ -7,6 +7,7 @@
 
 #include "Boss.h"
 #include "AEEngine.h"
+#include "SoundManager.h"
 #include <unordered_set>                                                                                                    // for boss_used_words history tracking
 
 /*
@@ -552,7 +553,7 @@ namespace BossSystem
                 boss_hit_tint_timer = 0.0f;                                                                                 // clear any leftover hit tint
                 boss_flash_cooldown_timer = Boss_PickFlashCooldown();                                                       // pick a random wait before the first flash attack
                 boss_flash_active_timer = 0.0f;                                                                             // no flash overlay at the start
-
+                SoundManager::PlayBossSfx();
                 boss_state = BossState::CUTSCENE;                                                                           // move to the cutscene state
             }
             break;
@@ -588,6 +589,7 @@ namespace BossSystem
                 boss_cutscene_y = BossConfig::BOSS_POSITION_Y;                                                              // lock the boss to its exact fight position
                 Boss_PinKillWordPosition(pool);                                                                             // final pin before the word becomes visible
                 Boss_InjectKillWord(pool);                                                                                  // reveal the kill word so the player can start typing
+                SoundManager::StopBossSfx();
                 boss_state = BossState::ACTIVE;                                                                             // switch to the active fighting state
             }
             break;

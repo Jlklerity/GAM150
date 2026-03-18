@@ -31,6 +31,7 @@
 #include <ctime>
 #include <cstdio>  // snprintf
 #include "UpgradeSystem.h"
+#include "SoundManager.h"
 
 namespace
 {
@@ -246,12 +247,17 @@ namespace
     {
         switch (type)
         {
-        case PowerUpSystem::PowerType::Lightning: ActivateLightning(pool, health); break;
+        case PowerUpSystem::PowerType::Lightning: 
+            ActivateLightning(pool, health); 
+            SoundManager::PlayLightningSfx();
+            break;
         case PowerUpSystem::PowerType::Shield:
             g_shieldRemaining = SHIELD_DURATION * UpgradeSystem::Upgrade_GetPowerUpDurationMultiplier();                    // scaled by upgrade duration bonus
+            SoundManager::PlayShieldSfx();
             break;
         case PowerUpSystem::PowerType::TimeSlow:
             g_slowRemaining = SLOW_DURATION * UpgradeSystem::Upgrade_GetPowerUpDurationMultiplier();                        // scaled by upgrade duration bonus
+            SoundManager::PlaySlowSfx();
             break;
         }
     }

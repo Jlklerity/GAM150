@@ -568,12 +568,13 @@ void Main_Menu_Init()
     Leaderboard_System::Read_TimeLeaderboard();
 
 
-    if (gGameStatePrev != GS_SHOP)
+    /*if (gGameStatePrev != GS_SHOP)
         if (gGameStatePrev != GS_SHOP && gGameStatePrev != GS_CREDITS)
         {
             SoundManager::Init();
             SoundManager::PlayBackgroundMusic();
-        }
+        }*/
+    SoundManager::Init();
 
     BackgroundParallax::MenuParallax_Init();
 

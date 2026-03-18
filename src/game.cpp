@@ -22,6 +22,7 @@
 #include "GameClouds.h"
 #include "StreakSystem.h"
 #include "UpgradeSystem.h"
+#include "SoundManager.h"
 
 namespace {
     //avatar mesh and texture
@@ -107,8 +108,8 @@ void Game_Init()
     GameClouds::Exit();
     LaserBeam_Free();
     StreakSystem::Exit();
+    SoundManager::Exit();
     DeathTransition::Reset();
-
 
     if (playerTexture1) { AEGfxTextureUnload(playerTexture1); playerTexture1 = nullptr; }
     if (playerTexture2) { AEGfxTextureUnload(playerTexture2); playerTexture2 = nullptr; }
@@ -156,8 +157,10 @@ void Game_Init()
     Particles_Init();
     Weather_Init();
 
+
     LaserBeam_Init();
     LaserBeam_SetOrigin(spriteX + 75.0f, spriteY);
+    SoundManager::Init();
     StreakSystem::Init();
     DeathTransition::Reset();
 }
@@ -375,6 +378,7 @@ void Game_Exit()
     Weather_Exit();
     LaserBeam_Free();
     DebugConsole::Exit();
+    SoundManager::Exit();
     DeathTransition::Reset();
     GameClouds::Exit();
     StreakSystem::Exit();
