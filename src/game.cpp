@@ -227,9 +227,8 @@ void Game_Update()
             PowerUpSystem::OnMouseClick(wx, wy, enemy_pool);
         } // azfar code
 
-        // MOVED TYPING LOGIC HERE (so it pauses)
-        // Gate typing while player is frozen (snow) or stunned (thunder)
-        if (!Weather_IsPlayerFrozen() && !Weather_IsPlayerStunned())
+        // Gate typing while player is frozen (snow), stunned (thunder), or locked (ghost)
+        if (!Weather_IsPlayerFrozen() && !Weather_IsPlayerStunned() && !Weather_IsTypingLocked())
             Typing_UpdateAndApplyToEnemies(enemy_pool, score, health);
 
         // MOVED ANIMATION LOGIC HERE (so it pauses)
@@ -267,7 +266,7 @@ void Game_Update()
     {
         float dt = (float)AEFrameRateControllerGetFrameTime();
         if (dt > 0.1f) dt = 0.01667f;
-        UpgradeSystem::Upgrade_Update(health, dt);                                                                          // pass dt for card animation
+        UpgradeSystem::Upgrade_Update(health);
     }
 
 
