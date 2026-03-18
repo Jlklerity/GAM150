@@ -127,6 +127,21 @@ namespace
     constexpr float RAINBOW_Y = 80.0f;   // world-space Y (mid-upper area)
     constexpr float RAINBOW_FADE_TIME = 1.5f;    // fade-in / fade-out duration
 
+    // ================================================================
+    //  Ghost weather constants
+    // ================================================================
+    constexpr int   GHOST_COUNT = 5;
+    constexpr float GHOST_LIFETIME = 10.0f;   // seconds before lock triggers
+    constexpr float GHOST_LOCK_DUR = 3.0f;    // typing locked duration
+    constexpr float GHOST_SPEED_MIN = 80.0f;
+    constexpr float GHOST_SPEED_MAX = 160.0f;
+    constexpr float GHOST_SIZE = 60.0f;   // display size (px)
+    // Sprite sheet: 16 frames in one row (walk cycle)
+    constexpr int   GHOST_FRAME_COUNT = 16;
+    constexpr float GHOST_FRAME_TIME = 0.07f;   // seconds per frame
+    constexpr float GHOST_LABEL_OFFSET_Y = 38.0f;   // px above ghost centre for digit label
+    constexpr float GHOST_SPAWN_MARGIN = 80.0f;   // off-screen spawn margin
+
     // Inline helpers
     static inline float RandF(float lo, float hi)
     {
@@ -141,7 +156,7 @@ namespace
 namespace
 {
     // Which weather event is currently active
-    enum class WeatherType { SNOW, THUNDER, RAINBOW };
+    enum class WeatherType { SNOW, THUNDER, RAINBOW, GHOST };
 
     // Weather state machine (shared by both types)
     enum class WeatherState
@@ -165,6 +180,17 @@ namespace
 
     // Rain particle
     struct Raindrop { float x, y, speedY, w, h, alpha; };
+
+    // Ghost particle (ghost weather)
+    struct Ghost
+    {
+        float x, y;          // world-space position
+        float velX, velY;    // velocity (px/s)
+        int   digit;         // 5–9 assigned digit
+        bool  alive;         // false once killed by player
+        int   frame;         // current animation frame
+        float frameTimer;    // accumulator for frame advance
+    };
 
     // Shared state
     static WeatherState s_state = WeatherState::IDLE; // curent state, changes based on Update()
@@ -196,6 +222,14 @@ namespace
     static float            s_rainbowFrameTimer = 0.0f;  // time accumulator for frame advance
     static AEGfxTexture* s_rainbowTex = nullptr;
     static AEGfxVertexList* s_rainbowMesh = nullptr; // single-frame UV quad
+
+    // Ghost weather state
+    static Ghost            s_ghosts[GHOST_COUNT]{};
+    static float            s_ghostLifeTimer = 0.0f; // counts up; triggers lock at GHOST_LIFETIME
+    static float            s_ghostLockTimer = 0.0f; // counts down; >0 means typing locked
+    static bool             s_ghostEventActive = false;
+    static AEGfxTexture* s_ghostTex = nullptr;
+    static AEGfxVertexList* s_ghostMesh = nullptr;   // single-frame UV quad (1/GHOST_FRAME_COUNT wide)
 
     // ---- Particles ----
     static Snowflake s_ambient[AMBIENT_COUNT]{};
@@ -241,6 +275,14 @@ namespace
     static void  Rainbow_Update(float dt);
     static void  Rainbow_DrawSprite();
 
+    // Ghost weather helpers
+    static void  Ghost_BuildMesh();
+    static void  Ghost_Start();
+    static void  Ghost_Update(float dt);
+    static void  Ghost_Draw();
+    static void  Ghost_DrawHUD();
+    static void  Ghost_SpawnOne(Ghost& g, int digit);
+
     static void  DrawCentredText(const char* text, float ndcY, float scale,
         float r, float g, float b, float alpha);
 }
@@ -280,6 +322,14 @@ void Weather_Init()
     s_rainbowTex = AEGfxTextureLoad("Assets/rainbowvfx.png");
     Rainbow_BuildMesh();
 
+    // Ghost weather init
+    s_ghostTex = AEGfxTextureLoad("Assets/ghost.png");
+    Ghost_BuildMesh();
+    s_ghostEventActive = false;
+    s_ghostLifeTimer = 0.0f;
+    s_ghostLockTimer = 0.0f;
+    for (int i = 0; i < GHOST_COUNT; ++i) s_ghosts[i].alive = false;
+
     ResetTriggerTimer();
 
     for (int i = 0; i < AMBIENT_COUNT; ++i)
@@ -307,11 +357,12 @@ void Weather_Update(float dt, std::vector<Data::Enemy>& enemy_pool)
         s_triggerTimer += dt;
         if (s_triggerTimer >= s_triggerTarget)
         {
-            // Randomly pick SNOW, THUNDER, or RAINBOW (1-in-3 each)
-            int pick = rand() % 3;
-            if (pick == 0)      s_activeType = WeatherType::SNOW;
-            else if (pick == 1) s_activeType = WeatherType::THUNDER;
-            else                s_activeType = WeatherType::RAINBOW;
+            // Weighted pick: Snow 30%, Thunder 30%, Ghost 30%, Rainbow 10%
+            int pick = rand() % 10;
+            if (pick < 3) s_activeType = WeatherType::SNOW;
+            else if (pick < 6) s_activeType = WeatherType::THUNDER;
+            else if (pick < 9) s_activeType = WeatherType::GHOST;
+            else               s_activeType = WeatherType::RAINBOW;
 
             if (s_activeType == WeatherType::SNOW)
             {
@@ -323,9 +374,13 @@ void Weather_Update(float dt, std::vector<Data::Enemy>& enemy_pool)
             {
                 Thunder_StartStorm();
             }
-            else
+            else if (s_activeType == WeatherType::RAINBOW)
             {
                 Rainbow_Start();
+            }
+            else
+            {
+                Ghost_Start();
             }
         }
     }
@@ -387,6 +442,14 @@ void Weather_Update(float dt, std::vector<Data::Enemy>& enemy_pool)
     {
         Rainbow_Update(dt);
     }
+
+    // ================================================================
+    //  GHOST path
+    // ================================================================
+    if (s_activeType == WeatherType::GHOST && s_ghostEventActive)
+    {
+        Ghost_Update(dt);
+    }
 }
 
 // ----------------------------------------------------------------
@@ -400,7 +463,9 @@ void Weather_DrawBackground()
 // ----------------------------------------------------------------
 void Weather_Draw()
 {
-    if (!s_quad || s_state == WeatherState::IDLE) return; // if there is nothing to draw, prevent UB or crash
+    // Ghost weather has its own active flag, not bound to the shared state machine
+    bool ghostVisible = (s_activeType == WeatherType::GHOST && s_ghostEventActive);
+    if (!s_quad || (s_state == WeatherState::IDLE && !ghostVisible)) return;
 
     if (s_activeType == WeatherType::SNOW)
     {
@@ -420,6 +485,12 @@ void Weather_Draw()
         Thunder_DrawStrikeFlash();
     }
     // RAINBOW: all drawing is done in Weather_DrawBackground() — nothing to do here
+    // GHOST: ghosts + HUD drawn here
+    if (s_activeType == WeatherType::GHOST && s_ghostEventActive)
+    {
+        Ghost_Draw();
+        Ghost_DrawHUD();
+    }
 }
 
 void Weather_Exit()
@@ -427,11 +498,14 @@ void Weather_Exit()
     if (s_quad) { AEGfxMeshFree(s_quad);             s_quad = nullptr; }
     if (s_rainbowTex) { AEGfxTextureUnload(s_rainbowTex);  s_rainbowTex = nullptr; }
     if (s_rainbowMesh) { AEGfxMeshFree(s_rainbowMesh);      s_rainbowMesh = nullptr; }
+    if (s_ghostTex) { AEGfxTextureUnload(s_ghostTex);    s_ghostTex = nullptr; }
+    if (s_ghostMesh) { AEGfxMeshFree(s_ghostMesh);        s_ghostMesh = nullptr; }
 }
 
 // Functions used in game.cpp to prevent certain game mechanics
 bool Weather_IsPlayerFrozen() { return s_state == WeatherState::FROZEN; }
 bool Weather_IsPlayerStunned() { return (s_activeType == WeatherType::THUNDER && s_stunTimer > 0.0f); }
+bool Weather_IsTypingLocked() { return (s_activeType == WeatherType::GHOST && s_ghostLockTimer > 0.0f); }
 
 // Used in debugconsole
 void Weather_ForceEvent(int type, std::vector<Data::Enemy>& enemy_pool)
@@ -447,6 +521,11 @@ void Weather_ForceEvent(int type, std::vector<Data::Enemy>& enemy_pool)
     s_spaceWasHeld = false;
     s_stunTimer = 0.0f;
     s_strikeFlash = 0.0f;
+    // Ghost reset
+    s_ghostEventActive = false;
+    s_ghostLifeTimer = 0.0f;
+    s_ghostLockTimer = 0.0f;
+    for (int i = 0; i < GHOST_COUNT; ++i) s_ghosts[i].alive = false;
 
     if (type == 0)
     {
@@ -461,11 +540,17 @@ void Weather_ForceEvent(int type, std::vector<Data::Enemy>& enemy_pool)
         s_activeType = WeatherType::THUNDER;
         Thunder_StartStorm();
     }
-    else
+    else if (type == 2)
     {
         // Force rainbow
         s_activeType = WeatherType::RAINBOW;
         Rainbow_Start();
+    }
+    else
+    {
+        // Force ghost weather
+        s_activeType = WeatherType::GHOST;
+        Ghost_Start();
     }
 
     // Reset the trigger timer so the next random event fires on schedule after this one
@@ -940,5 +1025,234 @@ namespace
         // Reset render state
         AEGfxSetTransparency(1.0f);
         AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);
+    }
+
+    // ================================================================
+    //  Ghost weather helpers
+    // ================================================================
+
+    // Ghost mesh is rebuilt each draw call with exact UV coords for the current frame.
+    // No persistent mesh needed — we free/rebuild per-ghost per-frame using Spritesheet_Mesh.
+    static void Ghost_BuildMesh()
+    {
+        // Nothing to pre-build; per-frame meshes are created in Ghost_Draw.
+        // Free any stale mesh from a previous session.
+        if (s_ghostMesh) { AEGfxMeshFree(s_ghostMesh); s_ghostMesh = nullptr; }
+    }
+
+    // Spawn one ghost at a random screen edge with a random inward velocity.
+    static void Ghost_SpawnOne(Ghost& g, int digit)
+    {
+        // Pick a random edge: 0=top, 1=bottom, 2=left, 3=right
+        int edge = rand() % 4;
+        switch (edge)
+        {
+        case 0: // top
+            g.x = RandF(-HALF_W, HALF_W);
+            g.y = HALF_H + GHOST_SPAWN_MARGIN;
+            break;
+        case 1: // bottom
+            g.x = RandF(-HALF_W, HALF_W);
+            g.y = -HALF_H - GHOST_SPAWN_MARGIN;
+            break;
+        case 2: // left
+            g.x = -HALF_W - GHOST_SPAWN_MARGIN;
+            g.y = RandF(-HALF_H, HALF_H);
+            break;
+        default: // right
+            g.x = HALF_W + GHOST_SPAWN_MARGIN;
+            g.y = RandF(-HALF_H, HALF_H);
+            break;
+        }
+
+        // Random direction — ensure it has a non-trivial inward component
+        float angle = RandF(0.0f, 6.2832f); // full 2*pi
+        float speed = RandF(GHOST_SPEED_MIN, GHOST_SPEED_MAX);
+        g.velX = cosf(angle) * speed;
+        g.velY = sinf(angle) * speed;
+
+        g.digit = digit;
+        g.alive = true;
+        g.frame = 0;
+        g.frameTimer = 0.0f;
+    }
+
+    // Kick off a new ghost weather event.
+    static void Ghost_Start()
+    {
+        s_ghostEventActive = true;
+        s_ghostLifeTimer = 0.0f;
+        s_ghostLockTimer = 0.0f;
+
+        // Assign digits 5-9 (one per ghost, shuffled slightly via rand)
+        int digits[GHOST_COUNT] = { 5, 6, 7, 8, 9 };
+        // Fisher-Yates shuffle for variety
+        for (int i = GHOST_COUNT - 1; i > 0; --i)
+        {
+            int j = rand() % (i + 1);
+            int tmp = digits[i]; digits[i] = digits[j]; digits[j] = tmp;
+        }
+
+        for (int i = 0; i < GHOST_COUNT; ++i)
+            Ghost_SpawnOne(s_ghosts[i], digits[i]);
+    }
+
+    // Per-frame ghost update: movement, animation, digit input, lock timer.
+    static void Ghost_Update(float dt)
+    {
+        // ---- Lock timer: count down ----
+        if (s_ghostLockTimer > 0.0f)
+        {
+            s_ghostLockTimer -= dt;
+            if (s_ghostLockTimer < 0.0f) s_ghostLockTimer = 0.0f;
+        }
+
+        // ---- Count still-alive ghosts ----
+        int alive = 0;
+        for (int i = 0; i < GHOST_COUNT; ++i)
+            if (s_ghosts[i].alive) ++alive;
+
+        // Event ends when all ghosts are dead and no lock is pending
+        if (alive == 0 && s_ghostLockTimer <= 0.0f)
+        {
+            s_ghostEventActive = false;
+            s_state = WeatherState::IDLE;
+            ResetTriggerTimer();
+            return;
+        }
+
+        // ---- Life timer: triggers lock if a ghost survives too long ----
+        if (alive > 0)
+        {
+            s_ghostLifeTimer += dt;
+            if (s_ghostLifeTimer >= GHOST_LIFETIME && s_ghostLockTimer <= 0.0f)
+            {
+                // Lock typing for GHOST_LOCK_DUR seconds
+                s_ghostLockTimer = GHOST_LOCK_DUR;
+                s_ghostLifeTimer = 0.0f; // reset so subsequent survivors can trigger again
+            }
+        }
+
+        // ---- Move and animate live ghosts ----
+        for (int i = 0; i < GHOST_COUNT; ++i)
+        {
+            Ghost& g = s_ghosts[i];
+            if (!g.alive) continue;
+
+            g.x += g.velX * dt;
+            g.y += g.velY * dt;
+
+            // Bounce off screen edges to keep ghosts on screen
+            if (g.x < -HALF_W) { g.x = -HALF_W; g.velX = fabsf(g.velX); }
+            if (g.x > HALF_W) { g.x = HALF_W; g.velX = -fabsf(g.velX); }
+            if (g.y < -HALF_H) { g.y = -HALF_H; g.velY = fabsf(g.velY); }
+            if (g.y > HALF_H) { g.y = HALF_H; g.velY = -fabsf(g.velY); }
+
+            // Advance animation frame
+            g.frameTimer += dt;
+            if (g.frameTimer >= GHOST_FRAME_TIME)
+            {
+                g.frameTimer -= GHOST_FRAME_TIME;
+                g.frame = (g.frame + 1) % GHOST_FRAME_COUNT;
+            }
+        }
+
+        // ---- Check digit input (only when typing is not locked) ----
+        if (s_ghostLockTimer <= 0.0f)
+        {
+            // Check keys '5' through '9'
+            for (int key = 5; key <= 9; ++key)
+            {
+                // AEVK_0 = 0x30, so digit key = 0x30 + key
+                u8 vk = (u8)(0x30 + key);
+                if (AEInputCheckTriggered(vk))
+                {
+                    // Kill the first live ghost whose digit matches
+                    for (int i = 0; i < GHOST_COUNT; ++i)
+                    {
+                        if (s_ghosts[i].alive && s_ghosts[i].digit == key)
+                        {
+                            s_ghosts[i].alive = false;
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // Draw all live ghosts (sprite + digit label above them).
+    static void Ghost_Draw()
+    {
+        if (!s_ghostTex) return;
+
+        constexpr float uvW = 1.0f / (float)GHOST_FRAME_COUNT;
+
+        for (int i = 0; i < GHOST_COUNT; ++i)
+        {
+            const Ghost& g = s_ghosts[i];
+            if (!g.alive) continue;
+
+            // ---- Build a fresh mesh with exact UV slice for this frame ----
+            float uMin = (float)g.frame * uvW;
+            float uMax = uMin + uvW;
+            AEGfxVertexList* frameMesh = Spritesheet_Mesh(1.0f, 1.0f, uMin, 0.0f, uMax, 1.0f);
+            if (!frameMesh) continue;
+
+            // ---- Draw sprite ----
+            AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
+            AEGfxSetBlendMode(AE_GFX_BM_BLEND);
+            AEGfxSetTransparency(1.0f);
+            AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);
+            AEGfxSetColorToAdd(0.0f, 0.0f, 0.0f, 0.0f);
+            AEGfxTextureSet(s_ghostTex, 0.0f, 0.0f); // no extra offset; UVs are baked
+            Mesh_Renderer(frameMesh, g.x, g.y, GHOST_SIZE, GHOST_SIZE, 0.0f);
+
+            AEGfxMeshFree(frameMesh);
+
+            // ---- Draw digit label above the ghost ----
+            if (Graphics::font_id >= 0)
+            {
+                char label[2] = { (char)('0' + g.digit), '\0' };
+                constexpr float DIGIT_SCALE = 0.6f;
+
+                float hw = (float)AEGfxGetWindowWidth() * 0.5f;
+                float hh = (float)AEGfxGetWindowHeight() * 0.5f;
+                float ndcX = (hw > 0.0f) ? (g.x / hw) : 0.0f;
+                float ndcY = (hh > 0.0f) ? ((g.y + GHOST_LABEL_OFFSET_Y) / hh) : 0.0f;
+
+                float tw = 0.0f, th = 0.0f;
+                AEGfxGetPrintSize(Graphics::font_id, label, DIGIT_SCALE, &tw, &th);
+                ndcX -= tw * 0.5f;
+
+                AEGfxSetBlendMode(AE_GFX_BM_BLEND);
+                AEGfxPrint(Graphics::font_id, label, ndcX, ndcY, DIGIT_SCALE, 1.0f, 0.95f, 0.2f, 1.0f);
+            }
+        }
+
+        // Reset render state
+        AEGfxSetRenderMode(AE_GFX_RM_COLOR);
+        AEGfxSetTransparency(1.0f);
+        AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);
+        AEGfxSetColorToAdd(0.0f, 0.0f, 0.0f, 0.0f);
+    }
+
+    // Draw "LOCKED" + countdown while the typing lock is active.
+    static void Ghost_DrawHUD()
+    {
+        if (s_ghostLockTimer <= 0.0f) return;
+        if (Graphics::font_id < 0) return;
+
+        AEGfxSetBlendMode(AE_GFX_BM_BLEND);
+
+        // Pulsing red "LOCKED" text
+        float pulse = ((int)(s_ghostLockTimer * 6.0f) % 2 == 0) ? 1.0f : 0.55f;
+        DrawCentredText("GHOSTIFIED!", 0.25f, 0.85f, 1.0f, 0.15f, 0.15f, pulse);
+
+        // Countdown timer below (e.g. "2.4")
+        char buf[16];
+        int remaining = (int)ceilf(s_ghostLockTimer);
+        snprintf(buf, sizeof(buf), "%d", remaining);
+        DrawCentredText(buf, 0.05f, 0.65f, 1.0f, 1.0f, 1.0f, 1.0f);
     }
 }

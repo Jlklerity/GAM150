@@ -298,6 +298,7 @@ namespace
             PushHistory("/weather snow        - trigger blizzard event", false);
             PushHistory("/weather thunder     - trigger thunderstorm event", false);
             PushHistory("/weather rainbow     - trigger rainbow event", false);
+            PushHistory("/weather ghost       - trigger ghost weather event", false);
 
             return;
         }
@@ -332,12 +333,12 @@ namespace
             return;
         }
 
-        // /weather snow | thunder   -- force-trigger a weather event
+        // /weather snow | thunder | rainbow | ghost  -- force-trigger a weather event
         if (IEquals(cmd, "weather"))
         {
             if (tokens.size() < 2)
             {
-                PushHistory("Usage: /weather [snow|thunder|rainbow]", true);
+                PushHistory("Usage: /weather [snow|thunder|rainbow|ghost]", true);
                 return;
             }
             if (IEquals(tokens[1], "snow"))
@@ -355,11 +356,16 @@ namespace
                 Weather_ForceEvent(2, *s_pEnemyPool);
                 PushHistory("Triggered rainbow.", false);
             }
+            else if (IEquals(tokens[1], "ghost"))
+            {
+                Weather_ForceEvent(3, *s_pEnemyPool);
+                PushHistory("Triggered ghost weather.", false);
+            }
             else
             {
-                PushHistory("Unknown weather type. Use: snow | thunder | rainbow", true);
+                PushHistory("Unknown weather type. Use: snow | thunder | rainbow | ghost", true);
             }
-            return; // azfar code end
+            return;
         }
 
 

@@ -84,14 +84,14 @@ namespace UpgradeSystem
 
     /*
     @function       Upgrade_Update
-    @params         health (Data::Health&), dt (float)
+    @params         health (Data::Health&)
     @brief          Updates hover state and applies a clicked upgrade.
 
     Reads the cursor position, determines which card is hovered, and on left-click applies the
     upgrade and closes the screen. The health reference is only written for the max HP card.
     Does nothing when the screen is closed.
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
-    void Upgrade_Update(Data::Health& health, float dt);
+    void Upgrade_Update(Data::Health& health);
 
     /*
     @function       Upgrade_Draw

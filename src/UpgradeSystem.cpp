@@ -248,10 +248,10 @@ namespace UpgradeSystem
 
     /*
     @function       Upgrade_Update
-    @params         health (Data::Health&), dt (float)
+    @params         health (Data::Health&)
     @brief          Advances animation, updates hover state, and applies a clicked upgrade.
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
-    void Upgrade_Update(Data::Health& health, float dt)
+    void Upgrade_Update(Data::Health& health)
     {
         if (!upgrade_screen_open) return;
 

@@ -21,6 +21,13 @@
                            screen (behind enemies). Power-ups spawn every 3 seconds
                            for the duration of the event.
 
+            - GHOST:       5 ghosts fly across the screen in random directions.
+                           Each ghost displays a digit (5-9). The player must type
+                           the matching digit to destroy it. If any ghost survives
+                           for 10 seconds, typing is locked for 3 seconds.
+                           A centred "LOCKED" indicator with a countdown timer is
+                           shown while the lock is active.
+
 @integration (game.cpp):
             Weather_Init()              -- call once inside Game_Init()
             Weather_Update(dt, pool)    -- call inside the !isPaused && !isDead block
@@ -28,7 +35,8 @@
             Weather_Draw()              -- call inside the render block, after world / powerup draws
             Weather_Exit()              -- call once inside Game_Exit()
             Weather_IsPlayerFrozen()    -- } gate BOTH on
-            Weather_IsPlayerStunned()   -- } Typing_UpdateAndApplyToEnemies()
+            Weather_IsPlayerStunned()   -- } gate BOTH on
+            Weather_IsTypingLocked()    -- } Typing_UpdateAndApplyToEnemies()
 
 @author     (your name)
 */
@@ -42,11 +50,12 @@ void Weather_Draw();           // Call AFTER enemies: draws snow/thunder overlay
 void Weather_Exit();
 bool Weather_IsPlayerFrozen();   // true during full snow freeze
 bool Weather_IsPlayerStunned();  // true during brief thunder strike stun
+bool Weather_IsTypingLocked();   // true during ghost-weather typing lock
 
 /**
  * @brief Debug helper: immediately triggers a weather event of the given type.
  *        Any currently active event is cancelled first.
- * @param type       0 = Snow/Blizzard, 1 = Thunderstorm, 2 = Rainbow
+ * @param type       0 = Snow/Blizzard, 1 = Thunderstorm, 2 = Rainbow, 3 = Ghost
  * @param enemy_pool reference to enemy vector (needed to restore lunge speed)
  */
 void Weather_ForceEvent(int type, std::vector<Data::Enemy>& enemy_pool);
