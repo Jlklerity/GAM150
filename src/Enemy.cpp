@@ -1084,6 +1084,8 @@ namespace EnemySystem
         // letter orbit effect update, runs while enemy is falling and has a word
         if (!e.enemy_word_text.empty() && !e.enemy_has_landed)                                                              // only run orbit while enemy is actively falling
         {
+            float raw_dt = dt / PowerUpSystem::GetTimeScale();                                                              // unscaled dt so orbit is unaffected by the slow power-up
+
             if (!e.enemy_orbit_initialised)                                                                                 // first frame this enemy is active, do the random roll
             {
                 e.enemy_has_orbit_effect = (Utility::Utility_RandInt(0, 99) < EnemyConfig::ORBIT_SPAWN_CHANCE);             // randomly decide if this enemy gets the orbit effect
@@ -1096,9 +1098,9 @@ namespace EnemySystem
             {
                 if (e.enemy_orbit_phase == 0)                                                                               // IDLE phase: sitting at baseline, waiting for next orbit
                 {
-                    e.enemy_orbit_idle_timer -= dt;                                                                         // count down the idle wait
+                    e.enemy_orbit_idle_timer -= raw_dt;                                                                     // count down the idle wait
                     e.enemy_orbit_radius = Utility::Utility_Lerp(                                                           // smoothly return radius to zero while idle
-                        e.enemy_orbit_radius, 0.0f, EnemyConfig::ORBIT_FADE_SPEED * dt);
+                        e.enemy_orbit_radius, 0.0f, EnemyConfig::ORBIT_FADE_SPEED * raw_dt);
 
                     if (e.enemy_orbit_idle_timer <= 0.0f)                                                                   // idle wait finished, start orbiting
                     {
@@ -1108,10 +1110,10 @@ namespace EnemySystem
                 }
                 else if (e.enemy_orbit_phase == 1)                                                                          // ORBITING phase: letters spin outward for one full rotation
                 {
-                    e.enemy_orbit_timer += dt;                                                                              // advance the orbit angle timer
+                    e.enemy_orbit_timer += raw_dt;                                                                          // advance the orbit angle timer
 
                     e.enemy_orbit_radius = Utility::Utility_Lerp(                                                           // smoothly lerp radius up toward max
-                        e.enemy_orbit_radius, EnemyConfig::ORBIT_RADIUS_MAX_NDC, EnemyConfig::ORBIT_FADE_SPEED * dt);
+                        e.enemy_orbit_radius, EnemyConfig::ORBIT_RADIUS_MAX_NDC, EnemyConfig::ORBIT_FADE_SPEED * raw_dt);
 
                     float full_rotation_seconds = (6.2831853f / EnemyConfig::ORBIT_SPEED);                                  // time for one full 360 degree orbit
                     if (e.enemy_orbit_timer >= full_rotation_seconds)                                                       // one full rotation completed, start returning
@@ -1121,10 +1123,10 @@ namespace EnemySystem
                 }
                 else if (e.enemy_orbit_phase == 2)                                                                          // RETURNING phase: radius fades back to zero
                 {
-                    e.enemy_orbit_timer += dt;                                                                              // keep advancing timer so letters continue rotating while returning
+                    e.enemy_orbit_timer += raw_dt;                                                                          // keep advancing timer so letters continue rotating while returning
 
                     e.enemy_orbit_radius = Utility::Utility_Lerp(                                                           // smoothly lerp radius back toward zero
-                        e.enemy_orbit_radius, 0.0f, EnemyConfig::ORBIT_FADE_SPEED * dt);
+                        e.enemy_orbit_radius, 0.0f, EnemyConfig::ORBIT_FADE_SPEED * raw_dt);
 
                     if (e.enemy_orbit_radius < 0.001f)                                                                      // radius close enough to zero, letters are back at baseline
                     {
@@ -1137,7 +1139,7 @@ namespace EnemySystem
             else if (e.enemy_is_targeted)                                                                                   // player locked on, fade radius to zero immediately
             {
                 e.enemy_orbit_radius = Utility::Utility_Lerp(                                                               // smoothly pull letters back to baseline
-                    e.enemy_orbit_radius, 0.0f, EnemyConfig::ORBIT_FADE_SPEED * dt);
+                    e.enemy_orbit_radius, 0.0f, EnemyConfig::ORBIT_FADE_SPEED * raw_dt);
             }
         }
         /*--------------------------------*/
