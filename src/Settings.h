@@ -1,6 +1,7 @@
 #pragma once
 
 namespace SysSettings {
-	bool DisplaySettings();
-	void Settings_Exit();
+    void Init();
+    bool DisplaySettings(); // Returns false when the player clicks the "Close" button
+    void Exit();
 }
