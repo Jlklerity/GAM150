@@ -23,22 +23,21 @@ namespace UiPauseMenu
         AEGfxSetRenderMode(AE_GFX_RM_COLOR);
         AEGfxSetBlendMode(AE_GFX_BM_BLEND);
         AEGfxSetTransparency(0.75f);
-        AEGfxSetColorToMultiply(0.05f, 0.03f, 0.08f, 1.0f); // dark purple-black
+        AEGfxSetColorToMultiply(0.05f, 0.03f, 0.08f, 1.0f);
         Mesh_Renderer(bgMesh, 0.0f, 0.0f, winW, winH, 0.0f);
 
         if (Graphics::font_id < 0) return;
 
-        // --- Gold bordered panel behind menu ---
+        // --- Centered Gold bordered panel ---
         AEGfxSetRenderMode(AE_GFX_RM_COLOR);
         AEGfxSetBlendMode(AE_GFX_BM_BLEND);
         AEGfxSetTransparency(1.0f);
-        AEGfxSetColorToMultiply(0.85f, 0.70f, 0.15f, 1.0f); // gold
-        Mesh_Renderer(bgMesh, 0.0f, -0.1f * screenHalfH, 420.0f, 620.0f, 0.0f);
+        AEGfxSetColorToMultiply(0.85f, 0.70f, 0.15f, 1.0f);
+        Mesh_Renderer(bgMesh, 0.0f, 0.0f, 420.0f, 620.0f, 0.0f);
 
         // Dark panel fill
-        AEGfxSetColorToMultiply(0.07f, 0.05f, 0.10f, 1.0f); // dark purple
-        Mesh_Renderer(bgMesh, 0.0f, -0.1f * screenHalfH, 408.0f, 608.0f, 0.0f);
-
+        AEGfxSetColorToMultiply(0.07f, 0.05f, 0.10f, 1.0f);
+        Mesh_Renderer(bgMesh, 0.0f, 0.0f, 408.0f, 608.0f, 0.0f);
 
         // --- Button config ---
         float btnW = 340.0f;
@@ -54,41 +53,59 @@ namespace UiPauseMenu
                 AEGfxSetRenderMode(AE_GFX_RM_COLOR);
                 AEGfxSetBlendMode(AE_GFX_BM_BLEND);
                 AEGfxSetTransparency(1.0f);
-                AEGfxSetColorToMultiply(0.85f, 0.70f, 0.15f, 1.0f); // gold
+                AEGfxSetColorToMultiply(0.85f, 0.70f, 0.15f, 1.0f);
                 Mesh_Renderer(bgMesh, cx, worldY, btnW + borderSize * 2, btnH + borderSize * 2, 0.0f);
 
-                AEGfxSetColorToMultiply(0.10f, 0.08f, 0.14f, 1.0f); // dark purple
+                AEGfxSetColorToMultiply(0.10f, 0.08f, 0.14f, 1.0f);
                 Mesh_Renderer(bgMesh, cx, worldY, btnW, btnH, 0.0f);
 
                 float tw, th;
                 AEGfxGetPrintSize(Graphics::font_id, label, 0.65f, &tw, &th);
                 AEGfxSetBlendMode(AE_GFX_BM_BLEND);
                 AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);
+
                 float ndcY = worldY / screenHalfH;
-                AEGfxPrint(Graphics::font_id, label, cx / screenHalfW - tw * 0.5f, ndcY - 0.035f, 0.65f, 1.0f, 0.92f, 0.6f, 1.0f); // warm gold text
+                AEGfxPrint(Graphics::font_id, label,
+                    cx / screenHalfW - tw * 0.5f,
+                    ndcY - 0.035f,
+                    0.65f, 1.0f, 0.92f, 0.6f, 1.0f);
             };
 
-        // --- "PAUSED" title ---
+        // --- PAUSED ---
         {
             const char* title = "PAUSED";
             float tw, th;
             AEGfxGetPrintSize(Graphics::font_id, title, 1.1f, &tw, &th);
+
             AEGfxSetBlendMode(AE_GFX_BM_BLEND);
-            AEGfxPrint(Graphics::font_id, title, -tw * 0.5f + 0.005f, 0.42f, 1.1f, 0.0f, 0.0f, 0.0f, 1.0f); // Shadow
-            AEGfxPrint(Graphics::font_id, title, -tw * 0.5f, 0.43f, 1.1f, 1.0f, 0.82f, 0.1f, 1.0f); // Gold title
+
+            // Shadow
+            AEGfxPrint(Graphics::font_id, title,
+                -tw * 0.5f + 0.005f,
+                0.35f,
+                1.1f, 0.0f, 0.0f, 0.0f, 1.0f);
+
+            // Gold text
+            AEGfxPrint(Graphics::font_id, title,
+                -tw * 0.5f,
+                0.36f,
+                1.1f, 1.0f, 0.82f, 0.1f, 1.0f);
         }
 
-        // --- Decorative gold divider line under title ---
+        // --- Divider ---
         AEGfxSetRenderMode(AE_GFX_RM_COLOR);
         AEGfxSetBlendMode(AE_GFX_BM_BLEND);
         AEGfxSetTransparency(1.0f);
         AEGfxSetColorToMultiply(0.85f, 0.70f, 0.15f, 1.0f);
-        Mesh_Renderer(bgMesh, 0.0f, 0.27f * screenHalfH, 360.0f, 3.0f, 0.0f);
+        Mesh_Renderer(bgMesh, 0.0f, 0.20f * screenHalfH, 360.0f, 3.0f, 0.0f);
 
-        // --- Draw buttons ---
+        // --- Buttons ---
         DrawButton(btnX, resumeY * screenHalfH, "RESUME");
         DrawButton(btnX, settingsY * screenHalfH, "SETTINGS");
         DrawButton(btnX, menuY * screenHalfH, "MAIN MENU");
+
+        // (rest of your function unchanged)
+    
 
         // ========================================================================
         // EXIT CONFIRMATION POPUP OVERLAY
@@ -133,7 +150,7 @@ namespace UiPauseMenu
             const char* yesText = "YES";
             const char* noText = "NO";
 
-            float pw, ph, ww, wh, yw, yh, nw, nh;
+            float pw{}, ph{}, ww{}, wh{}, yw{}, yh{}, nw{}, nh{};
             AEGfxGetPrintSize(Graphics::font_id, promptText, 0.8f, &pw, &ph);
             if (gGameStateCurr != GS_TUTORIAL)
             AEGfxGetPrintSize(Graphics::font_id, warningText, 0.5f, &ww, &wh);
