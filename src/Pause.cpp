@@ -137,7 +137,10 @@ namespace UiPauseMenu
                 {
                     inSettings = false; // Close settings when user clicks "Close" or hits ESC
                 }
-                return; // Stop drawing the normal pause menu
+                else {
+
+                    return; // Stop drawing the normal pause menu
+                }
             }
 
             // Otherwise, draw the normal pause menu
