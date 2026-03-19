@@ -116,7 +116,7 @@ namespace
     constexpr int   RAINBOW_FRAME_COUNT = 9;        // frames in the sprite sheet
     constexpr float RAINBOW_FRAME_TIME = 0.12f;   // seconds per frame (~8 fps)
     constexpr float RAINBOW_DISPLAY_W = 1600.0f; // stretch to full screen width
-    constexpr float RAINBOW_DISPLAY_H = 120.0f;  // height of the rainbow band
+    constexpr float RAINBOW_DISPLAY_H = 60.0f;  // height of the rainbow band
     constexpr float RAINBOW_Y = 80.0f;   // world-space Y (mid-upper area)
     constexpr float RAINBOW_FADE_TIME = 1.5f;    // fade-in / fade-out duration
 
