@@ -14,171 +14,94 @@ namespace UiPauseMenu
 
     void Ui_DrawPauseMenu(bool& isPaused, AEGfxVertexList* bgMesh)
     {
-
-        float winW = (float)AEGfxGetWindowWidth();                                                                                    // store window width
+        float winW = (float)AEGfxGetWindowWidth();
         float winH = (float)AEGfxGetWindowHeight();
+        float screenHalfH = winH * 0.5f;
 
-        // --- Draw Background Quad (Dark Overlay) ---
+        // --- Dark overlay ---
         AEGfxSetRenderMode(AE_GFX_RM_COLOR);
         AEGfxSetBlendMode(AE_GFX_BM_BLEND);
-        AEGfxSetTransparency(0.6f);
-        AEGfxSetColorToMultiply(0.0f, 0.0f, 0.0f, 1.0f);
+        AEGfxSetTransparency(0.75f);
+        AEGfxSetColorToMultiply(0.05f, 0.03f, 0.08f, 1.0f); // dark purple-black
         Mesh_Renderer(bgMesh, 0.0f, 0.0f, winW, winH, 0.0f);
 
-        if (Graphics::font_id >= 0)
-        {
-            // --- Draw "PAUSED" Text ---
-            const char* pauseText = "PAUSED";
-            float w, h;
-            AEGfxGetPrintSize(Graphics::font_id, pauseText, 1.0f, &w, &h);
-
-            AEGfxSetBlendMode(AE_GFX_BM_BLEND);
-            AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);
-            AEGfxPrint(Graphics::font_id, pauseText, -w * 0.5f, 0.25f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f);
-
-            // ========================================================================
-            // Button Configuration
-            // ========================================================================
-            float btnW = 300.0f;
-            float btnH = 80.0f;
-            float btnX = 0.0f;
-
-            // These are NDC positions (-1.0 to 1.0)
-            float resumeY = 0.0f;
-            float settingsY = -0.30f;
-            float menuY = -0.60f;
-
-            // half the screen height to convert NDC to World Space perfectly
-            float screenHalfH = winH * 0.5f;
-
-            // --- Draw Button Backgrounds ---
-            AEGfxSetTransparency(1.0f);
-            AEGfxSetColorToMultiply(0.2f, 0.2f, 0.2f, 1.0f);
-
-            // Multiply by screenHalfH instead of winH!
-            Mesh_Renderer(bgMesh, btnX, resumeY * screenHalfH, btnW, btnH, 0.0f);
-            Mesh_Renderer(bgMesh, btnX, settingsY * screenHalfH, btnW, btnH, 0.0f);
-            Mesh_Renderer(bgMesh, btnX, menuY * screenHalfH, btnW, btnH, 0.0f);
-
-            // --- Draw Button Text ---
-            const char* text1 = "RESUME";
-            const char* text2 = "SETTINGS";
-            const char* text3 = "MAIN MENU";
-
-            float w1, h1, w2, h2, w3, h3;
-            AEGfxGetPrintSize(Graphics::font_id, text1, 0.7f, &w1, &h1);
-            AEGfxGetPrintSize(Graphics::font_id, text2, 0.7f, &w2, &h2);
-            AEGfxGetPrintSize(Graphics::font_id, text3, 0.7f, &w3, &h3);
-
-            AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);
-
-            // Text uses NDC natively, so this stays exactly as is!
-            AEGfxPrint(Graphics::font_id, text1, btnX - (w1 * 0.5f), resumeY - 0.04f, 0.7f, 1.0f, 1.0f, 1.0f, 1.0f);
-            AEGfxPrint(Graphics::font_id, text2, btnX - (w2 * 0.5f), settingsY - 0.04f, 0.7f, 1.0f, 1.0f, 1.0f, 1.0f);
-            AEGfxPrint(Graphics::font_id, text3, btnX - (w3 * 0.5f), menuY - 0.04f, 0.7f, 1.0f, 1.0f, 1.0f, 1.0f);
+        if (Graphics::font_id < 0) return;
 
 
-            // ========================================================================
-            // EXIT CONFIRMATION POPUP OVERLAY
-            // ========================================================================
-            if (inConfirmExit)
+        // --- Gold bordered panel behind menu ---
+        // Gold border
+        AEGfxSetRenderMode(AE_GFX_RM_COLOR);
+        AEGfxSetBlendMode(AE_GFX_BM_BLEND);
+        AEGfxSetTransparency(1.0f);
+        AEGfxSetColorToMultiply(0.85f, 0.70f, 0.15f, 1.0f); // gold
+        Mesh_Renderer(bgMesh, 0.0f, -0.1f * screenHalfH, 420.0f, 620.0f, 0.0f);
+
+        // Dark panel fill
+        AEGfxSetColorToMultiply(0.07f, 0.05f, 0.10f, 1.0f); // dark purple
+        Mesh_Renderer(bgMesh, 0.0f, -0.1f * screenHalfH, 408.0f, 608.0f, 0.0f);
+
+
+        // --- Button config ---
+        float btnW = 340.0f;
+        float btnH = 75.0f;
+        float btnX = 0.0f;
+        float resumeY = 0.05f;
+        float settingsY = -0.25f;
+        float menuY = -0.55f;
+
+        float borderSize = 5.0f;
+
+        // Helper to draw a gold-bordered dark button
+        auto DrawButton = [&](float cx, float worldY, const char* label)
             {
-                float screenHalfW = winW * 0.5f;
-
-                // 1. Draw extra dark overlay to dim the pause menu
+                // Gold border
                 AEGfxSetRenderMode(AE_GFX_RM_COLOR);
                 AEGfxSetBlendMode(AE_GFX_BM_BLEND);
-                AEGfxSetTransparency(0.7f);
-                AEGfxSetColorToMultiply(0.0f, 0.0f, 0.0f, 1.0f);
-                Mesh_Renderer(bgMesh, 0.0f, 0.0f, winW, winH, 0.0f);
-
-                // 2. Draw Popup Box
                 AEGfxSetTransparency(1.0f);
-                AEGfxSetColorToMultiply(0.15f, 0.15f, 0.15f, 1.0f); // Dark Grey Panel
-                Mesh_Renderer(bgMesh, 0.0f, 0.0f, 600.0f, 300.0f, 0.0f);
+                AEGfxSetColorToMultiply(0.85f, 0.70f, 0.15f, 1.0f); // gold
+                Mesh_Renderer(bgMesh, cx, worldY, btnW + borderSize * 2, btnH + borderSize * 2, 0.0f);
 
-                // 3. Draw YES and NO Buttons
-                float confBtnW = 150.0f;
-                float confBtnH = 60.0f;
-                float yesX = -120.0f;
-                float noX = 120.0f;
-                float confBtnY = -50.0f;
+                // Dark button fill
+                AEGfxSetColorToMultiply(0.10f, 0.08f, 0.14f, 1.0f); // dark purple
+                Mesh_Renderer(bgMesh, cx, worldY, btnW, btnH, 0.0f);
 
-                AEGfxSetColorToMultiply(0.3f, 0.3f, 0.3f, 1.0f); // Lighter Grey Buttons
-                Mesh_Renderer(bgMesh, yesX, confBtnY, confBtnW, confBtnH, 0.0f);
-                Mesh_Renderer(bgMesh, noX, confBtnY, confBtnW, confBtnH, 0.0f);
-
-                // 4. Draw Text
-                const char* promptText = "EXIT TO MAIN MENU?";
-                const char* warningText = "you will lose progress";
-                const char* yesText = "YES";
-                const char* noText = "NO";
-
-                float pw, ph, ww, wh, yw, yh, nw, nh;
-                AEGfxGetPrintSize(Graphics::font_id, promptText, 0.8f, &pw, &ph);
-                if (gGameStateCurr != GS_TUTORIAL) {
-                    AEGfxGetPrintSize(Graphics::font_id, warningText, 0.5f, &ww, &wh);
-                }
-                AEGfxGetPrintSize(Graphics::font_id, yesText, 0.7f, &yw, &yh);
-                AEGfxGetPrintSize(Graphics::font_id, noText, 0.7f, &nw, &nh);
-
+                // Button label
+                float tw, th;
+                AEGfxGetPrintSize(Graphics::font_id, label, 0.65f, &tw, &th);
+                AEGfxSetBlendMode(AE_GFX_BM_BLEND);
                 AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);
+                float ndcY = worldY / screenHalfH;
+                AEGfxPrint(Graphics::font_id, label, cx / (winW * 0.5f) - tw * 0.5f, ndcY - 0.035f, 0.65f, 1.0f, 0.92f, 0.6f, 1.0f); // warm gold text
+            };
 
-                // Align text perfectly inside the popup
-                AEGfxPrint(Graphics::font_id, promptText, -(pw * 0.5f), (80.0f / screenHalfH) - (ph * 0.5f), 0.8f, 1.0f, 1.0f, 1.0f, 1.0f);
-                if (gGameStateCurr != GS_TUTORIAL) {
-                    AEGfxPrint(Graphics::font_id, warningText, -(ww * 0.5f), (30.0f / screenHalfH) - (wh * 0.5f), 0.5f, 1.0f, 1.0f, 1.0f, 1.0f);
-                }
-                AEGfxPrint(Graphics::font_id, yesText, (yesX / screenHalfW) - (yw * 0.5f), (confBtnY / screenHalfH) - (yh * 0.5f), 0.7f, 1.0f, 1.0f, 1.0f, 1.0f);
-                AEGfxPrint(Graphics::font_id, noText, (noX / screenHalfW) - (nw * 0.5f), (confBtnY / screenHalfH) - (nh * 0.5f), 0.7f, 1.0f, 1.0f, 1.0f, 1.0f);
+        // --- "PAUSED" title ---
+        {
+            const char* title = "PAUSED";
+            float tw, th;
+            AEGfxGetPrintSize(Graphics::font_id, title, 1.1f, &tw, &th);
+            // Shadow
+            AEGfxSetBlendMode(AE_GFX_BM_BLEND);
+            AEGfxPrint(Graphics::font_id, title, -tw * 0.5f + 0.005f, 0.42f, 1.1f, 0.0f, 0.0f, 0.0f, 1.0f);
+            // Gold title
+            AEGfxPrint(Graphics::font_id, title, -tw * 0.5f, 0.43f, 1.1f, 1.0f, 0.82f, 0.1f, 1.0f);
+        }
 
-                // 5. Input Handling strictly for the Popup
-                if (ignoreNextClick)
-                {
-                    ignoreNextClick = false;
-                }
-                else if (AEInputCheckTriggered(AEVK_LBUTTON))
-                {
-                    s32 mx, my;
-                    AEInputGetCursorPosition(&mx, &my);
-                    float wx = (float)mx - screenHalfW;
-                    float wy = screenHalfH - (float)my;
+        // --- Decorative gold divider line under title ---
+        AEGfxSetRenderMode(AE_GFX_RM_COLOR);
+        AEGfxSetBlendMode(AE_GFX_BM_BLEND);
+        AEGfxSetTransparency(1.0f);
+        AEGfxSetColorToMultiply(0.85f, 0.70f, 0.15f, 1.0f);
+        Mesh_Renderer(bgMesh, 0.0f, 0.27f * screenHalfH, 360.0f, 3.0f, 0.0f);
 
-                    float halfConfW = confBtnW * 0.5f;
-                    float halfConfH = confBtnH * 0.5f;
-
-                    // Clicked YES
-                    if (wx >= (yesX - halfConfW) && wx <= (yesX + halfConfW) &&
-                        wy >= (confBtnY - halfConfH) && wy <= (confBtnY + halfConfH))
-                    {
-                        SoundManager::PlayClickBtnSfx();
-                        isPaused = false;
-                        std::string temp_name = "";
-                        ResetPlayerName(temp_name);
-                        gGameStateNext = GS_MAIN_MENU;
-                        inConfirmExit = false;
-                    }
-                    // Clicked NO
-                    else if (wx >= (noX - halfConfW) && wx <= (noX + halfConfW) &&
-                        wy >= (confBtnY - halfConfH) && wy <= (confBtnY + halfConfH))
-                    {
-                        SoundManager::PlayClickBtnSfx();
-                        inConfirmExit = false;
-                        ignoreNextClick = true; // Use our trick to prevent click-through!
-                    }
-                }
-
-                return; 
-            }
+        // --- Draw buttons ---
+        DrawButton(btnX, resumeY * screenHalfH, "RESUME");
+        DrawButton(btnX, settingsY * screenHalfH, "SETTINGS");
+        DrawButton(btnX, menuY * screenHalfH, "MAIN MENU");
 
             // ========================================================================
             // Input Handling
             // ========================================================================
-            if (ignoreNextClick)
-            {
-                ignoreNextClick = false;
-            }
-            else if (AEInputCheckTriggered(AEVK_LBUTTON))
+            if (AEInputCheckTriggered(AEVK_LBUTTON))
             {
                 s32 mx, my;
                 AEInputGetCursorPosition(&mx, &my);
@@ -212,8 +135,10 @@ namespace UiPauseMenu
                     wy >= ((menuY * screenHalfH) - halfH) && wy <= ((menuY * screenHalfH) + halfH))
                 {
                     SoundManager::PlayClickBtnSfx();
-                    inConfirmExit = true;
-                    ignoreNextClick = true;
+                    isPaused = false;
+                    std::string temp_name = "";
+                    ResetPlayerName(temp_name);
+                    gGameStateNext = GS_MAIN_MENU;
                 }
             }
         }
@@ -223,21 +148,17 @@ namespace UiPauseMenu
     {
         if (isPaused && !isDead)
         {
-            // Intercept normal pause menu if settings is open
             if (inSettings)
             {
                 if (SysSettings::DisplaySettings() == false)
                 {
                     inSettings = false; // Close settings when user clicks "Close" or hits ESC
-                    ignoreNextClick = true;
                 }
                 else {
 
                     return; // Stop drawing the normal pause menu
                 }
             }
-
-            // Otherwise, draw the normal pause menu
             Ui_DrawPauseMenu(isPaused, bgMesh);
         }
     }
