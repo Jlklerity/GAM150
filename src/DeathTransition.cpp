@@ -1,12 +1,11 @@
 /*
 @file           DeathTransition.cpp
-@author         YOU
-@brief          Death cinematic - circular black mask closes in on the player.
-                The game background shows through the circle cutout.
+@brief          Death cinematic - circular black mask closes in on the player,
+                then plays an 8-frame death sprite animation before fading to black.
 
 Phases:
   0.0 - 0.6s  (SHRINK)  Circle closes from full screen down to player size.
-  0.6 - 1.0s  (HOLD)    Circle locked tight. Death animation window.
+  0.6 - 1.0s  (HOLD)    Circle locked tight. Death animation plays here.
   1.0 - 2.5s  (FADE)    Full black fade. Game Over appears after.
 */
 #include "pch.h"
@@ -23,11 +22,25 @@ static const float PHASE_HOLD_END = 1.0f / 2.5f;
 static const float DT_PI = 3.14159265f;
 static const int   SLICES = 32;
 
+// Death sprite sheet: 8 frames, 1 row
+static const int   DEATH_ANIM_COLS = 8;
+static const int   DEATH_ANIM_ROWS = 1;
+static const float DEATH_FRAME_UV_W = 1.0f / DEATH_ANIM_COLS;
+static const float DEATH_FRAME_UV_H = 1.0f / DEATH_ANIM_ROWS;
+static const float DEATH_ANIM_FRAME_DURATION = 0.5f; // seconds per frame — tune as needed
+
 namespace
 {
     bool  s_active = false;
     bool  s_complete = false;
     float s_timer = 0.0f;
+
+    // Death sprite animation state
+    AEGfxTexture* s_deathTexture = nullptr;
+    AEGfxVertexList* s_deathMesh = nullptr;
+    int              s_deathFrame = 0;
+    float            s_deathAnimTimer = 0.0f;
+    bool             s_animFinished = false;  // stays on last frame once complete
 
     AEGfxVertexList* s_blackMesh = nullptr;
 
@@ -71,15 +84,10 @@ namespace
             float a1 = i * angleStep;
             float a2 = (i + 1) * angleStep;
 
-            float ix1 = cosf(a1) * radius;
-            float iy1 = sinf(a1) * radius;
-            float ix2 = cosf(a2) * radius;
-            float iy2 = sinf(a2) * radius;
-
-            float ox1 = cosf(a1) * outerRadius;
-            float oy1 = sinf(a1) * outerRadius;
-            float ox2 = cosf(a2) * outerRadius;
-            float oy2 = sinf(a2) * outerRadius;
+            float ix1 = cosf(a1) * radius, iy1 = sinf(a1) * radius;
+            float ix2 = cosf(a2) * radius, iy2 = sinf(a2) * radius;
+            float ox1 = cosf(a1) * outerRadius, oy1 = sinf(a1) * outerRadius;
+            float ox2 = cosf(a2) * outerRadius, oy2 = sinf(a2) * outerRadius;
 
             AEGfxMeshStart();
             AEGfxTriAdd(ix1, iy1, 0xFF000000, 0.0f, 0.0f,
@@ -110,15 +118,44 @@ namespace DeathTransition
         s_active = true;
         s_complete = false;
         s_timer = 0.0f;
+        s_deathFrame = 0;
+        s_deathAnimTimer = 0.0f;
+        s_animFinished = false;
 
         if (!s_blackMesh)
             s_blackMesh = Rect_Mesh(1.0f, 1.0f, 0xFFFFFFFF);
+
+        // Load the death animation sprite sheet
+        if (!s_deathTexture)
+            s_deathTexture = AEGfxTextureLoad("Assets/death1.png");
+
+        // Build a UV-mapped mesh for one death frame
+        if (!s_deathMesh)
+            s_deathMesh = Sprite_Mesh(DEATH_FRAME_UV_W, DEATH_FRAME_UV_H);
     }
 
     void Update(float dt)
     {
         if (!s_active || s_complete) return;
         s_timer += dt;
+
+        // Advance death animation only during SHRINK + HOLD phases
+        float t = s_timer / DEATH_DURATION;
+        if (t <= PHASE_HOLD_END && !s_animFinished)
+        {
+            s_deathAnimTimer += dt;
+            if (s_deathAnimTimer >= DEATH_ANIM_FRAME_DURATION)
+            {
+                s_deathAnimTimer = 0.0f;
+                s_deathFrame++;
+                if (s_deathFrame >= DEATH_ANIM_COLS)
+                {
+                    s_deathFrame = DEATH_ANIM_COLS - 1; // hold last frame
+                    s_animFinished = true;
+                }
+            }
+        }
+
         if (s_timer / DEATH_DURATION >= 1.0f)
         {
             s_complete = true;
@@ -126,15 +163,9 @@ namespace DeathTransition
         }
     }
 
-    void Draw(AEGfxVertexList* playerMesh, AEGfxTexture* playerTex,
-        float uvOffsetX, float uvOffsetY)
+    void Draw(AEGfxVertexList* /*playerMesh*/, AEGfxTexture* /*playerTex*/,
+        float /*uvOffsetX*/, float /*uvOffsetY*/)
     {
-        // Parameters reserved for future death animation use
-        (void)playerMesh;
-        (void)playerTex;
-        (void)uvOffsetX;
-        (void)uvOffsetY;
-
         if (!s_blackMesh) return;
         if (!s_active && !s_complete) return;
 
@@ -146,6 +177,7 @@ namespace DeathTransition
 
         AEGfxSetCamPosition(0.0f, 0.0f);
 
+        // --- Circular mask ---
         float shrinkProg = EaseInOutQuad(Remap01(t, 0.0f, PHASE_SHRINK_END));
         float maxRadius = sqrtf(winW * winW + winH * winH) * 0.6f;
         float minRadius = PLAYER_SIZE * 1.3f;
@@ -156,7 +188,21 @@ namespace DeathTransition
 
         DrawCircularMask(PLAYER_X, PLAYER_Y, radius, winW, winH);
 
-        // Fade to black during fade phase
+        // --- Death sprite animation (drawn inside the circle cutout) ---
+        if (s_deathTexture && s_deathMesh && t <= PHASE_HOLD_END)
+        {
+            float uvX = s_deathFrame * DEATH_FRAME_UV_W;
+            float uvY = 0.0f; // single row
+
+            AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
+            AEGfxSetBlendMode(AE_GFX_BM_BLEND);
+            AEGfxSetTransparency(1.0f);
+            AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);
+            AEGfxTextureSet(s_deathTexture, uvX, uvY);
+            Mesh_Renderer(s_deathMesh, PLAYER_X, PLAYER_Y, PLAYER_SIZE, PLAYER_SIZE, 0.0f);
+        }
+
+        // --- Fade to black during fade phase ---
         float fadeT = EaseInOutQuad(Remap01(t, PHASE_HOLD_END, 1.0f));
         if (fadeT > 0.0f)
         {
@@ -168,28 +214,22 @@ namespace DeathTransition
         }
     }
 
-    bool IsActive()
-    {
-        return s_active;
-    }
-
-    bool IsComplete()
-    {
-        return s_complete;
-    }
+    bool IsActive() { return s_active; }
+    bool IsComplete() { return s_complete; }
 
     void Reset()
     {
         s_active = false;
         s_complete = false;
         s_timer = 0.0f;
+        s_deathFrame = 0;
+        s_deathAnimTimer = 0.0f;
+        s_animFinished = false;
 
         AEGfxSetCamPosition(0.0f, 0.0f);
 
-        if (s_blackMesh)
-        {
-            AEGfxMeshFree(s_blackMesh);
-            s_blackMesh = nullptr;
-        }
+        if (s_blackMesh) { AEGfxMeshFree(s_blackMesh);          s_blackMesh = nullptr; }
+        if (s_deathMesh) { AEGfxMeshFree(s_deathMesh);          s_deathMesh = nullptr; }
+        if (s_deathTexture) { AEGfxTextureUnload(s_deathTexture);   s_deathTexture = nullptr; }
     }
 }

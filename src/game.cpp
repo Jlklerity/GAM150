@@ -309,14 +309,17 @@ render_only:
 
     Weather_DrawBackground(); // Rainbow draws here, behind enemies
 
-    //player
-    AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
-    AEGfxSetBlendMode(AE_GFX_BM_BLEND);
-    AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);
+    //player (skip once dead - DeathTransition draws the death animation instead)
+    if (!isDead)
+    {
+        AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
+        AEGfxSetBlendMode(AE_GFX_BM_BLEND);
+        AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);
 
-    AEGfxTextureSet(playerTexture, uvOffsetX, uvOffsetY);
-    Mesh_Renderer(playerMesh, SPRITE_X, SPRITE_Y, 150.0f, 150.0f, 0.0f);
-    StreakSystem::Draw();
+        AEGfxTextureSet(playerTexture, uvOffsetX, uvOffsetY);
+        Mesh_Renderer(playerMesh, SPRITE_X, SPRITE_Y, 150.0f, 150.0f, 0.0f);
+        StreakSystem::Draw();
+    }
 
     // Render typing letters 
 
