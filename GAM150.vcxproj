@@ -51,6 +51,7 @@
   <ItemGroup>
     <ClInclude Include="src\BackgroundParallex.h" />
     <ClInclude Include="src\Boss.h" />
+    <ClInclude Include="src\ButtonTween.h" />
     <ClInclude Include="src\CreditScreen.h" />
     <ClInclude Include="src\DayCycle.h" />
     <ClInclude Include="src\DeathTransition.h" />

@@ -1,5 +1,6 @@
 #include "pch.h"
 #include "Settings.h"
+#include "ButtonTween.h"
 
 namespace
 {
@@ -26,6 +27,8 @@ namespace
 
     const float BORDER = 5.0f;
 
+    static ButtonTween tweenClose;
+
     float Clamp01(float v) { return v < 0.0f ? 0.0f : (v > 1.0f ? 1.0f : v); }
 
     void DrawCentredText(const char* text, float ndcY, float scale, float r, float g, float b, float alpha)
@@ -48,6 +51,7 @@ namespace SysSettings
         bgmVol = SoundManager::GetBGMVolume();
         sfxVol = SoundManager::GetSFXVolume();
         ambVol = SoundManager::GetAmbientVolume();
+        ButtonTween_Reset(tweenClose);
     }
 
     bool DisplaySettings()
@@ -67,6 +71,14 @@ namespace SysSettings
         float startX = -(SLIDER_W * 0.5f);
 
         if (!mouseHeld) draggingSlider = -1;
+
+        // Close button tween
+        {
+            float dt = (float)AEFrameRateControllerGetFrameTime();
+            bool hClose = (worldX >= -(CLOSE_W * 0.5f) && worldX <= (CLOSE_W * 0.5f) &&
+                worldY >= CLOSE_Y - (CLOSE_H * 0.5f) && worldY <= CLOSE_Y + (CLOSE_H * 0.5f));
+            ButtonTween_Update(tweenClose, hClose, hClose && mouseTriggered, dt);
+        }
 
         // Close button / ESC
         if ((mouseTriggered && draggingSlider == -1 &&
@@ -123,7 +135,7 @@ namespace SysSettings
         AEGfxSetColorToMultiply(0.85f, 0.70f, 0.15f, 1.0f);
         Mesh_Renderer(s_quad, 0.0f, 260.0f, 540.0f, 3.0f, 0.0f);
 
-        // Title — shadow then gold
+        // Title ? shadow then gold
         // Shadow
         DrawCentredText("SOUND SETTINGS", 0.68f, 0.9f, 0.0f, 0.0f, 0.0f, 1.0f);
         // Gold
@@ -135,7 +147,7 @@ namespace SysSettings
                 // Label
                 DrawCentredText(label, (yPos + 50.0f) * ndcScale, 0.55f, 0.85f, 0.70f, 0.15f, 1.0f); // gold label
 
-                // Track — gold border then dark fill
+                // Track ? gold border then dark fill
                 AEGfxSetRenderMode(AE_GFX_RM_COLOR);
                 AEGfxSetBlendMode(AE_GFX_BM_BLEND);
                 AEGfxSetTransparency(1.0f);
@@ -154,7 +166,7 @@ namespace SysSettings
                     Mesh_Renderer(s_quad, fillX, yPos, fillW, SLIDER_H, 0.0f);
                 }
 
-                // Knob — gold border + dark fill
+                // Knob ? gold border + dark fill
                 float knobX = startX + fillW;
                 AEGfxSetColorToMultiply(0.85f, 0.70f, 0.15f, 1.0f);
                 Mesh_Renderer(s_quad, knobX, yPos, KNOB_W + BORDER, KNOB_H + BORDER, 0.0f);
@@ -166,14 +178,14 @@ namespace SysSettings
         DrawSlider(SFX_Y, sfxVol, "SFX VOLUME");
         DrawSlider(AMB_Y, ambVol, "AMBIENT VOLUME");
 
-        // Close button — gold border + dark fill
+        // Close button scaled by tween
         AEGfxSetRenderMode(AE_GFX_RM_COLOR);
         AEGfxSetBlendMode(AE_GFX_BM_BLEND);
         AEGfxSetTransparency(1.0f);
         AEGfxSetColorToMultiply(0.85f, 0.70f, 0.15f, 1.0f);
-        Mesh_Renderer(s_quad, 0.0f, CLOSE_Y, CLOSE_W + BORDER * 2, CLOSE_H + BORDER * 2, 0.0f);
+        Mesh_Renderer(s_quad, 0.0f, CLOSE_Y, (CLOSE_W + BORDER * 2) * tweenClose.scale, (CLOSE_H + BORDER * 2) * tweenClose.scale, 0.0f);
         AEGfxSetColorToMultiply(0.10f, 0.08f, 0.14f, 1.0f);
-        Mesh_Renderer(s_quad, 0.0f, CLOSE_Y, CLOSE_W, CLOSE_H, 0.0f);
+        Mesh_Renderer(s_quad, 0.0f, CLOSE_Y, CLOSE_W * tweenClose.scale, CLOSE_H * tweenClose.scale, 0.0f);
 
         // TEXT LABELS
         DrawCentredText("CLOSE", (CLOSE_Y)*ndcScale, 0.7f, 1.0f, 1.0f, 1.0f, 1.0f);

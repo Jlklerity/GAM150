@@ -570,7 +570,30 @@ void Tutorial_Update()
             if (s_stageStarted)
             {
                 Typing_UpdateAndApplyToEnemies(s_pool, s_score, s_health);
-                UpdateEnemies(dt, true);
+                for (int i = 0; i < (int)s_pool.size(); ++i)
+                {
+                    Data::Enemy& e = s_pool[(size_t)i];
+                    if (!e.enemy_is_active) continue;
+                    bool was_active = e.enemy_is_active;
+                    EnemySystem::Enemy_Update(e, s_enemyArea, dt, s_health);
+                    if (was_active && !e.enemy_is_active)
+                    {
+                        s_freeSlots.push_back(i);
+                        if (!e.enemy_has_landed) // left the field by typing - good
+                        {
+                            Particles_SpawnDamageImpact(e.enemy_position_x, e.enemy_position_y);
+                            // LaserBeam_Fire is already called inside Typing_UpdateAndApplyToEnemies
+                        }
+                        else // touched landing y - silently restore health and respawn
+                        {
+                            Particles_SpawnKillImpact(e.enemy_position_x, e.enemy_position_y, e.enemy_word_length);
+                            StreakSystem::OnStreakReset();
+                            HealthSystem::Health_Init(s_health);
+                            SpawnNormalEnemy("CAT");
+                            break; // stop iterating - new enemy will be processed next frame
+                        }
+                    }
+                }
                 if (!AnyEnemyActive() && s_stageTimer > 0.5f)
                     s_objectiveMet = true;
             }
@@ -593,7 +616,29 @@ void Tutorial_Update()
             if (s_stageStarted)
             {
                 Typing_UpdateAndApplyToEnemies(s_pool, s_score, s_health);
-                UpdateEnemies(dt, true);
+                for (int i = 0; i < (int)s_pool.size(); ++i)
+                {
+                    Data::Enemy& e = s_pool[(size_t)i];
+                    if (!e.enemy_is_active) continue;
+                    bool was_active = e.enemy_is_active;
+                    EnemySystem::Enemy_Update(e, s_enemyArea, dt, s_health);
+                    if (was_active && !e.enemy_is_active)
+                    {
+                        s_freeSlots.push_back(i);
+                        if (!e.enemy_has_landed) // typed kill - good
+                        {
+                            Particles_SpawnDamageImpact(e.enemy_position_x, e.enemy_position_y);
+                            // LaserBeam_Fire is already called inside Typing_UpdateAndApplyToEnemies
+                        }
+                        else // touched landing y - just respawn, no damage and no heal
+                        {                            // player should see their HP is low and be motivated to type the word
+                            Particles_SpawnKillImpact(e.enemy_position_x, e.enemy_position_y, e.enemy_word_length);
+                            StreakSystem::OnStreakReset();
+                            SpawnFriendlyEnemy("BIRD");
+                            break; // stop iterating - new enemy will be processed next frame
+                        }
+                    }
+                }
                 if (!AnyEnemyActive() && s_stageTimer > 0.5f)
                     s_objectiveMet = true;
             }
@@ -605,7 +650,30 @@ void Tutorial_Update()
             if (s_stageStarted)
             {
                 Typing_UpdateAndApplyToEnemies(s_pool, s_score, s_health);
-                UpdateEnemies(dt, true);
+                for (int i = 0; i < (int)s_pool.size(); ++i)
+                {
+                    Data::Enemy& e = s_pool[(size_t)i];
+                    if (!e.enemy_is_active) continue;
+                    bool was_active = e.enemy_is_active;
+                    EnemySystem::Enemy_Update(e, s_enemyArea, dt, s_health);
+                    if (was_active && !e.enemy_is_active)
+                    {
+                        s_freeSlots.push_back(i);
+                        if (!e.enemy_has_landed) // typed kill - good
+                        {
+                            Particles_SpawnDamageImpact(e.enemy_position_x, e.enemy_position_y);
+                            // LaserBeam_Fire is already called inside Typing_UpdateAndApplyToEnemies
+                        }
+                        else // touched landing y - silently restore health and respawn fresh shielded enemy
+                        {
+                            Particles_SpawnKillImpact(e.enemy_position_x, e.enemy_position_y, e.enemy_word_length);
+                            StreakSystem::OnStreakReset();
+                            HealthSystem::Health_Init(s_health);
+                            SpawnShieldedEnemy("ICE", "FIRE");
+                            break; // stop iterating - new enemy will be processed next frame
+                        }
+                    }
+                }
                 if (!AnyEnemyActive() && s_stageTimer > 0.5f)
                     s_objectiveMet = true;
             }
@@ -632,17 +700,15 @@ void Tutorial_Update()
                     Data::Enemy& e = s_pool[(size_t)i];
                     if (!e.enemy_is_active) continue;
                     bool was_active = e.enemy_is_active;
-                    bool was_damage_done = e.enemy_did_damage;
                     EnemySystem::Enemy_Update(e, s_enemyArea, dt, s_health);
                     if (was_active && !e.enemy_is_active)
                     {
                         s_freeSlots.push_back(i);
-                        if (!was_damage_done)
+                        if (!e.enemy_has_landed) // typed kill - LaserBeam_Fire already called inside Typing_UpdateAndApplyToEnemies
                         {
                             Particles_SpawnDamageImpact(e.enemy_position_x, e.enemy_position_y);
-                            LaserBeam_Fire(e.enemy_position_x, e.enemy_position_y);
                         }
-                        else
+                        else // landed - no laser, just impact and health restore
                         {
                             HealthSystem::Health_Init(s_health);
                             Particles_SpawnKillImpact(e.enemy_position_x, e.enemy_position_y, e.enemy_word_length);
@@ -662,7 +728,30 @@ void Tutorial_Update()
             if (s_stageStarted)
             {
                 Typing_UpdateAndApplyToEnemies(s_pool, s_score, s_health);
-                UpdateEnemies(dt, true);
+                for (int i = 0; i < (int)s_pool.size(); ++i)
+                {
+                    Data::Enemy& e = s_pool[(size_t)i];
+                    if (!e.enemy_is_active) continue;
+                    bool was_active = e.enemy_is_active;
+                    EnemySystem::Enemy_Update(e, s_enemyArea, dt, s_health);
+                    if (was_active && !e.enemy_is_active)
+                    {
+                        s_freeSlots.push_back(i);
+                        if (!e.enemy_has_landed) // typed kill - good
+                        {
+                            Particles_SpawnDamageImpact(e.enemy_position_x, e.enemy_position_y);
+                            // LaserBeam_Fire is already called inside Typing_UpdateAndApplyToEnemies
+                        }
+                        else // touched landing y - silently restore health and respawn as orbit enemy
+                        {
+                            Particles_SpawnKillImpact(e.enemy_position_x, e.enemy_position_y, e.enemy_word_length);
+                            StreakSystem::OnStreakReset();
+                            HealthSystem::Health_Init(s_health);
+                            SpawnOrbitEnemy("SPIN");
+                            break; // stop iterating - new enemy will be processed next frame
+                        }
+                    }
+                }
                 if (!AnyEnemyActive() && s_stageTimer > 0.5f)
                     s_objectiveMet = true;
             }
@@ -758,7 +847,8 @@ void Tutorial_Update()
 
     Typing_Render();
     UiSystem::Ui_DrawScoreAndTyped(s_score);
-    UiSystem::Ui_DrawHealthBar(s_health, s_meshes, s_heartAnim, dt);
+    if (s_stage == STAGE_KILL_BEFORE_LANDING || s_stage == STAGE_FRIENDLY)
+        UiSystem::Ui_DrawHealthBar(s_health, s_meshes, s_heartAnim, dt);
 
     DrawSpeechBubble(s_objectiveMet);
 

@@ -1,5 +1,6 @@
 #include "pch.h"
 #include "Shop.h"
+#include "ButtonTween.h"
 
 
 
@@ -15,7 +16,7 @@ namespace {
 	AEGfxTexture* pTexBack = nullptr;
 
 	AEGfxVertexList* pBack = nullptr;
-	AEGfxVertexList* pShop= nullptr;
+	AEGfxVertexList* pShop = nullptr;
 	AEGfxVertexList* pMeshBgItem = nullptr;
 	AEGfxVertexList* pMeshSkinItem = nullptr;
 
@@ -34,7 +35,7 @@ namespace {
 	float BG_ITEM_HEIGHT;
 	float SKIN_ITEM_WIDTH;
 	float SKIN_ITEM_HEIGHT;
-	
+
 	float bgLeftX;
 	float bgTopY;
 	float textX;
@@ -61,6 +62,13 @@ namespace {
 	bool isTransitioningIn = false;
 	bool isTransitioningOut = false;
 	float shopUiOffsetX = 0.0f;
+
+	// ---------------------------------------------------------------------------
+	// BUTTON TWEENS
+	// ---------------------------------------------------------------------------
+	ButtonTween tweenBack;
+	ButtonTween tweenBgItem[3];
+	ButtonTween tweenSkinItem[3];
 }
 
 
@@ -79,7 +87,7 @@ void DisplayScore() {
 	char s[128];      // text buffer for score
 	std::snprintf(s, sizeof(s), "SCORE: %d", SCORE_AMOUNT);    // format score line
 
-	AEGfxSetBlendMode(AE_GFX_BM_BLEND);  
+	AEGfxSetBlendMode(AE_GFX_BM_BLEND);
 	AEGfxPrint(Graphics::font_id, s, textX + shopUiOffsetX, textY, 1.0f, 1, 1, 1, 1);
 }
 
@@ -91,15 +99,15 @@ void Shop_Init() {
 
 	winW = (float)AEGfxGetWindowWidth();
 	winH = (float)AEGfxGetWindowHeight();
-	
+
 	SHOP_BG_WIDTH = winH * 1.2f;
 	SHOP_BG_HEIGHT = winH * 1.0f;
 	BACK_BTN_WIDTH = 80.0f;
 	BACK_BTN_HEIGHT = 80.0f;
 	BG_ITEM_WIDTH = winW * 0.2f;
-	BG_ITEM_HEIGHT = BG_ITEM_WIDTH * (120.0f / 450.0f);  
+	BG_ITEM_HEIGHT = BG_ITEM_WIDTH * (120.0f / 450.0f);
 	SKIN_ITEM_WIDTH = winW * 0.25f;
-	SKIN_ITEM_HEIGHT = SKIN_ITEM_WIDTH; 
+	SKIN_ITEM_HEIGHT = SKIN_ITEM_WIDTH;
 
 	BG_ITEM_Y = winH * 0.15f;
 	SKIN_ITEM_Y = winH * -0.15f;
@@ -152,14 +160,17 @@ void Shop_Init() {
 	pBack = Spritesheet_Mesh(1.0f, 1.0f, 0.0f, 0.0f, 0.5f, 0.5f);
 
 	SCORE_AMOUNT = Leaderboard_System::GetHighestScore();
+
+	ButtonTween_Reset(tweenBack);
+	for (int i = 0; i < 3; i++) { ButtonTween_Reset(tweenBgItem[i]); ButtonTween_Reset(tweenSkinItem[i]); }
 }
 
-void Shop_Update(){
+void Shop_Update() {
 
 	AEGfxSetCamPosition(0.0f, 0.0f);
 	AEGfxSetBackgroundColor(0.53f, 0.81f, 0.92f);
 
-	
+
 	float dt = (float)AEFrameRateControllerGetFrameTime();
 	if (dt > 0.1f) dt = 0.01667f;
 	BackgroundParallax::MenuParallax_Update(dt);
@@ -169,9 +180,37 @@ void Shop_Update(){
 
 	winW = (float)AEGfxGetWindowWidth();
 	winH = (float)AEGfxGetWindowHeight();
-	
+
 	worldX = (float)mouseX - (winW * 0.5f);
 	worldY = (winH * 0.5f) - (float)mouseY;
+
+	// ---------------------------------------------------------------------------
+	// BUTTON TWEEN UPDATES
+	// ---------------------------------------------------------------------------
+	if (!isTransitioningIn && !isTransitioningOut)
+	{
+		float dt_tween = (float)AEFrameRateControllerGetFrameTime();
+		bool click = AEInputCheckTriggered(AEVK_LBUTTON);
+
+		bool hBack = (worldX >= BACK_BTN_X - (BACK_BTN_WIDTH * 0.5f) && worldX <= BACK_BTN_X + (BACK_BTN_WIDTH * 0.5f) &&
+			worldY >= BACK_BTN_Y - (BACK_BTN_HEIGHT * 0.5f) && worldY <= BACK_BTN_Y + (BACK_BTN_HEIGHT * 0.5f));
+		ButtonTween_Update(tweenBack, hBack, hBack && click, dt_tween);
+
+		for (int i = 0; i < 3; i++)
+		{
+			bool hBg = (worldX >= BG_ITEM_X[i] - (BG_ITEM_WIDTH * 0.5f) && worldX <= BG_ITEM_X[i] + (BG_ITEM_WIDTH * 0.5f) &&
+				worldY >= BG_ITEM_Y - (BG_ITEM_HEIGHT * 0.5f) && worldY <= BG_ITEM_Y + (BG_ITEM_HEIGHT * 0.5f));
+			ButtonTween_Update(tweenBgItem[i], hBg, hBg && click, dt_tween);
+
+			float hitBoxW = SKIN_ITEM_WIDTH * 0.65f;
+			float hitBoxH = SKIN_ITEM_HEIGHT * 0.65f;
+			float hitBoxX = SKIN_ITEM_X[i] - 10.0f;
+			float hitBoxY = SKIN_ITEM_Y + 60.0f;
+			bool hSkin = (worldX >= hitBoxX - (hitBoxW * 0.5f) && worldX <= hitBoxX + (hitBoxW * 0.5f) &&
+				worldY >= hitBoxY - (hitBoxH * 0.5f) && worldY <= hitBoxY + (hitBoxH * 0.5f));
+			ButtonTween_Update(tweenSkinItem[i], hSkin, hSkin && click, dt_tween);
+		}
+	}
 
 	if (isTransitioningIn)
 	{
@@ -186,7 +225,7 @@ void Shop_Update(){
 
 		if (ScreenTransitions::result >= 0.3f)
 		{
-			shopUiOffsetX = 0.0f;  
+			shopUiOffsetX = 0.0f;
 			isTransitioningIn = false;
 			BackgroundParallax::MenuParallax_SetPanOffset(-0.4f); // Lock securely to center
 		}
@@ -214,7 +253,7 @@ void Shop_Update(){
 				worldY >= BG_ITEM_Y - (BG_ITEM_HEIGHT * 0.5f) && worldY <= BG_ITEM_Y + (BG_ITEM_HEIGHT * 0.5f)) {
 				SoundManager::PlayClickBtnSfx();
 				if (SCORE_AMOUNT >= BG_UNLOCK[i]) {
-					gShopBgID = i; 
+					gShopBgID = i;
 				}
 			}
 		}
@@ -251,7 +290,7 @@ void Shop_Update(){
 
 			isTransitioningOut = false;
 			BackgroundParallax::MenuParallax_SetPanOffset(0.2f);
-			gGameStateNext = GS_MAIN_MENU; 
+			gGameStateNext = GS_MAIN_MENU;
 		}
 	}
 
@@ -276,7 +315,7 @@ void Shop_Update(){
 				AEGfxSetColorToMultiply(0.3f, 0.3f, 0.3f, 1.0f); // Dark (Locked)
 			}
 			AEGfxTextureSet(pTexBgOptions[i], 0.0f, 0.0f);
-			Mesh_Renderer(pMeshBgItem, BG_ITEM_X[i] + shopUiOffsetX, BG_ITEM_Y, BG_ITEM_WIDTH * 0.7f, BG_ITEM_HEIGHT * 0.7f, 0.0f);
+			Mesh_Renderer(pMeshBgItem, BG_ITEM_X[i] + shopUiOffsetX, BG_ITEM_Y, BG_ITEM_WIDTH * 0.7f * tweenBgItem[i].scale, BG_ITEM_HEIGHT * 0.7f * tweenBgItem[i].scale, 0.0f);
 
 			// Only draw the gold item frame if THIS background is the equipped one
 			if (gShopBgID == i && pTexBgFrame) {
@@ -295,7 +334,7 @@ void Shop_Update(){
 
 
 				float textNdcX = (BG_ITEM_X[i] / (winW * 0.5f)) - (textW * 0.5f);
-				float textNdcY = (BG_ITEM_Y / (winH * 0.5f)) - 0.025f;				
+				float textNdcY = (BG_ITEM_Y / (winH * 0.5f)) - 0.025f;
 				AEGfxSetBlendMode(AE_GFX_BM_BLEND);
 				AEGfxPrint(Graphics::font_id, priceStr, textNdcX + shopUiOffsetX, textNdcY, textScale, 1.0f, 1.0f, 1.0f, 1.0f);
 			}
@@ -312,9 +351,9 @@ void Shop_Update(){
 				AEGfxSetColorToMultiply(0.3f, 0.3f, 0.3f, 1.0f); // Dark (Locked)
 			}
 			AEGfxTextureSet(pTexSkinOptions[i], 0.0f, 0.0f);
-			Mesh_Renderer(pMeshSkinItem, SKIN_ITEM_X[i] + shopUiOffsetX, SKIN_ITEM_Y, SKIN_ITEM_WIDTH, SKIN_ITEM_HEIGHT, 0.0f);
+			Mesh_Renderer(pMeshSkinItem, SKIN_ITEM_X[i] + shopUiOffsetX, SKIN_ITEM_Y, SKIN_ITEM_WIDTH * tweenSkinItem[i].scale, SKIN_ITEM_HEIGHT * tweenSkinItem[i].scale, 0.0f);
 
-		
+
 			if (gShopSkinID == i && pTexItemFrame) {
 				AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);
 				AEGfxTextureSet(pTexItemFrame, 0.0f, 0.0f);
@@ -331,7 +370,7 @@ void Shop_Update(){
 				float textW = 0.0f, textH = 0.0f;
 				AEGfxGetPrintSize(Graphics::font_id, priceStr, textScale, &textW, &textH);
 
-				float textNdcX = (SKIN_ITEM_X[i] / (winW * 0.5f)) - (textW * 0.5f); 
+				float textNdcX = (SKIN_ITEM_X[i] / (winW * 0.5f)) - (textW * 0.5f);
 				float textNdcY = ((SKIN_ITEM_Y + 60.0f) / (winH * 0.5f)) - 0.025f;
 				AEGfxSetBlendMode(AE_GFX_BM_BLEND);
 				AEGfxPrint(Graphics::font_id, priceStr, textNdcX + shopUiOffsetX, textNdcY, textScale, 1.0f, 1.0f, 1.0f, 1.0f);
@@ -345,7 +384,7 @@ void Shop_Update(){
 		AEGfxSetBlendMode(AE_GFX_BM_BLEND);
 		AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);
 		AEGfxTextureSet(pTexBack, 0.0f, 0.0f);
-		Mesh_Renderer(pBack, BACK_BTN_X + shopUiOffsetX, BACK_BTN_Y, BACK_BTN_WIDTH, BACK_BTN_HEIGHT, 0.0f);
+		Mesh_Renderer(pBack, BACK_BTN_X + shopUiOffsetX, BACK_BTN_Y, BACK_BTN_WIDTH * tweenBack.scale, BACK_BTN_HEIGHT * tweenBack.scale, 0.0f);
 	}
 
 	DisplayScore();
