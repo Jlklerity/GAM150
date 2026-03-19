@@ -161,6 +161,18 @@ namespace
     ButtonTween tweenCredits;
     ButtonTween tweenEnterGame;
     ButtonTween tweenBackName;
+
+    // ---------------------------------------------------------------------------
+    // DIGIPEN SPLASH OVERLAY
+    // ---------------------------------------------------------------------------
+    AEGfxTexture* pTexSplashLogo = nullptr;   // DigiPen logo texture
+    AEGfxVertexList* pMeshSplashQuad = nullptr;   // full-screen black quad
+    AEGfxVertexList* pMeshSplashLogo = nullptr;   // logo quad (centred)
+
+    static constexpr float SPLASH_HOLD = 2.0f;   // seconds fully visible
+    static constexpr float SPLASH_FADE = 1.0f;   // seconds to fade out
+    float splashTimer = 0.0f;
+    bool  splashActive = false;                   // only true on first launch
 } // Anonymous namespace end
 /*___________________________________________________________________________________________________________________________________________________________________________________________________*/
 
@@ -707,6 +719,37 @@ void Main_Menu_Init()
     ButtonTween_Reset(tweenCredits);
     ButtonTween_Reset(tweenEnterGame);
     ButtonTween_Reset(tweenBackName);
+
+    // ---------------------------------------------------------------------------
+    // SPLASH OVERLAY – only on very first launch (gGameStatePrev == GS_NONE)
+    // ---------------------------------------------------------------------------
+    splashTimer = 0.0f;
+    splashActive = (gGameStatePrev == GS_NONE);
+
+    if (splashActive)
+    {
+        pTexSplashLogo = AEGfxTextureLoad("Assets/DigiPen_BLACK.png");
+
+        // Full-screen solid black quad (unit quad, scaled by world half-extents in Update)
+        AEGfxMeshStart();
+        AEGfxTriAdd(-1.f, -1.f, 0xFF000000, 0.f, 1.f,
+            1.f, -1.f, 0xFF000000, 1.f, 1.f,
+            -1.f, 1.f, 0xFF000000, 0.f, 0.f);
+        AEGfxTriAdd(1.f, -1.f, 0xFF000000, 1.f, 1.f,
+            1.f, 1.f, 0xFF000000, 1.f, 0.f,
+            -1.f, 1.f, 0xFF000000, 0.f, 0.f);
+        pMeshSplashQuad = AEGfxMeshEnd();
+
+        // Logo quad
+        AEGfxMeshStart();
+        AEGfxTriAdd(-1.f, -1.f, 0xFFFFFFFF, 0.f, 1.f,
+            1.f, -1.f, 0xFFFFFFFF, 1.f, 1.f,
+            -1.f, 1.f, 0xFFFFFFFF, 0.f, 0.f);
+        AEGfxTriAdd(1.f, -1.f, 0xFFFFFFFF, 1.f, 1.f,
+            1.f, 1.f, 0xFFFFFFFF, 1.f, 0.f,
+            -1.f, 1.f, 0xFFFFFFFF, 0.f, 0.f);
+        pMeshSplashLogo = AEGfxMeshEnd();
+    }
 }
 
 /*
@@ -908,6 +951,76 @@ void Main_Menu_Update()
         Draw_Main_Menu(0.0f);                                                                                               // render standard visual
         Main_Menu_Input();                                                                                                  // scan for normal button clicks
     }
+
+    // ---------------------------------------------------------------------------
+    // SPLASH OVERLAY – drawn on top of everything else, fades out then disables
+    // ---------------------------------------------------------------------------
+    if (splashActive)
+    {
+        splashTimer += dt;
+
+        // Hold fully opaque, then linearly fade to 0
+        float alpha = 1.0f;
+        if (splashTimer > SPLASH_HOLD)
+        {
+            alpha = 1.0f - (splashTimer - SPLASH_HOLD) / SPLASH_FADE;
+            if (alpha < 0.0f) alpha = 0.0f;
+        }
+
+        if (alpha <= 0.0f)
+        {
+            // Fade complete – free resources
+            splashActive = false;
+            if (pMeshSplashQuad) { AEGfxMeshFree(pMeshSplashQuad); pMeshSplashQuad = nullptr; }
+            if (pMeshSplashLogo) { AEGfxMeshFree(pMeshSplashLogo); pMeshSplashLogo = nullptr; }
+            if (pTexSplashLogo) { AEGfxTextureUnload(pTexSplashLogo); pTexSplashLogo = nullptr; }
+        }
+        else
+        {
+            // Camera must be at origin so the overlay isn't offset
+            AEGfxSetCamPosition(0.0f, 0.0f);
+
+            // --- Full-screen black quad ---
+            AEMtx33 scaleMat, transform;
+            AEMtx33Scale(&scaleMat, winW * 0.5f, winH * 0.5f);
+            AEMtx33Trans(&transform, 0.0f, 0.0f);
+            AEMtx33Concat(&transform, &transform, &scaleMat);
+
+            AEGfxSetRenderMode(AE_GFX_RM_COLOR);
+            AEGfxSetBlendMode(AE_GFX_BM_BLEND);
+            AEGfxSetTransparency(alpha);
+            AEGfxSetColorToMultiply(0.0f, 0.0f, 0.0f, alpha);
+            AEGfxSetColorToAdd(0.0f, 0.0f, 0.0f, 0.0f);
+            AEGfxSetTransform(transform.m);
+            AEGfxMeshDraw(pMeshSplashQuad, AE_GFX_MDM_TRIANGLES);
+
+            // --- DigiPen logo centred, 50% screen width, aspect 3.5:1 ---
+            if (pTexSplashLogo && pMeshSplashLogo)
+            {
+                const float logoW = winW * 0.5f;
+                const float logoH = logoW / 3.5f;
+
+                AEMtx33 logoScale, logoTrans, logoTransform;
+                AEMtx33Scale(&logoScale, logoW * 0.5f, logoH * 0.5f);
+                AEMtx33Trans(&logoTrans, 0.0f, 0.0f);
+                AEMtx33Concat(&logoTransform, &logoTrans, &logoScale);
+
+                AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
+                AEGfxSetBlendMode(AE_GFX_BM_BLEND);
+                AEGfxSetTransparency(alpha);
+                AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, alpha);
+                AEGfxSetColorToAdd(0.0f, 0.0f, 0.0f, 0.0f);
+                AEGfxTextureSet(pTexSplashLogo, 0.0f, 0.0f);
+                AEGfxSetTransform(logoTransform.m);
+                AEGfxMeshDraw(pMeshSplashLogo, AE_GFX_MDM_TRIANGLES);
+            }
+        }
+
+        // Restore render state for next frame
+        AEGfxSetTransparency(1.0f);
+        AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);
+        AEGfxSetColorToAdd(0.0f, 0.0f, 0.0f, 0.0f);
+    }
 }
 
 /*
@@ -1028,6 +1141,13 @@ void Main_Menu_Exit()
         AEGfxTextureUnload(pTexCredits);
         pTexCredits = nullptr;
     }
+
+    // Splash overlay safety cleanup (normally freed after fade, guard anyway)
+    if (pMeshSplashQuad) { AEGfxMeshFree(pMeshSplashQuad); pMeshSplashQuad = nullptr; }
+    if (pMeshSplashLogo) { AEGfxMeshFree(pMeshSplashLogo); pMeshSplashLogo = nullptr; }
+    if (pTexSplashLogo) { AEGfxTextureUnload(pTexSplashLogo); pTexSplashLogo = nullptr; }
+    splashActive = false;
+
     ParallaxZoom::Reset();
     isZoomingToGame = false;
     Leaderboard_System::Free();
