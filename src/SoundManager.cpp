@@ -7,7 +7,6 @@ namespace
     AEAudioGroup bgmGroup;
     AEAudioGroup sfxGroup;
     AEAudioGroup ambientGroup;
-    AEAudioGroup bossAlarmGroup;
 
     AEAudio bgmTrack;
     AEAudio rainTrack;
@@ -57,7 +56,6 @@ namespace SoundManager
             bgmGroup = AEAudioCreateGroup();
             sfxGroup = AEAudioCreateGroup();
             ambientGroup = AEAudioCreateGroup();
-            bossAlarmGroup = AEAudioCreateGroup();
 
 
             bgmTrack = AEAudioLoadMusic("Assets/Game Sound/RUNNING THE BASS - Jazz MSCJAZ1_20.mp3");
@@ -192,12 +190,12 @@ namespace SoundManager
 
     void PlayBossSfx()
     {
-        AEAudioPlay(bossSfx, bossAlarmGroup, 1.0f, 1.0f, 0);
+        AEAudioPlay(bossSfx, sfxGroup, 1.0f, 1.0f, 0);
     }
 
     void StopBossSfx() {
 
-        AEAudioStopGroup(bossAlarmGroup);
+        AEAudioStopGroup(sfxGroup);
     }
 
     void PlayLightningSfx()

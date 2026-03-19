@@ -8,33 +8,13 @@ namespace
     float scrollSpeed = 0.35f;
 
     const char* creditLines[] = {
-        "YOUR GAME NAME", // Replace with your game name
-        "",
-        "YOUR TEAM NAME", // Replace with your team name
-        "",
-        "PRODUCER",
-        "[Student Name]",
-        "",
-        "TECHNICAL LEAD",
-        "[Student Name]",
-        "",
-        "ART LEAD",
-        "[Student Name]",
-        "",
-        "AUDIO LEAD",
-        "[Student Name]",
-        "",
-        "GRAPHICS PROGRAMMER",
-        "[Student Name]",
-        "",
-        "LEVEL DESIGNER",
-        "[Student Name]",
-        "",
-        "ENVIRONMENT ARTIST AND UI",
-        "[Student Name]",
-        "",
-        "COMPOSER",
-        "[Student Name]",
+        "REVENGE OF YK", // Replace with your game name
+        "TEAM FAREWELL YK", // Replace with your team name
+        "TEAM MEMBERS",
+        "ZI YUAN",
+        "PENG FEI",
+        "AZFAR",
+        "JEREMY LIM",
         "",
         "FACULTY AND ADVISORS",
         "",
@@ -147,8 +127,8 @@ namespace
 
                 if (ndcY > -1.2f && ndcY < 1.2f)
                 {
-                    if (line == "YOUR GAME NAME" || line == "YOUR TEAM NAME" ||
-                        line == "PRODUCER" || line == "TECHNICAL LEAD" ||
+                    if (line == "YOUR TEAM NAME" ||
+                        line == "TEAM MEMBERS" || line == "TECHNICAL LEAD" ||
                         line == "ART LEAD" || line == "AUDIO LEAD" ||
                         line == "GRAPHICS PROGRAMMER" || line == "LEVEL DESIGNER" ||
                         line == "ENVIRONMENT ARTIST AND UI" || line == "COMPOSER" ||

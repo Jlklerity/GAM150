@@ -6,6 +6,7 @@ namespace UiPauseMenu
     static bool inSettings = false;
     static bool ignoreNextClick = false;
     static bool inConfirmExit = false;
+    static bool isConfirmingRestart = false;
 
     bool IsSettingsOpen()
     {
@@ -33,19 +34,22 @@ namespace UiPauseMenu
         AEGfxSetBlendMode(AE_GFX_BM_BLEND);
         AEGfxSetTransparency(1.0f);
         AEGfxSetColorToMultiply(0.85f, 0.70f, 0.15f, 1.0f);
-        Mesh_Renderer(bgMesh, 0.0f, 0.0f, 420.0f, 620.0f, 0.0f);
+        Mesh_Renderer(bgMesh, 0.0f, -0.05f * screenHalfH, 440.0f, 780.0f, 0.0f);
 
         // Dark panel fill
         AEGfxSetColorToMultiply(0.07f, 0.05f, 0.10f, 1.0f);
-        Mesh_Renderer(bgMesh, 0.0f, 0.0f, 408.0f, 608.0f, 0.0f);
+        Mesh_Renderer(bgMesh, 0.0f, -0.05f * screenHalfH, 428.0f, 768.0f, 0.0f);
 
         // --- Button config ---
         float btnW = 340.0f;
         float btnH = 75.0f;
         float btnX = 0.0f;
-        float resumeY = 0.05f;
-        float settingsY = -0.25f;
-        float menuY = -0.55f;
+
+        float resumeY = 0.25f;
+        float restartY = -0.03f;
+        float settingsY = -0.31f;
+        float menuY = -0.59f;
+
         float borderSize = 5.0f;
 
         auto DrawButton = [&](float cx, float worldY, const char* label)
@@ -82,13 +86,13 @@ namespace UiPauseMenu
             // Shadow
             AEGfxPrint(Graphics::font_id, title,
                 -tw * 0.5f + 0.005f,
-                0.35f,
+                0.52f,
                 1.1f, 0.0f, 0.0f, 0.0f, 1.0f);
 
             // Gold text
             AEGfxPrint(Graphics::font_id, title,
                 -tw * 0.5f,
-                0.36f,
+                0.53f,
                 1.1f, 1.0f, 0.82f, 0.1f, 1.0f);
         }
 
@@ -97,15 +101,13 @@ namespace UiPauseMenu
         AEGfxSetBlendMode(AE_GFX_BM_BLEND);
         AEGfxSetTransparency(1.0f);
         AEGfxSetColorToMultiply(0.85f, 0.70f, 0.15f, 1.0f);
-        Mesh_Renderer(bgMesh, 0.0f, 0.20f * screenHalfH, 360.0f, 3.0f, 0.0f);
+        Mesh_Renderer(bgMesh, 0.0f, 0.45f * screenHalfH, 360.0f, 3.0f, 0.0f);
 
         // --- Buttons ---
         DrawButton(btnX, resumeY * screenHalfH, "RESUME");
+        DrawButton(btnX, restartY * screenHalfH, "RESTART");
         DrawButton(btnX, settingsY * screenHalfH, "SETTINGS");
-        DrawButton(btnX, menuY * screenHalfH, "MAIN MENU");
-
-        // (rest of your function unchanged)
-    
+        DrawButton(btnX, menuY * screenHalfH, "MAIN MENU");    
 
         // ========================================================================
         // EXIT CONFIRMATION POPUP OVERLAY
@@ -145,7 +147,7 @@ namespace UiPauseMenu
             DrawConfButton(noX, confBtnY);
 
             // Draw Text
-            const char* promptText = "EXIT TO MAIN MENU?";
+            const char* promptText = isConfirmingRestart ? "RESTART GAME?" : "EXIT TO MAIN MENU?";
             const char* warningText = "YOU WILL LOSE PROGRESS";
             const char* yesText = "YES";
             const char* noText = "NO";
@@ -185,10 +187,20 @@ namespace UiPauseMenu
                     wy >= (confBtnY - halfConfH) && wy <= (confBtnY + halfConfH)) {
                     SoundManager::PlayClickBtnSfx();
                     isPaused = false;
-                     //Reset game state and return to Main Menu
-                     std::string temp_name = "";
-                     ResetPlayerName(temp_name);
-                    gGameStateNext = GS_MAIN_MENU;
+                    // Route the game state depending on which popup we opened
+                    if (isConfirmingRestart)
+                    {
+                        // Safely restart the current level (re-loads current state)
+                        gGameStateNext = GS_RESTART;
+                    }
+                    else
+                    {
+                        // Reset player name and go to Main Menu
+                        std::string temp_name = "";
+                        ResetPlayerName(temp_name);
+                        gGameStateNext = GS_MAIN_MENU;
+                    }
+
                     inConfirmExit = false;
                 }
                 else if (wx >= (noX - halfConfW) && wx <= (noX + halfConfW) &&
@@ -227,6 +239,16 @@ namespace UiPauseMenu
                 isPaused = false; // Unpauses the game normally
             }
 
+            // --- Check RESTART ---
+            if (wx >= (btnX - halfW) && wx <= (btnX + halfW) &&
+                wy >= ((restartY * screenHalfH) - halfH) && wy <= ((restartY * screenHalfH) + halfH))
+            {
+                SoundManager::PlayClickBtnSfx();
+                inConfirmExit = true;
+                isConfirmingRestart = true; // Tell the popup to display "RESTART" text
+                ignoreNextClick = true;
+            }
+
             // Check SETTINGS
             if (wx >= (btnX - halfW) && wx <= (btnX + halfW) &&
                 wy >= ((settingsY * screenHalfH) - halfH) && wy <= ((settingsY * screenHalfH) + halfH))
@@ -241,6 +263,7 @@ namespace UiPauseMenu
             {
                 SoundManager::PlayClickBtnSfx();
                 inConfirmExit = true;    // Opens the confirmation popup
+                isConfirmingRestart = false;
                 ignoreNextClick = true;  // Prevents instantly clicking "YES" or "NO"
             }
         }
