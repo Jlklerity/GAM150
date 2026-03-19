@@ -121,7 +121,7 @@ namespace SysSettings
 
         // Gold divider under title
         AEGfxSetColorToMultiply(0.85f, 0.70f, 0.15f, 1.0f);
-        Mesh_Renderer(s_quad, 0.0f, 155.0f, 540.0f, 3.0f, 0.0f);
+        Mesh_Renderer(s_quad, 0.0f, 260.0f, 540.0f, 3.0f, 0.0f);
 
         // Title — shadow then gold
         // Shadow
@@ -176,12 +176,6 @@ namespace SysSettings
         Mesh_Renderer(s_quad, 0.0f, CLOSE_Y, CLOSE_W, CLOSE_H, 0.0f);
 
         // TEXT LABELS
-        float ndcScale = winH > 0 ? (2.0f / winH) : 0.0022f;
-
-        DrawCentredText("SOUND SETTINGS", 0.75f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f);
-        DrawCentredText("BACKGROUND VOLUME", (BGM_Y + 45.0f) * ndcScale, 0.6f, 1.0f, 1.0f, 1.0f, 1.0f);
-        DrawCentredText("SFX VOLUME", (SFX_Y + 45.0f) * ndcScale, 0.6f, 1.0f, 1.0f, 1.0f, 1.0f);
-        DrawCentredText("AMBIENT VOLUME", (AMB_Y + 45.0f) * ndcScale, 0.6f, 1.0f, 1.0f, 1.0f, 1.0f);
         DrawCentredText("CLOSE", (CLOSE_Y)*ndcScale, 0.7f, 1.0f, 1.0f, 1.0f, 1.0f);
 
         return true;
