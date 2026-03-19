@@ -44,9 +44,9 @@ namespace
     // ----------------------------------------------------------------
     // Effect durations
     // ----------------------------------------------------------------
-    constexpr float SHIELD_DURATION = 10.0f;
-    constexpr float SLOW_DURATION = 5.0f;
-    constexpr float SLOW_SCALE = 0.6f;  // 40% game speed during slow
+    constexpr float SHIELD_DURATION = 8.0f;
+    constexpr float SLOW_DURATION = 3.0f;
+    constexpr float SLOW_SCALE = 0.4f;  // 40% game speed during slow
 
     // ----------------------------------------------------------------
     // Per-slot drop state
@@ -96,7 +96,7 @@ namespace
     constexpr float STRIKE_FRAME_TIME = 0.16f;              // seconds per frame (~12 fps)
     constexpr float STRIKE_UV_W = 1.0f / STRIKE_FRAME_COUNT; // 0.2 per frame
     constexpr float STRIKE_DISPLAY_W = 400.0f;
-    constexpr float STRIKE_DISPLAY_H = 800.0f;
+    constexpr float STRIKE_DISPLAY_H = 1200.0f;
 
     struct LightningStrike
     {
@@ -110,6 +110,39 @@ namespace
     static LightningStrike  g_strikes[MAX_SLOTS];
     static AEGfxTexture* g_texStrike = nullptr;
     static AEGfxVertexList* g_strikeMesh = nullptr;  // single-frame-width UV quad
+
+    // ----------------------------------------------------------------
+    // Shield / Slow activation spritesheet animation
+    // ----------------------------------------------------------------
+    constexpr int   SHIELD_ANIM_FRAME_COUNT = 2;
+    constexpr float SHIELD_ANIM_FRAME_TIME = 0.12f;              // ~8 fps, snappy
+    constexpr float SHIELD_ANIM_UV_W = 1.0f / SHIELD_ANIM_FRAME_COUNT;  // 0.5 per frame
+    constexpr float SHIELD_ANIM_DISPLAY_W = 400.0f;
+    constexpr float SHIELD_ANIM_DISPLAY_H = 400.0f;
+    // After the last frame we hold frame 1 (fully-open) until the effect expires
+    // to give a continuous "shield is up" visual.
+
+    struct ScreenEffect
+    {
+        bool  active = false;
+        int   frame = 0;
+        float frameTimer = 0.0f;
+        bool  looping = false;   // if true, ping-pong / loop
+    };
+
+    static ScreenEffect      g_shieldEffect{};
+    static ScreenEffect      g_slowEffect{};
+    static AEGfxTexture* g_texShieldAnim = nullptr;   // shieldon.png (2-frame sheet)
+    static AEGfxVertexList* g_shieldAnimMesh = nullptr;  // half-width UV quad
+
+    // Running time counter used only for the pulsing text sine wave
+    static float g_pulseTimer = 0.0f;
+
+    // Short popup timers: text shows briefly on activation then disappears
+    constexpr float POPUP_DURATION = 1.8f;  // seconds the label stays visible
+    constexpr float POPUP_FADE_TIME = 0.5f;  // fade-out window at end
+    static float g_shieldPopupTimer = 0.0f;
+    static float g_slowPopupTimer = 0.0f;
 
     // Spawn strikes at left, centre, and right of the screen
     static void SpawnThreeStrikes()
@@ -235,16 +268,20 @@ namespace
     {
         switch (type)
         {
-        case PowerUpSystem::PowerType::Lightning: 
-            ActivateLightning(pool, health); 
+        case PowerUpSystem::PowerType::Lightning:
+            ActivateLightning(pool, health);
             SoundManager::PlayLightningSfx();
             break;
         case PowerUpSystem::PowerType::Shield:
-            g_shieldRemaining = SHIELD_DURATION * UpgradeSystem::Upgrade_GetPowerUpDurationMultiplier();                    // scaled by upgrade duration bonus
+            g_shieldRemaining = SHIELD_DURATION * UpgradeSystem::Upgrade_GetPowerUpDurationMultiplier();
+            g_shieldEffect = { true, 0, 0.0f, false };
+            g_shieldPopupTimer = POPUP_DURATION;
             SoundManager::PlayShieldSfx();
             break;
         case PowerUpSystem::PowerType::TimeSlow:
-            g_slowRemaining = SLOW_DURATION * UpgradeSystem::Upgrade_GetPowerUpDurationMultiplier();                        // scaled by upgrade duration bonus
+            g_slowRemaining = SLOW_DURATION * UpgradeSystem::Upgrade_GetPowerUpDurationMultiplier();
+            g_slowEffect = { true, 0, 0.0f, false };
+            g_slowPopupTimer = POPUP_DURATION;
             SoundManager::PlaySlowSfx();
             break;
         }
@@ -268,6 +305,11 @@ namespace PowerUpSystem
         g_texShield = AEGfxTextureLoad("Assets/shieldpowerup.png");
         g_texSlow = AEGfxTextureLoad("Assets/slowpowerup.png");
         g_texStrike = AEGfxTextureLoad("Assets/lightningstrike.png");
+        g_texShieldAnim = AEGfxTextureLoad("Assets/shieldon.png");
+
+        // Half-width UV quad for the 2-frame shield spritesheet
+        if (g_shieldAnimMesh) { AEGfxMeshFree(g_shieldAnimMesh); g_shieldAnimMesh = nullptr; }
+        g_shieldAnimMesh = Sprite_Mesh(SHIELD_ANIM_UV_W, 1.0f);
 
 
         // Single-frame UV quad: UV width = 1/5 of the sheet, full height
@@ -286,6 +328,11 @@ namespace PowerUpSystem
         g_nextSpawnIn = RandRange(g_spawnMin, g_spawnMax);
         g_shieldRemaining = 0.0f;
         g_slowRemaining = 0.0f;
+        g_shieldEffect = {};
+        g_slowEffect = {};
+        g_pulseTimer = 0.0f;
+        g_shieldPopupTimer = 0.0f;
+        g_slowPopupTimer = 0.0f;
     }
 
     // ----------------------------------------------------------------
@@ -293,10 +340,12 @@ namespace PowerUpSystem
     {
         if (g_mesh) { AEGfxMeshFree(g_mesh);              g_mesh = nullptr; }
         if (g_strikeMesh) { AEGfxMeshFree(g_strikeMesh);        g_strikeMesh = nullptr; }
+        if (g_shieldAnimMesh) { AEGfxMeshFree(g_shieldAnimMesh);   g_shieldAnimMesh = nullptr; }
         if (g_texLightning) { AEGfxTextureUnload(g_texLightning); g_texLightning = nullptr; }
         if (g_texShield) { AEGfxTextureUnload(g_texShield);    g_texShield = nullptr; }
         if (g_texSlow) { AEGfxTextureUnload(g_texSlow);      g_texSlow = nullptr; }
         if (g_texStrike) { AEGfxTextureUnload(g_texStrike);    g_texStrike = nullptr; }
+        if (g_texShieldAnim) { AEGfxTextureUnload(g_texShieldAnim); g_texShieldAnim = nullptr; }
     }
 
     // ----------------------------------------------------------------
@@ -330,6 +379,8 @@ namespace PowerUpSystem
         // ---- Decay effect timers ----
         if (g_shieldRemaining > 0.0f) { g_shieldRemaining -= dt; if (g_shieldRemaining < 0.0f) g_shieldRemaining = 0.0f; }
         if (g_slowRemaining > 0.0f) { g_slowRemaining -= dt; if (g_slowRemaining < 0.0f) g_slowRemaining = 0.0f; }
+        if (g_shieldPopupTimer > 0.0f) { g_shieldPopupTimer -= dt; if (g_shieldPopupTimer < 0.0f) g_shieldPopupTimer = 0.0f; }
+        if (g_slowPopupTimer > 0.0f) { g_slowPopupTimer -= dt; if (g_slowPopupTimer < 0.0f) g_slowPopupTimer = 0.0f; }
 
         // ---- Spawn timer ----
         g_spawnTimer += dt;
@@ -361,6 +412,32 @@ namespace PowerUpSystem
                     s.active = false;  // animation finished
             }
         }
+
+        // ---- Advance shield spritesheet animation (plays once on activation) ----
+        auto AdvanceEffect = [&](ScreenEffect& fx)
+            {
+                if (!fx.active) return;
+                fx.frameTimer += dt;
+                if (fx.frameTimer >= SHIELD_ANIM_FRAME_TIME)
+                {
+                    fx.frameTimer -= SHIELD_ANIM_FRAME_TIME;
+                    ++fx.frame;
+                    if (fx.frame >= SHIELD_ANIM_FRAME_COUNT)
+                    {
+                        fx.frame = SHIELD_ANIM_FRAME_COUNT - 1; // hold last frame
+                        fx.active = false; // intro done; pulsing text takes over
+                    }
+                }
+            };
+        AdvanceEffect(g_shieldEffect);
+        AdvanceEffect(g_slowEffect);
+
+        // ---- Deactivate held-frame when the effect expires ----
+        if (g_shieldRemaining <= 0.0f) g_shieldEffect.active = false;
+        if (g_slowRemaining <= 0.0f) g_slowEffect.active = false;
+
+        // ---- Global pulse timer (always ticks) ----
+        g_pulseTimer += dt;
 
         // ---- Move drops + key input + floor check ----
         // Key codes for 1, 2, 3
@@ -422,6 +499,84 @@ namespace PowerUpSystem
     void Draw()
     {
         if (!g_mesh) return;
+
+        // ---- Shield / Slow activation spritesheet + pulsing text ----
+        {
+            // Helper: draw a 2-frame spritesheet effect centred on screen
+            auto DrawScreenAnim = [&](const ScreenEffect& fx, AEGfxTexture* tex,
+                float dispW, float dispH, float alpha)
+                {
+                    if (!fx.active || !tex || !g_shieldAnimMesh) return;
+                    float uOffset = fx.frame * SHIELD_ANIM_UV_W;
+                    AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
+                    AEGfxSetBlendMode(AE_GFX_BM_BLEND);
+                    AEGfxSetTransparency(alpha);
+                    AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);
+                    AEGfxTextureSet(tex, uOffset, 0.0f);
+                    Mesh_Renderer(g_shieldAnimMesh, 0.0f, 0.0f, dispW, dispH, 0.0f);
+                    AEGfxSetTransparency(1.0f);
+                };
+
+            // Helper: draw pulsing centred text while effect is active
+            auto DrawPulsingText = [&](const char* label, float popupTimer, float ndcY,
+                float r, float g, float b)
+                {
+                    if (popupTimer <= 0.0f || Graphics::font_id < 0) return;
+
+                    // Pulse: scale between 0.9 and 1.1 using sine
+                    constexpr float PULSE_SPEED = 4.0f;
+                    constexpr float BASE_SCALE = 0.9f;
+                    constexpr float PULSE_AMP = 0.2f;
+                    float pulse = BASE_SCALE + PULSE_AMP * (0.5f + 0.5f * sinf(g_pulseTimer * PULSE_SPEED));
+
+                    // Fade out over the last POPUP_FADE_TIME seconds
+                    float alpha = (popupTimer < POPUP_FADE_TIME) ? (popupTimer / POPUP_FADE_TIME) : 1.0f;
+
+                    float tw = 0.0f, th = 0.0f;
+                    AEGfxGetPrintSize(Graphics::font_id, label, pulse, &tw, &th);
+
+                    AEGfxSetRenderMode(AE_GFX_RM_COLOR);
+                    AEGfxSetBlendMode(AE_GFX_BM_BLEND);
+                    AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);
+                    AEGfxPrint(Graphics::font_id, label,
+                        -tw * 0.5f,
+                        ndcY - th * 0.5f,
+                        pulse,
+                        r, g, b,
+                        alpha);
+                };
+
+            // Stack labels vertically so they never overlap when both are active.
+            float rowH = 0.0f, dummy = 0.0f;
+            if (Graphics::font_id >= 0)
+                AEGfxGetPrintSize(Graphics::font_id, "SHIELDED!", 0.9f, &dummy, &rowH);
+            constexpr float ROW_GAP = 0.06f;
+            float rowSpacing = rowH + ROW_GAP;
+
+            int activeCount = (g_shieldPopupTimer > 0.0f ? 1 : 0)
+                + (g_slowPopupTimer > 0.0f ? 1 : 0);
+            float stackTop = (activeCount - 1) * rowSpacing * 0.5f + 0.15f;
+            float curY = stackTop;
+
+            // Shield: spritesheet on activation, then pulsing text for the duration
+            if (g_shieldEffect.active)
+                DrawScreenAnim(g_shieldEffect, g_texShieldAnim,
+                    SHIELD_ANIM_DISPLAY_W, SHIELD_ANIM_DISPLAY_H, 0.85f);
+
+            if (g_shieldPopupTimer > 0.0f)
+            {
+                DrawPulsingText("SHIELDED!", g_shieldPopupTimer, curY, 0.4f, 1.0f, 0.6f);
+                curY -= rowSpacing;
+            }
+
+            // Slow: same shield sprite as placeholder, purple tint text
+            if (g_slowEffect.active)
+                DrawScreenAnim(g_slowEffect, g_texShieldAnim,
+                    SHIELD_ANIM_DISPLAY_W, SHIELD_ANIM_DISPLAY_H, 0.75f);
+
+            if (g_slowPopupTimer > 0.0f)
+                DrawPulsingText("SLOWED!", g_slowPopupTimer, curY, 0.7f, 0.4f, 1.0f);
+        }
 
         // ---- Lightning strike animations ----
         if (g_strikeMesh && g_texStrike)
