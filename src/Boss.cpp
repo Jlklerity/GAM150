@@ -935,7 +935,7 @@ namespace BossSystem
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
     bool Boss_ForceKill(std::vector<Data::Enemy>& pool, std::deque<int>& free_slots)
     {
-        if (boss_state != BossState::ACTIVE) return false;                                                                        // only valid while the boss is actively fighting
+        if (boss_state != BossState::ACTIVE) return false;                                                                  // only valid while the boss is actively fighting
 
         if (boss_pool_slot >= 0 && boss_pool_slot < (int)pool.size())                                                       // only clean up the slot if one is reserved
         {
