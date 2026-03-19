@@ -7,8 +7,9 @@ namespace UiPauseMenu
     static bool inSettings = false;
     static bool ignoreNextClick = false;
     static bool inConfirmExit = false;
-    static bool isConfirmingRestart = false;
-    static bool isConfirmingTutorial = false;
+ /*   static bool isConfirmingRestart = false;
+    static bool isConfirmingTutorial = false;*/
+    static PopupAction currentPopupAction = POPUP_MAIN_MENU;
 
     // Button tweens (persist across Draw calls)
     static ButtonTween tweenResume;
@@ -18,18 +19,36 @@ namespace UiPauseMenu
     static ButtonTween tweenYes;
     static ButtonTween tweenNo;
 
-    bool IsPopupOpen()
-    {
-        return inConfirmExit;
-    }
-
     bool IsSettingsOpen()
     {
         return inSettings;
     }
 
+    void OpenPopup(PopupAction action)
+    {
+        inConfirmExit = true;
+        currentPopupAction = action;
+        ignoreNextClick = true;
+    }
+
+    void ClosePopup()
+    {
+        inConfirmExit = false;
+        ignoreNextClick = true;
+    }
+
+    bool IsPopupOpen()
+    {
+        return inConfirmExit;
+    }
+
     void Ui_DrawPauseMenu(bool& isPaused, AEGfxVertexList* bgMesh)
     {
+        if (inConfirmExit)
+        {
+            Ui_DrawConfirmationPopup(bgMesh, &isPaused);
+            return; // Stops normal pause menu from drawing!
+        }
         float winW = (float)AEGfxGetWindowWidth();
         float winH = (float)AEGfxGetWindowHeight();
         float screenHalfW = winW * 0.5f;
@@ -147,8 +166,6 @@ namespace UiPauseMenu
         DrawButton(btnX, settingsY * screenHalfH, "SETTINGS", tweenSettings);
         DrawButton(btnX, menuY * screenHalfH, "MAIN MENU", tweenMenu);
 
-        // (rest of your function unchanged)
-
 
         // ========================================================================
         // EXIT CONFIRMATION POPUP OVERLAY
@@ -207,7 +224,7 @@ namespace UiPauseMenu
 
             // Draw Text
             const char* promptText = "EXIT TO MAIN MENU?";
-            if (isConfirmingRestart)
+            if (currentPopupAction == POPUP_RESTART)
             {
                 promptText = (gGameStateCurr == GS_TUTORIAL) ? "RESTART TUTORIAL?" : "RESTART GAME?";
             }
@@ -257,7 +274,7 @@ namespace UiPauseMenu
                     isPaused = false;
 
                     // Route the game state depending on which popup we opened
-                    if (isConfirmingRestart)
+                    if (currentPopupAction == POPUP_RESTART)
                     {
                         // Safely restart the current level (re-loads current state)
                         gGameStateNext = GS_RESTART;
@@ -312,9 +329,8 @@ namespace UiPauseMenu
                 wy >= ((restartY * screenHalfH) - halfH) && wy <= ((restartY * screenHalfH) + halfH))
             {
                 SoundManager::PlayClickBtnSfx();
-                inConfirmExit = true;
-                isConfirmingRestart = true; // Tell the popup to display "RESTART" text
-                ignoreNextClick = true;
+                SoundManager::PlayClickBtnSfx();
+                OpenPopup(POPUP_RESTART);
             }
 
             // Check SETTINGS
@@ -330,12 +346,136 @@ namespace UiPauseMenu
                 wy >= ((menuY * screenHalfH) - halfH) && wy <= ((menuY * screenHalfH) + halfH))
             {
                 SoundManager::PlayClickBtnSfx();
-                inConfirmExit = true;    // Opens the confirmation popup
-                isConfirmingRestart = false;
-                ignoreNextClick = true;  // Prevents instantly clicking "YES" or "NO"
+                OpenPopup(POPUP_MAIN_MENU);
             }
         }
     }
+
+    void Ui_DrawConfirmationPopup(AEGfxVertexList* bgMesh, bool* pIsPaused)
+    {
+        if (!inConfirmExit) return;
+
+        float winW = (float)AEGfxGetWindowWidth();
+        float winH = (float)AEGfxGetWindowHeight();
+        float screenHalfW = winW * 0.5f;
+        float screenHalfH = winH * 0.5f;
+        float borderSize = 5.0f;
+
+        //  Dim the background
+        AEGfxSetRenderMode(AE_GFX_RM_COLOR);
+        AEGfxSetBlendMode(AE_GFX_BM_BLEND);
+        AEGfxSetTransparency(0.85f);
+        AEGfxSetColorToMultiply(0.02f, 0.01f, 0.04f, 1.0f);
+        Mesh_Renderer(bgMesh, 0.0f, 0.0f, winW, winH, 0.0f);
+
+        // Popup Box - Gold Border & Dark Fill
+        AEGfxSetTransparency(1.0f);
+        AEGfxSetColorToMultiply(0.85f, 0.70f, 0.15f, 1.0f);
+        Mesh_Renderer(bgMesh, 0.0f, 0.0f, 610.0f, 310.0f, 0.0f);
+        AEGfxSetColorToMultiply(0.07f, 0.05f, 0.10f, 1.0f);
+        Mesh_Renderer(bgMesh, 0.0f, 0.0f, 600.0f, 300.0f, 0.0f);
+
+         
+        float confBtnW = 160.0f, confBtnH = 65.0f;
+        float yesX = -130.0f, noX = 130.0f, confBtnY = -60.0f;
+
+        float dt_conf = (float)AEFrameRateControllerGetFrameTime();
+        bool click_conf = AEInputCheckTriggered(AEVK_LBUTTON);
+
+        s32 mx_c, my_c;
+        AEInputGetCursorPosition(&mx_c, &my_c);
+        float wx_c = (float)mx_c - screenHalfW;
+        float wy_c = screenHalfH - (float)my_c;
+
+        bool hYes = (wx_c >= (yesX - confBtnW * 0.5f) && wx_c <= (yesX + confBtnW * 0.5f) &&
+            wy_c >= (confBtnY - confBtnH * 0.5f) && wy_c <= (confBtnY + confBtnH * 0.5f));
+        bool hNo = (wx_c >= (noX - confBtnW * 0.5f) && wx_c <= (noX + confBtnW * 0.5f) &&
+            wy_c >= (confBtnY - confBtnH * 0.5f) && wy_c <= (confBtnY + confBtnH * 0.5f));
+
+        // Update the scale of the buttons
+        ButtonTween_Update(tweenYes, hYes, hYes && click_conf, dt_conf);
+        ButtonTween_Update(tweenNo, hNo, hNo && click_conf, dt_conf);
+
+        auto DrawConfButton = [&](float cx, float cy, ButtonTween& tween) {
+            float sw = tween.scale; // Multiply the width and height by the tween scale!
+            AEGfxSetColorToMultiply(0.85f, 0.70f, 0.15f, 1.0f);
+            Mesh_Renderer(bgMesh, cx, cy, (confBtnW + borderSize * 2) * sw, (confBtnH + borderSize * 2) * sw, 0.0f);
+            AEGfxSetColorToMultiply(0.10f, 0.08f, 0.14f, 1.0f);
+            Mesh_Renderer(bgMesh, cx, cy, confBtnW * sw, confBtnH * sw, 0.0f);
+            };
+
+        DrawConfButton(yesX, confBtnY, tweenYes);
+        DrawConfButton(noX, confBtnY, tweenNo);
+
+        // 4. Determine Text Dynamically
+        const char* promptText = "";
+        const char* warningText = "YOU WILL LOSE PROGRESS";
+
+        if (currentPopupAction == POPUP_QUIT) {
+            promptText = "DO YOU WISH TO EXIT GAME?";
+        }
+        else if (currentPopupAction == POPUP_RESTART) {
+            promptText = (gGameStateCurr == GS_TUTORIAL) ? "RESTART TUTORIAL?" : "RESTART GAME?";
+        }
+        else {
+            promptText = "EXIT TO MAIN MENU?";
+        }
+
+        float pw, ph, ww, wh, yw, yh, nw, nh;
+        AEGfxGetPrintSize(Graphics::font_id, promptText, 0.8f, &pw, &ph);
+
+        if (currentPopupAction != POPUP_QUIT && gGameStateCurr != GS_TUTORIAL) {
+            AEGfxGetPrintSize(Graphics::font_id, warningText, 0.5f, &ww, &wh);
+        }
+
+        AEGfxGetPrintSize(Graphics::font_id, "YES", 0.65f, &yw, &yh);
+        AEGfxGetPrintSize(Graphics::font_id, "NO", 0.65f, &nw, &nh);
+
+        AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);
+
+        float promptY = (currentPopupAction == POPUP_QUIT || gGameStateCurr == GS_TUTORIAL) ? 60.0f : 80.0f;
+        AEGfxPrint(Graphics::font_id, promptText, -(pw * 0.5f), (promptY / screenHalfH) - (ph * 0.5f), 0.8f, 1.0f, 0.82f, 0.1f, 1.0f);
+
+        if (currentPopupAction != POPUP_QUIT && gGameStateCurr != GS_TUTORIAL) {
+            AEGfxPrint(Graphics::font_id, warningText, -(ww * 0.5f), (30.0f / screenHalfH) - (wh * 0.5f), 0.5f, 1.0f, 0.4f, 0.4f, 1.0f);
+        }
+
+        AEGfxPrint(Graphics::font_id, "YES", (yesX / screenHalfW) - (yw * 0.5f), (confBtnY / screenHalfH) - (yh * 0.5f), 0.65f, 1.0f, 0.92f, 0.6f, 1.0f);
+        AEGfxPrint(Graphics::font_id, "NO", (noX / screenHalfW) - (nw * 0.5f), (confBtnY / screenHalfH) - (nh * 0.5f), 0.65f, 1.0f, 0.92f, 0.6f, 1.0f);
+
+        // 5. Input Handling (FIXED: Now uses the hover booleans we calculated above!)
+        if (ignoreNextClick) {
+            ignoreNextClick = false;
+        }
+        else if (AEInputCheckTriggered(AEVK_ESCAPE)) {
+            SoundManager::PlayClickBtnSfx();
+            inConfirmExit = false;
+            ignoreNextClick = true;
+        }
+        else if (click_conf) {
+            // Clicked YES
+            if (hYes) {
+                SoundManager::PlayClickBtnSfx();
+
+                if (pIsPaused) *pIsPaused = false;
+
+                if (currentPopupAction == POPUP_QUIT) gGameStateNext = GS_QUIT;
+                else if (currentPopupAction == POPUP_RESTART) gGameStateNext = GS_RESTART;
+                else {
+                    std::string temp_name = ""; ResetPlayerName(temp_name);
+                    gGameStateNext = GS_MAIN_MENU;
+                }
+                inConfirmExit = false;
+            }
+            // Clicked NO
+            else if (hNo) {
+                SoundManager::PlayClickBtnSfx();
+                inConfirmExit = false;
+                ignoreNextClick = true;
+            }
+        }
+    }
+
 
     void Check_Paused(bool& isPaused, bool& isDead, AEGfxVertexList* bgMesh)
     {

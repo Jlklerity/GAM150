@@ -296,7 +296,7 @@ void Main_Menu_Input()
     worldY = (winH * 0.5f) - (float)mouseY;                                                                                 // convert screen Y to world Y
 
     if (selected_mode == "") selected_mode = "ZEN";                                                                         // default mode safety check
-
+     
     // ---------------------------------------------------------------------------
     // BUTTON TWEEN UPDATES
     // ---------------------------------------------------------------------------
@@ -323,6 +323,7 @@ void Main_Menu_Input()
         bool hCred = (worldX >= CREDITS_BTN_X - (CREDITS_WIDTH * 0.5f) && worldX <= CREDITS_BTN_X + (CREDITS_WIDTH * 0.5f) &&
             worldY >= CREDITS_BTN_Y - (CREDITS_HEIGHT * 0.5f) && worldY <= CREDITS_BTN_Y + (CREDITS_HEIGHT * 0.5f));
 
+
         if (!splashActive) {
             ButtonTween_Update(tweenPlay, hPlay, hPlay && click, dt);
             ButtonTween_Update(tweenShop, hShop, hShop && click, dt);
@@ -335,6 +336,7 @@ void Main_Menu_Input()
             ButtonTween_Update(tweenCredits, hCred, hCred && click, dt);
         }
     }
+        if (UiPauseMenu::IsPopupOpen()) return;
 
     if (!splashActive && !isTransitioningToName && !transitioningToShop && !isReturningFromShop && AEInputCheckTriggered(AEVK_ESCAPE))
     {
@@ -364,7 +366,7 @@ void Main_Menu_Input()
             worldY >= EXIT_BTN_Y - (EXIT_HEIGHT * 0.5f) && worldY <= EXIT_BTN_Y + (EXIT_HEIGHT * 0.5f))
         {
             SoundManager::PlayClickBtnSfx();
-            gGameStateNext = GS_QUIT;                                                                                       // queue application quit
+            UiPauseMenu::OpenPopup(UiPauseMenu::POPUP_QUIT);                                                                                      // queue application quit
         }
         // --- Check Settings Button ---
         else if (worldX >= SETTINGS_BTN_X - (SETTINGS_WIDTH * 0.5f) && worldX <= SETTINGS_BTN_X + (SETTINGS_WIDTH * 0.5f) &&
@@ -392,7 +394,7 @@ void Main_Menu_Input()
             worldY >= LEADERBOARD_BTN_Y - (LEADERBOARD_HEIGHT * 0.5f) && worldY <= LEADERBOARD_BTN_Y + (LEADERBOARD_HEIGHT * 0.5f))
         {
             SoundManager::PlayClickBtnSfx();
-            inLeaderboard = true; // Open the overlay!                                                                                             
+            inLeaderboard = true; //                                                                                              
         }
         // --- Check Tutorial Button ---
 
@@ -631,6 +633,7 @@ void Main_Menu_Init()
     uiOffsetX = 0.0f;
     transitioningToShop = false;
     inLeaderboard = false;
+    UiPauseMenu::ClosePopup();
     Leaderboard_System::Init();
     Leaderboard_System::Read_ZenLeaderboard();
     Leaderboard_System::Read_TimeLeaderboard();
@@ -952,6 +955,7 @@ void Main_Menu_Update()
     {
         Draw_Main_Menu(0.0f);                                                                                               // render standard visual
         Main_Menu_Input();                                                                                                  // scan for normal button clicks
+        UiPauseMenu::Ui_DrawConfirmationPopup(pMeshBtn, nullptr);
     }
 
     // ---------------------------------------------------------------------------
