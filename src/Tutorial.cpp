@@ -369,18 +369,47 @@ namespace
                 ndcObjX, ndcObjY, 0.38f, or_, og_, ob_, 1.0f);
         }
 
-        // NEXT / PLAY button
-        if (objectiveMet || s_stage == STAGE_BOSS_WARNING)
+        // ENTER hint text at bottom of bubble
+        if (Graphics::font_id >= 0)
         {
-            bool isLast = (s_stage == STAGE_BOSS_WARNING);
-            const char* btnLabel = isLast ? "PLAY >" : "NEXT >";
+            const char* hint = nullptr;
+            float hr, hg, hb;
 
+            if (s_stage == STAGE_BOSS_WARNING)
+            {
+                hint = "[ Click PLAY > to start! ]";
+                hr = 0.2f; hg = 1.0f; hb = 0.2f; // green for final
+            }
+            else if (objectiveMet)
+            {
+                hint = "[ Press ENTER to continue ]";
+                hr = 0.2f; hg = 0.7f; hb = 1.0f; // blue when done
+            }
+            else if (!s_readyClicked)
+            {
+                hint = "[ Press ENTER when ready ]";
+                hr = 1.0f; hg = 0.85f; hb = 0.1f; // yellow before start
+            }
+
+            if (hint)
+            {
+                float hw, hh;
+                AEGfxGetPrintSize(Graphics::font_id, hint, 0.40f, &hw, &hh);
+                float hndcX = (BUBBLE_X - BUBBLE_W * 0.5f + 18.0f) / (s_winW * 0.5f);
+                float hndcY = (BUBBLE_Y - BUBBLE_H * 0.5f + 18.0f) / (s_winH * 0.5f);
+                AEGfxSetBlendMode(AE_GFX_BM_BLEND);
+                AEGfxPrint(Graphics::font_id, hint, hndcX, hndcY, 0.40f, hr, hg, hb, 1.0f);
+            }
+        }
+
+        // PLAY > button for final stage only (still a click)
+        if (s_stage == STAGE_BOSS_WARNING)
+        {
+            const char* btnLabel = "PLAY >";
             AEGfxSetRenderMode(AE_GFX_RM_COLOR);
             AEGfxSetBlendMode(AE_GFX_BM_BLEND);
             AEGfxSetTransparency(1.0f);
-            AEGfxSetColorToMultiply(isLast ? 0.1f : 0.15f,
-                isLast ? 0.7f : 0.45f,
-                isLast ? 0.1f : 0.9f, 1.0f);
+            AEGfxSetColorToMultiply(0.1f, 0.7f, 0.1f, 1.0f);
             Mesh_Renderer(s_rectMesh, NEXT_BTN_X, NEXT_BTN_Y, NEXT_BTN_W, NEXT_BTN_H, 0.0f);
 
             float bw, bh;
@@ -390,40 +419,16 @@ namespace
             AEGfxSetBlendMode(AE_GFX_BM_BLEND);
             AEGfxPrint(Graphics::font_id, btnLabel, bndcX, bndcY, 0.48f, 1.0f, 1.0f, 1.0f, 1.0f);
         }
-        // READY button - shown before stage has started
-        else if (!s_readyClicked && s_stage != STAGE_BOSS_WARNING)
-        {
-            const char* readyLabel = "READY >";
-            AEGfxSetRenderMode(AE_GFX_RM_COLOR);
-            AEGfxSetBlendMode(AE_GFX_BM_BLEND);
-            AEGfxSetTransparency(1.0f);
-            AEGfxSetColorToMultiply(0.6f, 0.3f, 0.0f, 1.0f);
-            Mesh_Renderer(s_rectMesh, NEXT_BTN_X, NEXT_BTN_Y, NEXT_BTN_W, NEXT_BTN_H, 0.0f);
-
-            float bw, bh;
-            AEGfxGetPrintSize(Graphics::font_id, readyLabel, 0.48f, &bw, &bh);
-            float bndcX = (NEXT_BTN_X / (s_winW * 0.5f)) - bw * 0.5f;
-            float bndcY = (NEXT_BTN_Y / (s_winH * 0.5f)) - bh * 0.5f;
-            AEGfxSetBlendMode(AE_GFX_BM_BLEND);
-            AEGfxPrint(Graphics::font_id, readyLabel, bndcX, bndcY, 0.48f, 1.0f, 1.0f, 1.0f, 1.0f);
-        }
     }
 
-    bool NextButtonClicked()
+    bool EnterPressed()
     {
-        if (!AEInputCheckTriggered(AEVK_LBUTTON)) return false;
-        s32 mx, my;
-        AEInputGetCursorPosition(&mx, &my);
-        float wx = (float)mx - s_winW * 0.5f;
-        float wy = s_winH * 0.5f - (float)my;
-        return (wx >= NEXT_BTN_X - NEXT_BTN_W * 0.5f &&
-            wx <= NEXT_BTN_X + NEXT_BTN_W * 0.5f &&
-            wy >= NEXT_BTN_Y - NEXT_BTN_H * 0.5f &&
-            wy <= NEXT_BTN_Y + NEXT_BTN_H * 0.5f);
+        return AEInputCheckTriggered(AEVK_RETURN);
     }
 
-    bool ReadyButtonClicked()
+    bool PlayButtonClicked()
     {
+        // PLAY > button on final stage — kept as mouse click
         if (!AEInputCheckTriggered(AEVK_LBUTTON)) return false;
         s32 mx, my;
         AEInputGetCursorPosition(&mx, &my);
@@ -562,10 +567,10 @@ void Tutorial_Update()
 
     if (!s_isPaused && !s_objectiveMet)
     {
-        // Handle READY button click
+        // Handle ENTER to start stage
         if (!s_readyClicked && s_stage != STAGE_BOSS_WARNING)
         {
-            if (ReadyButtonClicked())
+            if (EnterPressed())
                 s_readyClicked = true;
         }
 
@@ -712,15 +717,15 @@ void Tutorial_Update()
     }
 
     // NEXT / PLAY button
-    if (!s_isPaused && (s_objectiveMet || s_stage == STAGE_BOSS_WARNING) && NextButtonClicked())
+    if (!s_isPaused && s_objectiveMet && EnterPressed() && s_stage != STAGE_BOSS_WARNING)
     {
-        if (s_stage == STAGE_BOSS_WARNING)
-        {
-            s_isFading = true;
-            s_fadeTimer = 0.0f;
-        }
-        else
-            StartStage((TutorialStage)(s_stage + 1));
+        StartStage((TutorialStage)(s_stage + 1));
+    }
+
+    if (!s_isPaused && s_stage == STAGE_BOSS_WARNING && PlayButtonClicked())
+    {
+        s_isFading = true;
+        s_fadeTimer = 0.0f;
     }
 
     // -----------------------------------------------------------------------

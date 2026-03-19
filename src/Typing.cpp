@@ -74,8 +74,7 @@ namespace UiSystem
         std::snprintf(s, sizeof(s), "SCORE: %d", score.score_value);    // format score line
 
         AEGfxSetBlendMode(AE_GFX_BM_BLEND);  // enable blending for text
-        AEGfxPrint(Graphics::font_id, s, -0.95f, 0.90f, 0.55f, 1.0f, 0.85f, 0.1f, 1.0f); // draw score at top-left-ish
-
+        AEGfxPrint(Graphics::font_id, s, -0.95f, 0.90f, 0.55f, 0.0f, 0.0f, 0.0f, 1.0f); // draw score at top-left-ish
     }
 }
 // ======================================================
@@ -455,7 +454,7 @@ void Typing_DrawEnemyWords(const std::vector<Data::Enemy>& enemy_pool)
                 }
 
                 if (li < split)                                                                                             // typed portion, draw green
-                    AEGfxPrint(Graphics::font_id, single, final_x, final_y, EnemyConfig::TEXT_SCALE, 0.1f, 0.9f, 0.2f, 1);
+                    AEGfxPrint(Graphics::font_id, single, final_x, final_y, EnemyConfig::TEXT_SCALE, 0.1f, 0.65f, 0.1f, 1);
                 else                                                                                                        // untyped portion, draw black
                     AEGfxPrint(Graphics::font_id, single, final_x, final_y, EnemyConfig::TEXT_SCALE, 0, 0, 0, 1);
 
