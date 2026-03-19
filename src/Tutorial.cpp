@@ -360,7 +360,7 @@ namespace
         if (s_stage < STAGE_BOSS_WARNING)
         {
             float ndcObjX = (BUBBLE_X - BUBBLE_W * 0.5f + 18.0f) / (s_winW * 0.5f);
-            float ndcObjY = (BUBBLE_Y - BUBBLE_H * 0.5f + 36.0f) / (s_winH * 0.5f);
+            float ndcObjY = (BUBBLE_Y - BUBBLE_H * 0.5f + 55.0f) / (s_winH * 0.5f);
             float or_ = objectiveMet ? 0.2f : 1.0f;
             float og_ = objectiveMet ? 1.0f : 0.85f;
             float ob_ = objectiveMet ? 0.2f : 0.1f;
