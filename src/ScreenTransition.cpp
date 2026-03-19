@@ -1,3 +1,4 @@
+#include "pch.h"
 #include "ScreenTransition.h"
 
 namespace ScreenTransitions {

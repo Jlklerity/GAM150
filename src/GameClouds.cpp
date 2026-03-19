@@ -1,8 +1,6 @@
+#include "pch.h"
 #include "GameClouds.h"
-#include "MeshTemplates.h"
-#include "MeshRenderer.h"
-#include "AEEngine.h"
-#include "DayCycle.h"
+
 
 namespace
 {

@@ -15,10 +15,9 @@ Explosion spritesheet  (Assets/explosion.png)
   - Scales up slightly as it plays for a punchy feel.
 */
 
+#include "pch.h"
 #include "LaserBeam.h"
-#include "AEEngine.h"
-#include "MeshTemplates.h"
-#include <cmath>
+
 
 // ----------------------------------------------------------------
 // Tuning constants

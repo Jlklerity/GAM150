@@ -14,17 +14,9 @@
 
 @author     (your name)
 */
-
+#include "pch.h"
 #include "Weather.h"
-#include "AEEngine.h"
-#include "MeshTemplates.h"
-#include "MeshRenderer.h"
-#include "Enemy.h"        // Graphics::font_id, Data::Enemy
-#include "PowerUp.h"      // PowerUpSystem::SetDropSpawnInterval (used by Rainbow)
-#include "SoundManager.h"
-#include <vector>
-#include <cstdlib>        // rand()
-#include <cmath>          // fabsf
+
 
 // ============================================================
 //  Internal constants

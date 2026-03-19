@@ -8,18 +8,8 @@ game.cpp only calls Init / Update / Render / Exit / IsOpen.
 
 #pragma warning(disable: 26426)
 #define NOMINMAX
-#include "DebugConsole.h"
-#include "AEEngine.h"
-#include "MeshRenderer.h"
-#include "MeshTemplates.h"
-#include "Enemy.h"
-#include "PowerUp.h"
-#include "Weather.h"
-#include "Boss.h"
+#include "pch.h"
 
-#include <string>
-#include <vector>
-#include <sstream>
 
 // Internal state
 namespace

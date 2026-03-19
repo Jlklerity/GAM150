@@ -1,34 +1,7 @@
-﻿#ifndef NOMINMAX
-#define NOMINMAX
-#endif
-
+﻿
+#include "pch.h"
 #include "TimeGame.h"
-#include "GameStateManager.h"
-#include "AEEngine.h"
-#include "MeshTemplates.h"
-#include "MeshRenderer.h"
-#include "Typing.h"
-#include "Enemy.h"
-#include "PowerUp.h"
-#include "MainMenu.h"
-#include "DebugConsole.h"
-#include "Particles.h"
-#include "GameOver.h"
-#include "Pause.h"
-#include "Weather.h"
-#include "Leaderboard.h"
-#include "Shop.h"
-#include "LaserBeam.h"
-#include "DeathTransition.h"
-#include "GameClouds.h"
-#include "StreakSystem.h"
-#include "SoundManager.h"
 
-#include <string>
-#include <vector>
-#include <deque>
-#include <fstream>
-#include <algorithm>
 
 namespace
 {

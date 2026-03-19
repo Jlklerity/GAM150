@@ -32,6 +32,10 @@
     <ClCompile Include="src\ParallaxZoom.cpp" />
     <ClCompile Include="src\Particles.cpp" />
     <ClCompile Include="src\Pause.cpp" />
+    <ClCompile Include="src\pch.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
+    </ClCompile>
     <ClCompile Include="src\PowerUp.cpp" />
     <ClCompile Include="src\ScreenTransition.cpp" />
     <ClCompile Include="src\Settings.cpp" />
@@ -65,6 +69,7 @@
     <ClInclude Include="src\ParallaxZoom.h" />
     <ClInclude Include="src\Particles.h" />
     <ClInclude Include="src\Pause.h" />
+    <ClInclude Include="src\pch.h" />
     <ClInclude Include="src\PowerUp.h" />
     <ClInclude Include="src\ScreenTransition.h" />
     <ClInclude Include="src\Settings.h" />
@@ -148,7 +153,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
     </ClCompile>
     <Link>
@@ -171,9 +176,8 @@ xcopy "$(SolutionDir)Extern\AlphaEngine\lib\fmodL.dll" "$(OutDir)" /s /r /y /q</
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <PrecompiledHeader>NotUsing</PrecompiledHeader>
-      <PrecompiledHeaderFile>
-      </PrecompiledHeaderFile>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>

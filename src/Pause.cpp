@@ -1,10 +1,5 @@
-#include "AEEngine.h"
-#include "Enemy.h"
-#include "MeshRenderer.h"
-#include "MainMenu.h"
-#include "GameStateManager.h"
-#include "Settings.h"
-#include "SoundManager.h"
+#include "pch.h"
+#include "Pause.h"
 
 namespace UiPauseMenu
 {
@@ -115,11 +110,13 @@ namespace UiPauseMenu
 
                 // 4. Draw Text
                 const char* promptText = "EXIT TO MAIN MENU?";
+                const char* warningText = "you will lose progress";
                 const char* yesText = "YES";
                 const char* noText = "NO";
 
-                float pw, ph, yw, yh, nw, nh;
+                float pw, ph, ww, wh, yw, yh, nw, nh;
                 AEGfxGetPrintSize(Graphics::font_id, promptText, 0.8f, &pw, &ph);
+                AEGfxGetPrintSize(Graphics::font_id, warningText, 0.5f, &ww, &wh);
                 AEGfxGetPrintSize(Graphics::font_id, yesText, 0.7f, &yw, &yh);
                 AEGfxGetPrintSize(Graphics::font_id, noText, 0.7f, &nw, &nh);
 
@@ -127,6 +124,7 @@ namespace UiPauseMenu
 
                 // Align text perfectly inside the popup
                 AEGfxPrint(Graphics::font_id, promptText, -(pw * 0.5f), (80.0f / screenHalfH) - (ph * 0.5f), 0.8f, 1.0f, 1.0f, 1.0f, 1.0f);
+                AEGfxPrint(Graphics::font_id, warningText, -(ww * 0.5f), (30.0f / screenHalfH) - (wh * 0.5f), 0.5f, 1.0f, 1.0f, 1.0f, 1.0f);
                 AEGfxPrint(Graphics::font_id, yesText, (yesX / screenHalfW) - (yw * 0.5f), (confBtnY / screenHalfH) - (yh * 0.5f), 0.7f, 1.0f, 1.0f, 1.0f, 1.0f);
                 AEGfxPrint(Graphics::font_id, noText, (noX / screenHalfW) - (nw * 0.5f), (confBtnY / screenHalfH) - (nh * 0.5f), 0.7f, 1.0f, 1.0f, 1.0f, 1.0f);
 
@@ -210,10 +208,8 @@ namespace UiPauseMenu
                     wy >= ((menuY * screenHalfH) - halfH) && wy <= ((menuY * screenHalfH) + halfH))
                 {
                     SoundManager::PlayClickBtnSfx();
-                    isPaused = false;
-                    std::string temp_name = "";
-                    ResetPlayerName(temp_name);
-                    gGameStateNext = GS_MAIN_MENU;
+                    inConfirmExit = true;
+                    ignoreNextClick = true;
                 }
             }
         }

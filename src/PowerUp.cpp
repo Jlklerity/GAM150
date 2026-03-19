@@ -17,21 +17,9 @@
  * - World origin at centre (0,0), screen 1600x900.
  * - Text in normalised [-1,+1] NDC.
  */
-
+#include "pch.h"
 #include "PowerUp.h"
-#include "MeshTemplates.h"
-#include "MeshRenderer.h"
-#include "Particles.h"
 
-#include "AEEngine.h"
-#include "AEGraphics.h"
-#include "AEMath.h"
-
-#include <cstdlib>
-#include <ctime>
-#include <cstdio>  // snprintf
-#include "UpgradeSystem.h"
-#include "SoundManager.h"
 
 namespace
 {

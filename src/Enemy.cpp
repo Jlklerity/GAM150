@@ -4,11 +4,8 @@
 @course         CSD1451
 @section        A
 *//*_________________________________________________________________________________________________________________________________________________________________________________________________*/
-
+#include "pch.h"
 #include "Enemy.h"
-#include "PowerUp.h"
-#include "SoundManager.h"
-#include <cmath>
 
 /*
 @namespace      EnemyConfig

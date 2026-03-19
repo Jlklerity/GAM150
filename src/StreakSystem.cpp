@@ -1,10 +1,5 @@
+#include "pch.h"
 #include "StreakSystem.h"
-#include "MeshTemplates.h"
-#include "MeshRenderer.h"
-#include "AEEngine.h"
-#include <cmath>
-#include <string>
-#include "Enemy.h"  // for Graphics::font_id
 
 // Flame position - sits just to the right of the player sprite
 static const float FLAME_X = -700.0f;

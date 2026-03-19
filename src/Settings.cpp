@@ -1,9 +1,6 @@
+#include "pch.h"
 #include "Settings.h"
-#include "AEEngine.h"
-#include "MeshTemplates.h"
-#include "MeshRenderer.h"
-#include "SoundManager.h"
-#include "Enemy.h" // Grabs your Graphics::font_id
+
 
 namespace
 {
@@ -79,7 +76,7 @@ namespace SysSettings
         bool mouseTriggered = (AEInputCheckTriggered(AEVK_LBUTTON) != 0);
 
         float startX = -(SLIDER_W * 0.5f);
-        float endX = (SLIDER_W * 0.5f);
+        //float endX = (SLIDER_W * 0.5f);
 
         // Reset drag if mouse is released
         if (!mouseHeld) {

@@ -1,11 +1,6 @@
+#include "pch.h"
 #include "GameOver.h"
-#include "GameStateManager.h"
-#include "AEEngine.h"
-#include "Enemy.h"
-#include "MeshRenderer.h"
-#include "MeshTemplates.h"
-#include "Leaderboard.h"
-#include "MainMenu.h"
+
 
 namespace
 {
