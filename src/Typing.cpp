@@ -61,7 +61,12 @@ namespace UiSystem
         std::snprintf(s, sizeof(s), "SCORE: %d", score.score_value);    // format score line
 
         AEGfxSetBlendMode(AE_GFX_BM_BLEND);  // enable blending for text
-        AEGfxPrint(Graphics::font_id, s, -0.95f, 0.90f, 0.55f, 0.0f, 0.0f, 0.0f, 1.0f); // draw score at top-left-ish
+       
+
+        if (DayCycle::IsNight())
+            AEGfxPrint(Graphics::font_id, s, -0.95f, 0.90f, 0.55f, 1.0f, 1.0f, 1.0f, 1.0f); // white at night
+        else
+            AEGfxPrint(Graphics::font_id, s, -0.95f, 0.90f, 0.55f, 0.0f, 0.0f, 0.0f, 1.0f); // draw score at top-left-ish
     }
 }
 // ======================================================
