@@ -12,9 +12,9 @@ static const float DAY_R   = 0.53f, DAY_G   = 0.81f, DAY_B   = 0.92f;
 static const float NIGHT_R = 0.04f, NIGHT_G = 0.04f, NIGHT_B = 0.15f;
 
 // Sun / moon world position (top-right corner)
-static const float BODY_SIZE   = 90.0f;   // sprite render size (square)
-static const float BODY_X      = 650.0f;  // world X
-static const float BODY_Y      = 380.0f;  // world Y (top-right area)
+static const float BODY_SIZE   = 450.0f;   // sprite render size (square)
+static const float BODY_X      = 340.0f;  // world X
+static const float BODY_Y      = 190.0f;  // world Y (top-right area)
 static const float SUN_DRIFT   = 30.0f;   // how far the sun drifts upward as it fades
 
 // Stars layer
@@ -111,8 +111,10 @@ namespace DayCycle
 
     float camX, camY;
     AEGfxGetCamPosition(&camX, &camY);
-    //float winW = (float)AEGfxGetWindowWidth();
-    //float winH = (float)AEGfxGetWindowHeight();
+    float winW = (float)AEGfxGetWindowWidth();
+    float winH = (float)AEGfxGetWindowHeight();
+    float aspect = winW / winH;  // 1600/900 = 1.777
+
 
     // ------------------------------------------------------------------
     // 1. Background colour overlay — SKY ONLY
@@ -156,7 +158,7 @@ namespace DayCycle
         AEGfxSetTransparency(sunAlpha);
         AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);
         AEGfxTextureSet(s_sunTex, 0.0f, 0.0f);
-        Mesh_Renderer(s_bodyMesh, BODY_X, sunY, BODY_SIZE, BODY_SIZE, 0.0f);
+        Mesh_Renderer(s_bodyMesh, BODY_X, sunY, BODY_SIZE * aspect, BODY_SIZE , 0.0f);
     }
 
     // ------------------------------------------------------------------
@@ -170,7 +172,7 @@ namespace DayCycle
         AEGfxSetTransparency(s_nightAlpha);
         AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);
         AEGfxTextureSet(s_moonTex, 0.0f, 0.0f);
-        Mesh_Renderer(s_bodyMesh, BODY_X, moonY, BODY_SIZE, BODY_SIZE, 0.0f);
+        Mesh_Renderer(s_bodyMesh, BODY_X, moonY, BODY_SIZE * aspect, BODY_SIZE, 0.0f);
     }
 }
 
