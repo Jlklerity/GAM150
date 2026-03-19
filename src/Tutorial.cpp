@@ -833,14 +833,26 @@ void Tutorial_Update()
             if (s_readyClicked && !s_stageStarted)
             {
                 PowerUpSystem::Update(0.0f, s_pool, s_enemyArea, s_health);
-                PowerUpSystem::DebugSpawn(PowerUpSystem::PowerType::Lightning);
+                PowerUpSystem::DebugSpawn(PowerUpSystem::PowerType::Shield);
                 s_stageStarted = true;
             }
             if (s_stageStarted)
             {
                 PowerUpSystem::Update(dt, s_pool, s_enemyArea, s_health);
-                if (AEInputCheckTriggered(AEVK_1))
+
+                static bool shieldWasActive = false;
+
+                if (PowerUpSystem::IsShieldActive())
+                {
+                    shieldWasActive = true;
+                }
+
+                // Step 2: detect when it ENDS
+                if (shieldWasActive && !PowerUpSystem::IsShieldActive())
+                {
                     s_objectiveMet = true;
+                    shieldWasActive = false; // reset for safety
+                }
             }
             break;
 
