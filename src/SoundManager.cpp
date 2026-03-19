@@ -107,6 +107,10 @@ namespace SoundManager
         UpdateVolumes();   // sets all group volumes from the module variables (removes the redundant hardcoded calls)        
     }
 
+    float GetBGMVolume() { return bgmVolume; }
+    float GetSFXVolume() { return sfxVolume; }
+    float GetAmbientVolume() { return ambientVolume; }
+
     void Exit()
     {
         if (gGameStateNext == GS_QUIT)

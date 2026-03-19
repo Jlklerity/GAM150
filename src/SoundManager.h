@@ -26,6 +26,10 @@ namespace SoundManager
     void PlayShieldSfx();
     void PlaySlowSfx();
 
+    float GetBGMVolume();
+    float GetSFXVolume();
+    float GetAmbientVolume();
+
     // --- Volume Controls ---
     void SetMasterVolume(float volume);
     void SetBGMVolume(float volume);

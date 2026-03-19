@@ -176,7 +176,10 @@ void Game_Update()
     // 1. INPUTS
     // ------------------------------------------------------------------------
     if (AEInputCheckTriggered(AEVK_ESCAPE)) {
-        isPaused = !isPaused; // pauses game
+        if (!UiPauseMenu::IsSettingsOpen()) // Only unpause if settings are closed!
+        {
+            isPaused = !isPaused;
+        }
     }
 
     //if (AEInputCheckTriggered(AEVK_TAB)) {

@@ -577,7 +577,7 @@ void Main_Menu_Init()
             SoundManager::PlayBackgroundMusic();
         }*/
     SoundManager::Init();
-
+    SysSettings::Init();
     BackgroundParallax::MenuParallax_Init();
 
     selected_mode = "ZEN";                                                                                                  // default selected mode
@@ -852,7 +852,7 @@ void Main_Menu_Update()
 *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
 void Main_Menu_Exit()
 {
-
+    SysSettings::Exit();
         if (gGameStateNext != GS_SHOP && gGameStateNext != GS_CREDITS) {
             BackgroundParallax::MenuParallax_Exit();
             SoundManager::Exit();
