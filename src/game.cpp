@@ -32,6 +32,8 @@ namespace {
     bool isDead = false;
     bool openLeaderboard = false;
 
+    static bool s_dayTransitionFired = false;
+
     /*
     @overview   Enemy and Boss
     @author     Wong Zi Yuan (w.ziyuan@digipen.edu)
@@ -88,6 +90,8 @@ void Game_Init()
     StreakSystem::Exit();
     SoundManager::Exit();
     DeathTransition::Reset();
+
+    s_dayTransitionFired = false;
 
     if (playerTexture) { AEGfxTextureUnload(playerTexture); playerTexture = nullptr; }
     
@@ -193,9 +197,11 @@ void Game_Update()
         DifficultySystem::Difficulty_UpdateOverTime(dt);                                                                              // increase difficulty over time
         BossSystem::Boss_Update(enemy_pool, free_slot_queue, enemy_area, word_bank, dt, boss_spawning_blocked);                       // run boss logic for this frame
         GameEnemyBoss::Update(dt, enemy_pool, free_slot_queue, enemy_area, word_bank, health, boss_spawning_blocked, is_random_spawning_enabled, random_spawn_timer_seconds);
-
-        if (boss_spawning_blocked)
+        if (boss_spawning_blocked && !s_dayTransitionFired)
+        {
             DayCycle::TriggerTransition();
+            s_dayTransitionFired = true;
+        }
         /*_______________________________________________________________________________________________________________________________________________________________________________________________*/
 
         PowerUpSystem::Update(dt, enemy_pool, enemy_area, health);
@@ -243,9 +249,12 @@ void Game_Update()
 
     // Trigger upgrade screen the frame the boss death animation finishes.
     // Runs outside the gameplay gate so it fires even on the frame the gate closes.
-    if (BossSystem::Boss_WasJustDefeated())
+    if (BossSystem::Boss_WasJustDefeated()) {
+        s_dayTransitionFired = false; // allow transition to fire again next boss wave
         UpgradeSystem::Upgrade_TriggerScreen();
+        DayCycle::TriggerDayTransition();
 
+    }
     // Run upgrade input and card animation while the screen is open.
     // Runs outside the normal gameplay gate so the cards stay interactive.
     if (UpgradeSystem::Upgrade_IsScreenOpen())

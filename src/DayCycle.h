@@ -11,4 +11,8 @@ namespace DayCycle
 
     bool IsNight();           // true once transition is fully complete
     float GetNightAlpha();    // 0.0 = full day, 1.0 = full night (smooth)
+    void DrawSky();
+    void DrawBodies();
+    void TriggerDayTransition(); // call when boss is defeated
+    bool IsDay();                // true once fully back to day
 }
