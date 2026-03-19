@@ -71,6 +71,7 @@ namespace
     bool          s_readyClicked = false;
     float         s_stageTimer = 0.0f;
     bool          s_isPaused = false;
+    bool          s_wasPaused = false;
     bool          s_isFading = false;
     float         s_fadeTimer = 0.0f;
     static const float FADE_DURATION = 1.2f;
@@ -483,6 +484,7 @@ void Tutorial_Init()
     s_uvX = 0.0f;
     s_uvY = 0.0f;
     s_isPaused = false;
+    s_wasPaused = false;
     s_isFading = false;
     s_fadeTimer = 0.0f;
 
@@ -538,7 +540,24 @@ void Tutorial_Update()
 
     // ESC pause
     if (AEInputCheckTriggered(AEVK_ESCAPE))
-        s_isPaused = !s_isPaused;
+    {
+        if (s_isPaused)
+        {
+            // If a sub-menu is open, let the UI handle the ESC key! Do NOT unpause!
+            if (UiPauseMenu::IsSettingsOpen() || UiPauseMenu::IsPopupOpen())
+            {
+                // Do nothing here
+            }
+            else
+            {
+                s_isPaused = false;
+            }
+        }
+        else
+        {
+            s_isPaused = true;
+        }
+    }
 
     if (!s_isPaused)
     {
@@ -906,6 +925,15 @@ void Tutorial_Update()
 
     bool isDead = false;
     UiPauseMenu::Check_Paused(s_isPaused, isDead, s_rectMesh);
+
+    // --- Audio Pause Tracking ---
+    if (s_isPaused && !s_wasPaused) {
+        SoundManager::PauseGameplaySounds();
+    }
+    else if (!s_isPaused && s_wasPaused) {
+        SoundManager::ResumeGameplaySounds();
+    }
+    s_wasPaused = s_isPaused;
 }
 
 void Tutorial_Exit()

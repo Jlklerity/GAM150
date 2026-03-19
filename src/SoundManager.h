@@ -25,6 +25,8 @@ namespace SoundManager
     void PlayLightningSfx();
     void PlayShieldSfx();
     void PlaySlowSfx();
+    void PauseGameplaySounds();
+    void ResumeGameplaySounds();
 
     float GetBGMVolume();
     float GetSFXVolume();

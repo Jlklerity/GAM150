@@ -29,6 +29,7 @@ namespace {
     const float SPRITE_UV_HEIGHT = 1.0f / SPRITE_ROWS;
 
     bool isPaused = false;
+    bool wasPaused = false;
     bool isDead = false;
     bool openLeaderboard = false;
 
@@ -79,6 +80,7 @@ void Game_Init()
     score.score_value = 0;
     isGameOver = false;
     openLeaderboard = false;
+    wasPaused = false;
     isPaused = false;
     isDead = false;
     frame_dt = 0.0f;
@@ -165,11 +167,28 @@ void Game_Update()
     // ------------------------------------------------------------------------
     // 1. INPUTS
     // ------------------------------------------------------------------------
-    if (AEInputCheckTriggered(AEVK_ESCAPE)) {
-        if (!UiPauseMenu::IsSettingsOpen()) // Only unpause if settings are closed!
+    if (AEInputCheckTriggered(AEVK_ESCAPE)) 
+    {
+
+        if (isPaused)
         {
-            isPaused = !isPaused;
+            // If a sub-menu is open, let the UI handle the ESC key! Do NOT unpause!
+            if (UiPauseMenu::IsSettingsOpen() || UiPauseMenu::IsPopupOpen())
+            {
+                // Do nothing here. (Pause.cpp and Settings.cpp will close themselves)
+            }
+            else
+            {
+                // Only the main pause menu is open, safely unpause
+                isPaused = false;
+            }
         }
+        else
+        {
+            // Pause the game normally
+            isPaused = true;
+        }
+
     }
 
     //if (AEInputCheckTriggered(AEVK_TAB)) {
@@ -356,7 +375,16 @@ render_only:
 
     // PAUSE OVERLAY
     UiPauseMenu::Check_Paused(isPaused, isDead, bgMesh);
-    // }
+
+    // --- Audio Pause Tracking ---
+    if (isPaused && !wasPaused) {
+        SoundManager::PauseGameplaySounds();
+    }
+    else if (!isPaused && wasPaused) {
+        SoundManager::ResumeGameplaySounds();
+    }
+    wasPaused = isPaused;
+
      // Game Over & Leaderboard OVERLAY
     if (isDead)
     {

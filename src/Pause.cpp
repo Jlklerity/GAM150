@@ -18,6 +18,11 @@ namespace UiPauseMenu
     static ButtonTween tweenYes;
     static ButtonTween tweenNo;
 
+    bool IsPopupOpen()
+    {
+        return inConfirmExit;
+    }
+
     bool IsSettingsOpen()
     {
         return inSettings;
@@ -231,6 +236,11 @@ namespace UiPauseMenu
             // Input Handling for Popup
             if (ignoreNextClick) {
                 ignoreNextClick = false;
+            }
+            else if (AEInputCheckTriggered(AEVK_ESCAPE)) {
+                SoundManager::PlayClickBtnSfx();
+                inConfirmExit = false;
+                ignoreNextClick = true;
             }
             else if (AEInputCheckTriggered(AEVK_LBUTTON)) {
                 s32 mx, my;

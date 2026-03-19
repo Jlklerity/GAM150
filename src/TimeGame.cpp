@@ -23,6 +23,7 @@ namespace
     float       uvOffsetY = 0.0f;
 
     bool isPaused = false;
+    bool wasPaused = false;
     bool isDead = false;
     bool isTimedOut = false;
     bool isGameOver = false;
@@ -110,7 +111,7 @@ void GameTimeMode_Init()
 {
     animTimer = 0.0f; animDuration = 0.1f; currentFrameIndex = 0;
     uvOffsetX = 0.0f; uvOffsetY = 0.0f;
-    isPaused = false; isDead = false; isTimedOut = false; isGameOver = false;
+    isPaused = false; wasPaused = false; isDead = false; isTimedOut = false; isGameOver = false;
     temp_name = ""; scoreWritten = false; openLeaderboard = false; lb_scroll = 0.0f;
     time_remaining = TOTAL_TIME; score.score_value = 0;
     random_spawn_timer_seconds = 9999.0f;
@@ -181,8 +182,25 @@ void GameTimeMode_Update()
     if (DebugConsole::IsOpen()) goto render_only;
 
     if (AEInputCheckTriggered(AEVK_ESCAPE) && !isTimedOut && !isDead)
-        if (!UiPauseMenu::IsSettingsOpen())
-            isPaused = !isPaused;
+    {
+
+        if (isPaused)
+        {
+            // If a sub-menu is open, let the UI handle the ESC key! Do NOT unpause!
+            if (UiPauseMenu::IsSettingsOpen() || UiPauseMenu::IsPopupOpen())
+            {
+                // Do nothing here
+            }
+            else
+            {
+                isPaused = false;
+            }
+        }
+        else
+        {
+            isPaused = true;
+        }
+    }
 
     if (!isPaused && !isTimedOut && !isDead)
     {
@@ -350,6 +368,15 @@ render_only:
     DrawTimerEffects();
 
     UiPauseMenu::Check_Paused(isPaused, isTimedOut, bgMesh);
+
+    // --- Audio Pause Tracking ---
+    if (isPaused && !wasPaused) {
+        SoundManager::PauseGameplaySounds();
+    }
+    else if (!isPaused && wasPaused) {
+        SoundManager::ResumeGameplaySounds();
+    }
+    wasPaused = isPaused;
 
     if (isDead)
     {

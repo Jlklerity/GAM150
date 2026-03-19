@@ -7,6 +7,7 @@ namespace
     AEAudioGroup bgmGroup;
     AEAudioGroup sfxGroup;
     AEAudioGroup ambientGroup;
+    AEAudioGroup uiGroup;
 
     AEAudio bgmTrack;
     AEAudio rainTrack;
@@ -56,6 +57,7 @@ namespace SoundManager
             bgmGroup = AEAudioCreateGroup();
             sfxGroup = AEAudioCreateGroup();
             ambientGroup = AEAudioCreateGroup();
+            uiGroup = AEAudioCreateGroup();
 
 
             bgmTrack = AEAudioLoadMusic("Assets/Game Sound/RUNNING THE BASS - Jazz MSCJAZ1_20.mp3");
@@ -134,6 +136,7 @@ namespace SoundManager
             AEAudioUnloadAudioGroup(bgmGroup);
             AEAudioUnloadAudioGroup(sfxGroup);
             AEAudioUnloadAudioGroup(ambientGroup);
+            AEAudioUnloadAudioGroup(uiGroup);
             isAudioLoaded = false;
         }
     }
@@ -180,7 +183,7 @@ namespace SoundManager
 
     void PlayClickBtnSfx()
     {
-        AEAudioPlay(clickbtnSfx, sfxGroup, 1.0f, 1.0f, 0);
+        AEAudioPlay(clickbtnSfx, uiGroup, 1.0f, 1.0f, 0);
     }
 
     void PlayTypingSfx()
@@ -213,6 +216,18 @@ namespace SoundManager
         AEAudioPlay(slowSfx, sfxGroup, 1.0f, 1.0f, 0);
     }
 
+    void PauseGameplaySounds()
+    {
+        AEAudioPauseGroup(ambientGroup); // Pauses weather/snow/thunder
+        AEAudioPauseGroup(sfxGroup);     // Pauses Boss alarm, explosions, typing
+    }
+
+    void ResumeGameplaySounds()
+    {
+        AEAudioResumeGroup(ambientGroup);
+        AEAudioResumeGroup(sfxGroup);
+    }
+
     // ==========================================
     // VOLUME SETTERS
     // ==========================================
@@ -230,8 +245,8 @@ namespace SoundManager
 
     void SetSFXVolume(float volume)
     {
-        sfxVolume = volume;
-        UpdateVolumes();
+        AEAudioSetGroupVolume(sfxGroup, volume);
+        AEAudioSetGroupVolume(uiGroup, volume);
     }
 
     void SetAmbientVolume(float volume)
