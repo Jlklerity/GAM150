@@ -116,7 +116,9 @@ namespace UiPauseMenu
 
                 float pw, ph, ww, wh, yw, yh, nw, nh;
                 AEGfxGetPrintSize(Graphics::font_id, promptText, 0.8f, &pw, &ph);
-                AEGfxGetPrintSize(Graphics::font_id, warningText, 0.5f, &ww, &wh);
+                if (gGameStateCurr != GS_TUTORIAL) {
+                    AEGfxGetPrintSize(Graphics::font_id, warningText, 0.5f, &ww, &wh);
+                }
                 AEGfxGetPrintSize(Graphics::font_id, yesText, 0.7f, &yw, &yh);
                 AEGfxGetPrintSize(Graphics::font_id, noText, 0.7f, &nw, &nh);
 
@@ -124,7 +126,9 @@ namespace UiPauseMenu
 
                 // Align text perfectly inside the popup
                 AEGfxPrint(Graphics::font_id, promptText, -(pw * 0.5f), (80.0f / screenHalfH) - (ph * 0.5f), 0.8f, 1.0f, 1.0f, 1.0f, 1.0f);
-                AEGfxPrint(Graphics::font_id, warningText, -(ww * 0.5f), (30.0f / screenHalfH) - (wh * 0.5f), 0.5f, 1.0f, 1.0f, 1.0f, 1.0f);
+                if (gGameStateCurr != GS_TUTORIAL) {
+                    AEGfxPrint(Graphics::font_id, warningText, -(ww * 0.5f), (30.0f / screenHalfH) - (wh * 0.5f), 0.5f, 1.0f, 1.0f, 1.0f, 1.0f);
+                }
                 AEGfxPrint(Graphics::font_id, yesText, (yesX / screenHalfW) - (yw * 0.5f), (confBtnY / screenHalfH) - (yh * 0.5f), 0.7f, 1.0f, 1.0f, 1.0f, 1.0f);
                 AEGfxPrint(Graphics::font_id, noText, (noX / screenHalfW) - (nw * 0.5f), (confBtnY / screenHalfH) - (nh * 0.5f), 0.7f, 1.0f, 1.0f, 1.0f, 1.0f);
 
