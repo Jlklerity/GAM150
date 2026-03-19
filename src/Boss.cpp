@@ -4,12 +4,9 @@
 @course         CSD1451
 @section        A
 *//*_________________________________________________________________________________________________________________________________________________________________________________________________*/
-
+#include "pch.h"
 #include "Boss.h"
-#include "AEEngine.h"
-#include "SoundManager.h"
-#include <unordered_set>                           
-#include "Daycycle.h"// for boss_used_words history tracking
+
 
 /*
 @namespace      BossConfig

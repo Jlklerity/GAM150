@@ -1,13 +1,6 @@
-#include "GameStateManager.h"
+#include "pch.h"
 #include "Shop.h"
-#include "MeshTemplates.h"
-#include "MeshRenderer.h"
-#include "Leaderboard.h"
-#include "Enemy.h"
-#include "ScreenTransition.h"
-#include "BackgroundParallex.h"
-#include "SoundManager.h"
-#include <AEEngine.h>
+
 
 
 int gShopSkinID = 0;

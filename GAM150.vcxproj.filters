@@ -33,6 +33,7 @@
     <ClCompile Include="src\CreditScreen.cpp" />
     <ClCompile Include="src\UpgradeSystem.cpp" />
     <ClCompile Include="src\DayCycle.cpp" />
+    <ClCompile Include="src\pch.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\Enemy.h" />
@@ -66,6 +67,7 @@
     <ClInclude Include="src\CreditScreen.h" />
     <ClInclude Include="src\UpgradeSystem.h" />
     <ClInclude Include="src\DayCycle.h" />
+    <ClInclude Include="src\pch.h" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="Assets\characterSheet.png" />

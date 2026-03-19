@@ -1,10 +1,5 @@
-#include "AEEngine.h"
-#include "Enemy.h"
-#include "MeshRenderer.h"
-#include "MainMenu.h"
-#include "GameStateManager.h"
-#include "Settings.h"
-#include "SoundManager.h"
+#include "pch.h"
+#include "Pause.h"
 
 namespace UiPauseMenu
 {

@@ -9,12 +9,9 @@ Phases:
   0.6 - 1.0s  (HOLD)    Circle locked tight. Death animation window.
   1.0 - 2.5s  (FADE)    Full black fade. Game Over appears after.
 */
-
+#include "pch.h"
 #include "DeathTransition.h"
-#include "MeshTemplates.h"
-#include "MeshRenderer.h"
-#include "AEEngine.h"
-#include <cmath>
+
 
 static const float PLAYER_X = -700.0f;
 static const float PLAYER_Y = -200.0f;

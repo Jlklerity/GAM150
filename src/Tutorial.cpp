@@ -3,28 +3,9 @@
 @author         YOU
 @brief          Tutorial game state implementation.
 */
-
+#include "pch.h"
 #include "Tutorial.h"
-#include "AEEngine.h"
-#include "MeshTemplates.h"
-#include "MeshRenderer.h"
-#include "GameStateManager.h"
-#include "Enemy.h"
-#include "Typing.h"
-#include "PowerUp.h"
-#include "Weather.h"
-#include "Particles.h"
-#include "StreakSystem.h"
-#include "MainMenu.h"
-#include "GameClouds.h"
-#include "Pause.h"
-#include "BackgroundParallex.h"
-#include "LaserBeam.h"
-#include <string>
-#include <vector>
-#include <deque>
-#include <cmath>
-#include <algorithm>
+
 
 static const float PLAYER_X = -700.0f;
 static const float PLAYER_Y = -200.0f;
@@ -373,7 +354,7 @@ namespace
         if (Graphics::font_id >= 0)
         {
             const char* hint = nullptr;
-            float hr, hg, hb;
+            float hr = 0.0f, hg = 0.0f, hb = 0.0f;
 
             if (s_stage == STAGE_BOSS_WARNING)
             {

@@ -1,11 +1,6 @@
+#include "pch.h"
 #include "GameStateManager.h"
-#include "MainMenu.h"
-#include "game.h"
-#include "Shop.h"
-#include "TimeGame.h"
-#include "Tutorial.h"
-#include "CreditScreen.h"
-#include <AEEngine.h>
+
 
 //define global variables
 int gGameStateCurr = GS_NONE;

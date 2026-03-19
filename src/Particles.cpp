@@ -1,7 +1,5 @@
-﻿#include "Particles.h"
-#include "AEEngine.h"
-#include <cmath>
-#include <cstdlib>
+﻿#include "pch.h"
+#include "Particles.h"
 
 //  Internal constants
 namespace

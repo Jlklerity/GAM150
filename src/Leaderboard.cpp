@@ -1,14 +1,5 @@
+#include "pch.h"
 #include "Leaderboard.h"
-#include "Enemy.h"
-#include "GameStateManager.h"
-#include "Game.h"
-#include "MeshRenderer.h"
-#include "MeshTemplates.h"
-#include <iostream>
-#include <vector>
-#include <fstream>   
-#include <algorithm> 
-#include <AEEngine.h>
 
 
 

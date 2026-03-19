@@ -8,19 +8,9 @@
     the screen dropping transition effect, and capturing keyboard input for the player's name.
 *//*_________________________________________________________________________________________________________________________________________________________________________________________________*/
 
-#include "AEEngine.h"
-#include "MeshRenderer.h"
-#include "MeshTemplates.h"
+#include "pch.h"
 #include "MainMenu.h"
-#include "GameStateManager.h"
-#include "Leaderboard.h"
-#include "Typing.h"
-#include "Settings.h"
-#include "ScreenTransition.h"
-#include "BackgroundParallex.h"
-#include "ParallaxZoom.h"
-#include "SoundManager.h"
-#include <iostream>
+
 
 /*
 @namespace      Anonymous (Main Menu State)

@@ -1,19 +1,5 @@
-#include "AEEngine.h"
-#include "MeshTemplates.h"
-#include "MeshRenderer.h"
-#include "GameStateManager.h" 
-#include "Leaderboard.h"
-#include "MainMenu.h"
+#include "pch.h"
 #include "Typing.h"
-#include "Enemy.h"
-#include "LaserBeam.h"
-#include <cstring>
-#include <iostream>
-#include <cmath>
-#include "StreakSystem.h"
-#include "Particles.h"
-#include "SoundManager.h"
-#include "DayCycle.h"
 
 
 

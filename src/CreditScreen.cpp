@@ -1,11 +1,6 @@
+#include "pch.h"
 #include "CreditScreen.h"
-#include "GameStateManager.h"
-#include "SoundManager.h"
-#include "MeshRenderer.h"
-#include "Enemy.h"
-#include <AEEngine.h>
-#include <vector>
-#include <string>
+
 
 namespace
 {

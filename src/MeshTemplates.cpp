@@ -1,4 +1,4 @@
-#include "Game.h"
+#include "pch.h"
 #include "MeshTemplates.h"
 
 //Makes mesh of a circle

@@ -1,12 +1,8 @@
 
 
+#include "pch.h"
 #include "ParallaxZoom.h"
-#include "BackgroundParallex.h"
-#include "GameStateManager.h"
-#include "MeshTemplates.h"
-#include "MeshRenderer.h"
-#include "AEEngine.h"
-#include <cmath>
+
 
 namespace
 {

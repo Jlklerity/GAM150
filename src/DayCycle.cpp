@@ -1,9 +1,6 @@
-
+#include "pch.h"
 #include "DayCycle.h"
-#include "MeshTemplates.h"
-#include "MeshRenderer.h"
-#include "AEEngine.h"
-#include <cmath>
+
 
 // ---------------------------------------------------------------------------
 // Tuning constants
@@ -114,14 +111,14 @@ namespace DayCycle
 
     float camX, camY;
     AEGfxGetCamPosition(&camX, &camY);
-    float winW = (float)AEGfxGetWindowWidth();
-    float winH = (float)AEGfxGetWindowHeight();
+    //float winW = (float)AEGfxGetWindowWidth();
+    //float winH = (float)AEGfxGetWindowHeight();
 
     // ------------------------------------------------------------------
     // 1. Background colour overlay — SKY ONLY
     // ------------------------------------------------------------------
-    const float SKY_HEIGHT = 670.0f; // tweak to match where ground 
-    float skyOffsetY = (winH * 0.5f) - (winH - SKY_HEIGHT) * 0.5f;
+   // const float SKY_HEIGHT = 670.0f; // tweak to match where ground 
+    //float skyOffsetY = (winH * 0.5f) - (winH - SKY_HEIGHT) * 0.5f;
 
     // 1. Background colour overlay 
     AEGfxSetRenderMode(AE_GFX_RM_COLOR);

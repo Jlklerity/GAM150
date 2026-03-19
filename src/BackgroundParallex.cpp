@@ -1,7 +1,6 @@
+#include "pch.h"
 #include "BackgroundParallex.h"
-#include "MeshRenderer.h"
-#include "MeshTemplates.h"
-#include <AEEngine.h>
+
 
 namespace {
 

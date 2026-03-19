@@ -1,12 +1,9 @@
 // ---------------------------------------------------------------------------
 // includes
 
-#include <crtdbg.h> // To check for memory leaks
-#include "GameStateManager.h"
+#include "pch.h"
 #include "game.h"
-#include "MainMenu.h"
-#include "Enemy.h"
-#include "SoundManager.h"
+
 
 // ---------------------------------------------------------------------------
 // main
