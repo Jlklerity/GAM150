@@ -174,7 +174,7 @@ namespace SysSettings
         float ndcScale = winH > 0 ? (2.0f / winH) : 0.0022f;
 
         DrawCentredText("SOUND SETTINGS", 0.75f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f);
-        DrawCentredText("MUSIC VOLUME", (BGM_Y + 45.0f) * ndcScale, 0.6f, 1.0f, 1.0f, 1.0f, 1.0f);
+        DrawCentredText("BACKGROUND VOLUME", (BGM_Y + 45.0f) * ndcScale, 0.6f, 1.0f, 1.0f, 1.0f, 1.0f);
         DrawCentredText("SFX VOLUME", (SFX_Y + 45.0f) * ndcScale, 0.6f, 1.0f, 1.0f, 1.0f, 1.0f);
         DrawCentredText("AMBIENT VOLUME", (AMB_Y + 45.0f) * ndcScale, 0.6f, 1.0f, 1.0f, 1.0f, 1.0f);
         DrawCentredText("CLOSE", (CLOSE_Y)*ndcScale, 0.7f, 1.0f, 1.0f, 1.0f, 1.0f);

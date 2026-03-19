@@ -9,6 +9,8 @@
 namespace UiPauseMenu
 {
     static bool inSettings = false;
+    static bool ignoreNextClick = false;
+    static bool inConfirmExit = false;
 
     bool IsSettingsOpen()
     {
@@ -80,10 +82,101 @@ namespace UiPauseMenu
             AEGfxPrint(Graphics::font_id, text2, btnX - (w2 * 0.5f), settingsY - 0.04f, 0.7f, 1.0f, 1.0f, 1.0f, 1.0f);
             AEGfxPrint(Graphics::font_id, text3, btnX - (w3 * 0.5f), menuY - 0.04f, 0.7f, 1.0f, 1.0f, 1.0f, 1.0f);
 
+
+            // ========================================================================
+            // EXIT CONFIRMATION POPUP OVERLAY
+            // ========================================================================
+            if (inConfirmExit)
+            {
+                float screenHalfW = winW * 0.5f;
+
+                // 1. Draw extra dark overlay to dim the pause menu
+                AEGfxSetRenderMode(AE_GFX_RM_COLOR);
+                AEGfxSetBlendMode(AE_GFX_BM_BLEND);
+                AEGfxSetTransparency(0.7f);
+                AEGfxSetColorToMultiply(0.0f, 0.0f, 0.0f, 1.0f);
+                Mesh_Renderer(bgMesh, 0.0f, 0.0f, winW, winH, 0.0f);
+
+                // 2. Draw Popup Box
+                AEGfxSetTransparency(1.0f);
+                AEGfxSetColorToMultiply(0.15f, 0.15f, 0.15f, 1.0f); // Dark Grey Panel
+                Mesh_Renderer(bgMesh, 0.0f, 0.0f, 600.0f, 300.0f, 0.0f);
+
+                // 3. Draw YES and NO Buttons
+                float confBtnW = 150.0f;
+                float confBtnH = 60.0f;
+                float yesX = -120.0f;
+                float noX = 120.0f;
+                float confBtnY = -50.0f;
+
+                AEGfxSetColorToMultiply(0.3f, 0.3f, 0.3f, 1.0f); // Lighter Grey Buttons
+                Mesh_Renderer(bgMesh, yesX, confBtnY, confBtnW, confBtnH, 0.0f);
+                Mesh_Renderer(bgMesh, noX, confBtnY, confBtnW, confBtnH, 0.0f);
+
+                // 4. Draw Text
+                const char* promptText = "EXIT TO MAIN MENU?";
+                const char* yesText = "YES";
+                const char* noText = "NO";
+
+                float pw, ph, yw, yh, nw, nh;
+                AEGfxGetPrintSize(Graphics::font_id, promptText, 0.8f, &pw, &ph);
+                AEGfxGetPrintSize(Graphics::font_id, yesText, 0.7f, &yw, &yh);
+                AEGfxGetPrintSize(Graphics::font_id, noText, 0.7f, &nw, &nh);
+
+                AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);
+
+                // Align text perfectly inside the popup
+                AEGfxPrint(Graphics::font_id, promptText, -(pw * 0.5f), (80.0f / screenHalfH) - (ph * 0.5f), 0.8f, 1.0f, 1.0f, 1.0f, 1.0f);
+                AEGfxPrint(Graphics::font_id, yesText, (yesX / screenHalfW) - (yw * 0.5f), (confBtnY / screenHalfH) - (yh * 0.5f), 0.7f, 1.0f, 1.0f, 1.0f, 1.0f);
+                AEGfxPrint(Graphics::font_id, noText, (noX / screenHalfW) - (nw * 0.5f), (confBtnY / screenHalfH) - (nh * 0.5f), 0.7f, 1.0f, 1.0f, 1.0f, 1.0f);
+
+                // 5. Input Handling strictly for the Popup
+                if (ignoreNextClick)
+                {
+                    ignoreNextClick = false;
+                }
+                else if (AEInputCheckTriggered(AEVK_LBUTTON))
+                {
+                    s32 mx, my;
+                    AEInputGetCursorPosition(&mx, &my);
+                    float wx = (float)mx - screenHalfW;
+                    float wy = screenHalfH - (float)my;
+
+                    float halfConfW = confBtnW * 0.5f;
+                    float halfConfH = confBtnH * 0.5f;
+
+                    // Clicked YES
+                    if (wx >= (yesX - halfConfW) && wx <= (yesX + halfConfW) &&
+                        wy >= (confBtnY - halfConfH) && wy <= (confBtnY + halfConfH))
+                    {
+                        SoundManager::PlayClickBtnSfx();
+                        isPaused = false;
+                        std::string temp_name = "";
+                        ResetPlayerName(temp_name);
+                        gGameStateNext = GS_MAIN_MENU;
+                        inConfirmExit = false;
+                    }
+                    // Clicked NO
+                    else if (wx >= (noX - halfConfW) && wx <= (noX + halfConfW) &&
+                        wy >= (confBtnY - halfConfH) && wy <= (confBtnY + halfConfH))
+                    {
+                        SoundManager::PlayClickBtnSfx();
+                        inConfirmExit = false;
+                        ignoreNextClick = true; // Use our trick to prevent click-through!
+                    }
+                }
+
+                return; 
+            }
+
             // ========================================================================
             // Input Handling
             // ========================================================================
-            if (AEInputCheckTriggered(AEVK_LBUTTON))
+            if (ignoreNextClick)
+            {
+                ignoreNextClick = false;
+            }
+            else if (AEInputCheckTriggered(AEVK_LBUTTON))
             {
                 s32 mx, my;
                 AEInputGetCursorPosition(&mx, &my);
@@ -136,6 +229,7 @@ namespace UiPauseMenu
                 if (SysSettings::DisplaySettings() == false)
                 {
                     inSettings = false; // Close settings when user clicks "Close" or hits ESC
+                    ignoreNextClick = true;
                 }
                 else {
 
