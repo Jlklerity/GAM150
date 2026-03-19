@@ -441,6 +441,13 @@ void Tutorial_Init()
     LaserBeam_Free();
     EnemyManage::EnemyManage_Free(s_meshes, s_pool, s_freeSlots);
 
+
+    // for when restarting tutorial
+    s_score = {};
+    s_health = {};
+    s_wordBank = {};
+    s_enemyArea = {};
+
     if (s_bgTex) { AEGfxTextureUnload(s_bgTex); s_bgTex = nullptr; }
     if (s_bgMesh) { AEGfxMeshFree(s_bgMesh); s_bgMesh = nullptr; }
     if (s_playerTex) { AEGfxTextureUnload(s_playerTex); s_playerTex = nullptr; }

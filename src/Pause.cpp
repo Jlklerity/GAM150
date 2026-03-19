@@ -8,9 +8,11 @@ namespace UiPauseMenu
     static bool ignoreNextClick = false;
     static bool inConfirmExit = false;
     static bool isConfirmingRestart = false;
+    static bool isConfirmingTutorial = false;
 
     // Button tweens (persist across Draw calls)
     static ButtonTween tweenResume;
+    static ButtonTween tweenRestart;
     static ButtonTween tweenSettings;
     static ButtonTween tweenMenu;
     static ButtonTween tweenYes;
@@ -75,6 +77,7 @@ namespace UiPauseMenu
                 wy_hover >= (wy - btnH * 0.5f) && wy_hover <= (wy + btnH * 0.5f));
             };
         ButtonTween_Update(tweenResume, HoverBtn(resumeY), HoverBtn(resumeY) && click_p, dt_p);
+        ButtonTween_Update(tweenRestart, HoverBtn(restartY), HoverBtn(restartY) && click_p, dt_p);
         ButtonTween_Update(tweenSettings, HoverBtn(settingsY), HoverBtn(settingsY) && click_p, dt_p);
         ButtonTween_Update(tweenMenu, HoverBtn(menuY), HoverBtn(menuY) && click_p, dt_p);
 
@@ -132,20 +135,15 @@ namespace UiPauseMenu
         AEGfxSetColorToMultiply(0.85f, 0.70f, 0.15f, 1.0f);
         Mesh_Renderer(bgMesh, 0.0f, 0.45f * screenHalfH, 360.0f, 3.0f, 0.0f);
 
-        // --- Buttons ---
-<<<<<<< HEAD
-        DrawButton(btnX, resumeY * screenHalfH, "RESUME");
-        DrawButton(btnX, restartY * screenHalfH, "RESTART");
-        DrawButton(btnX, settingsY * screenHalfH, "SETTINGS");
-        DrawButton(btnX, menuY * screenHalfH, "MAIN MENU");    
-=======
+        // --- Buttons ---  
+
         DrawButton(btnX, resumeY * screenHalfH, "RESUME", tweenResume);
+        DrawButton(btnX, restartY * screenHalfH, "RESTART", tweenRestart);
         DrawButton(btnX, settingsY * screenHalfH, "SETTINGS", tweenSettings);
         DrawButton(btnX, menuY * screenHalfH, "MAIN MENU", tweenMenu);
 
         // (rest of your function unchanged)
 
->>>>>>> 3d4f2058b9376420ef296fe7e06f4f1586a077e0
 
         // ========================================================================
         // EXIT CONFIRMATION POPUP OVERLAY
@@ -203,7 +201,11 @@ namespace UiPauseMenu
             DrawConfButton(noX, confBtnY, tweenNo);
 
             // Draw Text
-            const char* promptText = isConfirmingRestart ? "RESTART GAME?" : "EXIT TO MAIN MENU?";
+            const char* promptText = "EXIT TO MAIN MENU?";
+            if (isConfirmingRestart)
+            {
+                promptText = (gGameStateCurr == GS_TUTORIAL) ? "RESTART TUTORIAL?" : "RESTART GAME?";
+            }
             const char* warningText = "YOU WILL LOSE PROGRESS";
             const char* yesText = "YES";
             const char* noText = "NO";
@@ -243,7 +245,7 @@ namespace UiPauseMenu
                     wy >= (confBtnY - halfConfH) && wy <= (confBtnY + halfConfH)) {
                     SoundManager::PlayClickBtnSfx();
                     isPaused = false;
-<<<<<<< HEAD
+
                     // Route the game state depending on which popup we opened
                     if (isConfirmingRestart)
                     {
@@ -257,13 +259,6 @@ namespace UiPauseMenu
                         ResetPlayerName(temp_name);
                         gGameStateNext = GS_MAIN_MENU;
                     }
-
-=======
-                    //Reset game state and return to Main Menu
-                    std::string temp_name = "";
-                    ResetPlayerName(temp_name);
-                    gGameStateNext = GS_MAIN_MENU;
->>>>>>> 3d4f2058b9376420ef296fe7e06f4f1586a077e0
                     inConfirmExit = false;
                 }
                 else if (wx >= (noX - halfConfW) && wx <= (noX + halfConfW) &&

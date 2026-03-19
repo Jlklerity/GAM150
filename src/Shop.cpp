@@ -321,7 +321,7 @@ void Shop_Update() {
 			if (gShopBgID == i && pTexBgFrame) {
 				AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);
 				AEGfxTextureSet(pTexBgFrame, 0.0f, 0.0f);
-				Mesh_Renderer(pMeshBgItem, SKIN_ITEM_X[i] + shopUiOffsetX, BG_ITEM_Y, BG_ITEM_WIDTH * 0.7f, BG_ITEM_HEIGHT * 0.7f, 0.0f);
+				Mesh_Renderer(pMeshBgItem, BG_ITEM_X[i] + shopUiOffsetX, BG_ITEM_Y, BG_ITEM_WIDTH * 0.7f * tweenBgItem[i].scale, BG_ITEM_HEIGHT * 0.7f * tweenBgItem[i].scale, 0.0f);
 			}
 
 			if ((SCORE_AMOUNT < BG_UNLOCK[i]) && Graphics::font_id >= 0) {
@@ -359,7 +359,7 @@ void Shop_Update() {
 				AEGfxTextureSet(pTexItemFrame, 0.0f, 0.0f);
 				float frameScale = 0.65f;
 
-				Mesh_Renderer(pMeshSkinItem, SKIN_ITEM_X[i] - 10.0f + shopUiOffsetX, SKIN_ITEM_Y + 60.0f, SKIN_ITEM_WIDTH * frameScale, SKIN_ITEM_HEIGHT * frameScale, 0.0f);
+				Mesh_Renderer(pMeshSkinItem, SKIN_ITEM_X[i] - 10.0f + shopUiOffsetX, SKIN_ITEM_Y + 60.0f, SKIN_ITEM_WIDTH * frameScale * tweenSkinItem[i].scale, SKIN_ITEM_HEIGHT * frameScale * tweenSkinItem[i].scale, 0.0f);
 			}
 
 			if ((SCORE_AMOUNT < SKIN_UNLOCK[i]) && Graphics::font_id >= 0) {

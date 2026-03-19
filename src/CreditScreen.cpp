@@ -16,30 +16,29 @@ namespace
         "AZFAR",
         "JEREMY LIM",
         "",
+        "",
+        "",
         "FACULTY AND ADVISORS",
+        "GERALD WONG HAN FENG  <3",
+        "DR. SOROOR MALEKMOHAMMADAI FARADOUNBEH",
+        "TOMMY TAN CHEE WEI",
         "",
-        "DESIGN AND PRODUCTION",
-        "[Instructor Names]",
         "",
-        "ART",
-        "[Instructor Names]",
         "",
-        "PROGRAMMING",
-        "[Instructor Names]",
+        "Created at DigiPen Institute of Technology Singapore",
         "",
-        "AUDIO",
-        "[Instructor Names]",
-        "",
-        "LAB MANAGEMENT AND IT",
-        "[Instructor Names]",
         "",
         "SPECIAL THANKS",
-        "[Names]",
+        "JOSES",
+        "",
+        "",
         "",
         "CREATED AT DIGIPEN INSTITUTE OF TECHNOLOGY SINGAPORE",
         "",
+        "",
         "PRESIDENT",
         "Claude Comair",
+        "",
         "",
         "EXECUTIVES",
         "Jason Chu",
@@ -50,11 +49,20 @@ namespace
         "Benjamin Ellinger",
         "Melvin Gonsalvez",
         "",
+        "",
+        "",
         "WWW.DIGIPEN.EDU",
-        "All content (c) 2024 DigiPen Institute of Technology Singapore.",
+        "All content (c) 2026 DigiPen Institute of Technology Singapore.",
         "All Rights Reserved.",
         "",
-        "FMOD Sound System (c) FireLight Technologies Pty Ltd (1998 - 2024)", // Assuming you use FMOD
+        "",
+        "",
+        "TOOLS AND LIBRARIES",
+        "ALPHA ENGINE",
+        "soundly", 
+        "aseprite on steam"
+        "",
+        "",
         "",
         "THANK YOU FOR PLAYING!"
     };
@@ -128,14 +136,10 @@ namespace
                 if (ndcY > -1.2f && ndcY < 1.2f)
                 {
                     if (line == "YOUR TEAM NAME" ||
-                        line == "TEAM MEMBERS" || line == "TECHNICAL LEAD" ||
-                        line == "ART LEAD" || line == "AUDIO LEAD" ||
-                        line == "GRAPHICS PROGRAMMER" || line == "LEVEL DESIGNER" ||
-                        line == "ENVIRONMENT ARTIST AND UI" || line == "COMPOSER" ||
-                        line == "FACULTY AND ADVISORS" || line == "DESIGN AND PRODUCTION" ||
-                        line == "ART" || line == "PROGRAMMING" || line == "AUDIO" ||
-                        line == "LAB MANAGEMENT AND IT" || line == "SPECIAL THANKS" ||
-                        line == "CREATED AT DIGIPEN INSTITUTE OF TECHNOLOGY SINGAPORE" ||
+                        line == "TEAM MEMBERS" || line == "FACULTY AND ADVISORS" || 
+                        
+                        line == "SPECIAL THANKS" || line == "TOOLS AND LIBRARIES" ||
+          
                         line == "PRESIDENT" || line == "EXECUTIVES")
                         {
                         AEGfxPrint(Graphics::font_id, creditLines[i], ndcX, ndcY, scale, 1.0f, 1.0f, 0.0f, 1.0f); // Yellow
