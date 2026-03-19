@@ -8,21 +8,73 @@ namespace
     float scrollSpeed = 0.35f;
 
     const char* creditLines[] = {
-        "GAM150 PROJECT",
+        "YOUR GAME NAME", // Replace with your game name
         "",
-        "PRODUCED BY",
-        "Your Name Here",
+        "YOUR TEAM NAME", // Replace with your team name
+        "",
+        "PRODUCER",
+        "[Student Name]",
+        "",
+        "TECHNICAL LEAD",
+        "[Student Name]",
+        "",
+        "ART LEAD",
+        "[Student Name]",
+        "",
+        "AUDIO LEAD",
+        "[Student Name]",
+        "",
+        "GRAPHICS PROGRAMMER",
+        "[Student Name]",
+        "",
+        "LEVEL DESIGNER",
+        "[Student Name]",
+        "",
+        "ENVIRONMENT ARTIST AND UI",
+        "[Student Name]",
+        "",
+        "COMPOSER",
+        "[Student Name]",
+        "",
+        "FACULTY AND ADVISORS",
+        "",
+        "DESIGN AND PRODUCTION",
+        "[Instructor Names]",
+        "",
+        "ART",
+        "[Instructor Names]",
         "",
         "PROGRAMMING",
-        "Your Name Here",
-        "Teammate Name",
+        "[Instructor Names]",
         "",
-        "ART AND AUDIO",
-        "Teammate Name",
+        "AUDIO",
+        "[Instructor Names]",
+        "",
+        "LAB MANAGEMENT AND IT",
+        "[Instructor Names]",
         "",
         "SPECIAL THANKS",
-        "DigiPen Institute of Technology",
-        "Alpha Engine",
+        "[Names]",
+        "",
+        "CREATED AT DIGIPEN INSTITUTE OF TECHNOLOGY SINGAPORE",
+        "",
+        "PRESIDENT",
+        "Claude Comair",
+        "",
+        "EXECUTIVES",
+        "Jason Chu",
+        "Samir Abou Samra",
+        "Michele Comair",
+        "Angela Kugler",
+        "Erik Mohrmann",
+        "Benjamin Ellinger",
+        "Melvin Gonsalvez",
+        "",
+        "WWW.DIGIPEN.EDU",
+        "All content (c) 2024 DigiPen Institute of Technology Singapore.",
+        "All Rights Reserved.",
+        "",
+        "FMOD Sound System (c) FireLight Technologies Pty Ltd (1998 - 2024)", // Assuming you use FMOD
         "",
         "THANK YOU FOR PLAYING!"
     };
@@ -95,8 +147,17 @@ namespace
 
                 if (ndcY > -1.2f && ndcY < 1.2f)
                 {
-                    if (line == "PRODUCED BY" || line == "PROGRAMMING" ||
-                        line == "ART AND AUDIO" || line == "SPECIAL THANKS") {
+                    if (line == "YOUR GAME NAME" || line == "YOUR TEAM NAME" ||
+                        line == "PRODUCER" || line == "TECHNICAL LEAD" ||
+                        line == "ART LEAD" || line == "AUDIO LEAD" ||
+                        line == "GRAPHICS PROGRAMMER" || line == "LEVEL DESIGNER" ||
+                        line == "ENVIRONMENT ARTIST AND UI" || line == "COMPOSER" ||
+                        line == "FACULTY AND ADVISORS" || line == "DESIGN AND PRODUCTION" ||
+                        line == "ART" || line == "PROGRAMMING" || line == "AUDIO" ||
+                        line == "LAB MANAGEMENT AND IT" || line == "SPECIAL THANKS" ||
+                        line == "CREATED AT DIGIPEN INSTITUTE OF TECHNOLOGY SINGAPORE" ||
+                        line == "PRESIDENT" || line == "EXECUTIVES")
+                        {
                         AEGfxPrint(Graphics::font_id, creditLines[i], ndcX, ndcY, scale, 1.0f, 1.0f, 0.0f, 1.0f); // Yellow
                     }
                     else {

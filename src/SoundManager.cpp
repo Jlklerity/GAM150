@@ -23,10 +23,10 @@ namespace
     AEAudio slowSfx;
 
     bool isAudioLoaded = false;
-    float masterVolume = 1.0f; // 100%
-    float bgmVolume = 0.5f; // 50%
-    float sfxVolume = 0.8f; // 80%
-    float ambientVolume = 0.6f; // 60%
+    float masterVolume = 1.0f; 
+    float bgmVolume = 1.0f; 
+    float sfxVolume = 1.0f; 
+    float ambientVolume = 1.0f; 
 
     void UpdateVolumes()
     {
@@ -42,9 +42,15 @@ namespace SoundManager
 {
     void Init()
     {
-        bool isFirstBoot = false;
+        static bool isFirstBoot = false;
         
-
+        if (isFirstBoot)
+        {
+            bgmVolume = 1.0f;
+            sfxVolume = 1.0f;
+            ambientVolume = 1.0f;
+            isFirstBoot = false;
+        }
         // Create audio groups
         if (!isAudioLoaded)
         {
@@ -84,8 +90,6 @@ namespace SoundManager
         // Set default volumes
         if (gGameStateCurr == GS_GAME || gGameStateCurr == GS_GAME_TIMEMODE || gGameStateCurr == GS_TUTORIAL)
         {
-            bgmVolume = 0.2f; // Drop volume
-
             // ALWAYS restart the music from 0:00 when a level begins!
             AEAudioStopGroup(bgmGroup);
             PlayBackgroundMusic();
@@ -93,8 +97,6 @@ namespace SoundManager
         // --- ENTERING ANY MENU MODE ---
         else
         {
-            bgmVolume = 0.5f; // Bring volume up
-
             // RESTART from 0:00 if returning from a game, OR if it's the first boot!
             // (If moving between menus like Shop/Credits, this safely skips to keep music seamless)
             if (gGameStatePrev == GS_GAME || gGameStatePrev == GS_GAME_TIMEMODE || gGameStatePrev == GS_TUTORIAL || isFirstBoot) {

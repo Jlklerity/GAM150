@@ -121,7 +121,7 @@ namespace SysSettings
 
         // Gold divider under title
         AEGfxSetColorToMultiply(0.85f, 0.70f, 0.15f, 1.0f);
-        Mesh_Renderer(s_quad, 0.0f, 155.0f, 540.0f, 3.0f, 0.0f);
+        Mesh_Renderer(s_quad, 0.0f, 260.0f, 540.0f, 3.0f, 0.0f);
 
         // Title — shadow then gold
         // Shadow
@@ -174,7 +174,9 @@ namespace SysSettings
         Mesh_Renderer(s_quad, 0.0f, CLOSE_Y, CLOSE_W + BORDER * 2, CLOSE_H + BORDER * 2, 0.0f);
         AEGfxSetColorToMultiply(0.10f, 0.08f, 0.14f, 1.0f);
         Mesh_Renderer(s_quad, 0.0f, CLOSE_Y, CLOSE_W, CLOSE_H, 0.0f);
-        DrawCentredText("CLOSE", CLOSE_Y * ndcScale, 0.65f, 1.0f, 0.82f, 0.1f, 1.0f);
+
+        // TEXT LABELS
+        DrawCentredText("CLOSE", (CLOSE_Y)*ndcScale, 0.7f, 1.0f, 1.0f, 1.0f, 1.0f);
 
         return true;
     }
