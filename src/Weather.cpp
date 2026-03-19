@@ -108,6 +108,26 @@ namespace
     constexpr float STORM_OVL_G = 0.08f;
     constexpr float STORM_OVL_B = 0.18f;
 
+    // Thunderstorm sprite animation (thunderstorm.png — 4 frames horizontal)
+    constexpr int   TSTRIKE_FRAME_COUNT = 4;
+    constexpr float TSTRIKE_FRAME_TIME = 0.08f;   // ~12 fps, snappy
+    constexpr float TSTRIKE_UV_W = 1.0f / (float)TSTRIKE_FRAME_COUNT;
+    constexpr float TSTRIKE_DISPLAY_W = 120.0f;
+    constexpr float TSTRIKE_DISPLAY_H = 200.0f;
+
+    struct TStrikeAnim
+    {
+        bool  active = false;
+        float x = 0.0f;
+        float y = 0.0f;
+        int   frame = 0;
+        float frameTimer = 0.0f;
+    };
+
+    static TStrikeAnim      s_tStrike{};
+    static AEGfxTexture* s_tStrikeTex = nullptr;
+    static AEGfxVertexList* s_tStrikeMesh = nullptr;   // single-frame-width UV quad
+
     // ================================================================
     //  Rainbow constants
     // ================================================================
@@ -116,8 +136,12 @@ namespace
     constexpr int   RAINBOW_FRAME_COUNT = 9;        // frames in the sprite sheet
     constexpr float RAINBOW_FRAME_TIME = 0.12f;   // seconds per frame (~8 fps)
     constexpr float RAINBOW_DISPLAY_W = 1600.0f; // stretch to full screen width
-    constexpr float RAINBOW_DISPLAY_H = 60.0f;  // height of the rainbow band
-    constexpr float RAINBOW_Y = 80.0f;   // world-space Y (mid-upper area)
+    // Height derived from frame aspect ratio: each frame is a square slice of the sheet,
+    // so display height = display_width / frame_count to preserve pixel proportions.
+    // e.g. if the sheet is 900x100 px (9 frames x 100px wide, 100px tall) each frame is square.
+    // We want it to fill the top ~1/5 of the screen without covering the play area.
+    constexpr float RAINBOW_DISPLAY_H = 80.0f;
+    constexpr float RAINBOW_Y = 250.0f;          // upper sky area, well above enemies
     constexpr float RAINBOW_FADE_TIME = 1.5f;    // fade-in / fade-out duration
 
     // ================================================================
@@ -128,7 +152,7 @@ namespace
     constexpr float GHOST_LOCK_DUR = 3.0f;    // typing locked duration
     constexpr float GHOST_SPEED_MIN = 80.0f;
     constexpr float GHOST_SPEED_MAX = 160.0f;
-    constexpr float GHOST_SIZE = 60.0f;   // display size (px)
+    constexpr float GHOST_SIZE = 120.0f;   // display size (px)
     // Sprite sheet: 16 frames in one row (walk cycle)
     constexpr int   GHOST_FRAME_COUNT = 16;
     constexpr float GHOST_FRAME_TIME = 0.07f;   // seconds per frame
@@ -216,6 +240,15 @@ namespace
     static AEGfxTexture* s_rainbowTex = nullptr;
     static AEGfxVertexList* s_rainbowMesh = nullptr; // single-frame UV quad
 
+    // Running pulse timer (always increments, used for sine-wave text pulsing)
+    static float            s_weatherPulseTimer = 0.0f;
+
+    // Short popup timers: text shows briefly on event start then disappears
+    constexpr float WEATHER_POPUP_DUR = 1.8f;
+    constexpr float WEATHER_POPUP_FADE = 0.5f;
+    static float            s_rainbowPopupTimer = 0.0f;
+    static float            s_ghostPopupTimer = 0.0f;
+
     // Ghost weather state
     static Ghost            s_ghosts[GHOST_COUNT]{};
     static float            s_ghostLifeTimer = 0.0f; // counts up; triggers lock at GHOST_LIFETIME
@@ -261,12 +294,14 @@ namespace
     static void  Thunder_RestoreLunge(std::vector<Data::Enemy>& enemy_pool); // require enemy vector to strike random enemy
     static void  Thunder_DrawHUD();
     static void  Thunder_DrawStrikeFlash();
+    static void  Thunder_DrawStrikeAnim();
 
     // Rainbow helpers
     static void  Rainbow_BuildMesh();
     static void  Rainbow_Start();
     static void  Rainbow_Update(float dt);
     static void  Rainbow_DrawSprite();
+    static void  Rainbow_DrawHUD();
 
     // Ghost weather helpers
     static void  Ghost_BuildMesh();
@@ -315,6 +350,16 @@ void Weather_Init()
     s_rainbowTex = AEGfxTextureLoad("Assets/rainbowvfx.png");
     Rainbow_BuildMesh();
 
+    // Thunderstorm strike animation
+    if (s_tStrikeTex) { AEGfxTextureUnload(s_tStrikeTex);  s_tStrikeTex = nullptr; }
+    if (s_tStrikeMesh) { AEGfxMeshFree(s_tStrikeMesh);      s_tStrikeMesh = nullptr; }
+    s_tStrikeTex = AEGfxTextureLoad("Assets/thunderstorm.png");
+    s_tStrikeMesh = Sprite_Mesh(TSTRIKE_UV_W, 1.0f);
+    s_tStrike = {};
+    s_weatherPulseTimer = 0.0f;
+    s_rainbowPopupTimer = 0.0f;
+    s_ghostPopupTimer = 0.0f;
+
     // Ghost weather init
     s_ghostTex = AEGfxTextureLoad("Assets/ghost.png");
     Ghost_BuildMesh();
@@ -344,6 +389,24 @@ void Weather_Init()
 
 void Weather_Update(float dt, std::vector<Data::Enemy>& enemy_pool)
 {
+    // Always tick the pulse timer (used for sine-wave text effects)
+    s_weatherPulseTimer += dt;
+    if (s_rainbowPopupTimer > 0.0f) { s_rainbowPopupTimer -= dt; if (s_rainbowPopupTimer < 0.0f) s_rainbowPopupTimer = 0.0f; }
+    if (s_ghostPopupTimer > 0.0f) { s_ghostPopupTimer -= dt; if (s_ghostPopupTimer < 0.0f) s_ghostPopupTimer = 0.0f; }
+
+    // Advance thunderstorm on-enemy strike animation
+    if (s_tStrike.active)
+    {
+        s_tStrike.frameTimer += dt;
+        if (s_tStrike.frameTimer >= TSTRIKE_FRAME_TIME)
+        {
+            s_tStrike.frameTimer -= TSTRIKE_FRAME_TIME;
+            ++s_tStrike.frame;
+            if (s_tStrike.frame >= TSTRIKE_FRAME_COUNT)
+                s_tStrike.active = false;
+        }
+    }
+
     // Advance trigger timer when no weather active
     if (s_state == WeatherState::IDLE)
     {
@@ -476,10 +539,15 @@ void Weather_Draw()
         float elapsed = STORM_DURATION - s_stormTimer;
         DrawFullscreenOverlay(STORM_OVL_R, STORM_OVL_G, STORM_OVL_B,
             STORM_OVL_ALPHA_MAX * Clamp01(elapsed / 2.0f));
+        Thunder_DrawStrikeAnim();
         Thunder_DrawHUD();
         Thunder_DrawStrikeFlash();
     }
-    // RAINBOW: all drawing is done in Weather_DrawBackground() — nothing to do here
+    // RAINBOW: sprite drawn in Weather_DrawBackground() — HUD drawn here
+    if (s_activeType == WeatherType::RAINBOW && s_state != WeatherState::IDLE)
+    {
+        Rainbow_DrawHUD();
+    }
     // GHOST: ghosts + HUD drawn here
     if (s_activeType == WeatherType::GHOST && s_ghostEventActive)
     {
@@ -495,6 +563,8 @@ void Weather_Exit()
     if (s_quad) { AEGfxMeshFree(s_quad);             s_quad = nullptr; }
     if (s_rainbowTex) { AEGfxTextureUnload(s_rainbowTex);  s_rainbowTex = nullptr; }
     if (s_rainbowMesh) { AEGfxMeshFree(s_rainbowMesh);      s_rainbowMesh = nullptr; }
+    if (s_tStrikeTex) { AEGfxTextureUnload(s_tStrikeTex);  s_tStrikeTex = nullptr; }
+    if (s_tStrikeMesh) { AEGfxMeshFree(s_tStrikeMesh);      s_tStrikeMesh = nullptr; }
     if (s_ghostTex) { AEGfxTextureUnload(s_ghostTex);    s_ghostTex = nullptr; }
     if (s_ghostMesh) { AEGfxMeshFree(s_ghostMesh);        s_ghostMesh = nullptr; }
 }
@@ -519,10 +589,13 @@ void Weather_ForceEvent(int type, std::vector<Data::Enemy>& enemy_pool)
     s_spaceWasHeld = false;
     s_stunTimer = 0.0f;
     s_strikeFlash = 0.0f;
+    s_tStrike = {};
     // Ghost reset
     s_ghostEventActive = false;
     s_ghostLifeTimer = 0.0f;
     s_ghostLockTimer = 0.0f;
+    s_rainbowPopupTimer = 0.0f;
+    s_ghostPopupTimer = 0.0f;
     for (int i = 0; i < GHOST_COUNT; ++i) s_ghosts[i].alive = false;
 
     if (type == 0)
@@ -817,6 +890,9 @@ namespace
         s_lungeTimer = LUNGE_DUR;
         target.enemy_fall_speed_units_per_second *= LUNGE_SPEED_MUL;
 
+        // Spawn on-enemy strike animation
+        s_tStrike = { true, target.enemy_position_x, target.enemy_position_y, 0, 0.0f };
+
         // Trigger stun + white flash
         s_stunTimer = STUN_DUR;
         s_strikeFlash = 1.0f;
@@ -925,7 +1001,7 @@ namespace
         else if (s_boltPhase == BoltPhase::STRIKING && s_stunTimer > 0.0f)
         {
             float alpha = Clamp01(s_stunTimer / STUN_DUR);
-            DrawCentredText("STUNNED!", 0.10f, 0.65f, 1.0f, 0.3f, 0.1f, alpha);   // red-orange
+            DrawCentredText("STUNNED!", 0.10f, 1.2f, 1.0f, 0.3f, 0.1f, alpha);   // red-orange, larger
         }
     }
 
@@ -936,36 +1012,46 @@ namespace
         DrawFullscreenOverlay(1.0f, 1.0f, 0.85f, s_strikeFlash * 0.75f);   // warm white/yellow flash
     }
 
+    // Per-enemy thunderstorm sprite played on the struck enemy
+    static void Thunder_DrawStrikeAnim()
+    {
+        if (!s_tStrike.active || !s_tStrikeTex || !s_tStrikeMesh) return;
+
+        float uOffset = s_tStrike.frame * TSTRIKE_UV_W;
+
+        AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
+        AEGfxSetBlendMode(AE_GFX_BM_ADD);
+        AEGfxSetTransparency(1.0f);
+        AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);
+        AEGfxTextureSet(s_tStrikeTex, uOffset, 0.0f);
+        Mesh_Renderer(s_tStrikeMesh, s_tStrike.x, s_tStrike.y,
+            TSTRIKE_DISPLAY_W, TSTRIKE_DISPLAY_H, 0.0f);
+
+        AEGfxSetBlendMode(AE_GFX_BM_BLEND);
+        AEGfxSetTransparency(1.0f);
+        AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);
+    }
+
     // ================================================================
     //  Rainbow helpers
     // ================================================================
 
-    // Build a single-frame UV quad: the mesh maps to UV [0, 1/FRAMES] x [0, 1].
-    // AEGfxTextureSet(tex, uvOffset, 0) scrolls to the correct frame each draw.
+    // No persistent mesh needed — we build an exact UV-sliced mesh per frame in Rainbow_DrawSprite.
     static void Rainbow_BuildMesh()
     {
         if (s_rainbowMesh) { AEGfxMeshFree(s_rainbowMesh); s_rainbowMesh = nullptr; }
-        constexpr float uvW = 1.0f / (float)RAINBOW_FRAME_COUNT;
-        AEGfxMeshStart();
-        AEGfxTriAdd(
-            -0.5f, -0.5f, 0xFFFFFFFF, 0.0f, 1.0f,
-            0.5f, -0.5f, 0xFFFFFFFF, uvW, 1.0f,
-            -0.5f, 0.5f, 0xFFFFFFFF, 0.0f, 0.0f);
-        AEGfxTriAdd(
-            0.5f, -0.5f, 0xFFFFFFFF, uvW, 1.0f,
-            0.5f, 0.5f, 0xFFFFFFFF, uvW, 0.0f,
-            -0.5f, 0.5f, 0xFFFFFFFF, 0.0f, 0.0f);
-        s_rainbowMesh = AEGfxMeshEnd();
+        // intentionally empty — per-frame meshes created in Rainbow_DrawSprite
     }
 
     // Kick off a new rainbow event
     static void Rainbow_Start()
     {
-        s_state = WeatherState::FREEZING; // reuse FREEZING as "active" sentinel
+        s_state = WeatherState::FREEZING;
         s_rainbowTimer = RAINBOW_DURATION;
-        s_rainbowPowerupTimer = RAINBOW_POWERUP_INTERVAL; // first drop spawns after 3 s
+        s_rainbowPowerupTimer = RAINBOW_POWERUP_INTERVAL;
         s_rainbowFrame = 0;
         s_rainbowFrameTimer = 0.0f;
+        s_rainbowPopupTimer = WEATHER_POPUP_DUR;
     }
 
     // Per-frame rainbow update: advance animation, trigger power-up spawns
@@ -1001,11 +1087,11 @@ namespace
         }
     }
 
-    // Draw the animated rainbow sprite stretched across the full screen width.
-    // Called from Weather_DrawBackground() so it renders BEHIND enemies.
+    // Draw the animated rainbow sprite across the sky.
+    // Uses a fresh per-frame Spritesheet_Mesh so the UV slice is exact — no stretching.
     static void Rainbow_DrawSprite()
     {
-        if (!s_rainbowTex || !s_rainbowMesh) return;
+        if (!s_rainbowTex) return;
 
         // Compute smooth fade-in / fade-out alpha
         float elapsed = RAINBOW_DURATION - s_rainbowTimer;
@@ -1014,19 +1100,59 @@ namespace
         float alpha = fadeIn * fadeOut;
         if (alpha <= 0.001f) return;
 
-        // UV X-offset scrolls to the current animation frame
-        float uvOffset = (float)s_rainbowFrame / (float)RAINBOW_FRAME_COUNT;
+        // Build a mesh with the UV slice for the current frame baked in
+        constexpr float uvW = 1.0f / (float)RAINBOW_FRAME_COUNT;
+        float uMin = (float)s_rainbowFrame * uvW;
+        float uMax = uMin + uvW;
+        AEGfxVertexList* frameMesh = Spritesheet_Mesh(1.0f, 1.0f, uMin, 0.0f, uMax, 1.0f);
+        if (!frameMesh) return;
 
         AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
         AEGfxSetBlendMode(AE_GFX_BM_BLEND);
         AEGfxSetTransparency(alpha);
         AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);
-        AEGfxTextureSet(s_rainbowTex, uvOffset, 0.0f);
-        Mesh_Renderer(s_rainbowMesh, 0.0f, RAINBOW_Y, RAINBOW_DISPLAY_W, RAINBOW_DISPLAY_H, 0.0f);
+        AEGfxTextureSet(s_rainbowTex, 0.0f, 0.0f);  // no offset — UVs baked into mesh
+        Mesh_Renderer(frameMesh, 0.0f, RAINBOW_Y, RAINBOW_DISPLAY_W, RAINBOW_DISPLAY_H, 0.0f);
+
+        AEGfxMeshFree(frameMesh);
 
         // Reset render state
         AEGfxSetTransparency(1.0f);
         AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);
+    }
+
+    // Rainbow HUD: cycling rainbow-coloured "POWER UPS GALORE!" + timer below
+    static void Rainbow_DrawHUD()
+    {
+        if (s_rainbowPopupTimer <= 0.0f || Graphics::font_id < 0) return;
+
+        AEGfxSetBlendMode(AE_GFX_BM_BLEND);
+
+        // Fade out over last WEATHER_POPUP_FADE seconds
+        float alpha = (s_rainbowPopupTimer < WEATHER_POPUP_FADE)
+            ? (s_rainbowPopupTimer / WEATHER_POPUP_FADE) : 1.0f;
+
+        // Cycle hue using the pulse timer
+        constexpr float HUE_SPEED = 2.5f;
+        float h = fmodf(s_weatherPulseTimer * HUE_SPEED, 6.0f);
+        float r, g, b;
+        int   seg = (int)h;
+        float f = h - (float)seg;
+        switch (seg % 6)
+        {
+        case 0: r = 1.0f;     g = f;        b = 0.0f;     break;
+        case 1: r = 1.0f - f; g = 1.0f;     b = 0.0f;     break;
+        case 2: r = 0.0f;     g = 1.0f;     b = f;        break;
+        case 3: r = 0.0f;     g = 1.0f - f; b = 1.0f;     break;
+        case 4: r = f;        g = 0.0f;     b = 1.0f;     break;
+        default: r = 1.0f;    g = 0.0f;     b = 1.0f - f; break;
+        }
+
+        constexpr float BASE_SCALE = 0.75f;
+        constexpr float PULSE_AMP = 0.08f;
+        float scale = BASE_SCALE + PULSE_AMP * sinf(s_weatherPulseTimer * 4.0f);
+
+        DrawCentredText("POWER UPS GALORE!", 0.25f, scale, r, g, b, alpha);
     }
 
     // ================================================================
@@ -1085,6 +1211,7 @@ namespace
         s_ghostEventActive = true;
         s_ghostLifeTimer = 0.0f;
         s_ghostLockTimer = 0.0f;
+        s_ghostPopupTimer = WEATHER_POPUP_DUR;
 
         // Assign digits 5-9 (one per ghost, shuffled slightly via rand)
         int digits[GHOST_COUNT] = { 5, 6, 7, 8, 9 };
@@ -1239,22 +1366,34 @@ namespace
         AEGfxSetColorToAdd(0.0f, 0.0f, 0.0f, 0.0f);
     }
 
-    // Draw "LOCKED" + countdown while the typing lock is active.
+    // Draw "DEFEAT THE GHOSTS!" prompt always while event is active,
+    // plus "GHOSTIFIED!" lock indicator when typing is locked.
     static void Ghost_DrawHUD()
     {
-        if (s_ghostLockTimer <= 0.0f) return;
         if (Graphics::font_id < 0) return;
 
         AEGfxSetBlendMode(AE_GFX_BM_BLEND);
 
-        // Pulsing red "LOCKED" text
-        float pulse = ((int)(s_ghostLockTimer * 6.0f) % 2 == 0) ? 1.0f : 0.55f;
-        DrawCentredText("GHOSTIFIED!", 0.25f, 0.85f, 1.0f, 0.15f, 0.15f, pulse);
+        // ---- "DEFEAT THE GHOSTS!" — popup only on event start ----
+        if (s_ghostPopupTimer > 0.0f)
+        {
+            float alpha = (s_ghostPopupTimer < WEATHER_POPUP_FADE)
+                ? (s_ghostPopupTimer / WEATHER_POPUP_FADE) : 1.0f;
+            float brightness = fabsf(sinf(s_weatherPulseTimer * 2.5f));
+            float scale = 0.65f + 0.08f * sinf(s_weatherPulseTimer * 3.5f);
+            DrawCentredText("DEFEAT THE GHOSTS!", 0.38f, scale,
+                brightness, brightness, brightness, alpha);
+        }
 
-        // Countdown timer below (e.g. "2.4")
-        char buf[16];
-        int remaining = (int)ceilf(s_ghostLockTimer);
-        snprintf(buf, sizeof(buf), "%d", remaining);
-        DrawCentredText(buf, 0.05f, 0.65f, 1.0f, 1.0f, 1.0f, 1.0f);
+        // ---- "GHOSTIFIED!" lock indicator ----
+        if (s_ghostLockTimer > 0.0f)
+        {
+            float pulse = ((int)(s_ghostLockTimer * 6.0f) % 2 == 0) ? 1.0f : 0.55f;
+            DrawCentredText("GHOSTIFIED!", 0.10f, 0.85f, 1.0f, 0.15f, 0.15f, pulse);
+
+            char buf[16];
+            snprintf(buf, sizeof(buf), "%d", (int)ceilf(s_ghostLockTimer));
+            DrawCentredText(buf, -0.05f, 0.65f, 1.0f, 1.0f, 1.0f, 1.0f);
+        }
     }
 }
