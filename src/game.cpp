@@ -4,7 +4,7 @@
 
 namespace {
     //avatar mesh and texture
-    AEGfxTexture* playerTexture = nullptr; 
+    AEGfxTexture* playerTexture = nullptr;
     AEGfxVertexList* playerMesh = nullptr;
 
     //background mesh and texture
@@ -87,7 +87,7 @@ void Game_Init()
     // Initialise shared heart animation state (6 frames, single row sprite sheet)
     heart_anim = {};
     heart_anim.animation_columns = 6;
-    heart_anim.animation_rows    = 1;
+    heart_anim.animation_rows = 1;
     heart_anim.animation_frame_duration_seconds = 0.10f;
 
     if (bgTexture1) { AEGfxTextureUnload(bgTexture1); bgTexture1 = nullptr; }
@@ -104,7 +104,7 @@ void Game_Init()
     s_dayTransitionFired = false;
 
     if (playerTexture) { AEGfxTextureUnload(playerTexture); playerTexture = nullptr; }
-    
+
 
     //player texture
     const char* skinPath = Shop_GetActiveSkinPath();
@@ -298,7 +298,7 @@ render_only:
     DayCycle::Draw();
     GameClouds::Draw();
 
-   
+
 
     AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
     AEGfxSetBlendMode(AE_GFX_BM_BLEND);
@@ -346,7 +346,7 @@ render_only:
     @overview   Boss flash overlay and Health bar
     @author     Wong Zi Yuan (w.ziyuan@digipen.edu)
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
-    UiSystem::Ui_DrawHealthBar(health, meshes, heart_anim, frame_dt);                                                       // draw animated heart health bar
+    UiSystem::Ui_DrawHealthBar(health, meshes, heart_anim, isPaused || DebugConsole::IsOpen() ? 0.0f : frame_dt);           // draw animated heart health bar
     BossSystem::Boss_DrawFlashOverlay(meshes);                                                                              // draw the white flash overlay on top of everything else
     /*_______________________________________________________________________________________________________________________________________________________________________________________________*/
 
@@ -421,5 +421,5 @@ void Game_Exit()
         AEGfxTextureUnload(playerTexture);
         playerTexture = nullptr;
     }
-    
+
 }
