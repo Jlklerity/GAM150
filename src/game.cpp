@@ -275,11 +275,11 @@ render_only:
 
     AEGfxTexture* activeBg = (gShopBgID == 0) ? bgTexture1 : bgTexture2;
     AEGfxTextureSet(activeBg, 0.0f, 0.0f);
-    // 1. Draw sky (DayCycle owns this completely)
     DayCycle::Draw();
     GameClouds::Draw();
 
-    // 2. Draw ground on top (sky area is transparent, unaffected by night overlay)
+   
+
     AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
     AEGfxSetBlendMode(AE_GFX_BM_BLEND);
     AEGfxSetTransparency(1.0f);
