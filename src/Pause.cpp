@@ -1,11 +1,19 @@
 #include "pch.h"
 #include "Pause.h"
+#include "ButtonTween.h"
 
 namespace UiPauseMenu
 {
     static bool inSettings = false;
     static bool ignoreNextClick = false;
     static bool inConfirmExit = false;
+
+    // Button tweens (persist across Draw calls)
+    static ButtonTween tweenResume;
+    static ButtonTween tweenSettings;
+    static ButtonTween tweenMenu;
+    static ButtonTween tweenYes;
+    static ButtonTween tweenNo;
 
     bool IsSettingsOpen()
     {
@@ -48,16 +56,37 @@ namespace UiPauseMenu
         float menuY = -0.55f;
         float borderSize = 5.0f;
 
-        auto DrawButton = [&](float cx, float worldY, const char* label)
+        // Mouse world coords for hover detection
+        s32 mx_hover, my_hover;
+        AEInputGetCursorPosition(&mx_hover, &my_hover);
+        float wx_hover = (float)mx_hover - screenHalfW;
+        float wy_hover = screenHalfH - (float)my_hover;
+        float dt_p = (float)AEFrameRateControllerGetFrameTime();
+        bool click_p = AEInputCheckTriggered(AEVK_LBUTTON);
+
+        // Update main pause button tweens
+        auto HoverBtn = [&](float cy) {
+            float wy = cy * screenHalfH;
+            return (wx_hover >= (btnX - btnW * 0.5f) && wx_hover <= (btnX + btnW * 0.5f) &&
+                wy_hover >= (wy - btnH * 0.5f) && wy_hover <= (wy + btnH * 0.5f));
+            };
+        ButtonTween_Update(tweenResume, HoverBtn(resumeY), HoverBtn(resumeY) && click_p, dt_p);
+        ButtonTween_Update(tweenSettings, HoverBtn(settingsY), HoverBtn(settingsY) && click_p, dt_p);
+        ButtonTween_Update(tweenMenu, HoverBtn(menuY), HoverBtn(menuY) && click_p, dt_p);
+
+        auto DrawButton = [&](float cx, float worldY, const char* label, ButtonTween& tween)
             {
+                float sw = tween.scale;
+                float scaledW = btnW * sw;
+                float scaledH = btnH * sw;
                 AEGfxSetRenderMode(AE_GFX_RM_COLOR);
                 AEGfxSetBlendMode(AE_GFX_BM_BLEND);
                 AEGfxSetTransparency(1.0f);
                 AEGfxSetColorToMultiply(0.85f, 0.70f, 0.15f, 1.0f);
-                Mesh_Renderer(bgMesh, cx, worldY, btnW + borderSize * 2, btnH + borderSize * 2, 0.0f);
+                Mesh_Renderer(bgMesh, cx, worldY, scaledW + borderSize * 2, scaledH + borderSize * 2, 0.0f);
 
                 AEGfxSetColorToMultiply(0.10f, 0.08f, 0.14f, 1.0f);
-                Mesh_Renderer(bgMesh, cx, worldY, btnW, btnH, 0.0f);
+                Mesh_Renderer(bgMesh, cx, worldY, scaledW, scaledH, 0.0f);
 
                 float tw, th;
                 AEGfxGetPrintSize(Graphics::font_id, label, 0.65f, &tw, &th);
@@ -100,12 +129,12 @@ namespace UiPauseMenu
         Mesh_Renderer(bgMesh, 0.0f, 0.20f * screenHalfH, 360.0f, 3.0f, 0.0f);
 
         // --- Buttons ---
-        DrawButton(btnX, resumeY * screenHalfH, "RESUME");
-        DrawButton(btnX, settingsY * screenHalfH, "SETTINGS");
-        DrawButton(btnX, menuY * screenHalfH, "MAIN MENU");
+        DrawButton(btnX, resumeY * screenHalfH, "RESUME", tweenResume);
+        DrawButton(btnX, settingsY * screenHalfH, "SETTINGS", tweenSettings);
+        DrawButton(btnX, menuY * screenHalfH, "MAIN MENU", tweenMenu);
 
         // (rest of your function unchanged)
-    
+
 
         // ========================================================================
         // EXIT CONFIRMATION POPUP OVERLAY
@@ -135,14 +164,32 @@ namespace UiPauseMenu
             float noX = 130.0f;
             float confBtnY = -60.0f;
 
-            auto DrawConfButton = [&](float cx, float cy) {
+            auto DrawConfButton = [&](float cx, float cy, ButtonTween& tween) {
+                float sw = tween.scale;
                 AEGfxSetColorToMultiply(0.85f, 0.70f, 0.15f, 1.0f);
-                Mesh_Renderer(bgMesh, cx, cy, confBtnW + borderSize * 2, confBtnH + borderSize * 2, 0.0f);
+                Mesh_Renderer(bgMesh, cx, cy, (confBtnW + borderSize * 2) * sw, (confBtnH + borderSize * 2) * sw, 0.0f);
                 AEGfxSetColorToMultiply(0.10f, 0.08f, 0.14f, 1.0f);
-                Mesh_Renderer(bgMesh, cx, cy, confBtnW, confBtnH, 0.0f);
+                Mesh_Renderer(bgMesh, cx, cy, confBtnW * sw, confBtnH * sw, 0.0f);
                 };
-            DrawConfButton(yesX, confBtnY);
-            DrawConfButton(noX, confBtnY);
+
+            // Update YES/NO tweens
+            {
+                float dt_conf = (float)AEFrameRateControllerGetFrameTime();
+                bool click_conf = AEInputCheckTriggered(AEVK_LBUTTON);
+                s32 mx_c, my_c;
+                AEInputGetCursorPosition(&mx_c, &my_c);
+                float wx_c = (float)mx_c - screenHalfW;
+                float wy_c = screenHalfH - (float)my_c;
+                bool hYes = (wx_c >= (yesX - confBtnW * 0.5f) && wx_c <= (yesX + confBtnW * 0.5f) &&
+                    wy_c >= (confBtnY - confBtnH * 0.5f) && wy_c <= (confBtnY + confBtnH * 0.5f));
+                bool hNo = (wx_c >= (noX - confBtnW * 0.5f) && wx_c <= (noX + confBtnW * 0.5f) &&
+                    wy_c >= (confBtnY - confBtnH * 0.5f) && wy_c <= (confBtnY + confBtnH * 0.5f));
+                ButtonTween_Update(tweenYes, hYes, hYes && click_conf, dt_conf);
+                ButtonTween_Update(tweenNo, hNo, hNo && click_conf, dt_conf);
+            }
+
+            DrawConfButton(yesX, confBtnY, tweenYes);
+            DrawConfButton(noX, confBtnY, tweenNo);
 
             // Draw Text
             const char* promptText = "EXIT TO MAIN MENU?";
@@ -153,7 +200,7 @@ namespace UiPauseMenu
             float pw{}, ph{}, ww{}, wh{}, yw{}, yh{}, nw{}, nh{};
             AEGfxGetPrintSize(Graphics::font_id, promptText, 0.8f, &pw, &ph);
             if (gGameStateCurr != GS_TUTORIAL)
-            AEGfxGetPrintSize(Graphics::font_id, warningText, 0.5f, &ww, &wh);
+                AEGfxGetPrintSize(Graphics::font_id, warningText, 0.5f, &ww, &wh);
             AEGfxGetPrintSize(Graphics::font_id, yesText, 0.65f, &yw, &yh);
             AEGfxGetPrintSize(Graphics::font_id, noText, 0.65f, &nw, &nh);
 
@@ -162,8 +209,8 @@ namespace UiPauseMenu
             // Gold prompt
             AEGfxPrint(Graphics::font_id, promptText, -(pw * 0.5f), (80.0f / screenHalfH) - (ph * 0.5f), 0.8f, 1.0f, 0.82f, 0.1f, 1.0f);
             // Red warning
-            if(gGameStateCurr != GS_TUTORIAL)
-            AEGfxPrint(Graphics::font_id, warningText, -(ww * 0.5f), (30.0f / screenHalfH) - (wh * 0.5f), 0.5f, 1.0f, 0.4f, 0.4f, 1.0f);
+            if (gGameStateCurr != GS_TUTORIAL)
+                AEGfxPrint(Graphics::font_id, warningText, -(ww * 0.5f), (30.0f / screenHalfH) - (wh * 0.5f), 0.5f, 1.0f, 0.4f, 0.4f, 1.0f);
             // Warm gold YES/NO
             AEGfxPrint(Graphics::font_id, yesText, (yesX / screenHalfW) - (yw * 0.5f), (confBtnY / screenHalfH) - (yh * 0.5f), 0.65f, 1.0f, 0.92f, 0.6f, 1.0f);
             AEGfxPrint(Graphics::font_id, noText, (noX / screenHalfW) - (nw * 0.5f), (confBtnY / screenHalfH) - (nh * 0.5f), 0.65f, 1.0f, 0.92f, 0.6f, 1.0f);
@@ -185,9 +232,9 @@ namespace UiPauseMenu
                     wy >= (confBtnY - halfConfH) && wy <= (confBtnY + halfConfH)) {
                     SoundManager::PlayClickBtnSfx();
                     isPaused = false;
-                     //Reset game state and return to Main Menu
-                     std::string temp_name = "";
-                     ResetPlayerName(temp_name);
+                    //Reset game state and return to Main Menu
+                    std::string temp_name = "";
+                    ResetPlayerName(temp_name);
                     gGameStateNext = GS_MAIN_MENU;
                     inConfirmExit = false;
                 }
@@ -263,7 +310,7 @@ namespace UiPauseMenu
                 }
             }
 
-           
+
             Ui_DrawPauseMenu(isPaused, bgMesh);
         }
     }
