@@ -17,6 +17,24 @@ namespace
         "JEREMY LIM",
         "",
         "",
+        "PROGRAMMERS",
+        "ZI YUAN",
+        "PENG FEI",
+        "AZFAR",
+        "JEREMY LIM",
+        "",
+        "",
+        "ART DESIGNERS",
+        "PENG FEI",
+        "AZFAR",
+        "",
+        "",
+        "SOUND DESIGNERS",
+        "ZI YUAN",
+        "PENG FEI",
+        "AZFAR",
+        "JEREMY LIM",
+        "",
         "",
         "FACULTY AND ADVISORS",
         "GERALD WONG HAN FENG  <3",
@@ -59,8 +77,9 @@ namespace
         "",
         "TOOLS AND LIBRARIES",
         "ALPHA ENGINE",
-        "soundly", 
-        "aseprite on steam"
+        "metadigger", 
+        "aseprite on steam",
+        "piskel",
         "",
         "",
         "",
@@ -137,7 +156,7 @@ namespace
                 {
                     if (line == "YOUR TEAM NAME" ||
                         line == "TEAM MEMBERS" || line == "FACULTY AND ADVISORS" || 
-                        
+                        line == "PROGRAMMERS" || line == "ART DESIGNERS" || line == "SOUND DESIGNERS" ||
                         line == "SPECIAL THANKS" || line == "TOOLS AND LIBRARIES" ||
           
                         line == "PRESIDENT" || line == "EXECUTIVES")

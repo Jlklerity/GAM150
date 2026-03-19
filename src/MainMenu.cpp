@@ -323,23 +323,25 @@ void Main_Menu_Input()
         bool hCred = (worldX >= CREDITS_BTN_X - (CREDITS_WIDTH * 0.5f) && worldX <= CREDITS_BTN_X + (CREDITS_WIDTH * 0.5f) &&
             worldY >= CREDITS_BTN_Y - (CREDITS_HEIGHT * 0.5f) && worldY <= CREDITS_BTN_Y + (CREDITS_HEIGHT * 0.5f));
 
-        ButtonTween_Update(tweenPlay, hPlay, hPlay && click, dt);
-        ButtonTween_Update(tweenShop, hShop, hShop && click, dt);
-        ButtonTween_Update(tweenTutorial, hTut, hTut && click, dt);
-        ButtonTween_Update(tweenExit, hExit, hExit && click, dt);
-        ButtonTween_Update(tweenSettings, hSet, hSet && click, dt);
-        ButtonTween_Update(tweenLeaderboard, hLdr, hLdr && click, dt);
-        ButtonTween_Update(tweenLeftArrow, hLArr, hLArr && click, dt);
-        ButtonTween_Update(tweenRightArrow, hRArr, hRArr && click, dt);
-        ButtonTween_Update(tweenCredits, hCred, hCred && click, dt);
+        if (!splashActive) {
+            ButtonTween_Update(tweenPlay, hPlay, hPlay && click, dt);
+            ButtonTween_Update(tweenShop, hShop, hShop && click, dt);
+            ButtonTween_Update(tweenTutorial, hTut, hTut && click, dt);
+            ButtonTween_Update(tweenExit, hExit, hExit && click, dt);
+            ButtonTween_Update(tweenSettings, hSet, hSet && click, dt);
+            ButtonTween_Update(tweenLeaderboard, hLdr, hLdr && click, dt);
+            ButtonTween_Update(tweenLeftArrow, hLArr, hLArr && click, dt);
+            ButtonTween_Update(tweenRightArrow, hRArr, hRArr && click, dt);
+            ButtonTween_Update(tweenCredits, hCred, hCred && click, dt);
+        }
     }
 
-    if (!isTransitioningToName && !transitioningToShop && !isReturningFromShop && AEInputCheckTriggered(AEVK_ESCAPE))
+    if (!splashActive && !isTransitioningToName && !transitioningToShop && !isReturningFromShop && AEInputCheckTriggered(AEVK_ESCAPE))
     {
         SoundManager::PlayClickBtnSfx();
         gGameStateNext = GS_QUIT;
     }
-    if (!isTransitioningToName && !transitioningToShop && !isReturningFromShop && AEInputCheckTriggered(AEVK_LBUTTON))                                                                                // check for left click
+    if (!splashActive && !isTransitioningToName && !transitioningToShop && !isReturningFromShop && AEInputCheckTriggered(AEVK_LBUTTON))                                                                                // check for left click
     {
         // --- Check Play Button ---
         if (worldX >= 0.0f - (PLAY_HITBOX_WIDTH * 0.5f) && worldX <= 0.0f + (PLAY_HITBOX_WIDTH * 0.5f) &&
