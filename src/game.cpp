@@ -44,6 +44,8 @@ namespace {
     Data::Health        health{};                                                                                           // create health state
     Data::Score         score{};                                                                                            // create score state
     Data::SpriteAnim    enemy_animation{};                                                                                  // create enemy animation state
+    Data::SpriteAnim    heart_anim{};                                                                                       // create heart animation state
+
     Data::EnemyArea     enemy_area{};                                                                                       // create enemy area limits
     Data::Meshes        meshes{};                                                                                           // create meshes
 
@@ -55,6 +57,7 @@ namespace {
     bool is_difficulty_debug_visible = false;                                                                               // toggle for difficulty text
 
     float random_spawn_timer_seconds = 9999.0f;                                                                             // start high to spawn immediately
+    float frame_dt = 0.0f;                                                                                                  // delta time for current frame, shared between update and render
 
     // Boss
     bool boss_spawning_blocked = false;                                                                                     // tracks whether the boss is blocking normal enemy spawning
@@ -78,7 +81,14 @@ void Game_Init()
     openLeaderboard = false;
     isPaused = false;
     isDead = false;
+    frame_dt = 0.0f;
     DifficultySystem::Difficulty_Reset();
+
+    // Initialise shared heart animation state (6 frames, single row sprite sheet)
+    heart_anim = {};
+    heart_anim.animation_columns = 6;
+    heart_anim.animation_rows    = 1;
+    heart_anim.animation_frame_duration_seconds = 0.10f;
 
     if (bgTexture1) { AEGfxTextureUnload(bgTexture1); bgTexture1 = nullptr; }
     if (bgTexture2) { AEGfxTextureUnload(bgTexture2); bgTexture2 = nullptr; }
@@ -180,13 +190,14 @@ void Game_Update()
     if (!isPaused && !isDead && !UpgradeSystem::Upgrade_IsScreenOpen())
     {
         float healthBefore = health.health_current; // for pf streak
-        float dt = (float)AEFrameRateControllerGetFrameTime();                                               // read delta time for this frame
-        if (dt > 0.1f)
+        frame_dt = (float)AEFrameRateControllerGetFrameTime();                                                                        // read delta time for this frame
+        if (frame_dt > 0.1f)
         {
             // Force it to a safe standard frame time (~60 FPS)
-            dt = 0.01667f;
+            frame_dt = 0.01667f;
         }
-        dt *= PowerUpSystem::GetTimeScale(); // azfar code
+        frame_dt *= PowerUpSystem::GetTimeScale(); // azfar code
+        float dt = frame_dt;                                                                                                          // local alias used by the rest of the update block
 
         GameClouds::Update(dt);
         DayCycle::Update(dt);
@@ -328,12 +339,11 @@ render_only:
 
     Weather_Draw();
 
-    UiSystem::Ui_DrawHealthBar(health, meshes); // jeremy code
-
     /*
-    @overview   Boss flash overlay draw
+    @overview   Boss flash overlay and Health bar
     @author     Wong Zi Yuan (w.ziyuan@digipen.edu)
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
+    UiSystem::Ui_DrawHealthBar(health, meshes, heart_anim, frame_dt);                                                       // draw animated heart health bar
     BossSystem::Boss_DrawFlashOverlay(meshes);                                                                              // draw the white flash overlay on top of everything else
     /*_______________________________________________________________________________________________________________________________________________________________________________________________*/
 

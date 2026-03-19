@@ -224,6 +224,7 @@ namespace Data
         AEGfxVertexList* shield_sprite_mesh = nullptr;                                                                      // 3-row mesh (shield enemy)
         AEGfxVertexList* friendly_sprite_mesh = nullptr;                                                                    // 3-row mesh (friendly)
         AEGfxVertexList* debug_box_mesh = nullptr;                                                                          // box mesh for debug shapes
+        AEGfxVertexList* heart_sprite_mesh = nullptr;                                                                       // 1-row mesh (heart health icons)
     };
 
     /*
@@ -863,9 +864,16 @@ namespace UiSystem
     void Debug_DrawDifficultyTopRight(bool show, bool auto_spawn_on, const Data::Health& health);
 
     /*
-    @author         Jeremy
+    @function       Ui_DrawHealthBar
+    @params         health (Data::Health&), meshes (Data::Meshes&), heart_anim (Data::SpriteAnim&), dt (float)
+    @brief          Draws the player health bar as a grid of animated heart sprites.
+
+    This function renders one heart icon per 10 HP of maximum health, laid out in rows of up to
+    ten hearts each. Each heart shows a full sprite when the corresponding 10 HP block is intact,
+    and a depleting animation frame matching the partial HP remaining in that block. All heart
+    animations share a single global timer so every sprite advances in lockstep.
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
-    void Ui_DrawHealthBar(Data::Health& h, Data::Meshes& meshes);
+    void Ui_DrawHealthBar(Data::Health& health, Data::Meshes& meshes, Data::SpriteAnim& heart_anim, float dt);
 
 } // UiSystem namespace end
 /*___________________________________________________________________________________________________________________________________________________________________________________________________*/

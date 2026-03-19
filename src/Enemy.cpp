@@ -56,9 +56,9 @@ namespace EnemyConfig
 
     // letter orbit effect tuning values
     const float ORBIT_RADIUS_MAX_NDC = 0.2f;                                                                                // maximum orbit radius in NDC space that letters reach at full effect
-    const float ORBIT_SPEED = 2.5f;                                                                                         // how fast letters orbit in radians per second
-    const float ORBIT_FADE_SPEED = 3.0f;                                                                                    // lerp speed when orbit radius fades in or out
-    const float ORBIT_IDLE_DURATION_SECONDS = 3.0f;                                                                         // how long letters sit at baseline between orbits
+    const float ORBIT_SPEED = 3.5f;                                                                                         // how fast letters orbit in radians per second
+    const float ORBIT_FADE_SPEED = 1.5f;                                                                                    // lerp speed when orbit radius fades in or out
+    const float ORBIT_IDLE_DURATION_SECONDS = 4.0f;                                                                         // how long letters sit at baseline between orbits
     const int   ORBIT_SPAWN_CHANCE = 40;                                                                                    // percentage chance 0 to 99 that a spawned enemy gets the orbit effect
 } // EnemyConfig namespace end
 /*___________________________________________________________________________________________________________________________________________________________________________________________________*/
@@ -288,6 +288,7 @@ namespace Graphics
     AEGfxTexture* enemy_textures[9] = { nullptr };                                                                          // enemy textures indexed by word length
     AEGfxTexture* friendly_texture = nullptr;                                                                               // princess texture
     AEGfxTexture* shield_texture = nullptr;                                                                                 // shield enemy texture
+    AEGfxTexture* heart_texture = nullptr;                                                                                  // heart health icon sprite sheet
     s8 font_id = -1;                                                                                                        // font handle id
 
     /*
@@ -958,7 +959,7 @@ namespace EnemySystem
                             if (!PowerUpSystem::IsShieldActive())                                                           // only damage if shield is not active
                             {
                                 HealthSystem::Health_Add(health, -10.0f);                                                   // damage player
-                                
+
                             }
                         }
                         else                                                                                                // damage already handled
@@ -1681,30 +1682,81 @@ namespace UiSystem
     }
 
     /*
-    @author         Jeremy
+    @function       Ui_DrawHealthBar
+    @params         health (Data::Health&), meshes (Data::Meshes&), heart_anim (Data::SpriteAnim&), dt (float)
+    @brief          Draws the player health bar as a grid of animated heart sprites.
+
+    This function renders one heart icon per 10 HP of current health, laid out in rows of up to
+    ten hearts each. Hearts are only drawn for HP blocks that exist in the current health total,
+    so losing health removes hearts and gaining health adds them back. Each heart shows a full
+    animated sprite when the corresponding 10 HP block is fully intact, and a static partial frame
+    when the block is only partially filled. All heart animations share a single global timer so
+    every sprite advances in lockstep.
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
-    void Ui_DrawHealthBar(Data::Health& health, Data::Meshes& meshes) {
-        float bar_w = 250.0f;  // Total width of the bar
-        float bar_h = 25.0f;   // Total height of the bar
-        float bar_x = -550.0f; // Center X position of the bar
-        float bar_y = 350.0f;  // Center Y position of the bar
+    void Ui_DrawHealthBar(Data::Health& health, Data::Meshes& meshes, Data::SpriteAnim& heart_anim, float dt)
+    {
+        if (!Graphics::heart_texture) return;                                                                               // skip if heart texture not loaded
+        if (!meshes.heart_sprite_mesh) return;                                                                              // skip if heart mesh not built
 
-        Graphics::Graphics_SetColorState(1.0f);
-        AEGfxSetColorToMultiply(0.8f, 0.2f, 0.2f, 1.0f); // Dark Red
-        Graphics::Draw_DrawMeshAt(meshes.debug_box_mesh, bar_x, bar_y, bar_w, bar_h, 0.0f);
+        // advance the shared animation timer so all hearts animate in lockstep
+        Animation::Animation_Update(heart_anim, dt);                                                                        // advance the shared animation timer each frame
 
-        float hp_percent = health.health_current / health.health_max;
-        hp_percent = Utility::Utility_Clamp(hp_percent, 0.0f, 1.0f);
+        const int   HEART_COLUMNS = 6;                                                                                      // frames across the sprite sheet
+        const float HEART_SIZE_PX = 50.0f;                                                                                  // rendered size of one heart in pixels
+        const float HEART_SPACING_PX = 40.0f;                                                                               // center-to-center distance between hearts (2px gap)
+        const float HEART_ROW_GAP_PX = 44.0f;                                                                               // center-to-center distance between rows (4px gap)
+        const int   HEARTS_PER_ROW = 5;                                                                                     // maximum hearts drawn per row
+        const float START_X = -745.0f;                                                                                      // world x of the first heart, aligned to top-left under score
+        const float START_Y = 360.0f;                                                                                       // world y of the first row, just below the score text
 
-        float current_w = bar_w * hp_percent;
+        float hp_max = health.health_max;                                                                                   // read max health
+        float hp_current = Utility::Utility_Clamp(health.health_current, 0.0f, hp_max);                                     // read current health, clamped
 
-        float left_edge = bar_x - (bar_w * 0.5f);
-        float new_center_x = left_edge + (current_w * 0.5f);
+        // only draw hearts that exist within the current HP total:
+        // a full 10-HP block gets one heart, and a leftover partial block also gets one heart
+        int total_hearts = (int)(hp_current / 10.0f);                                                                       // one heart per full 10 HP block
+        if (hp_current > (float)total_hearts * 10.0f) total_hearts += 1;                                                    // add one extra heart for any partial block
+        // total_hearts is now 0 when the player is dead and grows as HP is added back
 
-        AEGfxSetColorToMultiply(0.2f, 1.0f, 0.2f, 1.0f); // Bright Green
-        Graphics::Draw_DrawMeshAt(meshes.debug_box_mesh, new_center_x, bar_y, current_w, bar_h, 0.0f);
+        float uv_w = heart_anim.Anim_UvWidth();                                                                             // uv width of one frame column
 
-        AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);
+        Graphics::Graphics_SetSpriteState();                                                                                // switch to textured sprite draw mode
+
+        for (int i = 0; i < total_hearts; ++i)                                                                              // loop only over hearts that should be visible
+        {
+            int col = i % HEARTS_PER_ROW;                                                                                   // column index within the current row
+            int row = i / HEARTS_PER_ROW;                                                                                   // row index (0 is the topmost row)
+
+            float heart_x = START_X + (float)col * HEART_SPACING_PX;                                                        // world x center of this heart
+            float heart_y = START_Y - (float)row * HEART_ROW_GAP_PX;                                                        // world y center of this heart (rows go downward)
+
+            float block_hp_min = (float)(i) * 10.0f;                                                                        // hp at the start of this block
+            float block_hp_max = (float)(i + 1) * 10.0f;                                                                    // hp at the end of this block
+
+            float uv_x = 0.0f;                                                                                              // default UV x to frame 0 (full animated heart)
+
+            if (hp_current < block_hp_max)
+            {
+                // block partially filled (this is the last visible heart): static frame proportional to fill
+                float fill = (hp_current - block_hp_min) / 10.0f;                                                           // 1.0 = full, 0.0 = empty
+                fill = Utility::Utility_Clamp(fill, 0.0f, 1.0f);                                                            // clamp fill ratio to valid range
+                int partial_frame = (int)((1.0f - fill) * (float)(HEART_COLUMNS - 1) + 0.5f);                               // round to nearest depletion frame
+                if (partial_frame < 0)                 partial_frame = 0;                                                   // clamp low end
+                if (partial_frame > HEART_COLUMNS - 2) partial_frame = HEART_COLUMNS - 2;                                   // clamp to second-to-last frame (last frame = fully empty, never shown)
+                uv_x = (float)partial_frame * uv_w;                                                                         // static partial frame UV
+            }
+            else
+            {
+                // block fully intact: cycle all frames using the shared animation index
+                uv_x = (float)heart_anim.animation_frame_index * uv_w;                                                      // animated UV from shared timer
+            }
+
+            AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);                                                                // draw hearts in their natural colors
+            AEGfxTextureSet(Graphics::heart_texture, uv_x, 0.0f);                                                           // bind texture at the chosen frame, row 0
+            Graphics::Draw_DrawMeshAt(meshes.heart_sprite_mesh, heart_x, heart_y, HEART_SIZE_PX, HEART_SIZE_PX, 0.0f);      // draw the heart sprite
+        }
+
+        AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);                                                                    // restore color multiply to neutral
     }
 } // UiSystem namespace end
 /*___________________________________________________________________________________________________________________________________________________________________________________________________*/
@@ -1779,6 +1831,9 @@ namespace EnemyManage
         Graphics::enemy_textures[8] = AEGfxTextureLoad("Assets/8letterEnemy.png");                                          // load 8-letter enemy texture
         AE_ASSERT_MESG(Graphics::enemy_textures[8], "Failed to load: Assets/8letterEnemy.png");                             // stop if missing
 
+        Graphics::heart_texture = AEGfxTextureLoad("Assets/hearts.png");                                                    // load heart health icon sprite sheet
+        AE_ASSERT_MESG(Graphics::heart_texture, "Failed to load: Assets/hearts.png");                                       // stop if missing
+
         // build 2-row mesh (normal enemies)
         {
             Data::SpriteAnim anim2 = enemy_anim;
@@ -1806,8 +1861,16 @@ namespace EnemyManage
             meshes.friendly_sprite_mesh = Graphics::Mesh_BuildSpriteQuad(anim3f.Anim_UvWidth(), anim3f.Anim_UvHeight(), 0xFFFFFFFF);
         }
 
-        meshes.debug_box_mesh = Graphics::Mesh_BuildUnitRect(0xFFFFFFFF);                                                   // build debug rectangle mesh
+        // build 1-row mesh (heart health icons, 6 frames across a single row)
+        {
+            Data::SpriteAnim heart_anim_temp{};
+            heart_anim_temp.animation_columns = 6;
+            heart_anim_temp.animation_rows = 1;
 
+            meshes.heart_sprite_mesh = Graphics::Mesh_BuildSpriteQuad(heart_anim_temp.Anim_UvWidth(), heart_anim_temp.Anim_UvHeight(), 0xFFFFFFFF);
+        }
+
+        meshes.debug_box_mesh = Graphics::Mesh_BuildUnitRect(0xFFFFFFFF);                                                   // build debug rectangle mesh
         return meshes;                                                                                                      // return loaded meshes
     }
 
@@ -1856,6 +1919,7 @@ namespace EnemyManage
         if (meshes.enemy_sprite_mesh) AEGfxMeshFree(meshes.enemy_sprite_mesh);                                              // free enemy mesh
         if (meshes.shield_sprite_mesh) AEGfxMeshFree(meshes.shield_sprite_mesh);                                            // free shield mesh
         if (meshes.friendly_sprite_mesh) AEGfxMeshFree(meshes.friendly_sprite_mesh);                                        // free friendly mesh
+        if (meshes.heart_sprite_mesh) AEGfxMeshFree(meshes.heart_sprite_mesh);                                              // free heart health icon mesh
         meshes = {};                                                                                                        // reset mesh pointers to defaults
 
         for (int i = 3; i <= 8; ++i)                                                                                        // loop through enemy texture slots
@@ -1872,6 +1936,9 @@ namespace EnemyManage
 
         if (Graphics::shield_texture) AEGfxTextureUnload(Graphics::shield_texture);                                         // unload shield enemy texture
         Graphics::shield_texture = nullptr;                                                                                 // clear pointer
+
+        if (Graphics::heart_texture) AEGfxTextureUnload(Graphics::heart_texture);                                           // unload heart health icon texture
+        Graphics::heart_texture = nullptr;                                                                                  // clear pointer
 
         if (Graphics::font_id >= 0)                                                                                         // check if font exists
         {

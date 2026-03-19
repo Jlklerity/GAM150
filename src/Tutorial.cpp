@@ -79,6 +79,7 @@ namespace
     Data::Health        s_health{};
     Data::Score         s_score{};
     Data::SpriteAnim    s_enemyAnim{};
+    Data::SpriteAnim    s_heartAnim{};
     Data::EnemyArea     s_enemyArea{};
     Data::Meshes        s_meshes{};
     std::vector<Data::Enemy> s_pool;
@@ -478,6 +479,12 @@ void Tutorial_Init()
     s_isFading = false;
     s_fadeTimer = 0.0f;
 
+    // Initialise shared heart animation state (6 frames, single row sprite sheet)
+    s_heartAnim = {};
+    s_heartAnim.animation_columns = 6;
+    s_heartAnim.animation_rows = 1;
+    s_heartAnim.animation_frame_duration_seconds = 0.10f;
+
     StartStage(STAGE_BASIC_TYPING);
 }
 
@@ -751,7 +758,7 @@ void Tutorial_Update()
 
     Typing_Render();
     UiSystem::Ui_DrawScoreAndTyped(s_score);
-    UiSystem::Ui_DrawHealthBar(s_health, s_meshes);
+    UiSystem::Ui_DrawHealthBar(s_health, s_meshes, s_heartAnim, dt);
 
     DrawSpeechBubble(s_objectiveMet);
 
