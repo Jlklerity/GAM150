@@ -13,6 +13,7 @@
 #include "StreakSystem.h"
 #include "Particles.h"
 #include "SoundManager.h"
+#include "DayCycle.h"
 
 
 
@@ -405,6 +406,12 @@ void Typing_DrawEnemyWords(const std::vector<Data::Enemy>& enemy_pool)
 {
     if (Graphics::font_id < 0) return;                                                                                      // skip if font missing
 
+    // Lerp untyped word color from black (day) to white (night)
+    float nightA = DayCycle::GetNightAlpha();
+    float untypedR = nightA;
+    float untypedG = nightA;
+    float untypedB = nightA;
+
     for (int i = 0; i < (int)enemy_pool.size(); ++i)                                                                        // loop through all enemies by index so we can compare against s_targetIndex
     {
         const Data::Enemy& e = enemy_pool[(size_t)i];                                                                       // read enemy data
@@ -455,8 +462,8 @@ void Typing_DrawEnemyWords(const std::vector<Data::Enemy>& enemy_pool)
 
                 if (li < split)                                                                                             // typed portion, draw green
                     AEGfxPrint(Graphics::font_id, single, final_x, final_y, EnemyConfig::TEXT_SCALE, 0.1f, 0.65f, 0.1f, 1);
-                else                                                                                                        // untyped portion, draw black
-                    AEGfxPrint(Graphics::font_id, single, final_x, final_y, EnemyConfig::TEXT_SCALE, 0, 0, 0, 1);
+                else                                                                                                        // untyped portion, lerp black->white at night
+                    AEGfxPrint(Graphics::font_id, single, final_x, final_y, EnemyConfig::TEXT_SCALE, untypedR, untypedG, untypedB, 1);
 
                 cursor_x += lw;                                                                                             // advance baseline cursor
             }
@@ -485,7 +492,7 @@ void Typing_DrawEnemyWords(const std::vector<Data::Enemy>& enemy_pool)
                     final_y = draw_y + (orbit_y - draw_y) * t;                                                              // blend baseline to orbit y
                 }
 
-                AEGfxPrint(Graphics::font_id, single, final_x, final_y, EnemyConfig::TEXT_SCALE, 0, 0, 0, 1);               // draw letter in black at final position
+                AEGfxPrint(Graphics::font_id, single, final_x, final_y, EnemyConfig::TEXT_SCALE, untypedR, untypedG, untypedB, 1);               // draw letter lerped black->white at night
                 cursor_x += lw;                                                                                             // advance baseline cursor
             }
         }

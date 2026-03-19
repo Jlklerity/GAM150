@@ -1,13 +1,12 @@
-
-
 #include "GameClouds.h"
 #include "MeshTemplates.h"
 #include "MeshRenderer.h"
 #include "AEEngine.h"
+#include "DayCycle.h"
 
 namespace
 {
-    AEGfxTexture*    s_cloudTex  = nullptr;
+    AEGfxTexture* s_cloudTex = nullptr;
     AEGfxVertexList* s_cloudMesh = nullptr;
 
     float s_uOffset = 0.0f;
@@ -31,7 +30,7 @@ namespace GameClouds
             AEGfxMeshFree(s_cloudMesh);
             s_cloudMesh = nullptr;
         }
-        s_uOffset  = 0.0f;
+        s_uOffset = 0.0f;
 
         s_cloudTex = AEGfxTextureLoad("Assets/cloudextra.png");
         AE_ASSERT_MESG(s_cloudTex, "Failed to load cloudextra.png");
@@ -52,12 +51,16 @@ namespace GameClouds
     {
         if (!s_cloudTex || !s_cloudMesh) return;
 
+        // Fade clouds out as night falls
+        float cloudAlpha = 1.0f - DayCycle::GetNightAlpha();
+        if (cloudAlpha <= 0.01f) return;
+
         float camX, camY;
         AEGfxGetCamPosition(&camX, &camY);
 
         AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
         AEGfxSetBlendMode(AE_GFX_BM_BLEND);
-        AEGfxSetTransparency(1.0f);
+        AEGfxSetTransparency(cloudAlpha);
         AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);
         AEGfxTextureSet(s_cloudTex, s_uOffset, 0.0f);
         Mesh_Renderer(s_cloudMesh, camX, camY + 180.0f, 1.0f, 1.0f, 0.0f);

@@ -32,6 +32,7 @@
     <ClCompile Include="src\SoundManager.cpp" />
     <ClCompile Include="src\CreditScreen.cpp" />
     <ClCompile Include="src\UpgradeSystem.cpp" />
+    <ClCompile Include="src\DayCycle.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\Enemy.h" />
@@ -64,6 +65,7 @@
     <ClInclude Include="src\SoundManager.h" />
     <ClInclude Include="src\CreditScreen.h" />
     <ClInclude Include="src\UpgradeSystem.h" />
+    <ClInclude Include="src\DayCycle.h" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="Assets\characterSheet.png" />

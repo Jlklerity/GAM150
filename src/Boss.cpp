@@ -8,7 +8,8 @@
 #include "Boss.h"
 #include "AEEngine.h"
 #include "SoundManager.h"
-#include <unordered_set>                                                                                                    // for boss_used_words history tracking
+#include <unordered_set>                           
+#include "Daycycle.h"// for boss_used_words history tracking
 
 /*
 @namespace      BossConfig
@@ -832,7 +833,10 @@ namespace BossSystem
                 "BOSS %d / %d", boss_words_typed, BossConfig::BOSS_WORDS_TO_DEFEAT);
 
             AEGfxSetBlendMode(AE_GFX_BM_BLEND);                                                                             // use blending so the text renders correctly
-            AEGfxPrint(Graphics::font_id, progress_buf, -0.1f, 0.8f, 0.55f, 0.0f, 0.0f, 0.0f, 1.0f);                        // draw the progress counter near the top of the screen
+            if (DayCycle::IsNight())
+                AEGfxPrint(Graphics::font_id, progress_buf, -0.1f, 0.8f, 0.55f, 1.0f, 1.0f, 1.0f, 1.0f); // white at night
+            else
+                AEGfxPrint(Graphics::font_id, progress_buf, -0.1f, 0.8f, 0.55f, 0.0f, 0.0f, 0.0f, 1.0f); // black during day
         }
     }
 

@@ -23,6 +23,8 @@
 #include "StreakSystem.h"
 #include "UpgradeSystem.h"
 #include "SoundManager.h"
+#include "DayCycle.h"
+
 
 namespace {
     //avatar mesh and texture
@@ -105,6 +107,7 @@ void Game_Init()
     if (bgMesh) { AEGfxMeshFree(bgMesh);          bgMesh = nullptr; }
 
     GameClouds::Exit();
+    DayCycle::Exit();
     LaserBeam_Free();
     StreakSystem::Exit();
     SoundManager::Exit();
@@ -122,7 +125,7 @@ void Game_Init()
     playerMesh = Sprite_Mesh(SPRITE_UV_WIDTH, SPRITE_UV_HEIGHT);
 
     // Background
-    bgTexture1 = AEGfxTextureLoad("Assets/background.png");
+    bgTexture1 = AEGfxTextureLoad("Assets/transbackground.png");
     AE_ASSERT_MESG(bgTexture1, "Failed to load background!");
     bgTexture2 = AEGfxTextureLoad("Assets/background.png"); //for ltr when we have more bg skins
     AE_ASSERT_MESG(bgTexture2, "Failed to load background!");
@@ -136,6 +139,7 @@ void Game_Init()
 
     bgMesh = Rect_Mesh(1.0f, 1.0f, 0xFFFFFFFF);
     GameClouds::Init();
+    DayCycle::Init();
     Typing_Init();
     Leaderboard_System::Init();
     //Shop_Init();
@@ -202,6 +206,7 @@ void Game_Update()
         dt *= PowerUpSystem::GetTimeScale(); // azfar code
 
         GameClouds::Update(dt);
+        DayCycle::Update(dt);
         /*
         @overview   Boss update and enemy spawning
         @author     Wong Zi Yuan (w.ziyuan@digipen.edu)
@@ -209,6 +214,9 @@ void Game_Update()
         DifficultySystem::Difficulty_UpdateOverTime(dt);                                                                              // increase difficulty over time
         BossSystem::Boss_Update(enemy_pool, free_slot_queue, enemy_area, word_bank, dt, boss_spawning_blocked);                       // run boss logic for this frame
         GameEnemyBoss::Update(dt, enemy_pool, free_slot_queue, enemy_area, word_bank, health, boss_spawning_blocked, is_random_spawning_enabled, random_spawn_timer_seconds);
+
+        if (boss_spawning_blocked)
+            DayCycle::TriggerTransition();
         /*_______________________________________________________________________________________________________________________________________________________________________________________________*/
 
         PowerUpSystem::Update(dt, enemy_pool, enemy_area, health);
@@ -288,9 +296,17 @@ render_only:
 
     AEGfxTexture* activeBg = (gShopBgID == 0) ? bgTexture1 : bgTexture2;
     AEGfxTextureSet(activeBg, 0.0f, 0.0f);
-    Mesh_Renderer(bgMesh, 0.0f, 0.0f, 1600.0f, 900.0f, 0.0f);
-
+    // 1. Draw sky (DayCycle owns this completely)
+    DayCycle::Draw();
     GameClouds::Draw();
+
+    // 2. Draw ground on top (sky area is transparent, unaffected by night overlay)
+    AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
+    AEGfxSetBlendMode(AE_GFX_BM_BLEND);
+    AEGfxSetTransparency(1.0f);
+    AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);
+    AEGfxTextureSet(activeBg, 0.0f, 0.0f);
+    Mesh_Renderer(bgMesh, 0.0f, 0.0f, 1600.0f, 900.0f, 0.0f);
 
     Weather_DrawBackground(); // Rainbow draws here, behind enemies
 
@@ -375,6 +391,7 @@ void Game_Exit()
     SoundManager::Exit();
     DeathTransition::Reset();
     GameClouds::Exit();
+    DayCycle::Exit();
     StreakSystem::Exit();
 
     if (playerMesh) {
