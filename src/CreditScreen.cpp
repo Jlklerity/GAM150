@@ -8,14 +8,11 @@ namespace
     float scrollSpeed = 0.35f;
 
     const char* creditLines[] = {
-        "REVENGE OF YK", // Replace with your game name
-        "TEAM FAREWELL YK", // Replace with your team name
-        "TEAM MEMBERS",
-        "ZI YUAN",
-        "PENG FEI",
-        "AZFAR",
-        "JEREMY LIM",
+        "REVENGE OF YK",
+        "FAREWELL YK",
         "",
+        "All content (c) 2026 DigiPen Institute of Technology Singapore.",
+        "All Rights Reserved.",
         "",
         "PROGRAMMERS",
         "ZI YUAN",
@@ -23,11 +20,9 @@ namespace
         "AZFAR",
         "JEREMY LIM",
         "",
-        "",
         "ART DESIGNERS",
         "PENG FEI",
         "AZFAR",
-        "",
         "",
         "SOUND DESIGNERS",
         "ZI YUAN",
@@ -35,6 +30,11 @@ namespace
         "AZFAR",
         "JEREMY LIM",
         "",
+        "TOOLS AND LIBRARIES",
+        "ALPHA ENGINE",
+        "metadigger",
+        "aseprite on steam",
+        "piskel",
         "",
         "FACULTY AND ADVISORS",
         "GERALD WONG HAN FENG  <3",
@@ -42,21 +42,11 @@ namespace
         "TOMMY TAN CHEE WEI",
         "",
         "",
-        "",
-        "Created at DigiPen Institute of Technology Singapore",
-        "",
-        "",
-        "SPECIAL THANKS",
-        "JOSES",
-        "",
-        "",
-        "",
         "CREATED AT DIGIPEN INSTITUTE OF TECHNOLOGY SINGAPORE",
         "",
         "",
         "PRESIDENT",
         "Claude Comair",
-        "",
         "",
         "EXECUTIVES",
         "Jason Chu",
@@ -66,22 +56,6 @@ namespace
         "Erik Mohrmann",
         "Benjamin Ellinger",
         "Melvin Gonsalvez",
-        "",
-        "",
-        "",
-        "WWW.DIGIPEN.EDU",
-        "All content (c) 2026 DigiPen Institute of Technology Singapore.",
-        "All Rights Reserved.",
-        "",
-        "",
-        "",
-        "TOOLS AND LIBRARIES",
-        "ALPHA ENGINE",
-        "metadigger", 
-        "aseprite on steam",
-        "piskel",
-        "",
-        "",
         "",
         "THANK YOU FOR PLAYING!"
     };
@@ -154,7 +128,7 @@ namespace
 
                 if (ndcY > -1.2f && ndcY < 1.2f)
                 {
-                    if (line == "YOUR TEAM NAME" ||
+                    if (line == "REVENGE OF YK" ||
                         line == "TEAM MEMBERS" || line == "FACULTY AND ADVISORS" || 
                         line == "PROGRAMMERS" || line == "ART DESIGNERS" || line == "SOUND DESIGNERS" ||
                         line == "SPECIAL THANKS" || line == "TOOLS AND LIBRARIES" ||
