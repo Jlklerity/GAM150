@@ -41,7 +41,7 @@ namespace BossConfig
 
     // Trick Room special attack
     const int   BOSS_TRICK_ROOM_FIRST_TRIGGER = 5;                                                                          // fire Trick Room after the player types this many kill words
-    const int   BOSS_TRICK_ROOM_INTERVAL = 10;                                                                              // fire Trick Room again every N kill words after the first trigger
+    const int   BOSS_TRICK_ROOM_INTERVAL = 7;                                                                               // fire Trick Room again every N kill words after the first trigger
     const float BOSS_TRICK_ROOM_DURATION_SECONDS = 20.0f;                                                                   // how long each Trick Room phase lasts
     const float BOSS_TRICK_ROOM_COOLDOWN_SECONDS = 15.0f;                                                                   // minimum gap before Trick Room can trigger again
     const float BOSS_TRICK_ROOM_OVERLAY_ALPHA = 0.20f;                                                                      // opacity of the purple tint drawn over the screen during Trick Room
