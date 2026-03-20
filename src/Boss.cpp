@@ -886,6 +886,7 @@ namespace BossSystem
         // DEAD state
         case BossState::DEAD:
         {
+            tr_state = TrickRoomState::INACTIVE;
             boss_spawning_blocked = false;                                                                                  // allow normal enemy spawning to resume
             boss_anim_timer += dt;                                                                                          // count up toward the next death animation frame
             if (boss_anim_timer >= BOSS_ANIM_DEATH_FRAME_DURATION)                                                          // check if enough time has passed to advance the death frame

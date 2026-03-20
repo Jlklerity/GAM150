@@ -195,7 +195,11 @@ namespace
                 PushHistory("Usage: /kill boss", true);
                 return;
             }
-
+            if (!BossSystem::Boss_IsActive())
+            {
+                PushHistory("Error: boss must be active to kill it.", true);
+                return;
+            }
             if (IEquals(tokens[1], "boss"))
             {
                 BossSystem::Boss_ForceKill(*s_pEnemyPool, *s_pFreeSlots);
@@ -288,8 +292,8 @@ namespace
             PushHistory("/spawn friendly      - spawn a friendly enemy", false);
             PushHistory("/spawn shield        - spawn a shielded enemy", false);
             PushHistory("/spawn boss          - force-spawn the boss", false);
-            PushHistory("/kill boss           - instantly kill the active boss", false);
             PushHistory("/spawn minion        - spawn a boss minion (boss required)", false);
+            PushHistory("/kill boss           - instantly kill the active boss (boss required)", false);
             PushHistory("/trickroom           - force-trigger Trick Room (boss required)", false);
             PushHistory("/health add          - add 10 HP", false);
             PushHistory("/health die          - kills player", false);
