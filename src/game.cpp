@@ -126,6 +126,7 @@ void Game_Init()
     @overview   Enemy and Boss
     @author     Wong Zi Yuan (w.ziyuan@digipen.edu)
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
+    UpgradeSystem::Upgrade_Reset();                                                                                          // clear all upgrade bonuses
     GameEnemyBoss::Init(meshes, word_bank, health, enemy_animation, enemy_area, enemy_pool, free_slot_queue, boss_spawning_blocked);
     /*_______________________________________________________________________________________________________________________________________________________________________________________________*/
 
@@ -167,7 +168,7 @@ void Game_Update()
     // ------------------------------------------------------------------------
     // 1. INPUTS
     // ------------------------------------------------------------------------
-    if (AEInputCheckTriggered(AEVK_ESCAPE)) 
+    if (AEInputCheckTriggered(AEVK_ESCAPE))
     {
 
         if (isPaused)
@@ -385,7 +386,7 @@ render_only:
     }
     wasPaused = isPaused;
 
-     // Game Over & Leaderboard OVERLAY
+    // Game Over & Leaderboard OVERLAY
     if (isDead)
     {
         float _dt = (float)AEFrameRateControllerGetFrameTime();
