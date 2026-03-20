@@ -601,7 +601,7 @@ namespace BossSystem
 
     /*
     @function       Boss_Update
-    @params         pool (std::vector<Data::Enemy>&), free_slots (std::deque<int>&), area (const Data::EnemyArea&), bank (const Data::WordBank&), dt (float), boss_spawning_blocked (bool&)
+    @params         pool (std::vector<Data::Enemy>&), free_slots (std::deque<int>&), area (const Data::EnemyArea&), bank (const Data::WordBank&), dt (float), boss_spawning_blocked (bool&), is_random_spawning_enabled (bool) 
     @brief          Full per frame boss tick covering timing, state transitions, movement, and minion management.
 
     This function owns the 60 second spawn trigger, the pool clear wait, the cutscene countdown,
@@ -611,7 +611,7 @@ namespace BossSystem
     the boss is fully defeated so the caller can stop regular enemy spawning during the entire
     boss event.
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
-    void Boss_Update(std::vector<Data::Enemy>& pool, std::deque<int>& free_slots, const Data::EnemyArea& area, const Data::WordBank& bank, float dt, bool& boss_spawning_blocked)
+    void Boss_Update(std::vector<Data::Enemy>& pool, std::deque<int>& free_slots, const Data::EnemyArea& area, const Data::WordBank& bank, float dt, bool& boss_spawning_blocked, bool is_random_spawning_enabled)
     {
         // Flash attack timer runs every frame while the boss is active.
         if (boss_state == BossState::ACTIVE)                                                                                // only tick the flash timer when the boss is actually fighting
@@ -637,7 +637,8 @@ namespace BossSystem
             // INACTIVE state
         case BossState::INACTIVE:
         {
-            boss_cycle_timer_seconds += dt;                                                                                 // count up each frame toward the spawn trigger time
+            if (is_random_spawning_enabled)                                                                                 // only tick when autospawn is on
+                boss_cycle_timer_seconds += dt;                                                                             // count up each frame toward the spawn trigger time
 
             if (boss_cycle_timer_seconds >= BossConfig::BOSS_SPAWN_INTERVAL_SECONDS)                                        // check if the spawn timer has reached the threshold
             {

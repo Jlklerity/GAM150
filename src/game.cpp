@@ -226,7 +226,7 @@ void Game_Update()
         @author     Wong Zi Yuan (w.ziyuan@digipen.edu)
         *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
         DifficultySystem::Difficulty_UpdateOverTime(dt);                                                                              // increase difficulty over time
-        BossSystem::Boss_Update(enemy_pool, free_slot_queue, enemy_area, word_bank, dt, boss_spawning_blocked);                       // run boss logic for this frame
+        BossSystem::Boss_Update(enemy_pool, free_slot_queue, enemy_area, word_bank, dt, boss_spawning_blocked, is_random_spawning_enabled);                       // run boss logic for this frame
         GameEnemyBoss::Update(dt, enemy_pool, free_slot_queue, enemy_area, word_bank, health, boss_spawning_blocked, is_random_spawning_enabled, random_spawn_timer_seconds);
         if (boss_spawning_blocked && !s_dayTransitionFired)
         {

@@ -98,7 +98,7 @@ namespace BossSystem
 
     /*
     @function       Boss_Update
-    @params         pool (std::vector<Data::Enemy>&), free_slots (std::deque<int>&), area (const Data::EnemyArea&), bank (const Data::WordBank&), dt (float), boss_spawning_blocked (bool&)
+    @params         pool (std::vector<Data::Enemy>&), free_slots (std::deque<int>&), area (const Data::EnemyArea&), bank (const Data::WordBank&), dt (float), boss_spawning_blocked (bool&), is_random_spawning_enabled (bool)
     @brief          Full per frame boss tick: timing, state transitions, movement, minion management,
                     kill word pool injection and removal, hit feedback, and flash attack.
 
@@ -107,7 +107,7 @@ namespace BossSystem
     decay, and flash attack timing. It sets boss_spawning_blocked to true from the moment the 60 second
     mark is hit until the boss is fully defeated, so the caller can gate regular enemy spawning.
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
-    void Boss_Update(std::vector<Data::Enemy>& pool, std::deque<int>& free_slots, const Data::EnemyArea& area, const Data::WordBank& bank, float dt, bool& boss_spawning_blocked);
+    void Boss_Update(std::vector<Data::Enemy>& pool, std::deque<int>& free_slots, const Data::EnemyArea& area, const Data::WordBank& bank, float dt, bool& boss_spawning_blocked, bool is_random_spawning_enabled);
 
     /*
     @function       Boss_Draw
