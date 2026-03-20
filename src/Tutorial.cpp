@@ -847,7 +847,6 @@ void Tutorial_Update()
                     shieldWasActive = true;
                 }
 
-                // Step 2: detect when it ENDS
                 if (shieldWasActive && !PowerUpSystem::IsShieldActive())
                 {
                     s_objectiveMet = true;

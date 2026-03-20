@@ -128,15 +128,24 @@ namespace ParallaxZoom
             Mesh_Renderer(s_layerMesh, camX, renderY, winW * zoom, winH * zoom, 0.0f);
         }
 
-        // Fade to black
         float fadeAlpha = Remap01(t, FADE_START_T, 1.0f);
-        if (fadeAlpha > 0.0f && s_fadeMesh)
+        if (s_fadeMesh && fadeAlpha > 0.0f)
         {
             AEGfxSetRenderMode(AE_GFX_RM_COLOR);
-            AEGfxSetBlendMode(AE_GFX_BM_BLEND);
-            AEGfxSetTransparency(fadeAlpha);
             AEGfxSetColorToMultiply(0.0f, 0.0f, 0.0f, 1.0f);
-            Mesh_Renderer(s_fadeMesh, camX, camY, winW, winH, 0.0f);
+
+            if (fadeAlpha >= 0.5f)  // switch to BM_NONE at 50% fade, not 100%
+            {
+                AEGfxSetBlendMode(AE_GFX_BM_NONE);
+                AEGfxSetTransparency(1.0f);
+            }
+            else
+            {
+                AEGfxSetBlendMode(AE_GFX_BM_BLEND);
+                AEGfxSetTransparency(fadeAlpha * 2.0f); // remap 0-0.5 to 0-1
+            }
+
+            Mesh_Renderer(s_fadeMesh, camX, camY, winW * 3.0f, winH * 3.0f, 0.0f);
         }
     }
 

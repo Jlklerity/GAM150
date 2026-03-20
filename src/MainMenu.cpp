@@ -434,7 +434,7 @@ void ResetPlayerName(std::string& reset_name)
 *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
 void Main_Menu_EnterName(float worldYOffset, float ndcYOffset, bool allowInput)
 {
-    AEGfxSetBackgroundColor(0.0f, 0.0f, 0.0f);                                                                              // force clear background color
+    //AEGfxSetBackgroundColor(0.0f, 0.0f, 0.0f);                                                                              // force clear background color
     s32 mouseX, mouseY;                                                                                                     // raw mouse inputs
     AEInputGetCursorPosition(&mouseX, &mouseY);                                                                             // grab cursor screen pos
 
@@ -515,7 +515,7 @@ void Main_Menu_EnterName(float worldYOffset, float ndcYOffset, bool allowInput)
         }
     }
 
-    AEGfxSetBackgroundColor(0.53f, 0.81f, 0.92f);                                                                              // clear screen to black
+   // AEGfxSetBackgroundColor(0.53f, 0.81f, 0.92f);                                                                              // clear screen to black
 
     // Draw Exit Name Button
     if (pTexBackName) {
@@ -637,7 +637,8 @@ void Main_Menu_Init()
     Leaderboard_System::Init();
     Leaderboard_System::Read_ZenLeaderboard();
     Leaderboard_System::Read_TimeLeaderboard();
-
+    isZoomingToGame = false;
+    ParallaxZoom::Reset();
 
     /*if (gGameStatePrev != GS_SHOP)
         if (gGameStatePrev != GS_SHOP && gGameStatePrev != GS_CREDITS)
@@ -842,8 +843,10 @@ void Main_Menu_Update()
     CREDITS_BTN_Y = winH * -0.4f;
 
     AEGfxSetCamPosition(0.0f, 0.0f);                                                                                        // reset camera explicitly
-    AEGfxSetBackgroundColor(0.53f, 0.81f, 0.92f);                                                                              // clear screen to black
-
+    if (isZoomingToGame || ParallaxZoom::IsActive())
+        AEGfxSetBackgroundColor(0.0f, 0.0f, 0.0f);
+    else
+        AEGfxSetBackgroundColor(0.53f, 0.81f, 0.92f);
 
     float camY = 0.0f;                                                                                                      // initialize camera Y variable
     float textNdcOffset = 0.0f;                                                                                             // initialize text offset variable
@@ -1036,6 +1039,7 @@ void Main_Menu_Update()
 *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
 void Main_Menu_Exit()
 {
+    AEGfxSetBackgroundColor(0.53f, 0.81f, 0.92f);
     SysSettings::Exit();
     if (gGameStateNext != GS_SHOP && gGameStateNext != GS_CREDITS) {
         BackgroundParallax::MenuParallax_Exit();
