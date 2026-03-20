@@ -421,7 +421,7 @@ namespace UiPauseMenu
             promptText = "EXIT TO MAIN MENU?";
         }
 
-        float pw, ph, ww, wh, yw, yh, nw, nh;
+        float pw{}, ph{}, ww{}, wh{}, yw{}, yh{}, nw{}, nh{};
         AEGfxGetPrintSize(Graphics::font_id, promptText, 0.8f, &pw, &ph);
 
         if (currentPopupAction != POPUP_QUIT && gGameStateCurr != GS_TUTORIAL) {
