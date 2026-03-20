@@ -264,7 +264,7 @@ namespace
         e.enemy_orbit_initialised = true;
         e.enemy_has_orbit_effect = true;
         e.enemy_orbit_phase = 0;
-        e.enemy_orbit_idle_timer = EnemyConfig::ORBIT_IDLE_DURATION_SECONDS;
+        e.enemy_orbit_idle_timer = 2.0f;
         e.enemy_orbit_radius = 0.0f;
         e.enemy_orbit_timer = 0.0f;
     }
