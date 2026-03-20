@@ -25,6 +25,7 @@ namespace EnemyConfig
     // Visual and text sizing
     const float ENEMY_SIZE_PX = 150.0f;                                                                                     // enemy sprite size
     const float TEXT_SCALE = 0.6f;                                                                                          // enemy word text scale
+    const float WORD_LABEL_OFFSET_PX = 80.0f;                                                                               // word drawn y axis offset
 
     // Difficulty tuning
     const float DIFFICULTY_RAMP_PER_SECOND = 0.1f;                                                                          // difficulty gain per second
@@ -1261,8 +1262,11 @@ namespace EnemySystem
         float text_w = 0.0f, text_h = 0.0f;
         AEGfxGetPrintSize(Graphics::font_id, e.enemy_word_text.c_str(), EnemyConfig::TEXT_SCALE, &text_w, &text_h);         // measure full word size for centering
 
+        float half_win_h = AEGfxGetWinMaxY();
+        float label_offset_ndc = (half_win_h > 0.0f) ? (EnemyConfig::WORD_LABEL_OFFSET_PX / half_win_h) : 0.0f;
+
         float draw_x = ndc_x - (text_w * 0.5f);                                                                             // center text horizontally
-        float draw_y = ndc_y - (text_h * -2.5f);                                                                            // position text above enemy
+        float draw_y = ndc_y + label_offset_ndc;                                                                            // position text above enemy
 
         AEGfxSetBlendMode(AE_GFX_BM_BLEND);                                                                                 // enable blending for text
 

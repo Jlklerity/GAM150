@@ -38,6 +38,15 @@ namespace BossConfig
     const int   BOSS_MINION_WAVE_SIZE = 5;                                                                                  // how many minions spawn in one wave
     const float BOSS_CUTSCENE_DURATION_SECONDS = 3.0f;                                                                      // how long the boss entrance animation plays before gameplay resumes
     const float BOSS_POSITION_Y = 120.0f;                                                                                   // the fixed vertical position where the boss sits during a fight
+
+    // Trick Room special attack
+    const int   BOSS_TRICK_ROOM_FIRST_TRIGGER = 5;                                                                          // fire Trick Room after the player types this many kill words
+    const int   BOSS_TRICK_ROOM_INTERVAL = 10;                                                                              // fire Trick Room again every N kill words after the first trigger
+    const float BOSS_TRICK_ROOM_DURATION_SECONDS = 20.0f;                                                                   // how long each Trick Room phase lasts
+    const float BOSS_TRICK_ROOM_COOLDOWN_SECONDS = 15.0f;                                                                   // minimum gap before Trick Room can trigger again
+    const float BOSS_TRICK_ROOM_OVERLAY_ALPHA = 0.20f;                                                                      // opacity of the purple tint drawn over the screen during Trick Room
+    const float BOSS_TRICK_ROOM_WARNING_DURATION_SECONDS = 2.5f;                                                            // how long the "TRICK ROOM!" banner stays on-screen
+    const float BOSS_TRICK_ROOM_FADE_DURATION_SECONDS = 2.0f;                                                               // how long the purple tint fades out after Trick Room ends
 } // BossConfig namespace end
 /*___________________________________________________________________________________________________________________________________________________________________________________________________*/
 
@@ -88,6 +97,7 @@ namespace
     // kill word pool slot
     int         boss_pool_slot = -1;                                                                                        // which slot in the enemy pool the boss is using for its kill word
     std::string boss_current_word;                                                                                          // the word the player must type to damage the boss right now
+    float       boss_kill_word_anchor_y = BossConfig::BOSS_POSITION_Y;                                                      // overwritten in Boss_Init once the sprite scale constants are available
 
     // targeting lock
     bool        boss_kill_word_in_pool = false;                                                                             // true when the kill word is visible and targetable by the player
@@ -115,21 +125,19 @@ namespace
     AEGfxVertexList* boss_sprite_mesh = nullptr;                                                                            // mesh built to match the boss sprite sheet UV layout
     AEGfxVertexList* boss_flash_mesh = nullptr;                                                                             // full screen rectangle used to draw the flash overlay
 
-    /*
-    Kill word anchor Y, computed once in Boss_Init so every system reads the exact same value.
-
-    Previously the formula (BOSS_POSITION_Y + 2.5 * (boss_half - normal_half)) was duplicated in
-    three places: the WAITING slot setup, the CUTSCENE-to-ACTIVE transition, and the ACTIVE per-frame
-    pin. If any one of those sites missed the extra offset the kill word would appear at the wrong
-    height. Precomputing it here removes all duplication and makes the correct position impossible
-    to get wrong at any call site.
-    */
-    float       boss_kill_word_anchor_y = BossConfig::BOSS_POSITION_Y;                                                      // overwritten in Boss_Init once the sprite scale constants are available
-
     // defeat signal, set true for one frame when DEAD transitions to INACTIVE
     bool        boss_was_defeated = false;                                                                                  // set true once when DEAD finishes; cleared on read by Boss_WasJustDefeated
 
-    // helpers
+    // Trick Room state
+    enum class TrickRoomState { INACTIVE, ACTIVE, COOLDOWN };
+
+    TrickRoomState  tr_state = TrickRoomState::INACTIVE;                                                                    // which phase the Trick Room mechanic is in
+    float           tr_timer = 0.0f;                                                                                        // counts down from BOSS_TRICK_ROOM_DURATION_SECONDS while ACTIVE
+    float           tr_cooldown_timer = 0.0f;                                                                               // counts down from BOSS_TRICK_ROOM_COOLDOWN_SECONDS while COOLDOWN
+    float           tr_fade_timer = 0.0f;                                                                                   // counts down from BOSS_TRICK_ROOM_FADE_DURATION_SECONDS for the tint fade-out
+    float           tr_warning_timer = 0.0f;                                                                                // counts down for the "TRICK ROOM!" banner shown at phase start
+    int             tr_next_trigger_count = 0;                                                                              // kill-word count at which the next Trick Room fires
+    AEGfxVertexList* tr_overlay_mesh = nullptr;                                                                             // plain white unit rect used to draw the purple tint overlay
 
     /*
     @function       Boss_CountActiveMinions
@@ -290,7 +298,153 @@ namespace
         if (boss_pool_slot < 0 || boss_pool_slot >= (int)pool.size()) return;                                               // slot is not valid so there is nothing to pin
         pool[(size_t)boss_pool_slot].enemy_position_x = boss_position_x;                                                    // keep kill word locked to the current boss X
         pool[(size_t)boss_pool_slot].enemy_position_y = boss_kill_word_anchor_y;                                            // keep kill word at the precomputed anchor Y
-        pool[(size_t)boss_pool_slot].enemy_orbit_initialised = true;                                                         // prevent the orbit system from displacing the kill word above its anchor
+        pool[(size_t)boss_pool_slot].enemy_orbit_initialised = true;                                                        // prevent the orbit system from displacing the kill word above its anchor
+    }
+
+    /*
+    @function       TrickRoom_BuildOverlayMesh
+    @brief          Allocates (or reallocates) the plain white unit rect used for the purple tint overlay.
+    *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
+    void TrickRoom_BuildOverlayMesh()
+    {
+        if (tr_overlay_mesh) { AEGfxMeshFree(tr_overlay_mesh); tr_overlay_mesh = nullptr; }                                 // free old mesh before rebuilding
+        tr_overlay_mesh = Graphics::Mesh_BuildUnitRect(0xFFFFFFFF);                                                         // white unit rect, tinted purple at draw time
+    }
+
+    /*
+    @function       TrickRoom_FreeOverlayMesh
+    @brief          Releases the Trick Room overlay mesh and clears the pointer.
+    *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
+    void TrickRoom_FreeOverlayMesh()
+    {
+        if (tr_overlay_mesh) { AEGfxMeshFree(tr_overlay_mesh); tr_overlay_mesh = nullptr; }                                 // release overlay mesh so nothing leaks on exit
+    }
+
+    /*
+    @function       TrickRoom_ResetState
+    @brief          Resets all Trick Room runtime state to defaults.  Safe to call at any time.
+    *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
+    void TrickRoom_ResetState()
+    {
+        tr_state = TrickRoomState::INACTIVE;                                                                                // phase is not running
+        tr_timer = 0.0f;                                                                                                    // no active countdown
+        tr_cooldown_timer = 0.0f;                                                                                           // no cooldown running
+        tr_fade_timer = 0.0f;                                                                                               // no fade running
+        tr_warning_timer = 0.0f;                                                                                            // no banner visible
+        tr_next_trigger_count = BossConfig::BOSS_TRICK_ROOM_FIRST_TRIGGER;                                                  // first trigger threshold
+    }
+
+    /*
+    @function       TrickRoom_TriggerInternal
+    @brief          Activates Trick Room.  Only fires when the boss is ACTIVE and the phase is INACTIVE.
+    *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
+    void TrickRoom_TriggerInternal()
+    {
+        if (boss_state != BossState::ACTIVE)    return;                                                                     // Trick Room only makes sense during a live boss fight
+        if (tr_state != TrickRoomState::INACTIVE) return;                                                                   // already running or on cooldown, ignore
+
+        tr_state = TrickRoomState::ACTIVE;                                                                                  // enter the active Trick Room phase
+        tr_timer = BossConfig::BOSS_TRICK_ROOM_DURATION_SECONDS;                                                            // set the 20-second countdown
+        tr_warning_timer = BossConfig::BOSS_TRICK_ROOM_WARNING_DURATION_SECONDS;                                            // show the banner for a couple of seconds
+    }
+
+    /*
+    @function       TrickRoom_UpdateInternal
+    @param          dt (float)
+    @brief          Advances the Trick Room timer and transitions states when they expire.
+                    Call once per frame inside Boss_Update while the boss is ACTIVE.
+    *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
+    void TrickRoom_UpdateInternal(float dt)
+    {
+        if (tr_warning_timer > 0.0f)                                                                                        // tick the banner display timer regardless of phase state
+            tr_warning_timer -= dt;
+
+        switch (tr_state)
+        {
+        case TrickRoomState::ACTIVE:
+            tr_timer -= dt;                                                                                                 // count down the 20-second phase
+            if (tr_timer <= 0.0f)
+            {
+                tr_timer = 0.0f;
+                tr_fade_timer = BossConfig::BOSS_TRICK_ROOM_FADE_DURATION_SECONDS;                                          // kick off the tint fade-out the moment the phase ends
+                tr_cooldown_timer = BossConfig::BOSS_TRICK_ROOM_COOLDOWN_SECONDS;                                           // start the post-phase cooldown
+                tr_state = TrickRoomState::COOLDOWN;                                                                        // move to cooldown so the phase cannot retrigger immediately
+            }
+            break;
+
+        case TrickRoomState::COOLDOWN:
+            if (tr_fade_timer > 0.0f)
+                tr_fade_timer -= dt;                                                                                        // tick fade independently; finishes before cooldown ends
+            tr_cooldown_timer -= dt;                                                                                        // count down the cooldown gap
+            if (tr_cooldown_timer <= 0.0f)
+            {
+                tr_cooldown_timer = 0.0f;
+                tr_fade_timer = 0.0f;                                                                                       // ensure fade is fully cleared when cooldown ends
+                tr_state = TrickRoomState::INACTIVE;                                                                        // phase is now available to trigger again
+            }
+            break;
+
+        default:
+            break;
+        }
+    }
+
+    /*
+    @function       TrickRoom_DrawOverlayInternal
+    @brief          Draws the purple tint, "TRICK ROOM" banner, "type in reverse" sub-label,
+                    and the countdown timer. Call at the end of Boss_Draw.
+    *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
+    void TrickRoom_DrawOverlayInternal()
+    {
+        if (tr_state == TrickRoomState::INACTIVE) return;                                                                   // nothing to draw when the phase is not running
+        if (!tr_overlay_mesh) return;                                                                                       // no mesh available so skip drawing
+
+        float win_w = (float)AEGfxGetWindowWidth();
+        float win_h = (float)AEGfxGetWindowHeight();
+
+        // Purple tint overlay
+        float overlay_alpha = BossConfig::BOSS_TRICK_ROOM_OVERLAY_ALPHA;
+        if (tr_state == TrickRoomState::COOLDOWN)
+        {
+            float fade_t = tr_fade_timer / BossConfig::BOSS_TRICK_ROOM_FADE_DURATION_SECONDS;                               // 1.0 at start of fade, 0.0 when fully gone
+            overlay_alpha = BossConfig::BOSS_TRICK_ROOM_OVERLAY_ALPHA * fade_t;
+        }
+
+        if (overlay_alpha > 0.005f)
+        {
+            AEGfxSetRenderMode(AE_GFX_RM_COLOR);
+            AEGfxSetBlendMode(AE_GFX_BM_BLEND);
+            AEGfxSetTransparency(overlay_alpha);
+            AEGfxSetColorToMultiply(0.55f, 0.0f, 0.85f, 1.0f);                                                              // purple tint
+            AEGfxSetColorToAdd(0.0f, 0.0f, 0.0f, 0.0f);
+            Graphics::Draw_DrawMeshAt(tr_overlay_mesh, 0.0f, 0.0f, win_w, win_h, 0.0f);
+
+            AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);                                                                // reset colour multiply
+            AEGfxSetColorToAdd(0.0f, 0.0f, 0.0f, 0.0f);
+            AEGfxSetTransparency(1.0f);
+        }
+
+        if (Graphics::font_id < 0) return;                                                                                  // no font loaded, skip all text
+        AEGfxSetBlendMode(AE_GFX_BM_BLEND);
+
+        // "!! TRICK ROOM !!" warning banner while the phase just started
+        if (tr_warning_timer > 0.0f && tr_state == TrickRoomState::ACTIVE)
+        {
+            const char* banner = "!! TRICK ROOM !!";
+            float bw = 0.0f, bh = 0.0f;
+            AEGfxGetPrintSize(Graphics::font_id, banner, 1.0f, &bw, &bh);
+            float pulse = tr_warning_timer / BossConfig::BOSS_TRICK_ROOM_WARNING_DURATION_SECONDS;                          // fade banner out as the warning timer expires
+            AEGfxPrint(Graphics::font_id, banner, -(bw * 0.5f), 0.10f, 1.0f, 1.0f, 0.2f, 1.0f, pulse);                      // magenta text, alpha tied to pulse
+        }
+
+        // "TYPE WORDS IN REVERSE!" sub-label throughout the active phase
+        if (tr_state == TrickRoomState::ACTIVE)
+        {
+            const char* sub = "TYPE WORDS IN REVERSE!";
+            float sw = 0.0f, sh = 0.0f;
+            AEGfxGetPrintSize(Graphics::font_id, sub, 0.50f, &sw, &sh);
+            AEGfxPrint(Graphics::font_id, sub, -(sw * 0.5f), 0.02f, 0.50f, 1.0f, 1.0f, 0.3f, 1.0f);                        // yellow label, always fully opaque
+        }
     }
 
     /*
@@ -402,6 +556,10 @@ namespace BossSystem
         boss_anim_timer = 0.0f;                                                                                             // reset the animation frame timer
         boss_used_words.clear();                                                                                            // clear the word history so nothing carries over
         boss_was_defeated = false;                                                                                          // clear defeat flag on init
+
+        // Trick Room - reset all state and build the overlay mesh
+        TrickRoom_ResetState();                                                                                             // clear timers, phase, and trigger counter
+        TrickRoom_BuildOverlayMesh();                                                                                       // allocate the purple tint overlay mesh
     }
 
     /*
@@ -435,6 +593,10 @@ namespace BossSystem
 
         std::string().swap(boss_current_word);                                                                              // release boss_current_word internal buffer
         std::unordered_set<std::string>().swap(boss_used_words);                                                            // release boss_used_words internal buffer
+
+        // Trick Room - reset state and release the overlay mesh
+        TrickRoom_ResetState();                                                                                             // clear all Trick Room timers and phase flags
+        TrickRoom_FreeOverlayMesh();                                                                                        // release the purple tint overlay mesh
     }
 
     /*
@@ -452,7 +614,6 @@ namespace BossSystem
     void Boss_Update(std::vector<Data::Enemy>& pool, std::deque<int>& free_slots, const Data::EnemyArea& area, const Data::WordBank& bank, float dt, bool& boss_spawning_blocked)
     {
         // Flash attack timer runs every frame while the boss is active.
-        // The caller already skips this function when the game is paused.
         if (boss_state == BossState::ACTIVE)                                                                                // only tick the flash timer when the boss is actually fighting
         {
             boss_flash_cooldown_timer -= dt;                                                                                // count down toward the next flash attack
@@ -598,8 +759,10 @@ namespace BossSystem
         {
             boss_spawning_blocked = true;                                                                                   // keep normal enemy spawning blocked while the boss is alive
 
+            // Trick Room - advance the phase timer every frame while the boss is alive
+            TrickRoom_UpdateInternal(dt);                                                                                   // ticks ACTIVE countdown and COOLDOWN gap, transitions states when they expire
+
             // Check if Typing.cpp just matched the kill word this frame.
-            // When Typing.cpp calls Enemy_Killed on this slot it sets enemy_is_dying to true.
             if (boss_pool_slot >= 0 && boss_pool_slot < (int)pool.size())                                                   // make sure the slot index is still valid
             {
                 Data::Enemy& kw = pool[(size_t)boss_pool_slot];                                                             // get a reference to the kill word enemy slot
@@ -637,6 +800,14 @@ namespace BossSystem
                         boss_kill_word_in_pool = false;                                                                     // mark the kill word as hidden
 
                         Boss_SwapKillWord(pool, bank);                                                                      // pick a fresh non-repeated word and update the slot
+
+                        // Trick Room - fire the special attack when the kill-word threshold is reached
+                        if (boss_words_typed >= tr_next_trigger_count)                                                      // check if this hit crosses the Trick Room trigger threshold
+                        {
+                            TrickRoom_TriggerInternal();                                                                    // activate the Trick Room phase (guarded inside)
+                            tr_next_trigger_count = boss_words_typed +
+                                BossConfig::BOSS_TRICK_ROOM_INTERVAL;                                                       // schedule the next Trick Room trigger N kill words from now
+                        }
 
                         // Show the new word right away if no minions are alive
                         if (Boss_CountActiveMinions(pool) == 0)                                                             // check if there are any minions on screen
@@ -677,8 +848,12 @@ namespace BossSystem
             // Re-pin X after movement so the kill word tracks the updated boss position this frame
             Boss_PinKillWordPosition(pool);
 
-            // Minion spawning, send a wave every BOSS_MINION_SPAWN_INTERVAL_SECONDS
-            if (minion_count < BossConfig::BOSS_MINION_CAP)                                                                 // only spawn if the minion count is under the cap
+            // Minion spawning - blocked during Trick Room so the player can focus on reverse typing
+            if (tr_state == TrickRoomState::ACTIVE)
+            {
+                boss_minion_spawn_timer = 0.0f;                                                                             // hold the timer at zero while Trick Room is running
+            }
+            else if (minion_count < BossConfig::BOSS_MINION_CAP)                                                            // only spawn if not in Trick Room and below the cap
             {
                 boss_minion_spawn_timer += dt;                                                                              // count up toward the next wave trigger
                 if (boss_minion_spawn_timer >= BossConfig::BOSS_MINION_SPAWN_INTERVAL_SECONDS)                              // check if enough time has passed for a new wave
@@ -835,6 +1010,9 @@ namespace BossSystem
             else
                 AEGfxPrint(Graphics::font_id, progress_buf, -0.1f, 0.8f, 0.55f, 0.0f, 0.0f, 0.0f, 1.0f); // black during day
         }
+
+        // Trick Room overlay: purple tint, banner, reverse-typing label, and countdown timer
+        TrickRoom_DrawOverlayInternal();
     }
 
     /*
@@ -951,6 +1129,39 @@ namespace BossSystem
         boss_anim_timer = 0.0f;                                                                                             // reset the frame timer
         boss_state = BossState::DEAD;                                                                                       // move to the dead state so the death animation plays and upgrade triggers
         return true;
+    }
+
+    /*
+    @function       Boss_ForceTrickRoom
+    @brief          Immediately triggers Trick Room, bypassing the cooldown.  Debug only.
+
+    If Trick Room is on cooldown or already active, the cooldown is cleared and the phase
+    restarts immediately. The boss must still be in the ACTIVE fight state.
+    *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
+    bool Boss_ForceTrickRoom()
+    {
+        if (boss_state != BossState::ACTIVE) return false;                                                                  // boss must be in the active fight state
+
+        // Bypass cooldown: if on cooldown or already active, reset to INACTIVE first so
+        // TrickRoom_TriggerInternal's guard will allow the trigger to fire.
+        if (tr_state == TrickRoomState::COOLDOWN || tr_state == TrickRoomState::ACTIVE)
+        {
+            tr_state = TrickRoomState::INACTIVE;                                                                            // clear cooldown/active so the trigger is not blocked
+            tr_cooldown_timer = 0.0f;                                                                                       // reset cooldown timer
+            tr_fade_timer = 0.0f;                                                                                           // reset any in-progress tint fade
+        }
+
+        TrickRoom_TriggerInternal();                                                                                        // now guaranteed to fire since state is INACTIVE
+        return true;
+    }
+
+    /*
+    @function       Boss_IsTrickRoomActive
+    @brief          Returns true while the Trick Room reverse-typing phase is running.
+    *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
+    bool Boss_IsTrickRoomActive()
+    {
+        return tr_state == TrickRoomState::ACTIVE;                                                                          // expose the internal Trick Room phase flag read-only
     }
 
     /*

@@ -6,15 +6,7 @@
 *//*_________________________________________________________________________________________________________________________________________________________________________________________________*/
 #pragma once
 
-#include <cstdlib>
-#include <vector>
-#include <deque>
-#include <string>
-#include <fstream>
-#include <cstdio>
-#include <algorithm>
-#include <cctype>
-#include "AEEngine.h"
+#include "pch.h"
 
 /*
 @namespace      EnemyConfig
@@ -35,6 +27,7 @@ namespace EnemyConfig
     // Visual and text sizing
     extern const float ENEMY_SIZE_PX;                                                                                       // enemy sprite size
     extern const float TEXT_SCALE;                                                                                          // enemy word text scale
+    extern const float WORD_LABEL_OFFSET_PX;                                                                                // word drawn y axis offset
 
     // Difficulty tuning
     extern const float DIFFICULTY_RAMP_PER_SECOND;                                                                          // difficulty gain per second

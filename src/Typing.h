@@ -1,6 +1,5 @@
 #pragma once
-#include <vector>
-#include <string>
+#include "pch.h"
 
 void Typing_Init();
 void Typing_Update();

@@ -122,7 +122,7 @@ namespace
         {
             if (tokens.size() < 2)
             {
-                PushHistory("Usage: /spawn [3-8] | friendly | shield | boss", true);
+                PushHistory("Usage: /spawn [3-8] | friendly | shield | boss | minion", true);
                 return;
             }
 
@@ -152,6 +152,20 @@ namespace
                 return;
             }
 
+            // /spawn minion - spawn one boss minion (boss must be active)
+            if (IEquals(tokens[1], "minion"))
+            {
+                if (!BossSystem::Boss_IsActive())
+                {
+                    PushHistory("Error: boss must be active to spawn a minion.", true);
+                    return;
+                }
+                int len = Utility::Utility_RandInt(BossConfig::BOSS_WORD_MIN_LEN, BossConfig::BOSS_WORD_MAX_LEN);
+                EnemySystem::Enemy_SpawnFromPool(*s_pEnemyPool, *s_pFreeSlots, *s_pEnemyArea, *s_pWordBank, len);
+                PushHistory("Spawned boss minion (word length " + std::to_string(len) + ").", false);
+                return;
+            }
+
             // /spawn [3-8]
             int len = 0;
             try
@@ -160,7 +174,7 @@ namespace
             }
             catch (...)
             {
-                PushHistory("Error: unknown spawn type. Use [3-8], friendly, shield, boss.", true);
+                PushHistory("Error: unknown spawn type. Use [3-8], friendly, shield, boss, minion.", true);
                 return;
             }
             if (len < 3 || len > 8)
@@ -275,6 +289,8 @@ namespace
             PushHistory("/spawn shield        - spawn a shielded enemy", false);
             PushHistory("/spawn boss          - force-spawn the boss", false);
             PushHistory("/kill boss           - instantly kill the active boss", false);
+            PushHistory("/spawn minion        - spawn a boss minion (boss required)", false);
+            PushHistory("/trickroom           - force-trigger Trick Room (boss required)", false);
             PushHistory("/health add          - add 10 HP", false);
             PushHistory("/health die          - kills player", false);
             PushHistory("/difficulty up       - increase difficulty by 1", false);
@@ -358,6 +374,19 @@ namespace
             return;
         }
 
+
+        // /trickroom - immediately trigger Trick Room (boss must be active)
+        if (IEquals(cmd, "trickroom"))
+        {
+            if (!BossSystem::Boss_IsActive())
+            {
+                PushHistory("Error: boss must be active to trigger Trick Room.", true);
+                return;
+            }
+            BossSystem::Boss_ForceTrickRoom();
+            PushHistory("Trick Room triggered! Type all words in reverse for 20s.", false);
+            return;
+        }
 
         // Unknown command
         PushHistory("Unknown command: /" + cmd + "  (try /help)", true);

@@ -2,6 +2,20 @@
 #include "Typing.h"
 
 
+/*
+@function       TR_DisplayWord
+@brief          Returns the word the player sees and must type.
+
+During Trick Room the word is reversed so the player types the last letter first.
+*//*______________________________________________________________________________________________*/
+static std::string TR_DisplayWord(const std::string& word)
+{
+    if (!BossSystem::Boss_IsTrickRoomActive()) return word;   // normal mode: word unchanged
+    std::string rev = word;
+    std::reverse(rev.begin(), rev.end());                     // Trick Room: reverse every character
+    return rev;
+}
+/*________________________________________________________________________________________________*/
 
 namespace Utility
 {
@@ -38,7 +52,7 @@ namespace EnemySystem
             if (!e.enemy_is_active) continue;  // skip inactive enemies
             if (e.enemy_is_dying) continue;    // skip dying enemies
 
-            if (Utility::String_StartsWith(e.enemy_word_text, typed)) // check typing match
+            if (Utility::String_StartsWith(TR_DisplayWord(e.enemy_word_text), typed)) // check typing match against display word (reversed during Trick Room)
             {
                 if (e.enemy_position_y < best_y) // if enemy pos is smaller than besty (meaning its the closest to falling)
                 {
@@ -61,7 +75,7 @@ namespace UiSystem
         std::snprintf(s, sizeof(s), "SCORE: %d", score.score_value);    // format score line
 
         AEGfxSetBlendMode(AE_GFX_BM_BLEND);  // enable blending for text
-       
+
 
         if (DayCycle::IsNight())
             AEGfxPrint(Graphics::font_id, s, -0.95f, 0.90f, 0.55f, 1.0f, 1.0f, 1.0f, 1.0f); // white at night
@@ -411,18 +425,24 @@ void Typing_DrawEnemyWords(const std::vector<Data::Enemy>& enemy_pool)
         if (e.enemy_word_text.empty()) continue;                                                                            // skip if no text
         if (e.enemy_is_dying) continue;                                                                                     // skip during death animation so word disappears when enemy is killed
 
+        // Build the display word: reversed during Trick Room so the player types last-letter-first
+        std::string display_word = TR_DisplayWord(e.enemy_word_text);                                                       // normal or reversed depending on Trick Room state
+
         float ndc_x = 0.0f, ndc_y = 0.0f;
         Utility::Convert_WorldToNdc(e.enemy_position_x, e.enemy_position_y, ndc_x, ndc_y);                                  // convert enemy world pos to NDC for text placement
 
         float text_w = 0.0f, text_h = 0.0f;
-        AEGfxGetPrintSize(Graphics::font_id, e.enemy_word_text.c_str(), EnemyConfig::TEXT_SCALE, &text_w, &text_h);         // measure full word size for centering
+        AEGfxGetPrintSize(Graphics::font_id, display_word.c_str(), EnemyConfig::TEXT_SCALE, &text_w, &text_h);              // measure full display word size for centering
 
-        float draw_x = ndc_x - (text_w * 0.5f);                                                                             // center text horizontally over enemy
-        float draw_y = ndc_y - (text_h * -2.5f);                                                                            // position text vertically above enemy sprite
+        float half_win_h = AEGfxGetWinMaxY();
+        float label_offset_ndc = (half_win_h > 0.0f) ? (EnemyConfig::WORD_LABEL_OFFSET_PX / half_win_h) : 0.0f;
+
+        float draw_x = ndc_x - (text_w * 0.5f);                                                                             // center text horizontally
+        float draw_y = ndc_y + label_offset_ndc;                                                                            // position text above enemy
 
         AEGfxSetBlendMode(AE_GFX_BM_BLEND);                                                                                 // enable blending for text
 
-        int word_len = (int)e.enemy_word_text.size();                                                                       // number of letters in the word
+        int word_len = (int)display_word.size();                                                                            // number of letters in the display word
         float cursor_x = draw_x;                                                                                            // tracks baseline x position as we step through letters
 
         if (i == s_targetIndex && typedLen > 0)                                                                             // this enemy is targeted and player has typed something
@@ -431,7 +451,7 @@ void Typing_DrawEnemyWords(const std::vector<Data::Enemy>& enemy_pool)
 
             for (int li = 0; li < word_len; ++li)                                                                           // loop through every letter
             {
-                char single[2] = { e.enemy_word_text[(size_t)li], '\0' };                                                   // isolate this letter
+                char single[2] = { display_word[(size_t)li], '\0' };                                                        // isolate this letter from the display word (reversed during Trick Room)
                 float lw = 0.0f, lh = 0.0f;
                 AEGfxGetPrintSize(Graphics::font_id, single, EnemyConfig::TEXT_SCALE, &lw, &lh);                            // measure letter width
 
@@ -463,7 +483,7 @@ void Typing_DrawEnemyWords(const std::vector<Data::Enemy>& enemy_pool)
         {
             for (int li = 0; li < word_len; ++li)                                                                           // loop through every letter
             {
-                char single[2] = { e.enemy_word_text[(size_t)li], '\0' };                                                   // isolate this letter
+                char single[2] = { display_word[(size_t)li], '\0' };                                                        // isolate this letter from the display word (reversed during Trick Room)
                 float lw = 0.0f, lh = 0.0f;
                 AEGfxGetPrintSize(Graphics::font_id, single, EnemyConfig::TEXT_SCALE, &lw, &lh);                            // measure letter width
 
@@ -518,8 +538,8 @@ void Typing_UpdateAndApplyToEnemies(std::vector<Data::Enemy>& enemy_pool, Data::
 
 
     if (s_targetIndex >= 0) // means have locked enemy target
-        //if index out of range OR enemy no longer active OR enemy_is_dying OR the typed letters no longer match the start of the target word, target lock clear (s_targetIndex =-1)
-        if (s_targetIndex >= (int)enemy_pool.size() || !enemy_pool[(size_t)s_targetIndex].enemy_is_active || enemy_pool[(size_t)s_targetIndex].enemy_is_dying || !Utility::String_StartsWith(enemy_pool[(size_t)s_targetIndex].enemy_word_text, typed_buffer)) s_targetIndex = -1;
+        //if index out of range OR enemy no longer active OR enemy_is_dying OR the typed letters no longer match the start of the display word, target lock clear (s_targetIndex =-1)
+        if (s_targetIndex >= (int)enemy_pool.size() || !enemy_pool[(size_t)s_targetIndex].enemy_is_active || enemy_pool[(size_t)s_targetIndex].enemy_is_dying || !Utility::String_StartsWith(TR_DisplayWord(enemy_pool[(size_t)s_targetIndex].enemy_word_text), typed_buffer)) s_targetIndex = -1;
 
     // if no target locked try to find one
     if (s_targetIndex < 0) s_targetIndex = EnemySystem::Enemy_FindBestTargetByPrefix(enemy_pool, typed_buffer);
@@ -545,8 +565,8 @@ void Typing_UpdateAndApplyToEnemies(std::vector<Data::Enemy>& enemy_pool, Data::
             Data::Enemy& target = enemy_pool[(size_t)s_targetIndex];
             s_debugTarget = target.enemy_word_text; //store its word for debug
 
-            //if enemy valid AND typed word matches
-            if (target.enemy_is_active && !target.enemy_is_dying && target.enemy_word_text == typed_buffer)
+            //if enemy valid AND typed word matches including the reversed word during Trick Room)
+            if (target.enemy_is_active && !target.enemy_is_dying && TR_DisplayWord(target.enemy_word_text) == typed_buffer)
             {
                 // -------------------------
                 // FRIENDLY NPC: heal 10 hp

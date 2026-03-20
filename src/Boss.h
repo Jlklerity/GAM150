@@ -6,7 +6,7 @@
 *//*_________________________________________________________________________________________________________________________________________________________________________________________________*/
 #pragma once
 
-#include "Enemy.h"
+#include "pch.h"
 
 /*
 @namespace      BossConfig
@@ -50,9 +50,16 @@ namespace BossConfig
 
     // Cutscene
     extern const float BOSS_CUTSCENE_DURATION_SECONDS;                                                                      // how long the boss entrance animation plays before gameplay resumes
-
-    // Y position of the boss
     extern const float BOSS_POSITION_Y;                                                                                     // the fixed vertical position where the boss sits during a fight
+
+    // Trick Room special attack
+    extern const int   BOSS_TRICK_ROOM_FIRST_TRIGGER;                                                                       // fire Trick Room after the player types this many kill words
+    extern const int   BOSS_TRICK_ROOM_INTERVAL;                                                                            // fire Trick Room again every N kill words after the first trigger
+    extern const float BOSS_TRICK_ROOM_DURATION_SECONDS;                                                                    // how long each Trick Room phase lasts
+    extern const float BOSS_TRICK_ROOM_COOLDOWN_SECONDS;                                                                    // minimum gap before Trick Room can trigger again
+    extern const float BOSS_TRICK_ROOM_OVERLAY_ALPHA;                                                                       // opacity of the purple tint drawn over the screen during Trick Room
+    extern const float BOSS_TRICK_ROOM_WARNING_DURATION_SECONDS;                                                            // how long the "TRICK ROOM!" banner stays on-screen
+    extern const float BOSS_TRICK_ROOM_FADE_DURATION_SECONDS;                                                               // how long the purple tint takes to fade out after Trick Room ends
 }
 /*___________________________________________________________________________________________________________________________________________________________________________________________________*/
 
@@ -187,6 +194,19 @@ namespace BossSystem
     the upgrade card screen at exactly the right moment without polling every frame.
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
     bool Boss_WasJustDefeated();
+
+    /*
+    @function       Boss_ForceTrickRoom
+    @brief          Debug only. Immediately triggers Trick Room, bypassing the cooldown.
+                    Returns false only if the boss is not in the ACTIVE fight state.
+    *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
+    bool Boss_ForceTrickRoom();
+
+    /*
+    @function       Boss_IsTrickRoomActive
+    @brief          Returns true while the Trick Room reverse-typing phase is running.
+    *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
+    bool Boss_IsTrickRoomActive();
 
 } // BossSystem namespace end
 /*___________________________________________________________________________________________________________________________________________________________________________________________________*/
