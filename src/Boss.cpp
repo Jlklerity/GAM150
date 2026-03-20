@@ -848,12 +848,8 @@ namespace BossSystem
             // Re-pin X after movement so the kill word tracks the updated boss position this frame
             Boss_PinKillWordPosition(pool);
 
-            // Minion spawning - blocked during Trick Room so the player can focus on reverse typing
-            if (tr_state == TrickRoomState::ACTIVE)
-            {
-                boss_minion_spawn_timer = 0.0f;                                                                             // hold the timer at zero while Trick Room is running
-            }
-            else if (minion_count < BossConfig::BOSS_MINION_CAP)                                                            // only spawn if not in Trick Room and below the cap
+            // Minion spawning
+            if (minion_count < BossConfig::BOSS_MINION_CAP)                                                                 // only spawn if not in Trick Room and below the cap
             {
                 boss_minion_spawn_timer += dt;                                                                              // count up toward the next wave trigger
                 if (boss_minion_spawn_timer >= BossConfig::BOSS_MINION_SPAWN_INTERVAL_SECONDS)                              // check if enough time has passed for a new wave
