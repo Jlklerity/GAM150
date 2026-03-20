@@ -37,7 +37,7 @@ namespace
         "piskel",
         "",
         "FACULTY AND ADVISORS",
-        "GERALD WONG HAN FENG  <3",
+        "GERALD WONG HAN FENG",
         "DR. SOROOR MALEKMOHAMMADAI FARADOUNBEH",
         "TOMMY TAN CHEE WEI",
         "",
