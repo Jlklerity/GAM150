@@ -576,6 +576,7 @@ void Typing_UpdateAndApplyToEnemies(std::vector<Data::Enemy>& enemy_pool, Data::
                     LaserBeam_Fire(target.enemy_position_x, target.enemy_position_y); // fire laser to enemy
                     EnemySystem::Enemy_Killed(target, health);                                                  // kill friendly
                     Particles_SpawnFriendlyHeal(target.enemy_position_x, target.enemy_position_y);             // play heal sprite effect
+                    score.score_value += (int)(target.enemy_word_length * 10 * StreakSystem::GetMultiplier());
                     if (health.health_current < 0) health.health_current = 0;                                   // clamp
                     StreakSystem::OnWordCorrectAt(target.enemy_position_x, target.enemy_position_y);
                 }
