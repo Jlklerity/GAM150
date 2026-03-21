@@ -80,8 +80,8 @@ namespace Data
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
     struct Health
     {
-        float health_max = 100.0f;                                                                                          // maximum health value
-        float health_current = 100.0f;                                                                                      // current health value
+        float health_max;                                                                                                   // maximum health value
+        float health_current;                                                                                               // current health value
     };
 
     /*
