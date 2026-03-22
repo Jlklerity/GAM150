@@ -140,7 +140,8 @@ void Shop_Init() {
 
 	pTexBgOptions[0] = AEGfxTextureLoad("Assets/Background1.png");
 	AE_ASSERT_MESG(pTexBgOptions, "Failed to load Background1.png");
-	pTexBgOptions[1] = pTexBgOptions[0]; // TODO: Change to bg1.png later
+	pTexBgOptions[1] = AEGfxTextureLoad("Assets/floorground2.png");
+	AE_ASSERT_MESG(pTexBgOptions[1], "Failed to load floorground2shop.png");
 	pTexBgOptions[2] = pTexBgOptions[0]; // TODO: Change to bg2.png later
 
 	// Load Skin Options (Using a placeholder for now)

@@ -119,7 +119,7 @@ void Game_Init()
     // Background
     bgTexture1 = AEGfxTextureLoad("Assets/transbackground.png");
     AE_ASSERT_MESG(bgTexture1, "Failed to load background!");
-    bgTexture2 = AEGfxTextureLoad("Assets/background.png"); //for ltr when we have more bg skins
+    bgTexture2 = AEGfxTextureLoad("Assets/floorground2.png"); //for ltr when we have more bg skins
     AE_ASSERT_MESG(bgTexture2, "Failed to load background!");
 
     /*
