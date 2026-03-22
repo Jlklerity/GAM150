@@ -30,15 +30,15 @@ namespace
     constexpr float HALF_H = 450.0f;
 
     // Trigger timing 
-    constexpr float TRIGGER_MIN_SEC = 25.0f;   // earliest
+    constexpr float TRIGGER_MIN_SEC = 15.0f;   // earliest
     constexpr float TRIGGER_MAX_SEC = 30.0f;   // latest
 
     // Phase durations
-    constexpr float FREEZE_IN_DUR = 1.8f;
-    constexpr float THAW_DUR = 1.2f;
+    constexpr float FREEZE_IN_DUR = 3.0f;
+    constexpr float THAW_DUR = 3.0f;
 
     // Spacebar break free mechanic
-    constexpr int   SPACES_NEEDED = 15;
+    constexpr int   SPACES_NEEDED = 20;
 
     // Particle counts
     constexpr int   AMBIENT_COUNT = 80;
@@ -62,7 +62,7 @@ namespace
     // Rain particle constants
     constexpr int   RAIN_COUNT = 200;      // number of raindrops
     constexpr float RAIN_SPEED_MIN = 500.0f;   // downward fall 
-    constexpr float RAIN_SPEED_MAX = 800.0f;
+    constexpr float RAIN_SPEED_MAX = 1000.0f;
     constexpr float RAIN_DRIFT = 80.0f;    // -ve for left, +ve for right
     constexpr float RAIN_W_MIN = 2.0f;     // width
     constexpr float RAIN_W_MAX = 3.0f;
@@ -89,7 +89,7 @@ namespace
 
     constexpr float STORM_DURATION = 20.0f;
 
-    constexpr float BOLT_INTERVAL = 5.0f; // lightning strike
+    constexpr float BOLT_INTERVAL = 4.0f; // lightning strike
 
     constexpr float BRACE_WARNING_DUR = 1.0f; // BRACE! warning shown x seconds before the strike
 
@@ -109,8 +109,8 @@ namespace
     constexpr float STORM_OVL_B = 0.18f;
 
     // Thunderstorm sprite animation (thunderstorm.png — 4 frames horizontal)
-    constexpr int   TSTRIKE_FRAME_COUNT = 4;
-    constexpr float TSTRIKE_FRAME_TIME = 0.08f;   // ~12 fps, snappy
+    constexpr int   TSTRIKE_FRAME_COUNT = 3;
+    constexpr float TSTRIKE_FRAME_TIME = 0.12f;   // ~12 fps, snappy
     constexpr float TSTRIKE_UV_W = 1.0f / (float)TSTRIKE_FRAME_COUNT;
     constexpr float TSTRIKE_DISPLAY_W = 120.0f;
     constexpr float TSTRIKE_DISPLAY_H = 200.0f;
@@ -131,8 +131,8 @@ namespace
     // ================================================================
     //  Rainbow constants
     // ================================================================
-    constexpr float RAINBOW_DURATION = 15.0f;   // total event length
-    constexpr float RAINBOW_POWERUP_INTERVAL = 3.0f;  // spawn a power-up every N seconds
+    constexpr float RAINBOW_DURATION = 10.0f;   // total event length
+    constexpr float RAINBOW_POWERUP_INTERVAL = 5.0f;  // spawn a power-up every N seconds
     constexpr int   RAINBOW_FRAME_COUNT = 9;        // frames in the sprite sheet
     constexpr float RAINBOW_FRAME_TIME = 0.12f;   // seconds per frame (~8 fps)
     constexpr float RAINBOW_DISPLAY_W = 1600.0f; // stretch to full screen width
@@ -1208,6 +1208,11 @@ namespace
     // Kick off a new ghost weather event.
     static void Ghost_Start()
     {
+        // Move out of IDLE so the trigger timer stops advancing during the event,
+        // preventing a second weather type from overwriting s_activeType mid-ghost.
+        s_state = WeatherState::FREEZING;
+        ResetTriggerTimer();
+
         s_ghostEventActive = true;
         s_ghostLifeTimer = 0.0f;
         s_ghostLockTimer = 0.0f;

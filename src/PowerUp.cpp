@@ -327,7 +327,10 @@ namespace PowerUpSystem
             g_strikes[i].active = false;
         }
 
-        // Reset timers
+        // Reset timers — always restore the default spawn interval so a restart after
+        // a rainbow event does not carry over the near-zero interval it left behind.
+        g_spawnMin = DROP_SPAWN_MIN_DEFAULT;
+        g_spawnMax = DROP_SPAWN_MAX_DEFAULT;
         g_spawnTimer = 0.0f;
         g_nextSpawnIn = RandRange(g_spawnMin, g_spawnMax);
         g_shieldRemaining = 0.0f;
