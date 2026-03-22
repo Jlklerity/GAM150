@@ -40,7 +40,7 @@ namespace BossConfig
     const float BOSS_POSITION_Y = 120.0f;                                                                                   // the fixed vertical position where the boss sits during a fight
 
     // Trick Room special attack
-    const int   BOSS_TRICK_ROOM_FIRST_TRIGGER = 5;                                                                          // fire Trick Room after the player types this many kill words
+    const int   BOSS_TRICK_ROOM_FIRST_TRIGGER = 7;                                                                          // fire Trick Room after the player types this many kill words
     const int   BOSS_TRICK_ROOM_INTERVAL = 7;                                                                               // fire Trick Room again every N kill words after the first trigger
     const float BOSS_TRICK_ROOM_DURATION_SECONDS = 20.0f;                                                                   // how long each Trick Room phase lasts
     const float BOSS_TRICK_ROOM_COOLDOWN_SECONDS = 15.0f;                                                                   // minimum gap before Trick Room can trigger again
@@ -713,6 +713,7 @@ namespace BossSystem
                 boss_hit_tint_timer = 0.0f;                                                                                 // clear any leftover hit tint
                 boss_flash_cooldown_timer = Boss_PickFlashCooldown();                                                       // pick a random wait before the first flash attack
                 boss_flash_active_timer = 0.0f;                                                                             // no flash overlay at the start
+                TrickRoom_ResetState();                                                                                     // reset trickroom counter
                 SoundManager::PlayBossSfx();
                 boss_state = BossState::CUTSCENE;                                                                           // move to the cutscene state
             }
