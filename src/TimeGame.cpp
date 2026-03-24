@@ -260,7 +260,7 @@ void GameTimeMode_Update()
                 if (!was_damage_done && !was_dying) // fresh typed kill — not yet in dying state
                 {
                     Particles_SpawnDamageImpact(e.enemy_position_x, e.enemy_position_y);
-                    LaserBeam_Fire(e.enemy_position_x, e.enemy_position_y);
+                   // LaserBeam_Fire(e.enemy_position_x, e.enemy_position_y);
                 }
                 else // landed OR finished dying fall
                     Particles_SpawnKillImpact(e.enemy_position_x, e.enemy_position_y, e.enemy_word_length);
@@ -317,8 +317,7 @@ render_only:
     Mesh_Renderer(bgMesh, 0.0f, 0.0f, 1600.0f, 900.0f, 0.0f);
 
     // 2. DayCycle sky + sun (behind clouds)
-    DayCycle::DrawSky();
-    DayCycle::DrawBodies();
+    DayCycle::Draw();
 
     // 3. Clouds
     GameClouds::Draw();
