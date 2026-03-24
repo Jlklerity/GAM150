@@ -576,7 +576,7 @@ namespace HealthSystem
     It is called when entering the game or restarting a level.
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
     void Health_Init(Data::Health& health) {
-        health.health_max = 30.0f;                                                                                          // reset max health to default
+        health.health_max = 50.0f;                                                                                          // reset max health to default
         health.health_current = health.health_max;
     }
 

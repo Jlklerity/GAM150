@@ -1,4 +1,4 @@
-/*
+ï»¿/*
 @file           Tutorial.cpp
 @author         YOU
 @brief          Tutorial game state implementation.
@@ -73,6 +73,7 @@ namespace
     bool          s_isPaused = false;
     bool          s_wasPaused = false;
     bool          s_isFading = false;
+    bool          s_weatherFreezeStarted = false;
     float         s_fadeTimer = 0.0f;
     static const float FADE_DURATION = 1.2f;
 
@@ -282,6 +283,7 @@ namespace
         s_objectiveMet = false;
         s_stageStarted = false;
         s_readyClicked = false;
+        s_weatherFreezeStarted = false;
         s_stageTimer = 0.0f;
         s_streakWordIdx = 0;
         ResetPool();
@@ -360,8 +362,8 @@ namespace
 
             if (s_stage == STAGE_BOSS_WARNING)
             {
-                hint = "[ Click PLAY > to start! ]";
-                hr = 0.2f; hg = 1.0f; hb = 0.2f; // green for final
+                hint = "[ Press ENTER to continue ]";
+                hr = 0.2f; hg = 0.7f; hb = 1.0f;
             }
             else if (objectiveMet)
             {
@@ -385,23 +387,7 @@ namespace
             }
         }
 
-        // PLAY > button for final stage only (still a click)
-        if (s_stage == STAGE_BOSS_WARNING)
-        {
-            const char* btnLabel = "PLAY >";
-            AEGfxSetRenderMode(AE_GFX_RM_COLOR);
-            AEGfxSetBlendMode(AE_GFX_BM_BLEND);
-            AEGfxSetTransparency(1.0f);
-            AEGfxSetColorToMultiply(0.1f, 0.7f, 0.1f, 1.0f);
-            Mesh_Renderer(s_rectMesh, NEXT_BTN_X, NEXT_BTN_Y, NEXT_BTN_W, NEXT_BTN_H, 0.0f);
 
-            float bw, bh;
-            AEGfxGetPrintSize(Graphics::font_id, btnLabel, 0.48f, &bw, &bh);
-            float bndcX = (NEXT_BTN_X / (s_winW * 0.5f)) - bw * 0.5f;
-            float bndcY = (NEXT_BTN_Y / (s_winH * 0.5f)) - bh * 0.5f;
-            AEGfxSetBlendMode(AE_GFX_BM_BLEND);
-            AEGfxPrint(Graphics::font_id, btnLabel, bndcX, bndcY, 0.48f, 1.0f, 1.0f, 1.0f, 1.0f);
-        }
     }
 
     bool EnterPressed()
@@ -411,7 +397,7 @@ namespace
 
     bool PlayButtonClicked()
     {
-        // PLAY > button on final stage — kept as mouse click
+        // PLAY > button on final stage ï¿½ kept as mouse click
         if (!AEInputCheckTriggered(AEVK_LBUTTON)) return false;
         s32 mx, my;
         AEInputGetCursorPosition(&mx, &my);
@@ -588,7 +574,7 @@ void Tutorial_Update()
                 s_readyClicked = true;
         }
 
-        switch (s_stage )
+        switch (s_stage)
         {
             // Stage 1: Basic typing - kill the enemy
         case STAGE_BASIC_TYPING:
@@ -621,7 +607,7 @@ void Tutorial_Update()
                             HealthSystem::Health_Init(s_health);
                             SpawnNormalEnemy("CAT");
                             break;
-                            
+
                         }
                         else // landed and dealt damage
                         {
@@ -672,15 +658,15 @@ void Tutorial_Update()
                         if (e.enemy_type == Data::EnemyType::FRIENDLY && !e.enemy_has_landed)
                         {
                             //AE_ASSERT_MESG(false, "BRANCH: was_dying - SpawnDamageImpact");
-                            // friendly flew away after being typed — already handled by Typing.cpp
+                            // friendly flew away after being typed ï¿½ already handled by Typing.cpp
                             // Particles_SpawnFriendlyHeal already called there, just set objective
                             s_objectiveMet = true;
                         }
                         else if (was_dying) {
                             Particles_SpawnKillImpact(e.enemy_position_x, e.enemy_position_y, e.enemy_word_length);
-                          //  AE_ASSERT_MESG(false, "2");
+                            //  AE_ASSERT_MESG(false, "2");
                         }
-                        else if (!was_damage_done) { 
+                        else if (!was_damage_done) {
                             Particles_SpawnDamageImpact(e.enemy_position_x, e.enemy_position_y);
                             StreakSystem::OnStreakReset();
                             SpawnFriendlyEnemy("BIRD");
@@ -861,7 +847,11 @@ void Tutorial_Update()
             if (s_stageStarted)
             {
                 Weather_Update(dt, s_pool);
-                if (s_stageTimer > 6.0f && !Weather_IsPlayerFrozen())
+                // Mark that freeze has started
+                if (Weather_IsPlayerFrozen())
+                    s_weatherFreezeStarted = true;
+                // Only complete once freeze has started AND ended
+                if (s_weatherFreezeStarted && !Weather_IsPlayerFrozen())
                     s_objectiveMet = true;
             }
             break;
@@ -881,7 +871,7 @@ void Tutorial_Update()
         StartStage((TutorialStage)(s_stage + 1));
     }
 
-    if (!s_isPaused && s_stage == STAGE_BOSS_WARNING && PlayButtonClicked())
+    if (!s_isPaused && s_stage == STAGE_BOSS_WARNING && s_objectiveMet && EnterPressed())
     {
         s_isFading = true;
         s_fadeTimer = 0.0f;
@@ -912,6 +902,30 @@ void Tutorial_Update()
     Typing_DrawEnemyWords(s_pool);
 
     PowerUpSystem::Draw();
+
+    if (s_stage == STAGE_POWERUP && PowerUpSystem::IsShieldActive() && Graphics::font_id >= 0)
+    {
+        float bob = sinf(s_stageTimer * 5.0f) * 6.0f;
+
+        float arrowWorldX = -s_winW * 0.5f + 140.0f + bob;
+        float arrowWorldY = -s_winH * 0.5f + 35.0f;
+
+        float ax, ay, aw, ah;
+        const char* arrow = "<";
+        AEGfxGetPrintSize(Graphics::font_id, arrow, 0.55f, &aw, &ah);
+        ax = (arrowWorldX / (s_winW * 0.5f)) - aw * 0.5f;
+        ay = (arrowWorldY / (s_winH * 0.5f)) - ah * 0.5f;
+
+        AEGfxSetBlendMode(AE_GFX_BM_BLEND);
+        AEGfxPrint(Graphics::font_id, arrow, ax, ay, 0.55f, 0.9f, 0.85f, 0.3f, 1.0f);
+
+        const char* label = "Power-up active!";
+        float lw, lh;
+        AEGfxGetPrintSize(Graphics::font_id, label, 0.35f, &lw, &lh);
+        float lx = (arrowWorldX / (s_winW * 0.5f)) - lw * 0.5f;
+        float ly = ((arrowWorldY + 45.0f) / (s_winH * 0.5f)) - lh * 0.5f;
+        AEGfxPrint(Graphics::font_id, label, lx, ly, 0.35f, 0.9f, 0.85f, 0.3f, 1.0f);
+    }
     Weather_Draw();
     Particles_Draw();
     LaserBeam_Draw();
