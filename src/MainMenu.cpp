@@ -124,6 +124,9 @@ namespace
     float TUTORIAL_BTN_Y;
     float CREDITS_BTN_X;
     float CREDITS_BTN_Y;
+    float EMPTY_NAME_WARNING_TIMER;  
+    float EMPTY_NAME_WARNING_X;      
+    float EMPTY_NAME_WARNING_Y;      
 
     // ---------------------------------------------------------------------------
     // STATE & LOGIC VARIABLES
@@ -140,6 +143,7 @@ namespace
 
     std::string player_name = "";                                                                                           // holds typed player name
     std::string selected_mode = "";                                                                                         // holds currently selected game mode
+    std::string leaderboard_mode = "ZEN";
 
     float uiOffsetX = 0.0f;
     float cursorTimer = 0.0f;                                                                                               // timer for text cursor blink
@@ -394,6 +398,7 @@ void Main_Menu_Input()
             worldY >= LEADERBOARD_BTN_Y - (LEADERBOARD_HEIGHT * 0.5f) && worldY <= LEADERBOARD_BTN_Y + (LEADERBOARD_HEIGHT * 0.5f))
         {
             SoundManager::PlayClickBtnSfx();
+            leaderboard_mode = "ZEN";
             inLeaderboard = true; //                                                                                              
         }
         // --- Check Tutorial Button ---
@@ -471,7 +476,14 @@ void Main_Menu_EnterName(float worldYOffset, float ndcYOffset, bool allowInput)
             int zoomTarget = (selected_mode == "TIME") ? GS_GAME_TIMEMODE : GS_GAME;
             ParallaxZoom::Start(zoomTarget);
         }
-        // --- Check Exit Name Button (Triggered by Mouse Click) ---
+        // --Draw no name pop up
+        else if ((enterPressed || enterClicked) && player_name.empty() && selected_mode != "")
+        {
+            SoundManager::PlayClickBtnSfx();
+            EMPTY_NAME_WARNING_TIMER = 1.5f;
+            EMPTY_NAME_WARNING_X = 0.0f;
+            EMPTY_NAME_WARNING_Y = 0.05f;  
+        }
         else if (exitClicked)
         {
             SoundManager::PlayClickBtnSfx();
@@ -565,6 +577,7 @@ void Main_Menu_EnterName(float worldYOffset, float ndcYOffset, bool allowInput)
         float startX = 0.0f;                                                                                                // name string start X
         textY = 0.2f;                                                                                                       // explicit overwrite (as in orig)
 
+
         if (selected_mode == "ZEN")                                                                                         // specific logic block for ZEN
         {
             AEGfxGetPrintSize(Graphics::font_id, modeDisplay.c_str(), modeScale, &modeWidth, &modeHeight);                  // re-measure mode text
@@ -588,6 +601,30 @@ void Main_Menu_EnterName(float worldYOffset, float ndcYOffset, bool allowInput)
             startX = 0.0f - (textWidth * 0.5f);                                                                             // center horizontally
             AEGfxSetBlendMode(AE_GFX_BM_BLEND);                                                                             // re-apply blend
             AEGfxPrint(Graphics::font_id, player_name.c_str(), startX, textY, textScale, 0.0f, 0.0f, 0.0f, 1.0f);           // print typed name
+        }
+    // ========================================================================
+    // DRAW EMPTY NAME WARNING POPUP
+    // ========================================================================
+        if (EMPTY_NAME_WARNING_TIMER > 0.0f)
+        {
+            // 1. Calculate fade-out alpha based on time left
+            float alpha = EMPTY_NAME_WARNING_TIMER / 0.5f;
+            if (alpha > 1.0f) alpha = 1.0f; // Stays fully solid for 1 second, fades out for 0.5s
+
+            const char* warning_text = "PLEASE ENTER A NAME";
+            float tw, th;
+            float warningScale = 0.85f;
+            AEGfxGetPrintSize(Graphics::font_id, warning_text, warningScale, &tw, &th);
+
+            // 3. Draw the red warning text
+            AEGfxSetBlendMode(AE_GFX_BM_BLEND);
+            AEGfxSetTransparency(1.0f);
+
+            float ndcX = 0.0f - (tw * 0.5f);
+            float ndcY = EMPTY_NAME_WARNING_Y + ndcYOffset;
+
+            // Print the text (R, G, B, Alpha)
+            AEGfxPrint(Graphics::font_id, warning_text, ndcX, ndcY, warningScale, 1.0f, 0.2f, 0.2f, alpha);
         }
 
         if (cursorVisible)                                                                                                  // check cursor flag
@@ -640,12 +677,10 @@ void Main_Menu_Init()
     isZoomingToGame = false;
     ParallaxZoom::Reset();
 
-    /*if (gGameStatePrev != GS_SHOP)
-        if (gGameStatePrev != GS_SHOP && gGameStatePrev != GS_CREDITS)
-        {
-            SoundManager::Init();
-            SoundManager::PlayBackgroundMusic();
-        }*/
+    EMPTY_NAME_WARNING_TIMER = 0.0f;
+    EMPTY_NAME_WARNING_X = 0.0f;           
+    EMPTY_NAME_WARNING_Y = 0.0f;
+
     SoundManager::Init();
     SysSettings::Init();
     BackgroundParallax::MenuParallax_Init();
@@ -771,6 +806,12 @@ void Main_Menu_Update()
 
     float dt = (float)AEFrameRateControllerGetFrameTime();
     if (dt > 0.1f) dt = 0.01667f;                                                                                           // dt clamp
+    
+    if (EMPTY_NAME_WARNING_TIMER > 0.0f)
+    {
+        EMPTY_NAME_WARNING_TIMER -= dt;
+    }
+
     BackgroundParallax::MenuParallax_Update(dt);
 
     if (transitioningToShop) {
@@ -841,6 +882,8 @@ void Main_Menu_Update()
 
     CREDITS_BTN_X = winW * 0.23f;
     CREDITS_BTN_Y = winH * -0.4f;
+
+
 
     AEGfxSetCamPosition(0.0f, 0.0f);                                                                                        // reset camera explicitly
     if (isZoomingToGame || ParallaxZoom::IsActive())
@@ -924,12 +967,98 @@ void Main_Menu_Update()
     {
         Draw_Main_Menu(0.0f); // Keep the menu rendered in the background
 
-        // Display the board based on the currently toggled mode
-        if (selected_mode == "ZEN") {
+        if (leaderboard_mode == "ZEN") {
             Leaderboard_System::Display_ZenLeaderboard(inLeaderboard);
         }
-        else if (selected_mode == "TIME") {
+        else if (leaderboard_mode == "TIME") {
             Leaderboard_System::Display_TimeLeaderboard(inLeaderboard);
+        }
+
+        // ==========================================================
+        // NEW: DRAW THE SWITCH MODE ARROW BUTTON (Top Right Corner)
+        // ==========================================================
+        s32 mouseX, mouseY;
+        AEInputGetCursorPosition(&mouseX, &mouseY);
+        winW = (float)AEGfxGetWindowWidth();
+        winH = (float)AEGfxGetWindowHeight();
+
+        // Calculate mouse in World Coordinates to match the sprite meshes
+        float wx = (float)mouseX - (winW * 0.5f);
+        float wy = (winH * 0.5f) - (float)mouseY;
+
+        // Pin the arrow to the top right corner of the screen
+        float arrowW = 80.0f;
+        float arrowH = 80.0f;
+        float arrowX = 0.0f;
+        float arrowY = 0.0f;
+
+        // Move the arrow to the Left or Right edge depending on the mode
+        if (leaderboard_mode == "ZEN") {
+            arrowX = (winW * 0.5f) - 380.0f; // Push to the right edge
+        }
+        else {
+            arrowX = -(winW * 0.5f) + 380.0f; // Push to the left edge
+        }
+
+        // Hitbox logic using world coordinates
+        bool isHovering = (wx >= arrowX - arrowW * 1.5f && wx <= arrowX + arrowW * 1.5f &&
+            wy >= arrowY - arrowH * 1.2f && wy <= arrowY + arrowH * 1.2f);
+
+        float drawScale = isHovering ? 1.2f : 1.0f; // Slight pop effect on hover
+
+        // 1. Draw the Arrow Sprite
+        if (pTexArrows) {
+            AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
+            AEGfxSetBlendMode(AE_GFX_BM_BLEND);
+
+            // Tint yellow on hover, white otherwise
+            if (isHovering) AEGfxSetColorToMultiply(1.0f, 1.0f, 0.0f, 1.0f);
+            else AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);
+
+            AEGfxTextureSet(pTexArrows, 0.0f, 0.0f);
+
+            if (leaderboard_mode == "ZEN") {
+                // Show RIGHT arrow to switch to TIME mode
+                Mesh_Renderer(pMeshRightArrow, arrowX, arrowY, arrowW * drawScale, arrowH * drawScale, 0.0f);
+            }
+            else {
+                // Show LEFT arrow to switch to ZEN mode
+                Mesh_Renderer(pMeshLeftArrow, arrowX, arrowY, arrowW * drawScale, arrowH * drawScale, 0.0f);
+            }
+
+            AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f); // Reset color
+        }
+
+        // 2. Draw helper text next to the arrow
+        if (Graphics::font_id >= 0) {
+            const char* lbl = (leaderboard_mode == "ZEN") ? "TIME MODE" : "ZEN MODE";
+            float tw, th;
+            AEGfxGetPrintSize(Graphics::font_id, lbl, 0.45f, &tw, &th);
+
+            float ndcX = 0.0f;
+            if (leaderboard_mode == "ZEN") {
+                // Text sits to the LEFT of the right arrow
+                ndcX = (arrowX - arrowW * 0.5f) / (winW * 0.5f) - tw - 0.05f;
+            }
+            else {
+                // Text sits to the RIGHT of the left arrow
+                ndcX = (arrowX + arrowW * 0.5f) / (winW * 0.5f) + 0.05f;
+            }
+
+            float ndcY = (arrowY - 10.0f) / (winH * 0.5f);
+
+            if (isHovering) {
+                AEGfxPrint(Graphics::font_id, lbl, ndcX, ndcY, 0.45f, 1.0f, 1.0f, 0.0f, 1.0f);
+            }
+            else {
+                AEGfxPrint(Graphics::font_id, lbl, ndcX, ndcY, 0.45f, 1.0f, 1.0f, 1.0f, 1.0f);
+            }
+        }
+
+        // 3. Click Logic
+        if (isHovering && AEInputCheckTriggered(AEVK_LBUTTON)) {
+            SoundManager::PlayClickBtnSfx();
+            leaderboard_mode = (leaderboard_mode == "ZEN") ? "TIME" : "ZEN";
         }
     }
     else if (inSettings)                                                                                                         // process settings UI

@@ -1,6 +1,6 @@
 #include "pch.h"
 #include "Leaderboard.h"
-
+#include <AEEngine.h>
 
 
 
@@ -141,66 +141,83 @@ namespace Leaderboard_System
 
 		AEGfxSetRenderMode(AE_GFX_RM_COLOR);
 		AEGfxSetBlendMode(AE_GFX_BM_BLEND);
-		AEGfxSetTransparency(0.85f);
+		AEGfxSetTransparency(0.85f);                                        // semi-transparent black background
 		AEGfxSetColorToMultiply(0.0f, 0.0f, 0.0f, 1.0f);
-
 		Mesh_Renderer(overlayMesh, 0.0f, 0.0f, 1600.0f, 900.0f, 0.0f);
+		AEGfxSetTransparency(1.0f);                                         // reset transparency for text
 
-		AEGfxSetTransparency(1.0f); // Reset transparency for text
-
-		// 3. Draw a prompt so they know how to leave
-		if (Graphics::font_id >= 0) {
-			const char* promptText = "Press ESC or Click to Return";
-			float pw, ph;
-			AEGfxGetPrintSize(Graphics::font_id, promptText, 0.5f, &pw, &ph);
-			AEGfxPrint(Graphics::font_id, promptText, -pw * 0.5f, -0.8f, 0.5f, 1.0f, 1.0f, 0.0f, 1.0f);
-		}
-
-		// 4. Return to the Game Over buttons if they click or hit Escape
-		if (AEInputCheckTriggered(AEVK_ESCAPE) || AEInputCheckTriggered(AEVK_LBUTTON)) {
-			openLeaderboard = false;
-		}
 		if (Graphics::font_id < 0) return;
 
-		//MOUSE WHEEL settings
-		s32 wheel_delta = 0;
-		AEInputMouseWheelDelta(&wheel_delta); // Get scroll amount
+		// ---- Title ----
+		const char* title = "ZEN MODE - LEADERBOARD";
+		float tw, th;
+		AEGfxGetPrintSize(Graphics::font_id, title, 0.7f, &tw, &th);
+		AEGfxPrint(Graphics::font_id, title, -tw * 0.5f, 0.75f, 0.7f, 1.0f, 0.85f, 0.2f, 1.0f); // centered, gold color
 
-		if (wheel_delta != 0) {
-			if (wheel_delta > 0) scroll_offset--;
-			else scroll_offset++;
-		}
+		// ---- Mouse wheel scrolling ----
+		s32 wheel = 0;
+		AEInputMouseWheelDelta(&wheel);
+		int maxScroll = ((int)leaderboard_list.size() - LB_VISIBLE > 0) ? (int)leaderboard_list.size() - LB_VISIBLE : 0; // max scroll = entries that dont fit
+		if (wheel > 0) scroll_offset = (scroll_offset - 1.0f < 0.0f) ? 0.0f : scroll_offset - 1.0f;          // scroll up toward older entries
+		if (wheel < 0) scroll_offset = (scroll_offset + 1.0f > (float)maxScroll) ? (float)maxScroll : scroll_offset + 1.0f; // scroll down toward newer
 
-		u64 max_offset = leaderboard_list.size() - ENTRIES_PER_PAGE;
-		scroll_offset = Utility::Utility_Clamp(scroll_offset, 0, (float)max_offset);
+		float startY = 0.5f;
+		float spacing = 0.2f;
 
+		for (int i = 0; i < LB_VISIBLE; ++i)
+		{
+			int idx = (int)scroll_offset + i;
+			if (idx >= (int)leaderboard_list.size()) break;                     // stop if past end of list
 
-		//RENDER LEADERBOARD
-		float startY = 150.0f;
-		float spacing = 50.0f;
-
-		for (int i = 0; i < ENTRIES_PER_PAGE; ++i) { //display leaderboard starting from highest to lowest score
-
-			int data_index = (int)scroll_offset + i;
-			if (data_index >= leaderboard_list.size()) break;
-
-			const auto& entry = leaderboard_list[data_index];
-
-			std::string rank = std::to_string(data_index + 1) + ".   ";
-			std::string player_name = entry.player_name;
-			std::string score = std::to_string(entry.player_score);
-
-			std::string player_stats = rank + player_name + "   " + score;
-
+			const auto& e = leaderboard_list[(size_t)idx];
+			std::string line = std::to_string(idx + 1) + ".   " + e.player_name + "   " + std::to_string(e.player_score); // format as "rank. name score"
 			float y = startY - (i * spacing);
-			AEGfxPrint(Graphics::font_id, player_stats.c_str(), -0.3f, y / 450.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f);
+			
+			if (idx == 0) {
+				AEGfxPrint(Graphics::font_id, line.c_str(), -0.3f, y, 0.9f, 1.0f, 1.0f, 0.0f, 1.0f); // RGB: 1, 1, 0 (Yellow)
+			}
+			else {
+				AEGfxPrint(Graphics::font_id, line.c_str(), -0.3f, y, 0.9f, 1.0f, 1.0f, 1.0f, 1.0f); // RGB: 1, 1, 1 (White)
+			}
 		}
-		//Scroll indicator
-		if (scroll_offset > 0) {
-			AEGfxPrint(Graphics::font_id, "^", 0.4f, 0.5f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f);
+
+		// ---- Scroll indicators ----
+		if (scroll_offset > 0)
+			AEGfxPrint(Graphics::font_id, "^", 0.4f, 0.6f, 0.8f, 0.8f, 0.8f, 0.8f, 1.0f);        // more entries above
+		if ((int)scroll_offset < maxScroll)
+			AEGfxPrint(Graphics::font_id, "v", 0.4f, -0.6f, 0.8f, 0.8f, 0.8f, 0.8f, 1.0f);       // more entries below
+
+		// ---- Return prompt ----
+		const char* prompt = "Press ESC or Click to Return";
+		float pw, ph;
+		AEGfxGetPrintSize(Graphics::font_id, prompt, 0.45f, &pw, &ph);
+		AEGfxPrint(Graphics::font_id, prompt, -pw * 0.5f, -0.85f, 0.45f, 1.0f, 1.0f, 0.0f, 1.0f); // yellow
+
+		if (AEInputCheckTriggered(AEVK_ESCAPE)) {
+			openLeaderboard = false;
 		}
-		if (scroll_offset < max_offset) {
-			AEGfxPrint(Graphics::font_id, "v", 0.4f, -0.5f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f);
+		else if (AEInputCheckTriggered(AEVK_LBUTTON)) {
+			s32 mx, my;
+			AEInputGetCursorPosition(&mx, &my);
+
+			float winH = (float)AEGfxGetWindowHeight();
+			float winW = (float)AEGfxGetWindowWidth();
+
+			float wx = (float)mx - (winW * 0.5f);
+			float wy = (winH * 0.5f) - (float)my;
+
+			float arrowW = 80.0f;
+			float arrowH = 80.0f;
+			float arrowY = 0.0f;
+
+			// FIXED: Zen arrow is on the RIGHT side!
+			float arrowX = (winW * 0.5f) - 380.0f;
+
+			// Only close if they click OUTSIDE the forgiving hitbox
+			if (!(wx >= arrowX - arrowW * 1.5f && wx <= arrowX + arrowW * 1.5f &&
+				wy >= arrowY - arrowH * 1.2f && wy <= arrowY + arrowH * 1.2f)) {
+				openLeaderboard = false;
+			}
 		}
 	}
 
@@ -239,7 +256,13 @@ namespace Leaderboard_System
 			const auto& e = s_timedBoard[(size_t)idx];
 			std::string line = std::to_string(idx + 1) + ".   " + e.player_name + "   " + std::to_string(e.player_score); // format as "rank. name score"
 			float y = startY - (i * spacing);
-			AEGfxPrint(Graphics::font_id, line.c_str(), -0.3f, y, 0.9f, 1.0f, 1.0f, 1.0f, 1.0f);
+			
+			if (idx == 0) {
+				AEGfxPrint(Graphics::font_id, line.c_str(), -0.3f, y, 0.9f, 1.0f, 1.0f, 0.0f, 1.0f); // RGB: 1, 1, 0 (Yellow)
+			}
+			else {
+				AEGfxPrint(Graphics::font_id, line.c_str(), -0.3f, y, 0.9f, 1.0f, 1.0f, 1.0f, 1.0f); // RGB: 1, 1, 1 (White)
+			}			
 		}
 
 		// ---- Scroll indicators ----
@@ -254,8 +277,32 @@ namespace Leaderboard_System
 		AEGfxGetPrintSize(Graphics::font_id, prompt, 0.45f, &pw, &ph);
 		AEGfxPrint(Graphics::font_id, prompt, -pw * 0.5f, -0.85f, 0.45f, 1.0f, 1.0f, 0.0f, 1.0f); // yellow
 
-		if (AEInputCheckTriggered(AEVK_ESCAPE) || AEInputCheckTriggered(AEVK_LBUTTON))
-			openLeaderboard = false;                                        // close leaderboard, return to timeout screen
+		if (AEInputCheckTriggered(AEVK_ESCAPE)) {
+			openLeaderboard = false;
+		}
+		else if (AEInputCheckTriggered(AEVK_LBUTTON)) {
+			s32 mx, my;
+			AEInputGetCursorPosition(&mx, &my);
+
+			float winH = (float)AEGfxGetWindowHeight();
+			float winW = (float)AEGfxGetWindowWidth();
+
+			float wx = (float)mx - (winW * 0.5f);
+			float wy = (winH * 0.5f) - (float)my;
+
+			float arrowW = 80.0f;
+			float arrowH = 80.0f;
+			float arrowY = 0.0f;
+
+			// FIXED: Time arrow is on the LEFT side!
+			float arrowX = -(winW * 0.5f) + 380.0f;
+
+			// Only close if they click OUTSIDE the forgiving hitbox
+			if (!(wx >= arrowX - arrowW * 1.5f && wx <= arrowX + arrowW * 1.5f &&
+				wy >= arrowY - arrowH * 1.2f && wy <= arrowY + arrowH * 1.2f)) {
+				openLeaderboard = false;
+			}
+		}
 	}
 }
 

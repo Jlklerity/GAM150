@@ -6,9 +6,14 @@ namespace
 {
     float scrollY = 0.0f;
     float scrollSpeed = 0.35f;
+    AEGfxVertexList* pMeshCreditsLogo = nullptr;
+    AEGfxTexture* pTexCreditsLogo = nullptr;
+
+    const float LOGO_WIDTH = 1000.0f;                                                                                        // width of title logo
+    const float LOGO_HEIGHT = 600.0f;
 
     const char* creditLines[] = {
-        "REVENGE OF YK",
+        "BY",
         "FAREWELL YK",
         "",
         "All content (c) 2026 DigiPen Institute of Technology Singapore.",
@@ -69,6 +74,9 @@ namespace
             Graphics::font_id = AEGfxCreateFont("Assets/Pixel-Game.otf", 48);
         }
 
+        // ---> NEW: Load the logo texture and mesh <---
+        pTexCreditsLogo = AEGfxTextureLoad("Assets/title.png");
+        pMeshCreditsLogo = Sprite_Mesh(1.0f, 1.0f); // Assuming Sprite_Mesh is used globally
         // Start the text slightly below the bottom of the screen (-1.0 is the bottom edge in NDC)
         scrollY = -1.2f;
     }
@@ -108,7 +116,28 @@ namespace
         AEGfxSetCamPosition(0.0f, 0.0f);
         AEGfxSetBackgroundColor(0.0f, 0.0f, 0.0f); // Cinematic black background
 
-        // 4. Draw the Text
+        if (pTexCreditsLogo && pMeshCreditsLogo)
+        {
+            float winH = (float)AEGfxGetWindowHeight();
+
+            // Map the NDC scrollY (-1.2 to 1.2) into World Y coordinates
+            // We add a slight offset (+0.3f) so it sits perfectly in the empty space we made
+            float logoWorldY = (scrollY + 0.3f) * (winH * 0.5f);
+            float logoWorldX = 10.0f;
+
+            AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
+            AEGfxSetBlendMode(AE_GFX_BM_BLEND);
+            AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);
+
+            AEGfxTextureSet(pTexCreditsLogo, 0.0f, 0.0f);
+
+            // Render the logo (X: 0, Y: logoWorldY, Width: 600, Height: 360)
+            Mesh_Renderer(pMeshCreditsLogo, logoWorldX, logoWorldY, LOGO_WIDTH, LOGO_HEIGHT, 0.0f);
+
+            // Reset back to color mode for the text
+            AEGfxSetRenderMode(AE_GFX_RM_COLOR);
+        }
+
         if (Graphics::font_id >= 0)
         {
             AEGfxSetBlendMode(AE_GFX_BM_BLEND);
@@ -128,8 +157,8 @@ namespace
 
                 if (ndcY > -1.2f && ndcY < 1.2f)
                 {
-                    if (line == "REVENGE OF YK" ||
-                        line == "TEAM MEMBERS" || line == "FACULTY AND ADVISORS" || 
+                    
+                     if (line == "TEAM MEMBERS" || line == "FACULTY AND ADVISORS" || 
                         line == "PROGRAMMERS" || line == "ART DESIGNERS" || line == "SOUND DESIGNERS" ||
                         line == "SPECIAL THANKS" || line == "TOOLS AND LIBRARIES" ||
           
@@ -152,6 +181,14 @@ namespace
         {
             AEGfxDestroyFont(Graphics::font_id);
             Graphics::font_id = -1;
+        }
+        if (pMeshCreditsLogo) {
+            AEGfxMeshFree(pMeshCreditsLogo);
+            pMeshCreditsLogo = nullptr;
+        }
+        if (pTexCreditsLogo) {
+            AEGfxTextureUnload(pTexCreditsLogo);
+            pTexCreditsLogo = nullptr;
         }
     }
 
