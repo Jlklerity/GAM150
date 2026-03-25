@@ -225,7 +225,7 @@ void Draw_Main_Menu(float textNdcOffset)
         AEGfxGetPrintSize(Graphics::font_id, selected_mode.c_str(), 1.0f, &textW, &textH);                                  // measure text width/height
         float textNdcX = 0.0f - (textW * 0.5f) + uiOffsetX;                                                                             // center text horizontally
         float textNdcY = RIGHTARROW_BTN_Y / (winH * 0.5f) - 0.025f + textNdcOffset;                                         // calc Y and apply transition offset
-        AEGfxPrint(Graphics::font_id, selected_mode.c_str(), textNdcX, textNdcY, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f);             // render mode text
+        AEGfxPrint(Graphics::font_id, selected_mode.c_str(), textNdcX, textNdcY, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f);             // render mode text
     }
 
     // Draw Play Button
@@ -341,7 +341,7 @@ void Main_Menu_Input()
     if (!splashActive && !isTransitioningToName && !transitioningToShop && !isReturningFromShop && AEInputCheckTriggered(AEVK_ESCAPE))
     {
         SoundManager::PlayClickBtnSfx();
-        gGameStateNext = GS_QUIT;
+        UiPauseMenu::OpenPopup(UiPauseMenu::POPUP_QUIT);
     }
     if (!splashActive && !isTransitioningToName && !transitioningToShop && !isReturningFromShop && AEInputCheckTriggered(AEVK_LBUTTON))                                                                                // check for left click
     {
@@ -545,7 +545,7 @@ void Main_Menu_EnterName(float worldYOffset, float ndcYOffset, bool allowInput)
 
         AEGfxGetPrintSize(Graphics::font_id, promptText, promptScale, &promptWidth, &promptHeight);                         // measure string
         float promptStartX = 0.0f - (promptWidth * 0.5f);                                                                   // center horizontally
-        AEGfxPrint(Graphics::font_id, promptText, promptStartX, promptY, promptScale, 1.0f, 1.0f, 1.0f, 1.0f);              // draw prompt
+        AEGfxPrint(Graphics::font_id, promptText, promptStartX, promptY, promptScale, 0.0f, 0.0f, 0.0f, 1.0f);              // draw prompt
 
         float modeY = -0.35f + ndcYOffset;                                                                                  // mode string Y pos
         float textY = 0.2f + ndcYOffset;                                                                                    // input string Y pos
@@ -558,7 +558,7 @@ void Main_Menu_EnterName(float worldYOffset, float ndcYOffset, bool allowInput)
         float modeStartX = 0.0f - (modeWidth * 0.5f);                                                                       // center horizontally
 
         AEGfxSetBlendMode(AE_GFX_BM_BLEND);                                                                                 // re-apply blend mode
-        AEGfxPrint(Graphics::font_id, modeDisplay.c_str(), modeStartX, modeY, modeScale, 1.0f, 1.0f, 1.0f, 1.0f);           // render current mode text
+        AEGfxPrint(Graphics::font_id, modeDisplay.c_str(), modeStartX, modeY, modeScale, 0.0f, 0.0f, 0.0f, 1.0f);           // render current mode text
 
         float textWidth = 0.0f, textHeight = 0.0f;                                                                          // name string dimensions
         float textScale = 1.0f;                                                                                             // name string scale
@@ -570,7 +570,7 @@ void Main_Menu_EnterName(float worldYOffset, float ndcYOffset, bool allowInput)
             AEGfxGetPrintSize(Graphics::font_id, modeDisplay.c_str(), modeScale, &modeWidth, &modeHeight);                  // re-measure mode text
             modeStartX = 0.0f - (modeWidth * 0.5f);                                                                         // center horizontally
             AEGfxSetBlendMode(AE_GFX_BM_BLEND);                                                                             // re-apply blend
-            AEGfxPrint(Graphics::font_id, modeDisplay.c_str(), modeStartX, modeY, modeScale, 1.0f, 1.0f, 1.0f, 1.0f);       // print zen mode again
+            AEGfxPrint(Graphics::font_id, modeDisplay.c_str(), modeStartX, modeY, modeScale, 0.0f, 0.0f, 0.0f, 1.0f);       // print zen mode again
         }
 
         if (selected_mode == "TIME")                                                                                        // specific logic block for TIME
@@ -578,7 +578,7 @@ void Main_Menu_EnterName(float worldYOffset, float ndcYOffset, bool allowInput)
             AEGfxGetPrintSize(Graphics::font_id, modeDisplay.c_str(), modeScale, &modeWidth, &modeHeight);                  // re-measure mode text
             modeStartX = 0.0f - (modeWidth * 0.5f);                                                                         // center horizontally
             AEGfxSetBlendMode(AE_GFX_BM_BLEND);                                                                             // re-apply blend
-            AEGfxPrint(Graphics::font_id, modeDisplay.c_str(), modeStartX, modeY, modeScale, 1.0f, 1.0f, 1.0f, 1.0f);       // print time mode again
+            AEGfxPrint(Graphics::font_id, modeDisplay.c_str(), modeStartX, modeY, modeScale, 0.0f, 0.0f, 0.0f, 1.0f);       // print time mode again
         }
 
         textY = 0.2f + ndcYOffset;                                                                                          // re-apply transition offset
@@ -587,14 +587,14 @@ void Main_Menu_EnterName(float worldYOffset, float ndcYOffset, bool allowInput)
             AEGfxGetPrintSize(Graphics::font_id, player_name.c_str(), textScale, &textWidth, &textHeight);                  // measure name string
             startX = 0.0f - (textWidth * 0.5f);                                                                             // center horizontally
             AEGfxSetBlendMode(AE_GFX_BM_BLEND);                                                                             // re-apply blend
-            AEGfxPrint(Graphics::font_id, player_name.c_str(), startX, textY, textScale, 1.0f, 1.0f, 1.0f, 1.0f);           // print typed name
+            AEGfxPrint(Graphics::font_id, player_name.c_str(), startX, textY, textScale, 0.0f, 0.0f, 0.0f, 1.0f);           // print typed name
         }
 
         if (cursorVisible)                                                                                                  // check cursor flag
         {
             float cursorX = startX + textWidth;                                                                             // append cursor to end of word
             AEGfxSetBlendMode(AE_GFX_BM_BLEND);                                                                             // re-apply blend
-            AEGfxPrint(Graphics::font_id, "_", cursorX, textY, textScale, 1.0f, 1.0f, 1.0f, 1.0f);                          // print underscore cursor
+            AEGfxPrint(Graphics::font_id, "_", cursorX, textY, textScale, 0.0f, 0.0f, 0.0f, 1.0f);                          // print underscore cursor
         }
     }
 }

@@ -8,6 +8,8 @@ namespace
     AEAudioGroup sfxGroup;
     AEAudioGroup ambientGroup;
     AEAudioGroup uiGroup;
+    AEAudioGroup bossAlarmGroup;
+
 
     AEAudio bgmTrack;
     AEAudio rainTrack;
@@ -34,6 +36,8 @@ namespace
         AEAudioSetGroupVolume(bgmGroup, bgmVolume * masterVolume);
         AEAudioSetGroupVolume(sfxGroup, sfxVolume * masterVolume);
         AEAudioSetGroupVolume(ambientGroup, ambientVolume * masterVolume);
+        AEAudioSetGroupVolume(uiGroup, sfxVolume * masterVolume);
+        AEAudioSetGroupVolume(bossAlarmGroup, sfxVolume * masterVolume);
     }
    
 }
@@ -58,16 +62,9 @@ namespace SoundManager
             sfxGroup = AEAudioCreateGroup();
             ambientGroup = AEAudioCreateGroup();
             uiGroup = AEAudioCreateGroup();
-
+            bossAlarmGroup = AEAudioCreateGroup(); 
 
             bgmTrack = AEAudioLoadMusic("Assets/Game Sound/RUNNING THE BASS - Jazz MSCJAZ1_20.mp3");
-            // ... (KEEP ALL YOUR EXISTING AEAudioLoadSound CALLS HERE) ...
-
-
-           /* bgmGroup = AEAudioCreateGroup();
-            sfxGroup = AEAudioCreateGroup();
-            bossAlarmGroup = AEAudioCreateGroup();
-            ambientGroup = AEAudioCreateGroup();*/
 
             // Load audio files
             bgmTrack = AEAudioLoadMusic("Assets/Game Sound/RUNNING THE BASS - Jazz MSCJAZ1_20.mp3");
@@ -137,6 +134,7 @@ namespace SoundManager
             AEAudioUnloadAudioGroup(sfxGroup);
             AEAudioUnloadAudioGroup(ambientGroup);
             AEAudioUnloadAudioGroup(uiGroup);
+            AEAudioUnloadAudioGroup(bossAlarmGroup); 
             isAudioLoaded = false;
         }
     }
@@ -193,12 +191,12 @@ namespace SoundManager
 
     void PlayBossSfx()
     {
-        AEAudioPlay(bossSfx, sfxGroup, 1.0f, 1.0f, 0);
+        AEAudioPlay(bossSfx, bossAlarmGroup, 1.0f, 1.0f, -1);
     }
 
     void StopBossSfx() {
 
-        AEAudioStopGroup(sfxGroup);
+        AEAudioStopGroup(bossAlarmGroup);
     }
 
     void PlayLightningSfx()
@@ -220,12 +218,14 @@ namespace SoundManager
     {
         AEAudioPauseGroup(ambientGroup); // Pauses weather/snow/thunder
         AEAudioPauseGroup(sfxGroup);     // Pauses Boss alarm, explosions, typing
+        AEAudioPauseGroup(bossAlarmGroup); 
     }
 
     void ResumeGameplaySounds()
     {
         AEAudioResumeGroup(ambientGroup);
         AEAudioResumeGroup(sfxGroup);
+        AEAudioResumeGroup(bossAlarmGroup); 
     }
 
     // ==========================================
@@ -245,8 +245,8 @@ namespace SoundManager
 
     void SetSFXVolume(float volume)
     {
-        AEAudioSetGroupVolume(sfxGroup, volume);
-        AEAudioSetGroupVolume(uiGroup, volume);
+        sfxVolume = volume;  
+        UpdateVolumes();
     }
 
     void SetAmbientVolume(float volume)

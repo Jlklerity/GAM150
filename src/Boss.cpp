@@ -583,6 +583,7 @@ namespace BossSystem
             pool[(size_t)boss_pool_slot].enemy_is_active = false;                                                           // deactivate the slot before giving it back
             free_slots.push_back(boss_pool_slot);                                                                           // return the slot index to the free list
             boss_pool_slot = -1;                                                                                            // clear the reservation so nothing references the slot anymore
+            SoundManager::StopBossSfx();
         }
 
         boss_state = BossState::INACTIVE;                                                                                   // mark the boss as fully inactive
