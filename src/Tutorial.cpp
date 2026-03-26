@@ -45,7 +45,7 @@ static const char* STAGE_MESSAGES[STAGE_COUNT] =
     "This enemy has a shield!\nType word 1 to break it,\nthen word 2 to finish!",
     "Build a typing streak!\nType 5 words correctly\nto grow your flame!",
     "Some enemies orbit their\nword around them! Type\nthe word to defeat them.",
-    "Power ups fall from the sky! Press\nthe NUMBER shown to activate!\nMore types await in game...",
+    "Power ups fall from the sky!\nPress the NUMBER shown\nto activate it!",
     "Blizzards freeze you! Use SPACEBAR\n to break free when frozen!\nMore weather events await...",
     "After 60 seconds a BOSS\nappears! Type its words\nto deal damage.\nGood luck - go play!"
 };
@@ -89,6 +89,11 @@ namespace
 
     int s_streakWordIdx = 0;
     static const char* s_streakWords[] = { "RUN", "FLY", "HOP", "JAB", "ZAP", "CAT", "DOG" };
+
+    // Powerup stage sub-phase state
+    int   s_powerupPhase = 0;         // 0=Lightning, 1=Shield, 2=TimeSlow
+    float s_powerupPhaseTimer = 0.0f; // counts up after activation
+    float s_powerupSpawnTimer = 0.0f; // fallback timer for shield/slow phases
 
     AEGfxTexture* s_playerTex = nullptr;
     AEGfxVertexList* s_playerMesh = nullptr;
@@ -286,6 +291,9 @@ namespace
         s_weatherFreezeStarted = false;
         s_stageTimer = 0.0f;
         s_streakWordIdx = 0;
+        s_powerupPhase = 0;
+        s_powerupPhaseTimer = 0.0f;
+        s_powerupSpawnTimer = 0.0f;
         ResetPool();
         Typing_Init();
         StreakSystem::Init();
@@ -629,7 +637,14 @@ void Tutorial_Update()
 
             // Stage 2: Enemy lands on purpose - no typing allowed
         case STAGE_KILL_BEFORE_LANDING:
-            if (s_readyClicked && !s_stageStarted) { SpawnNormalEnemy("OUCH"); s_stageStarted = true; }
+            if (s_readyClicked && !s_stageStarted)
+            {
+                SpawnNormalEnemy("OUCH");
+                // Make it fall faster so the demo doesn't drag
+                for (auto& e : s_pool)
+                    if (e.enemy_is_active) { e.enemy_fall_speed_units_per_second = 200.0f; break; }
+                s_stageStarted = true;
+            }
             if (s_stageStarted)
             {
                 UpdateEnemies(dt, false);
@@ -814,29 +829,61 @@ void Tutorial_Update()
             }
             break;
 
-            // Stage 7: Power up - spawn on READY
+            // Stage 8: Power up - 3 sub-phases: Lightning, Shield, TimeSlow
         case STAGE_POWERUP:
             if (s_readyClicked && !s_stageStarted)
             {
+                // Disable auto-spawning so random drops never steal slots
+                PowerUpSystem::SetDropSpawnInterval(9999.0f, 9999.0f);
                 PowerUpSystem::Update(0.0f, s_pool, s_enemyArea, s_health);
-                PowerUpSystem::DebugSpawn(PowerUpSystem::PowerType::Shield);
+                SpawnNormalEnemy("FOE");
+                PowerUpSystem::DebugSpawn(PowerUpSystem::PowerType::Lightning);
                 s_stageStarted = true;
             }
             if (s_stageStarted)
             {
+                float scaledDt = dt * PowerUpSystem::GetTimeScale();
+                Typing_UpdateAndApplyToEnemies(s_pool, s_score, s_health);
+                UpdateEnemies(scaledDt, false);
                 PowerUpSystem::Update(dt, s_pool, s_enemyArea, s_health);
 
-                static bool shieldWasActive = false;
-
-                if (PowerUpSystem::IsShieldActive())
+                // Phase 0: Lightning - advance once enemy is gone
+                if (s_powerupPhase == 0)
                 {
-                    shieldWasActive = true;
+                    if (!AnyEnemyActive() && s_stageTimer > 1.0f)
+                    {
+                        s_powerupPhaseTimer += dt;
+                        if (s_powerupPhaseTimer >= 1.5f)
+                        {
+                            s_powerupPhase = 1;
+                            s_powerupPhaseTimer = 0.0f;
+                            PowerUpSystem::DebugSpawn(PowerUpSystem::PowerType::Shield);
+                        }
+                    }
                 }
-
-                if (shieldWasActive && !PowerUpSystem::IsShieldActive())
+                // Phase 1: Shield - advance 3s after activation, 10s fallback
+                else if (s_powerupPhase == 1)
                 {
-                    s_objectiveMet = true;
-                    shieldWasActive = false; // reset for safety
+                    s_powerupSpawnTimer += dt;
+                    if (PowerUpSystem::IsShieldActive())
+                        s_powerupPhaseTimer += dt;
+                    if (s_powerupPhaseTimer >= 3.0f || s_powerupSpawnTimer >= 10.0f)
+                    {
+                        s_powerupPhase = 2;
+                        s_powerupPhaseTimer = 0.0f;
+                        s_powerupSpawnTimer = 0.0f;
+                        SpawnNormalEnemy("SLOW");
+                        PowerUpSystem::DebugSpawn(PowerUpSystem::PowerType::TimeSlow);
+                    }
+                }
+                // Phase 2: TimeSlow - advance 3s after activation, 10s fallback
+                else if (s_powerupPhase == 2)
+                {
+                    s_powerupSpawnTimer += dt;
+                    if (PowerUpSystem::GetTimeScale() < 1.0f)
+                        s_powerupPhaseTimer += dt;
+                    if (s_powerupPhaseTimer >= 3.0f || s_powerupSpawnTimer >= 10.0f)
+                        s_objectiveMet = true;
                 }
             }
             break;
@@ -903,28 +950,72 @@ void Tutorial_Update()
 
     PowerUpSystem::Draw();
 
-    if (s_stage == STAGE_POWERUP && PowerUpSystem::IsShieldActive() && Graphics::font_id >= 0)
+    if (s_stage == STAGE_POWERUP && s_stageStarted && Graphics::font_id >= 0)
     {
-        float bob = sinf(s_stageTimer * 5.0f) * 6.0f;
-
-        float arrowWorldX = -s_winW * 0.5f + 140.0f + bob;
+        // Arrow only for Shield and TimeSlow phases
+        const char* label = nullptr;
+        float arrowWorldX = -s_winW * 0.5f + 140.0f + sinf(s_stageTimer * 5.0f) * 6.0f;
         float arrowWorldY = -s_winH * 0.5f + 35.0f;
 
-        float ax, ay, aw, ah;
-        const char* arrow = "<";
-        AEGfxGetPrintSize(Graphics::font_id, arrow, 0.55f, &aw, &ah);
-        ax = (arrowWorldX / (s_winW * 0.5f)) - aw * 0.5f;
-        ay = (arrowWorldY / (s_winH * 0.5f)) - ah * 0.5f;
+        if (s_powerupPhase == 1 && PowerUpSystem::IsShieldActive())
+            label = "Shield! Immune to damage!";
+        else if (s_powerupPhase == 2 && PowerUpSystem::GetTimeScale() < 1.0f)
+            label = "Time Slow! Enemies move slower!";
 
-        AEGfxSetBlendMode(AE_GFX_BM_BLEND);
-        AEGfxPrint(Graphics::font_id, arrow, ax, ay, 0.55f, 0.9f, 0.85f, 0.3f, 1.0f);
+        if (label)
+        {
+            float aw, ah;
+            AEGfxGetPrintSize(Graphics::font_id, "<", 0.55f, &aw, &ah);
+            float ax = (arrowWorldX / (s_winW * 0.5f)) - aw * 0.5f;
+            float ay = (arrowWorldY / (s_winH * 0.5f)) - ah * 0.5f;
+            AEGfxSetBlendMode(AE_GFX_BM_BLEND);
+            AEGfxPrint(Graphics::font_id, "<", ax, ay, 0.55f, 0.9f, 0.85f, 0.3f, 1.0f);
 
-        const char* label = "Power-up active!";
-        float lw, lh;
-        AEGfxGetPrintSize(Graphics::font_id, label, 0.35f, &lw, &lh);
-        float lx = (arrowWorldX / (s_winW * 0.5f)) - lw * 0.5f;
-        float ly = ((arrowWorldY + 45.0f) / (s_winH * 0.5f)) - lh * 0.5f;
-        AEGfxPrint(Graphics::font_id, label, lx, ly, 0.35f, 0.9f, 0.85f, 0.3f, 1.0f);
+            // Left-anchor label so it never overflows screen edge
+            float lx = (-s_winW * 0.5f + 20.0f) / (s_winW * 0.5f);
+            float ly = ((arrowWorldY + 45.0f) / (s_winH * 0.5f));
+            AEGfxPrint(Graphics::font_id, label, lx, ly, 0.35f, 0.9f, 0.85f, 0.3f, 1.0f);
+        }
+
+        // Per-phase instruction drawn in speech bubble area (override message)
+        const char* phaseMsg = nullptr;
+        if (s_powerupPhase == 0) phaseMsg = "1/3 LIGHTNING: Activate\nthe drop to wipe all\nenemies instantly!";
+        else if (s_powerupPhase == 1) phaseMsg = "2/3 SHIELD: Activate\nto become immune\nto damage briefly!";
+        else if (s_powerupPhase == 2) phaseMsg = "3/3 TIME SLOW: Activate\nto slow all enemies\nand their words!";
+
+        if (phaseMsg && s_rectMesh)
+        {
+            float ndcX = (BUBBLE_X - BUBBLE_W * 0.5f + 18.0f) / (s_winW * 0.5f);
+            float ndcY = (BUBBLE_Y + BUBBLE_H * 0.5f - 35.0f) / (s_winH * 0.5f);
+            float spacing = 0.085f;
+            AEGfxSetBlendMode(AE_GFX_BM_BLEND);
+            AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);
+
+            // Draw dark background over the existing message first
+            AEGfxSetRenderMode(AE_GFX_RM_COLOR);
+            AEGfxSetTransparency(0.92f);
+            AEGfxSetColorToMultiply(0.08f, 0.08f, 0.12f, 1.0f);
+            Mesh_Renderer(s_rectMesh, BUBBLE_X, BUBBLE_Y + 20.0f, BUBBLE_W - 4.0f, BUBBLE_H * 0.55f, 0.0f);
+
+            AEGfxSetBlendMode(AE_GFX_BM_BLEND);
+            AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);
+            std::string msg = phaseMsg;
+            float lineY = ndcY;
+            std::string line;
+            for (size_t ci = 0; ci <= msg.size(); ++ci)
+            {
+                if (ci == msg.size() || msg[ci] == '\n')
+                {
+                    if (!line.empty())
+                    {
+                        AEGfxPrint(Graphics::font_id, line.c_str(), ndcX, lineY, 0.42f, 1.0f, 1.0f, 1.0f, 1.0f);
+                        lineY -= spacing;
+                    }
+                    line.clear();
+                }
+                else line += msg[ci];
+            }
+        }
     }
     Weather_Draw();
     Particles_Draw();
