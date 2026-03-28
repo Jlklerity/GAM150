@@ -257,6 +257,11 @@ namespace
     static AEGfxTexture* s_ghostTex = nullptr;
     static AEGfxVertexList* s_ghostMesh = nullptr;   // single-frame UV quad (1/GHOST_FRAME_COUNT wide)
 
+    // Ghost pre-event announcement (shown for 3s before ghosts actually spawn)
+    constexpr float GHOST_ANNOUNCE_DUR = 3.0f;
+    static float            s_ghostAnnounceTimer = 0.0f; // counts down; ghosts spawn when it hits 0
+    static bool             s_ghostAnnouncePending = false; // true during the 3s pre-spawn window
+
     // ---- Particles ----
     static Snowflake s_ambient[AMBIENT_COUNT]{};
     static Snowflake s_blizzard[BLIZZARD_COUNT]{};
@@ -306,6 +311,7 @@ namespace
     // Ghost weather helpers
     static void  Ghost_BuildMesh();
     static void  Ghost_Start();
+    static void  Ghost_SpawnAll();
     static void  Ghost_Update(float dt);
     static void  Ghost_Draw();
     static void  Ghost_DrawHUD();
@@ -761,9 +767,9 @@ namespace
 
         AEGfxSetBlendMode(AE_GFX_BM_BLEND);
         // Main "FROZEN" title icy blue
-        DrawCentredText("YOU ARE FROZEN!", 0.35f, 0.75f, 0.6f, 0.88f, 1.0f, 1.0f);
+        DrawCentredText("YOU ARE FROZEN!", 0.10f, 0.75f, 0.6f, 0.88f, 1.0f, 1.0f);
         // Instruction – white
-        DrawCentredText("SPAM SPACE TO BREAK FREE!", 0.15f, 0.55f, 1.0f, 1.0f, 1.0f, 1.0f);
+        DrawCentredText("SPAM SPACE TO BREAK FREE!", -0.10f, 0.55f, 1.0f, 1.0f, 1.0f, 1.0f);
     }
 
     // Horizontal progress bar showing breakfree progress
@@ -996,12 +1002,12 @@ namespace
             float progress = Clamp01(s_boltPhaseTimer / BRACE_WARNING_DUR);
             float blinkHz = 2.0f + progress * 6.0f;   // 2 Hz → 8 Hz
             float pulse = ((int)(s_boltPhaseTimer * blinkHz * 2.0f) % 2 == 0) ? 1.0f : 0.4f;
-            DrawCentredText("BRACE!", 0.25f, 1.0f, 1.0f, 0.85f, 0.1f, pulse);   // yellow
+            DrawCentredText("BRACE!", 0.0f, 1.0f, 1.0f, 0.85f, 0.1f, pulse);   // yellow
         }
         else if (s_boltPhase == BoltPhase::STRIKING && s_stunTimer > 0.0f)
         {
             float alpha = Clamp01(s_stunTimer / STUN_DUR);
-            DrawCentredText("STUNNED!", 0.10f, 1.2f, 1.0f, 0.3f, 0.1f, alpha);   // red-orange, larger
+            DrawCentredText("STUNNED!", 0.0f, 1.2f, 1.0f, 0.3f, 0.1f, alpha);   // red-orange, larger
         }
     }
 
@@ -1152,7 +1158,7 @@ namespace
         constexpr float PULSE_AMP = 0.08f;
         float scale = BASE_SCALE + PULSE_AMP * sinf(s_weatherPulseTimer * 4.0f);
 
-        DrawCentredText("POWER UPS GALORE!", 0.25f, scale, r, g, b, alpha);
+        DrawCentredText("POWER UPS GALORE!", 0.0f, scale, r, g, b, alpha);
     }
 
     // ================================================================
@@ -1216,9 +1222,20 @@ namespace
         s_ghostEventActive = true;
         s_ghostLifeTimer = 0.0f;
         s_ghostLockTimer = 0.0f;
-        s_ghostPopupTimer = WEATHER_POPUP_DUR;
+        s_ghostPopupTimer = 0.0f; // not used during announce phase
 
-        // Assign digits 5-9 (one per ghost, shuffled slightly via rand)
+        // Start the 3-second pre-spawn announcement; ghosts spawn once it expires.
+        s_ghostAnnouncePending = true;
+        s_ghostAnnounceTimer = GHOST_ANNOUNCE_DUR;
+
+        // Mark all ghosts as dead until they are actually spawned after announcement
+        for (int i = 0; i < GHOST_COUNT; ++i)
+            s_ghosts[i].alive = false;
+    }
+
+    // Spawn all 5 ghosts with shuffled digits — called after the announcement ends.
+    static void Ghost_SpawnAll()
+    {
         int digits[GHOST_COUNT] = { 5, 6, 7, 8, 9 };
         // Fisher-Yates shuffle for variety
         for (int i = GHOST_COUNT - 1; i > 0; --i)
@@ -1226,7 +1243,6 @@ namespace
             int j = rand() % (i + 1);
             int tmp = digits[i]; digits[i] = digits[j]; digits[j] = tmp;
         }
-
         for (int i = 0; i < GHOST_COUNT; ++i)
             Ghost_SpawnOne(s_ghosts[i], digits[i]);
     }
@@ -1234,6 +1250,19 @@ namespace
     // Per-frame ghost update: movement, animation, digit input, lock timer.
     static void Ghost_Update(float dt)
     {
+        // ---- Announcement phase: wait 3s before spawning ghosts ----
+        if (s_ghostAnnouncePending)
+        {
+            s_ghostAnnounceTimer -= dt;
+            if (s_ghostAnnounceTimer <= 0.0f)
+            {
+                s_ghostAnnouncePending = false;
+                s_ghostAnnounceTimer = 0.0f;
+                Ghost_SpawnAll();
+            }
+            return; // don't process ghosts yet
+        }
+
         // ---- Lock timer: count down ----
         if (s_ghostLockTimer > 0.0f)
         {
@@ -1371,22 +1400,23 @@ namespace
         AEGfxSetColorToAdd(0.0f, 0.0f, 0.0f, 0.0f);
     }
 
-    // Draw "DEFEAT THE GHOSTS!" prompt always while event is active,
-    // plus "GHOSTIFIED!" lock indicator when typing is locked.
+    // Draw "DEFEAT GHOSTS (PRESS NUMBERS)" announcement before ghosts spawn,
+    // then "GHOSTIFIED!" lock indicator when typing is locked.
     static void Ghost_DrawHUD()
     {
         if (Graphics::font_id < 0) return;
 
         AEGfxSetBlendMode(AE_GFX_BM_BLEND);
 
-        // ---- "DEFEAT THE GHOSTS!" — popup only on event start ----
-        if (s_ghostPopupTimer > 0.0f)
+        // ---- "DEFEAT GHOSTS (PRESS NUMBERS)" — shown for 3s before ghosts spawn ----
+        if (s_ghostAnnouncePending && s_ghostAnnounceTimer > 0.0f)
         {
-            float alpha = (s_ghostPopupTimer < WEATHER_POPUP_FADE)
-                ? (s_ghostPopupTimer / WEATHER_POPUP_FADE) : 1.0f;
+            // Fade out over the last 0.5s of the announcement
+            float alpha = (s_ghostAnnounceTimer < WEATHER_POPUP_FADE)
+                ? (s_ghostAnnounceTimer / WEATHER_POPUP_FADE) : 1.0f;
             float brightness = fabsf(sinf(s_weatherPulseTimer * 2.5f));
             float scale = 0.65f + 0.08f * sinf(s_weatherPulseTimer * 3.5f);
-            DrawCentredText("DEFEAT THE GHOSTS!", 0.38f, scale,
+            DrawCentredText("DEFEAT GHOSTS (PRESS NUMBERS)", 0.0f, scale,
                 brightness, brightness, brightness, alpha);
         }
 

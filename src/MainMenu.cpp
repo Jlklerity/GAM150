@@ -44,6 +44,7 @@ namespace
     AEGfxTexture* pTexBackName = nullptr;
     AEGfxTexture* pTexTutorial = nullptr;
     AEGfxTexture* pTexCredits = nullptr;
+    AEGfxTexture* pTexExit = nullptr;                                                                                        // quit button texture
     // ---------------------------------------------------------------------------
     // WINDOW & CURSOR DATA
     // ---------------------------------------------------------------------------
@@ -60,7 +61,7 @@ namespace
     const float SHOP_WIDTH = 240.0f;                                                                                        // width of shop button
     const float SHOP_HEIGHT = 240.0f;                                                                                       // height of shop button
     const float EXIT_WIDTH = 240.0f;                                                                                        // width of exit button
-    const float EXIT_HEIGHT = 80.0f;                                                                                        // height of exit button
+    const float EXIT_HEIGHT = 240.0f;                                                                                       // height of exit button
     const float LEADERBOARD_WIDTH = 240.0f;
     const float LEADERBOARD_HEIGHT = 80.0f;
 
@@ -124,9 +125,9 @@ namespace
     float TUTORIAL_BTN_Y;
     float CREDITS_BTN_X;
     float CREDITS_BTN_Y;
-    float EMPTY_NAME_WARNING_TIMER;  
-    float EMPTY_NAME_WARNING_X;      
-    float EMPTY_NAME_WARNING_Y;      
+    float EMPTY_NAME_WARNING_TIMER;
+    float EMPTY_NAME_WARNING_X;
+    float EMPTY_NAME_WARNING_Y;
 
     // ---------------------------------------------------------------------------
     // STATE & LOGIC VARIABLES
@@ -279,9 +280,15 @@ void Draw_Main_Menu(float textNdcOffset)
         Mesh_Renderer(pMeshCreditsBtn, CREDITS_BTN_X + uiOffsetX, CREDITS_BTN_Y, CREDITS_WIDTH * tweenCredits.scale, CREDITS_HEIGHT * tweenCredits.scale, 0.0f);
     }
 
-    // Draw Exit Buttons
-    AEGfxSetRenderMode(AE_GFX_RM_COLOR);                                                                                    // swap back to color mode
-    Mesh_Renderer(pMeshExitBtn, 0.0f + uiOffsetX, EXIT_BTN_Y, 1.0f, 1.0f, 0.0f);                                           // render exit button
+    // Draw Exit Button
+    if (pTexExit)
+    {
+        AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
+        AEGfxSetBlendMode(AE_GFX_BM_BLEND);
+        AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);
+        AEGfxTextureSet(pTexExit, 0.0f, 0.0f);
+        Mesh_Renderer(pMeshExitBtn, 0.0f + uiOffsetX, EXIT_BTN_Y, EXIT_WIDTH * tweenExit.scale, EXIT_HEIGHT * tweenExit.scale, 0.0f);   // render quit button
+    }
 
 
 }
@@ -300,7 +307,7 @@ void Main_Menu_Input()
     worldY = (winH * 0.5f) - (float)mouseY;                                                                                 // convert screen Y to world Y
 
     if (selected_mode == "") selected_mode = "ZEN";                                                                         // default mode safety check
-     
+
     // ---------------------------------------------------------------------------
     // BUTTON TWEEN UPDATES
     // ---------------------------------------------------------------------------
@@ -340,7 +347,7 @@ void Main_Menu_Input()
             ButtonTween_Update(tweenCredits, hCred, hCred && click, dt);
         }
     }
-        if (UiPauseMenu::IsPopupOpen()) return;
+    if (UiPauseMenu::IsPopupOpen()) return;
 
     if (!splashActive && !isTransitioningToName && !transitioningToShop && !isReturningFromShop && AEInputCheckTriggered(AEVK_ESCAPE))
     {
@@ -482,7 +489,7 @@ void Main_Menu_EnterName(float worldYOffset, float ndcYOffset, bool allowInput)
             SoundManager::PlayClickBtnSfx();
             EMPTY_NAME_WARNING_TIMER = 1.5f;
             EMPTY_NAME_WARNING_X = 0.0f;
-            EMPTY_NAME_WARNING_Y = 0.05f;  
+            EMPTY_NAME_WARNING_Y = 0.05f;
         }
         else if (exitClicked)
         {
@@ -527,9 +534,9 @@ void Main_Menu_EnterName(float worldYOffset, float ndcYOffset, bool allowInput)
         }
     }
 
-   // AEGfxSetBackgroundColor(0.53f, 0.81f, 0.92f);                                                                              // clear screen to black
+    // AEGfxSetBackgroundColor(0.53f, 0.81f, 0.92f);                                                                              // clear screen to black
 
-    // Draw Exit Name Button
+     // Draw Exit Name Button
     if (pTexBackName) {
         AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);                                                                                    // set to texture mode
         AEGfxSetBlendMode(AE_GFX_BM_BLEND);                                                                                     // enable alpha blend
@@ -602,9 +609,9 @@ void Main_Menu_EnterName(float worldYOffset, float ndcYOffset, bool allowInput)
             AEGfxSetBlendMode(AE_GFX_BM_BLEND);                                                                             // re-apply blend
             AEGfxPrint(Graphics::font_id, player_name.c_str(), startX, textY, textScale, 0.0f, 0.0f, 0.0f, 1.0f);           // print typed name
         }
-    // ========================================================================
-    // DRAW EMPTY NAME WARNING POPUP
-    // ========================================================================
+        // ========================================================================
+        // DRAW EMPTY NAME WARNING POPUP
+        // ========================================================================
         if (EMPTY_NAME_WARNING_TIMER > 0.0f)
         {
             // 1. Calculate fade-out alpha based on time left
@@ -655,6 +662,7 @@ void Main_Menu_Init()
     if (pTexSettings) { AEGfxTextureUnload(pTexSettings);     pTexSettings = nullptr; }
     if (pTexTutorial) { AEGfxTextureUnload(pTexTutorial);     pTexTutorial = nullptr; }
     if (pTexCredits) { AEGfxTextureUnload(pTexCredits);      pTexCredits = nullptr; }
+    if (pTexExit) { AEGfxTextureUnload(pTexExit);         pTexExit = nullptr; }
 
     if (pMeshLogo) { AEGfxMeshFree(pMeshLogo);         pMeshLogo = nullptr; }
     if (pMeshBtn) { AEGfxMeshFree(pMeshBtn);          pMeshBtn = nullptr; }
@@ -678,7 +686,7 @@ void Main_Menu_Init()
     ParallaxZoom::Reset();
 
     EMPTY_NAME_WARNING_TIMER = 0.0f;
-    EMPTY_NAME_WARNING_X = 0.0f;           
+    EMPTY_NAME_WARNING_X = 0.0f;
     EMPTY_NAME_WARNING_Y = 0.0f;
 
     SoundManager::Init();
@@ -724,9 +732,12 @@ void Main_Menu_Init()
     pTexCredits = AEGfxTextureLoad("Assets/credits.png");
     AE_ASSERT_MESG(pTexCredits, "Failed to load credits.png");
 
+    pTexExit = AEGfxTextureLoad("Assets/quit.png");                                                                          // load quit button texture
+    AE_ASSERT_MESG(pTexExit, "Failed to load quit.png");
+
     pMeshLogo = Sprite_Mesh(1.0f, 1.0f);                                                            // build logo  
     pMeshBtn = Sprite_Mesh(1.0f, 1.0f);                                                                                     // build standard button mesh
-    pMeshExitBtn = Rect_Mesh(EXIT_WIDTH, EXIT_HEIGHT, 0xFFFFFFFF);                                                          // build exit button mesh
+    pMeshExitBtn = Sprite_Mesh(1.0f, 1.0f);                                                                                  // build exit button mesh
     pMeshEnterName = Sprite_Mesh(1.0f, 1.0f);
     pMeshBackName = Sprite_Mesh(1.0f, 1.0f);
     pMeshLeaderboardBtn = Sprite_Mesh(1.0f, 1.0f);
@@ -762,7 +773,7 @@ void Main_Menu_Init()
     ButtonTween_Reset(tweenBackName);
 
     // ---------------------------------------------------------------------------
-    // SPLASH OVERLAY – only on very first launch (gGameStatePrev == GS_NONE)
+    // SPLASH OVERLAY ? only on very first launch (gGameStatePrev == GS_NONE)
     // ---------------------------------------------------------------------------
     splashTimer = 0.0f;
     splashActive = (gGameStatePrev == GS_NONE);
@@ -806,7 +817,7 @@ void Main_Menu_Update()
 
     float dt = (float)AEFrameRateControllerGetFrameTime();
     if (dt > 0.1f) dt = 0.01667f;                                                                                           // dt clamp
-    
+
     if (EMPTY_NAME_WARNING_TIMER > 0.0f)
     {
         EMPTY_NAME_WARNING_TIMER -= dt;
@@ -852,9 +863,9 @@ void Main_Menu_Update()
 
     LOGO_Y = winH * 0.35f;                                                                                                  // set logo Y pos
     PLAY_BTN_Y = winH * 0.15f;                                                                                              // set play button Y pos
-    TUTORIAL_BTN_Y = winH * -0.09f;                                                                                         // set tutorial button Y pos
-    SHOP_BTN_Y = winH * -0.25f;                                                                                             // set shop button Y pos
-    EXIT_BTN_Y = winH * -0.43f;                                                                                             // set exit button Y pos
+    TUTORIAL_BTN_Y = winH * -0.04f;                                                                                         // set tutorial button Y pos
+    SHOP_BTN_Y = winH * -0.23f;                                                                                             // set shop button Y pos
+    EXIT_BTN_Y = winH * -0.42f;                                                                                             // set exit button Y pos
 
     EXITNAME_BTN_Y = winH * -0.35f;                                                                                         // set exit name Y pos
     EXITNAME_BTN_X = winW * -0.35f;                                                                                         // set exit name X pos
@@ -875,10 +886,10 @@ void Main_Menu_Update()
     LEADERBOARD_BTN_Y = winH * -0.4f;
 
     LEFTARROW_BTN_X = winH * -0.12f;                                                                                        // set left arrow X pos
-    LEFTARROW_BTN_Y = PLAY_BTN_Y - 85.0f;                                                                                   // set left arrow Y pos
+    LEFTARROW_BTN_Y = PLAY_BTN_Y + 85.0f;                                                                                   // set left arrow Y pos (above play button)
 
     RIGHTARROW_BTN_X = winH * 0.12f;                                                                                        // set right arrow X pos
-    RIGHTARROW_BTN_Y = PLAY_BTN_Y - 90.0f;                                                                                  // set right arrow Y pos
+    RIGHTARROW_BTN_Y = PLAY_BTN_Y + 85.0f;                                                                                  // set right arrow Y pos (above play button)
 
     CREDITS_BTN_X = winW * 0.23f;
     CREDITS_BTN_Y = winH * -0.4f;
@@ -1091,7 +1102,7 @@ void Main_Menu_Update()
     }
 
     // ---------------------------------------------------------------------------
-    // SPLASH OVERLAY – drawn on top of everything else, fades out then disables
+    // SPLASH OVERLAY ? drawn on top of everything else, fades out then disables
     // ---------------------------------------------------------------------------
     if (splashActive)
     {
@@ -1107,7 +1118,7 @@ void Main_Menu_Update()
 
         if (alpha <= 0.0f)
         {
-            // Fade complete – free resources
+            // Fade complete ? free resources
             splashActive = false;
             if (pMeshSplashQuad) { AEGfxMeshFree(pMeshSplashQuad); pMeshSplashQuad = nullptr; }
             if (pMeshSplashLogo) { AEGfxMeshFree(pMeshSplashLogo); pMeshSplashLogo = nullptr; }
@@ -1279,6 +1290,12 @@ void Main_Menu_Exit()
     {
         AEGfxTextureUnload(pTexCredits);
         pTexCredits = nullptr;
+    }
+
+    if (pTexExit)
+    {
+        AEGfxTextureUnload(pTexExit);                                                                                        // unload quit texture
+        pTexExit = nullptr;
     }
 
     // Splash overlay safety cleanup (normally freed after fade, guard anyway)
