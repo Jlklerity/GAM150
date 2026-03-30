@@ -81,7 +81,7 @@ namespace ParallaxZoom
 
         if (!s_switched && t >= STATE_SWITCH_T)
         {
-            gGameStateNext = s_target_state;
+            g_game_state_next = s_target_state;
             s_switched = true;
         }
 

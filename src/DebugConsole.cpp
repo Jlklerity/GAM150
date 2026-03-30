@@ -326,17 +326,17 @@ namespace
             }
             if (IEquals(tokens[1], "lightning"))
             {
-                PowerUpSystem::DebugSpawn(PowerUpSystem::PowerType::Lightning);
+                PowerUpSystem::DebugSpawn(PowerUpSystem::PowerType::LIGHTNING);
                 PushHistory("Spawned Lightning power-up.", false);
             }
             else if (IEquals(tokens[1], "shield"))
             {
-                PowerUpSystem::DebugSpawn(PowerUpSystem::PowerType::Shield);
+                PowerUpSystem::DebugSpawn(PowerUpSystem::PowerType::SHIELD);
                 PushHistory("Spawned Shield power-up.", false);
             }
             else if (IEquals(tokens[1], "slow"))
             {
-                PowerUpSystem::DebugSpawn(PowerUpSystem::PowerType::TimeSlow);
+                PowerUpSystem::DebugSpawn(PowerUpSystem::PowerType::TIME_SLOW);
                 PushHistory("Spawned TimeSlow power-up.", false);
             }
             else
@@ -425,9 +425,9 @@ namespace
     void DrawText(const char* text, float nx, float ny, float scale,
         float r, float g, float b)
     {
-        if (Graphics::font_id < 0) return;
+        if (Graphics::g_font_id < 0) return;
         AEGfxSetBlendMode(AE_GFX_BM_BLEND);
-        AEGfxPrint(Graphics::font_id, text, nx, ny, scale, r, g, b, 1.0f);
+        AEGfxPrint(Graphics::g_font_id, text, nx, ny, scale, r, g, b, 1.0f);
     }
 
     // Convert world Y to NDC
@@ -679,7 +679,7 @@ namespace DebugConsole
         DrawPanel(0.0f, INPUT_BAR_Y + INPUT_BAR_H * 0.5f + 1.0f, SCREEN_W, 2.0f, 0.4f, 0.8f, 0.4f, 1.0f);
 
         // Input text + cursor
-        if (Graphics::font_id >= 0)
+        if (Graphics::g_font_id >= 0)
         {
             std::string display = std::string(s_input_buf);
             if (s_cursor_visible) display += "_";
@@ -689,7 +689,7 @@ namespace DebugConsole
             float ny = WorldYtoNDC(INPUT_BAR_Y - 6.0f);
 
             AEGfxSetBlendMode(AE_GFX_BM_BLEND);
-            AEGfxPrint(Graphics::font_id, display.c_str(), nx, ny, text_scale, 0.6f, 1.0f, 0.6f, 1.0f);
+            AEGfxPrint(Graphics::g_font_id, display.c_str(), nx, ny, text_scale, 0.6f, 1.0f, 0.6f, 1.0f);
         }
     }
 

@@ -326,7 +326,7 @@ namespace
     // at the bottom (yellow = not started, blue = complete or boss stage)
     void DrawSpeechBubble(bool objectiveMet)
     {
-        if (!s_rectMesh || Graphics::font_id < 0) return;
+        if (!s_rectMesh || Graphics::g_font_id < 0) return;
         if (s_stage < 0 || s_stage >= STAGE_COUNT) return;
 
         // Gold border
@@ -366,7 +366,7 @@ namespace
             {
                 if (!line.empty())
                 {
-                    AEGfxPrint(Graphics::font_id, line.c_str(), ndcX, lineY, 0.42f, 1.0f, 1.0f, 1.0f, 1.0f);
+                    AEGfxPrint(Graphics::g_font_id, line.c_str(), ndcX, lineY, 0.42f, 1.0f, 1.0f, 1.0f, 1.0f);
                     lineY -= spacing;
                 }
                 line.clear();
@@ -382,13 +382,13 @@ namespace
             float obj_r = objectiveMet ? 0.2f : 1.0f;
             float obj_g = objectiveMet ? 1.0f : 0.85f;
             float obj_b = objectiveMet ? 0.2f : 0.1f;
-            AEGfxPrint(Graphics::font_id,
+            AEGfxPrint(Graphics::g_font_id,
                 objectiveMet ? "Objective complete!" : s_STAGE_OBJECTIVES[s_stage],
                 ndcObjX, ndcObjY, 0.38f, obj_r, obj_g, obj_b, 1.0f);
         }
 
         // ENTER hint text at bottom of bubble
-        if (Graphics::font_id >= 0)
+        if (Graphics::g_font_id >= 0)
         {
             const char* hint = nullptr;
             float hr = 0.0f, hg = 0.0f, hb = 0.0f;
@@ -412,11 +412,11 @@ namespace
             if (hint)
             {
                 float hw, hh;
-                AEGfxGetPrintSize(Graphics::font_id, hint, 0.40f, &hw, &hh);
+                AEGfxGetPrintSize(Graphics::g_font_id, hint, 0.40f, &hw, &hh);
                 float hndcX = (BUBBLE_X - BUBBLE_W * 0.5f + 18.0f) / (s_winW * 0.5f);
                 float hndcY = (BUBBLE_Y - BUBBLE_H * 0.5f + 18.0f) / (s_winH * 0.5f);
                 AEGfxSetBlendMode(AE_GFX_BM_BLEND);
-                AEGfxPrint(Graphics::font_id, hint, hndcX, hndcY, 0.40f, hr, hg, hb, 1.0f);
+                AEGfxPrint(Graphics::g_font_id, hint, hndcX, hndcY, 0.40f, hr, hg, hb, 1.0f);
             }
         }
 
@@ -572,7 +572,7 @@ void Tutorial_Update()
         Mesh_Renderer(s_rectMesh, 0.0f, 0.0f, 1600.0f, 900.0f, 0.0f);
 
         if (s_fadeTimer >= FADE_DURATION)
-            gGameStateNext = GS_MAIN_MENU;
+            g_game_state_next = GS_MAIN_MENU;
         return;
     }
 
@@ -881,7 +881,7 @@ void Tutorial_Update()
                 PowerUpSystem::SetDropSpawnInterval(9999.0f, 9999.0f);
                 PowerUpSystem::Update(0.0f, s_pool, s_enemyArea, s_health);
                 SpawnNormalEnemy("FOE");
-                PowerUpSystem::DebugSpawn(PowerUpSystem::PowerType::Lightning);
+                PowerUpSystem::DebugSpawn(PowerUpSystem::PowerType::LIGHTNING);
                 s_stageStarted = true;
             }
             if (s_stageStarted)
@@ -901,7 +901,7 @@ void Tutorial_Update()
                         {
                             s_powerupPhase = 1;
                             s_powerupPhaseTimer = 0.0f;
-                            PowerUpSystem::DebugSpawn(PowerUpSystem::PowerType::Shield);
+                            PowerUpSystem::DebugSpawn(PowerUpSystem::PowerType::SHIELD);
                         }
                     }
                 }
@@ -917,7 +917,7 @@ void Tutorial_Update()
                         s_powerupPhaseTimer = 0.0f;
                         s_powerupSpawnTimer = 0.0f;
                         SpawnNormalEnemy("SLOW");
-                        PowerUpSystem::DebugSpawn(PowerUpSystem::PowerType::TimeSlow);
+                        PowerUpSystem::DebugSpawn(PowerUpSystem::PowerType::TIME_SLOW);
                     }
                 }
                 // Phase 2: TimeSlow - advance 3s after activation, 10s fallback
@@ -994,7 +994,7 @@ void Tutorial_Update()
 
     PowerUpSystem::Draw();
 
-    if (s_stage == STAGE_POWERUP && s_stageStarted && Graphics::font_id >= 0)
+    if (s_stage == STAGE_POWERUP && s_stageStarted && Graphics::g_font_id >= 0)
     {
         // Arrow only for Shield and TimeSlow phases
         const char* label = nullptr;
@@ -1009,16 +1009,16 @@ void Tutorial_Update()
         if (label)
         {
             float aw, ah;
-            AEGfxGetPrintSize(Graphics::font_id, "<", 0.55f, &aw, &ah);
+            AEGfxGetPrintSize(Graphics::g_font_id, "<", 0.55f, &aw, &ah);
             float ax = (arrowWorldX / (s_winW * 0.5f)) - aw * 0.5f;
             float ay = (arrowWorldY / (s_winH * 0.5f)) - ah * 0.5f;
             AEGfxSetBlendMode(AE_GFX_BM_BLEND);
-            AEGfxPrint(Graphics::font_id, "<", ax, ay, 0.55f, 0.9f, 0.85f, 0.3f, 1.0f);
+            AEGfxPrint(Graphics::g_font_id, "<", ax, ay, 0.55f, 0.9f, 0.85f, 0.3f, 1.0f);
 
             // Left-anchor label so it never overflows screen edge
             float lx = (-s_winW * 0.5f + 20.0f) / (s_winW * 0.5f);
             float ly = ((arrowWorldY + 45.0f) / (s_winH * 0.5f));
-            AEGfxPrint(Graphics::font_id, label, lx, ly, 0.35f, 0.9f, 0.85f, 0.3f, 1.0f);
+            AEGfxPrint(Graphics::g_font_id, label, lx, ly, 0.35f, 0.9f, 0.85f, 0.3f, 1.0f);
         }
 
         // Per-phase instruction drawn in speech bubble area (override message)
@@ -1052,7 +1052,7 @@ void Tutorial_Update()
                 {
                     if (!line.empty())
                     {
-                        AEGfxPrint(Graphics::font_id, line.c_str(), ndcX, lineY, 0.42f, 1.0f, 1.0f, 1.0f, 1.0f);
+                        AEGfxPrint(Graphics::g_font_id, line.c_str(), ndcX, lineY, 0.42f, 1.0f, 1.0f, 1.0f, 1.0f);
                         lineY -= spacing;
                     }
                     line.clear();

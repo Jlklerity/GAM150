@@ -313,7 +313,7 @@ render_only:
 
     // Only draw world if not in death transition
 
-    AEGfxTexture* activeBg = (gShopBgID == 0) ? bgTexture1 : bgTexture2;
+    AEGfxTexture* activeBg = (g_shop_bg_id == 0) ? bgTexture1 : bgTexture2;
     AEGfxTextureSet(activeBg, 0.0f, 0.0f);
     DayCycle::Draw();
     GameClouds::Draw();

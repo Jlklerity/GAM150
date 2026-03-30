@@ -63,7 +63,7 @@ namespace
     // triggers a red screen flash when the timer first hits 10 seconds, and makes the number blink in the last 10 seconds
     void DrawTimerEffects()
     {
-        if (!bg_mesh || Graphics::font_id < 0) return;
+        if (!bg_mesh || Graphics::g_font_id < 0) return;
         float dt = (float)AEFrameRateControllerGetFrameTime();
         float pct = time_remaining / TOTAL_TIME;
 
@@ -101,9 +101,9 @@ namespace
         float cg = (pct > 0.5f) ? 1.0f : pct * 2.0f;
         float scale = (time_remaining <= 10.0f) ? 0.85f : 0.7f;
         float tw, th;
-        AEGfxGetPrintSize(Graphics::font_id, time_str.c_str(), scale, &tw, &th);
+        AEGfxGetPrintSize(Graphics::g_font_id, time_str.c_str(), scale, &tw, &th);
         AEGfxSetBlendMode(AE_GFX_BM_BLEND);
-        AEGfxPrint(Graphics::font_id, time_str.c_str(), -tw * 0.5f, 0.88f, scale, cr, cg, 0.1f, 1.0f);
+        AEGfxPrint(Graphics::g_font_id, time_str.c_str(), -tw * 0.5f, 0.88f, scale, cr, cg, 0.1f, 1.0f);
     }
 
 } // anonymous namespace
@@ -336,7 +336,7 @@ render_only:
     AEGfxSetBlendMode(AE_GFX_BM_BLEND);
     AEGfxSetTransparency(1.0f);
     AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);
-    AEGfxTexture* active_bg = (gShopBgID == 0) ? bg_texture1 : bg_texture2;
+    AEGfxTexture* active_bg = (g_shop_bg_id == 0) ? bg_texture1 : bg_texture2;
     AEGfxTextureSet(active_bg, 0.0f, 0.0f);
     Mesh_Renderer(bg_mesh, 0.0f, 0.0f, 1600.0f, 900.0f, 0.0f);
 

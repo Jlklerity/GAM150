@@ -148,24 +148,24 @@ namespace StreakSystem
             AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);
 
             // Streak counter above flame top
-            if (Graphics::font_id >= 0 && s_streak > 0)
+            if (Graphics::g_font_id >= 0 && s_streak > 0)
             {
                 std::string streak_str = std::to_string(s_streak) + "x";
                 float tw, th;
-                AEGfxGetPrintSize(Graphics::font_id, streak_str.c_str(), 0.5f, &tw, &th);
+                AEGfxGetPrintSize(Graphics::g_font_id, streak_str.c_str(), 0.5f, &tw, &th);
 
                 float win_h = (float)AEGfxGetWindowHeight();
                 float ndc_x = (FLAME_X / 800.0f) - tw * 0.5f;
                 float ndc_y = ((flame_centre_y + h * 0.5f + 10.0f) / (win_h * 0.5f));
 
                 AEGfxSetBlendMode(AE_GFX_BM_BLEND);
-                AEGfxPrint(Graphics::font_id, streak_str.c_str(),
+                AEGfxPrint(Graphics::g_font_id, streak_str.c_str(),
                     ndc_x, ndc_y, 0.5f, r, g * 0.8f, b, 1.0f);
             }
         }
 
         // Floating "+1" popup at kill position
-        if (s_float_active && Graphics::font_id >= 0)
+        if (s_float_active && Graphics::g_font_id >= 0)
         {
             float alpha = 1.0f - (s_float_timer / FLOAT_DURATION);
             float win_w = (float)AEGfxGetWindowWidth();
@@ -174,13 +174,13 @@ namespace StreakSystem
             std::string pop_str_str = "x" + std::to_string(s_streak);
             const char* pop_str = pop_str_str.c_str();
             float tw, th;
-            AEGfxGetPrintSize(Graphics::font_id, pop_str, 0.6f, &tw, &th);
+            AEGfxGetPrintSize(Graphics::g_font_id, pop_str, 0.6f, &tw, &th);
 
             float ndc_x = (s_float_x / (win_w * 0.5f)) - tw * 0.5f;
             float ndc_y = (s_float_y / (win_h * 0.5f));
 
             AEGfxSetBlendMode(AE_GFX_BM_BLEND);
-            AEGfxPrint(Graphics::font_id, pop_str,
+            AEGfxPrint(Graphics::g_font_id, pop_str,
                 ndc_x, ndc_y, 0.6f, 1.0f, 0.9f, 0.2f, alpha);
         }
     }

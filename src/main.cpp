@@ -21,7 +21,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 
 	int gGameRunning = 1;
 	//_CrtSetBreakAlloc(61465);
-	AESysInit(hInstance, nCmdShow, 1600, 900, 1, 60, false, nullptr);
+	AESysInit(hInstance, nCmdShow, 1600, 900, 0, 60, false, nullptr);
 
 	AESysSetWindowTitle("Revenge of YK");
 
@@ -43,23 +43,23 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 		GSM_Update();
 
 		// run the current state's Update function
-		if (gGameStateUpdate)
-			gGameStateUpdate();
+		if (g_game_state_update)
+			g_game_state_update();
 
 		// checks if the GSM set the state to quit
-		if (gGameStateCurr == GS_QUIT)
+		if (g_game_state_curr == GS_QUIT)
 			gGameRunning = 0;
 
 		AESysFrameEnd();
 
 	}
 	// clean up the last active state
-	if (gGameStateExit)
-		gGameStateExit();
+	if (g_game_state_exit)
+		g_game_state_exit();
 
-	if (Graphics::font_id >= 0) {
-		AEGfxDestroyFont(Graphics::font_id);
-		Graphics::font_id = -1;
+	if (Graphics::g_font_id >= 0) {
+		AEGfxDestroyFont(Graphics::g_font_id);
+		Graphics::g_font_id = -1;
 	}
 	SoundManager::Exit();
 	Main_Menu_Exit();

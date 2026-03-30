@@ -70,10 +70,10 @@ namespace UiSystem
 {
     // renders the current score at the top-left of the screen - draws white text
     // at night and black text during the day by querying DayCycle::IsNight();
-    // skips rendering entirely if the font has not been loaded (font_id < 0)
+    // skips rendering entirely if the font has not been loaded (g_font_id < 0)
     void Ui_DrawScoreAndTyped(const Data::Score& score)
     {
-        if (Graphics::font_id < 0) return;     // skip if font missing
+        if (Graphics::g_font_id < 0) return;     // skip if font missing
 
         char s[128];      // text buffer for score
         std::snprintf(s, sizeof(s), "SCORE: %d", score.score_value);    // format score line
@@ -82,9 +82,9 @@ namespace UiSystem
 
 
         if (DayCycle::IsNight())
-            AEGfxPrint(Graphics::font_id, s, -0.95f, 0.90f, 0.55f, 1.0f, 1.0f, 1.0f, 1.0f); // white at night
+            AEGfxPrint(Graphics::g_font_id, s, -0.95f, 0.90f, 0.55f, 1.0f, 1.0f, 1.0f, 1.0f); // white at night
         else
-            AEGfxPrint(Graphics::font_id, s, -0.95f, 0.90f, 0.55f, 0.0f, 0.0f, 0.0f, 1.0f); // draw score at top-left-ish
+            AEGfxPrint(Graphics::g_font_id, s, -0.95f, 0.90f, 0.55f, 0.0f, 0.0f, 0.0f, 1.0f); // draw score at top-left-ish
     }
 }
 // ======================================================
@@ -438,7 +438,7 @@ void Typing_Exit()
 // position outward to full orbit radius so the word visibly circles the sprite
 void Typing_DrawEnemyWords(const std::vector<Data::Enemy>& enemy_pool)
 {
-    if (Graphics::font_id < 0) return;                                                                                      // skip if font missing
+    if (Graphics::g_font_id < 0) return;                                                                                      // skip if font missing
 
     // Lerp untyped word color from black (day) to white (night)
     float nightA = DayCycle::GetNightAlpha();
@@ -461,7 +461,7 @@ void Typing_DrawEnemyWords(const std::vector<Data::Enemy>& enemy_pool)
         Utility::Convert_WorldToNdc(e.enemy_position_x, e.enemy_position_y, ndc_x, ndc_y);                                  // convert enemy world pos to NDC for text placement
 
         float text_w = 0.0f, text_h = 0.0f;
-        AEGfxGetPrintSize(Graphics::font_id, display_word.c_str(), EnemyConfig::TEXT_SCALE, &text_w, &text_h);              // measure full display word size for centering
+        AEGfxGetPrintSize(Graphics::g_font_id, display_word.c_str(), EnemyConfig::TEXT_SCALE, &text_w, &text_h);              // measure full display word size for centering
 
         float half_win_h = AEGfxGetWinMaxY();
         float label_offset_ndc = (half_win_h > 0.0f) ? (EnemyConfig::WORD_LABEL_OFFSET_PX / half_win_h) : 0.0f;
@@ -482,7 +482,7 @@ void Typing_DrawEnemyWords(const std::vector<Data::Enemy>& enemy_pool)
             {
                 char single[2] = { display_word[(size_t)li], '\0' };                                                        // isolate this letter from the display word (reversed during Trick Room)
                 float lw = 0.0f, lh = 0.0f;
-                AEGfxGetPrintSize(Graphics::font_id, single, EnemyConfig::TEXT_SCALE, &lw, &lh);                            // measure letter width
+                AEGfxGetPrintSize(Graphics::g_font_id, single, EnemyConfig::TEXT_SCALE, &lw, &lh);                            // measure letter width
 
                 float final_x = cursor_x;                                                                                   // default to baseline x
                 float final_y = draw_y;                                                                                     // default to baseline y
@@ -501,9 +501,9 @@ void Typing_DrawEnemyWords(const std::vector<Data::Enemy>& enemy_pool)
                 }
 
                 if (li < split)                                                                                             // s_typed portion, draw green
-                    AEGfxPrint(Graphics::font_id, single, final_x, final_y, EnemyConfig::TEXT_SCALE, 0.1f, 0.65f, 0.1f, 1);
+                    AEGfxPrint(Graphics::g_font_id, single, final_x, final_y, EnemyConfig::TEXT_SCALE, 0.1f, 0.65f, 0.1f, 1);
                 else                                                                                                        // untyped portion, lerp black->white at night
-                    AEGfxPrint(Graphics::font_id, single, final_x, final_y, EnemyConfig::TEXT_SCALE, untypedR, untypedG, untypedB, 1);
+                    AEGfxPrint(Graphics::g_font_id, single, final_x, final_y, EnemyConfig::TEXT_SCALE, untypedR, untypedG, untypedB, 1);
 
                 cursor_x += lw;                                                                                             // advance baseline cursor
             }
@@ -514,7 +514,7 @@ void Typing_DrawEnemyWords(const std::vector<Data::Enemy>& enemy_pool)
             {
                 char single[2] = { display_word[(size_t)li], '\0' };                                                        // isolate this letter from the display word (reversed during Trick Room)
                 float lw = 0.0f, lh = 0.0f;
-                AEGfxGetPrintSize(Graphics::font_id, single, EnemyConfig::TEXT_SCALE, &lw, &lh);                            // measure letter width
+                AEGfxGetPrintSize(Graphics::g_font_id, single, EnemyConfig::TEXT_SCALE, &lw, &lh);                            // measure letter width
 
                 float final_x = cursor_x;                                                                                   // default to baseline x
                 float final_y = draw_y;                                                                                     // default to baseline y
@@ -532,7 +532,7 @@ void Typing_DrawEnemyWords(const std::vector<Data::Enemy>& enemy_pool)
                     final_y = draw_y + (orbit_y - draw_y) * t;                                                              // blend baseline to orbit y
                 }
 
-                AEGfxPrint(Graphics::font_id, single, final_x, final_y, EnemyConfig::TEXT_SCALE, untypedR, untypedG, untypedB, 1);               // draw letter lerped black->white at night
+                AEGfxPrint(Graphics::g_font_id, single, final_x, final_y, EnemyConfig::TEXT_SCALE, untypedR, untypedG, untypedB, 1);               // draw letter lerped black->white at night
                 cursor_x += lw;                                                                                             // advance baseline cursor
             }
         }
