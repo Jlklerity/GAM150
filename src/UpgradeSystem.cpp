@@ -63,16 +63,16 @@ namespace
     };
 
     // Assets: one texture per upgrade type, shared quad mesh, shared overlay mesh
-    AEGfxTexture* card_textures[CARD_COUNT] = { nullptr, nullptr, nullptr };                                                // one texture per card type
-    AEGfxVertexList* card_mesh = nullptr;                                                                                   // quad covering one animation frame, shared by all cards
-    AEGfxVertexList* overlay_mesh = nullptr;                                                                                // unit rect for the dim overlay
+    AEGfxTexture* s_card_textures[CARD_COUNT] = { nullptr, nullptr, nullptr };                                                // one texture per card type
+    AEGfxVertexList* s_card_mesh = nullptr;                                                                                   // quad covering one animation frame, shared by all cards
+    AEGfxVertexList* s_overlay_mesh = nullptr;                                                                                // unit rect for the dim overlay
 
     // Screen state
-    bool             upgrade_screen_open = false;
-    bool             card_is_hovered[CARD_COUNT] = { false, false, false };
+    bool             s_upgrade_screen_open = false;
+    bool             s_card_is_hovered[CARD_COUNT] = { false, false, false };
 
-    // Display order: slot_upgrade_type[i] is the UpgradeType shown in slot i (shuffled on trigger)
-    UpgradeType      slot_upgrade_type[CARD_COUNT] =
+    // Display order: s_slot_upgrade_type[i] is the UpgradeType shown in slot i (shuffled on trigger)
+    UpgradeType      s_slot_upgrade_type[CARD_COUNT] =
     {
         UpgradeType::MAX_HP,
         UpgradeType::POWERUP_DURATION,
@@ -80,8 +80,8 @@ namespace
     };
 
     // Accumulated upgrade bonuses (persist across boss fights within one session)
-    float            accumulated_duration_multiplier = 1.0f;
-    float            accumulated_spawn_reduction = 0.0f;
+    float            s_accumulated_duration_multiplier = 1.0f;
+    float            s_accumulated_spawn_reduction = 0.0f;
 
     /*
     @function       Slot_CenterX
@@ -134,12 +134,12 @@ namespace
         }
         case UpgradeType::POWERUP_DURATION:
         {
-            accumulated_duration_multiplier *= UpgradeConfig::UPGRADE_DURATION_BONUS;                                       // stack the multiplier
+            s_accumulated_duration_multiplier *= UpgradeConfig::UPGRADE_DURATION_BONUS;                                       // stack the multiplier
             break;
         }
         case UpgradeType::POWERUP_SPAWN_RATE:
         {
-            accumulated_spawn_reduction += UpgradeConfig::UPGRADE_SPAWN_REDUCTION;                                          // accumulate the reduction
+            s_accumulated_spawn_reduction += UpgradeConfig::UPGRADE_SPAWN_REDUCTION;                                          // accumulate the reduction
             break;
         }
         default: break;
@@ -167,19 +167,19 @@ namespace UpgradeSystem
         // Load one 2-column, 1-row sprite sheet per upgrade type
         for (int i = 0; i < CARD_COUNT; ++i)
         {
-            card_textures[i] = AEGfxTextureLoad(CARD_TEXTURE_PATHS[i]);                                                     // load this card's sprite sheet
-            AE_ASSERT_MESG(card_textures[i], CARD_TEXTURE_PATHS[i]);                                                        // crash with the path name if the file was not found
+            s_card_textures[i] = AEGfxTextureLoad(CARD_TEXTURE_PATHS[i]);                                                     // load this card's sprite sheet
+            AE_ASSERT_MESG(s_card_textures[i], CARD_TEXTURE_PATHS[i]);                                                        // crash with the path name if the file was not found
         }
 
         // Build the shared card quad: full UV (uv_w = 1.0, uv_h = 1.0) for single-image textures
-        card_mesh = Graphics::Mesh_BuildSpriteQuad(1.0f, 1.0f, 0xFFFFFFFF);
+        s_card_mesh = Graphics::Mesh_BuildSpriteQuad(1.0f, 1.0f, 0xFFFFFFFF);
 
         // Build the full-screen overlay rectangle (scaled at draw time)
-        overlay_mesh = Graphics::Mesh_BuildUnitRect(0xFFFFFFFF);
+        s_overlay_mesh = Graphics::Mesh_BuildUnitRect(0xFFFFFFFF);
 
-        upgrade_screen_open = false;
+        s_upgrade_screen_open = false;
         for (int i = 0; i < CARD_COUNT; ++i)
-            card_is_hovered[i] = false;
+            s_card_is_hovered[i] = false;
     }
 
     /*
@@ -190,23 +190,23 @@ namespace UpgradeSystem
     {
         for (int i = 0; i < CARD_COUNT; ++i)
         {
-            if (card_textures[i])
+            if (s_card_textures[i])
             {
-                AEGfxTextureUnload(card_textures[i]);                                                                       // unload this card's texture from VRAM
-                card_textures[i] = nullptr;                                                                                 // clear pointer to prevent double-free
+                AEGfxTextureUnload(s_card_textures[i]);                                                                       // unload this card's texture from VRAM
+                s_card_textures[i] = nullptr;                                                                                 // clear pointer to prevent double-free
             }
         }
 
-        if (card_mesh)
+        if (s_card_mesh)
         {
-            AEGfxMeshFree(card_mesh);                                                                                       // free the shared card vertex list
-            card_mesh = nullptr;
+            AEGfxMeshFree(s_card_mesh);                                                                                       // free the shared card vertex list
+            s_card_mesh = nullptr;
         }
 
-        if (overlay_mesh)
+        if (s_overlay_mesh)
         {
-            AEGfxMeshFree(overlay_mesh);                                                                                    // free the overlay vertex list
-            overlay_mesh = nullptr;
+            AEGfxMeshFree(s_overlay_mesh);                                                                                    // free the overlay vertex list
+            s_overlay_mesh = nullptr;
         }
     }
 
@@ -216,25 +216,25 @@ namespace UpgradeSystem
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
     void Upgrade_TriggerScreen()
     {
-        if (upgrade_screen_open) return;                                                                                    // already open, do nothing
+        if (s_upgrade_screen_open) return;                                                                                    // already open, do nothing
 
         // Fisher-Yates shuffle of the three upgrade types across display slots
-        slot_upgrade_type[0] = UpgradeType::MAX_HP;
-        slot_upgrade_type[1] = UpgradeType::POWERUP_DURATION;
-        slot_upgrade_type[2] = UpgradeType::POWERUP_SPAWN_RATE;
+        s_slot_upgrade_type[0] = UpgradeType::MAX_HP;
+        s_slot_upgrade_type[1] = UpgradeType::POWERUP_DURATION;
+        s_slot_upgrade_type[2] = UpgradeType::POWERUP_SPAWN_RATE;
 
         for (int i = CARD_COUNT - 1; i > 0; --i)
         {
             int j = Utility::Utility_RandInt(0, i);
-            UpgradeType tmp = slot_upgrade_type[i];
-            slot_upgrade_type[i] = slot_upgrade_type[j];
-            slot_upgrade_type[j] = tmp;
+            UpgradeType tmp = s_slot_upgrade_type[i];
+            s_slot_upgrade_type[i] = s_slot_upgrade_type[j];
+            s_slot_upgrade_type[j] = tmp;
         }
 
         for (int i = 0; i < CARD_COUNT; ++i)
-            card_is_hovered[i] = false;                                                                                     // clear stale hover state from the previous frame
+            s_card_is_hovered[i] = false;                                                                                     // clear stale hover state from the previous frame
 
-        upgrade_screen_open = true;
+        s_upgrade_screen_open = true;
     }
 
     /*
@@ -243,7 +243,7 @@ namespace UpgradeSystem
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
     bool Upgrade_IsScreenOpen()
     {
-        return upgrade_screen_open;
+        return s_upgrade_screen_open;
     }
 
     /*
@@ -253,7 +253,7 @@ namespace UpgradeSystem
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
     void Upgrade_Update(Data::Health& health)
     {
-        if (!upgrade_screen_open) return;
+        if (!s_upgrade_screen_open) return;
 
         // Convert cursor pixel position to world space
         // Window is 1600x900 with world origin at center: wx = mx - 800, wy = 450 - my
@@ -264,17 +264,17 @@ namespace UpgradeSystem
 
         // Update hover flag for each slot
         for (int i = 0; i < CARD_COUNT; ++i)
-            card_is_hovered[i] = IsMouseOverCard(i, wx, wy);
+            s_card_is_hovered[i] = IsMouseOverCard(i, wx, wy);
 
         // Check for a left-click to select a card
         if (AEInputCheckTriggered(AEVK_LBUTTON))
         {
             for (int i = 0; i < CARD_COUNT; ++i)
             {
-                if (card_is_hovered[i])
+                if (s_card_is_hovered[i])
                 {
-                    ApplyUpgrade(slot_upgrade_type[i], health);                                                             // apply the chosen upgrade immediately
-                    upgrade_screen_open = false;                                                                            // close the screen
+                    ApplyUpgrade(s_slot_upgrade_type[i], health);                                                             // apply the chosen upgrade immediately
+                    s_upgrade_screen_open = false;                                                                            // close the screen
                     return;
                 }
             }
@@ -291,8 +291,8 @@ namespace UpgradeSystem
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
     void Upgrade_Draw()
     {
-        if (!upgrade_screen_open) return;
-        if (!card_mesh || !overlay_mesh) return;                                                                            // mesh missing, skip to avoid null dereference
+        if (!s_upgrade_screen_open) return;
+        if (!s_card_mesh || !s_overlay_mesh) return;                                                                            // mesh missing, skip to avoid null dereference
 
         // --- Dim overlay ---
         AEGfxSetRenderMode(AE_GFX_RM_COLOR);
@@ -301,27 +301,27 @@ namespace UpgradeSystem
         AEGfxSetColorToMultiply(0.0f, 0.0f, 0.0f, 1.0f);
         AEGfxSetColorToAdd(0.0f, 0.0f, 0.0f, 0.0f);
 
-        Graphics::Draw_DrawMeshAt(overlay_mesh, 0.0f, 0.0f, 1600.0f, 900.0f, 0.0f);
+        Graphics::Draw_DrawMeshAt(s_overlay_mesh, 0.0f, 0.0f, 1600.0f, 900.0f, 0.0f);
 
         // --- Cards (2-pass: idle first, hovered on top) ---
         for (int pass = 0; pass < 2; ++pass)
         {
             for (int i = 0; i < CARD_COUNT; ++i)
             {
-                bool hovered = card_is_hovered[i];
+                bool hovered = s_card_is_hovered[i];
 
                 if (pass == 0 && hovered) continue;                                                                         // skip hovered card in idle pass
                 if (pass == 1 && !hovered) continue;                                                                        // skip idle cards in hovered pass
 
                 // Look up which upgrade type is in this slot to select the correct texture
-                int type_idx = static_cast<int>(slot_upgrade_type[i]);
+                int type_idx = static_cast<int>(s_slot_upgrade_type[i]);
                 if (type_idx < 0 || type_idx >= CARD_COUNT) continue;                                                       // guard against invalid enum cast
-                if (!card_textures[type_idx]) continue;                                                                     // skip if this card's texture failed to load
+                if (!s_card_textures[type_idx]) continue;                                                                     // skip if this card's texture failed to load
 
                 Graphics::Graphics_SetSpriteState();
 
                 // Bind this card's own texture at UV origin (full single image)
-                AEGfxTextureSet(card_textures[type_idx], 0.0f, 0.0f);
+                AEGfxTextureSet(s_card_textures[type_idx], 0.0f, 0.0f);
 
                 float cx = Slot_CenterX(i);
                 float cy = UpgradeConfig::UPGRADE_CARD_CENTER_Y;
@@ -329,14 +329,14 @@ namespace UpgradeSystem
                 float draw_w = UpgradeConfig::UPGRADE_CARD_W * scale;
                 float draw_h = UpgradeConfig::UPGRADE_CARD_H * scale;
 
-                Graphics::Draw_DrawMeshAt(card_mesh, cx, cy, draw_w, draw_h, 0.0f);
+                Graphics::Draw_DrawMeshAt(s_card_mesh, cx, cy, draw_w, draw_h, 0.0f);
             }
         }
 
     }
 
-    float Upgrade_GetPowerUpDurationMultiplier() { return accumulated_duration_multiplier; }
-    float Upgrade_GetPowerUpSpawnIntervalReduction() { return accumulated_spawn_reduction; }
+    float Upgrade_GetPowerUpDurationMultiplier() { return s_accumulated_duration_multiplier; }
+    float Upgrade_GetPowerUpSpawnIntervalReduction() { return s_accumulated_spawn_reduction; }
 
     /*
     @function       Upgrade_Reset
@@ -344,11 +344,11 @@ namespace UpgradeSystem
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
     void Upgrade_Reset()
     {
-        accumulated_duration_multiplier = 1.0f;
-        accumulated_spawn_reduction = 0.0f;
-        upgrade_screen_open = false;
+        s_accumulated_duration_multiplier = 1.0f;
+        s_accumulated_spawn_reduction = 0.0f;
+        s_upgrade_screen_open = false;
         for (int i = 0; i < CARD_COUNT; ++i)
-            card_is_hovered[i] = false;
+            s_card_is_hovered[i] = false;
     }
 
 } // UpgradeSystem namespace end

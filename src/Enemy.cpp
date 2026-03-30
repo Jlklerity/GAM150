@@ -286,11 +286,11 @@ meshes with a standard 2D transform.
 *//*_________________________________________________________________________________________________________________________________________________________________________________________________*/
 namespace Graphics
 {
-    AEGfxTexture* enemy_textures[9] = { nullptr };                                                                          // enemy textures indexed by word length
-    AEGfxTexture* friendly_texture = nullptr;                                                                               // princess texture
-    AEGfxTexture* shield_texture = nullptr;                                                                                 // shield enemy texture
-    AEGfxTexture* heart_texture = nullptr;                                                                                  // heart health icon sprite sheet
-    s8 font_id = -1;                                                                                                        // font handle id
+    AEGfxTexture* s_enemy_textures[9] = { nullptr };                                                                        // enemy textures indexed by word length
+    AEGfxTexture* s_friendly_texture = nullptr;                                                                             // princess texture
+    AEGfxTexture* s_shield_texture = nullptr;                                                                               // shield enemy texture
+    AEGfxTexture* s_heart_texture = nullptr;                                                                                // heart health icon sprite sheet
+    s8 g_font_id = -1;                                                                                                      // font handle id
 
     /*
     @function       Graphics_GetEnemyTextureByWordLength
@@ -305,7 +305,7 @@ namespace Graphics
     {
         if (word_length < 3) word_length = 3;                                                                               // clamp minimum length
         if (word_length > 8) word_length = 8;                                                                               // clamp maximum length
-        return enemy_textures[word_length];                                                                                 // return the matching texture
+        return s_enemy_textures[word_length];                                                                               // return the matching texture
     }
 
     /*
@@ -428,7 +428,7 @@ speed scaling.
 *//*_________________________________________________________________________________________________________________________________________________________________________________________________*/
 namespace DifficultySystem
 {
-    float difficulty_value = 0.0f;                                                                                          // current difficulty value
+    float s_difficulty_value = 0.0f;                                                                                          // current difficulty value
 
     /*
     @function       Difficulty_Get
@@ -438,7 +438,7 @@ namespace DifficultySystem
     (such as debug UI) can display or use the current difficulty level.
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
     float Difficulty_Get() {
-        return difficulty_value;                                                                                            // read difficulty value
+        return s_difficulty_value;                                                                                            // read difficulty value
     }
 
     /*
@@ -449,7 +449,7 @@ namespace DifficultySystem
     difficulty level. It is called when restarting a level or entering the game from the main menu.
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
     void Difficulty_Reset() {
-        difficulty_value = 0.0f;
+        s_difficulty_value = 0.0f;
     }
 
     /*
@@ -462,8 +462,8 @@ namespace DifficultySystem
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
     void Difficulty_Add(float amount)
     {
-        difficulty_value += amount;                                                                                         // add amount to difficulty
-        difficulty_value = Utility::Utility_Clamp(difficulty_value, 0.0f, EnemyConfig::DIFFICULTY_MAX);                     // clamp to valid range
+        s_difficulty_value += amount;                                                                                         // add amount to difficulty
+        s_difficulty_value = Utility::Utility_Clamp(s_difficulty_value, 0.0f, EnemyConfig::DIFFICULTY_MAX);                     // clamp to valid range
     }
 
     /*
@@ -488,7 +488,7 @@ namespace DifficultySystem
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
     float Difficulty_GetSpawnIntervalSeconds()
     {
-        float interval_decrease = difficulty_value * EnemyConfig::RANDOM_SPAWN_INTERVAL_DECREASE_PER_LEVEL;                 // how much the interval shrinks from difficulty
+        float interval_decrease = s_difficulty_value * EnemyConfig::RANDOM_SPAWN_INTERVAL_DECREASE_PER_LEVEL;                 // how much the interval shrinks from difficulty
         float interval = EnemyConfig::RANDOM_SPAWN_INTERVAL_START_SECONDS - interval_decrease;                              // compute interval
         if (interval < EnemyConfig::RANDOM_SPAWN_INTERVAL_MIN_SECONDS)                                                      // check minimum
             interval = EnemyConfig::RANDOM_SPAWN_INTERVAL_MIN_SECONDS;                                                      // clamp to minimum interval
@@ -504,7 +504,7 @@ namespace DifficultySystem
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
     int Difficulty_GetUnlockedMaxWordLength()
     {
-        float d = difficulty_value;                                                                                         // copy difficulty value
+        float d = s_difficulty_value;                                                                                         // copy difficulty value
         if (d < 5.0f)  return 3;                                                                                            // allow only 3-letter words
         if (d < 10.0f) return 4;                                                                                            // allow up to 4-letter words
         if (d < 15.0f) return 5;                                                                                            // allow up to 5-letter words
@@ -539,10 +539,10 @@ namespace DifficultySystem
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
     float Difficulty_GetEnemyFallSpeed(int word_length)
     {
-        float fall_speed_bonus = difficulty_value * EnemyConfig::ENEMY_FALL_SPEED_INCREASE_PER_LEVEL;                       // bonus speed from difficulty scaling
+        float fall_speed_bonus = s_difficulty_value * EnemyConfig::ENEMY_FALL_SPEED_INCREASE_PER_LEVEL;                       // bonus speed from difficulty scaling
         float base_speed = EnemyConfig::ENEMY_FALL_SPEED_START + fall_speed_bonus;                                          // base speed from difficulty
 
-        float t = Utility::Utility_Clamp(difficulty_value / 14.0f, 0.0f, 1.0f);                                             // normalize difficulty into 0..1
+        float t = Utility::Utility_Clamp(s_difficulty_value / 14.0f, 0.0f, 1.0f);                                             // normalize difficulty into 0..1
 
         float target_multiplier = 1.0f;                                                                                     // default multiplier
         if (word_length == 3) target_multiplier = 1.20f;                                                                    // 3-letter enemies fall faster
@@ -758,10 +758,10 @@ namespace EnemySystem
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
     float Enemy_GetWordHalfWidthWorld(const std::string& word)
     {
-        if (Graphics::font_id < 0) return 0.0f;                                                                             // return 0 if font is missing
+        if (Graphics::g_font_id < 0) return 0.0f;                                                                             // return 0 if font is missing
 
         float text_w_ndc = 0.0f, text_h_ndc = 0.0f;                                                                         // storage for text size in screen space
-        AEGfxGetPrintSize(Graphics::font_id, word.c_str(), EnemyConfig::TEXT_SCALE, &text_w_ndc, &text_h_ndc);              // measure text
+        AEGfxGetPrintSize(Graphics::g_font_id, word.c_str(), EnemyConfig::TEXT_SCALE, &text_w_ndc, &text_h_ndc);              // measure text
 
         float half_window_width = (float)AEGfxGetWindowWidth() * 0.5f;                                                      // half window width in pixels
         return (text_w_ndc * 0.5f) * half_window_width;                                                                     // convert half width to world pixels
@@ -1214,9 +1214,9 @@ namespace EnemySystem
         AEGfxTexture* tex = nullptr;                                                                                        // start with no texture selected
 
         if (e.enemy_type == Data::EnemyType::FRIENDLY)                                                                      // check if is princess npc
-            tex = Graphics::friendly_texture;                                                                               // use princess texture
+            tex = Graphics::s_friendly_texture;                                                                               // use princess texture
         else if (e.enemy_type == Data::EnemyType::SHIELDED)                                                                 // check if is shielded enemies
-            tex = Graphics::shield_texture;                                                                                 // use shielded enemies texture
+            tex = Graphics::s_shield_texture;                                                                                 // use shielded enemies texture
         else
             tex = Graphics::Graphics_GetEnemyTextureByWordLength(e.enemy_word_length);                                      // use normal enemies texture
 
@@ -1252,7 +1252,7 @@ namespace EnemySystem
     void Enemy_DrawWord(const Data::Enemy& e)
     {
         if (!e.enemy_is_active) return;                                                                                     // skip inactive enemies
-        if (Graphics::font_id < 0) return;                                                                                  // skip if font missing
+        if (Graphics::g_font_id < 0) return;                                                                                  // skip if font missing
         if (e.enemy_word_text.empty()) return;                                                                              // skip if no text
         if (e.enemy_is_dying) return;                                                                                       // skip during death animation so word disappears when enemy is killed
 
@@ -1260,7 +1260,7 @@ namespace EnemySystem
         Utility::Convert_WorldToNdc(e.enemy_position_x, e.enemy_position_y, ndc_x, ndc_y);                                  // convert enemy position to NDC
 
         float text_w = 0.0f, text_h = 0.0f;
-        AEGfxGetPrintSize(Graphics::font_id, e.enemy_word_text.c_str(), EnemyConfig::TEXT_SCALE, &text_w, &text_h);         // measure full word size for centering
+        AEGfxGetPrintSize(Graphics::g_font_id, e.enemy_word_text.c_str(), EnemyConfig::TEXT_SCALE, &text_w, &text_h);         // measure full word size for centering
 
         float half_win_h = AEGfxGetWinMaxY();
         float label_offset_ndc = (half_win_h > 0.0f) ? (EnemyConfig::WORD_LABEL_OFFSET_PX / half_win_h) : 0.0f;
@@ -1278,7 +1278,7 @@ namespace EnemySystem
         {
             char single[2] = { e.enemy_word_text[(size_t)li], '\0' };                                                       // isolate this letter as a single char string
             float lw = 0.0f, lh = 0.0f;
-            AEGfxGetPrintSize(Graphics::font_id, single, EnemyConfig::TEXT_SCALE, &lw, &lh);                                // measure this letter's width
+            AEGfxGetPrintSize(Graphics::g_font_id, single, EnemyConfig::TEXT_SCALE, &lw, &lh);                                // measure this letter's width
 
             float final_x = cursor_x;                                                                                       // default to baseline x position
             float final_y = draw_y;                                                                                         // default to baseline y position
@@ -1296,7 +1296,7 @@ namespace EnemySystem
                 final_y = draw_y + (orbit_y - draw_y) * t;                                                                  // blend between baseline and orbit y
             }
 
-            AEGfxPrint(Graphics::font_id, single, final_x, final_y, EnemyConfig::TEXT_SCALE, 0, 0, 0, 1);                   // draw letter in black at final blended position
+            AEGfxPrint(Graphics::g_font_id, single, final_x, final_y, EnemyConfig::TEXT_SCALE, 0, 0, 0, 1);                   // draw letter in black at final blended position
             cursor_x += lw;                                                                                                 // advance baseline cursor to the next letter position
         }
         /*--------------------------------*/
@@ -1668,7 +1668,7 @@ namespace UiSystem
     void Debug_DrawDifficultyTopRight(bool show, bool auto_spawn_on, const Data::Health& health)
     {
         if (!show) return;                                                                                                  // skip if hidden
-        if (Graphics::font_id < 0) return;                                                                                  // skip if font missing
+        if (Graphics::g_font_id < 0) return;                                                                                  // skip if font missing
 
         char buffer[220];                                                                                                   // text buffer
         float hp_now = health.health_current;                                                                               // read current health
@@ -1683,7 +1683,7 @@ namespace UiSystem
             hp_now, hp_max, diff, interval, auto_text, max_len);                                                            // values for format
 
         AEGfxSetBlendMode(AE_GFX_BM_BLEND);                                                                                 // enable blending for text
-        AEGfxPrint(Graphics::font_id, buffer, -0.13f, 0.90f, 0.5f, 1.0f, 0.9f, 0.2f, 1.0f);                                 // draw top-right-ish text
+        AEGfxPrint(Graphics::g_font_id, buffer, -0.13f, 0.90f, 0.5f, 1.0f, 0.9f, 0.2f, 1.0f);                                 // draw top-right-ish text
     }
 
     /*
@@ -1700,7 +1700,7 @@ namespace UiSystem
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
     void Ui_DrawHealthBar(Data::Health& health, Data::Meshes& meshes, Data::SpriteAnim& heart_anim, float dt)
     {
-        if (!Graphics::heart_texture) return;                                                                               // skip if heart texture not loaded
+        if (!Graphics::s_heart_texture) return;                                                                               // skip if heart texture not loaded
         if (!meshes.heart_sprite_mesh) return;                                                                              // skip if heart mesh not built
 
         // advance the shared animation timer so all hearts animate in lockstep
@@ -1757,7 +1757,7 @@ namespace UiSystem
             }
 
             AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);                                                                // draw hearts in their natural colors
-            AEGfxTextureSet(Graphics::heart_texture, uv_x, 0.0f);                                                           // bind texture at the chosen frame, row 0
+            AEGfxTextureSet(Graphics::s_heart_texture, uv_x, 0.0f);                                                           // bind texture at the chosen frame, row 0
             Graphics::Draw_DrawMeshAt(meshes.heart_sprite_mesh, heart_x, heart_y, HEART_SIZE_PX, HEART_SIZE_PX, 0.0f);      // draw the heart sprite
         }
 
@@ -1790,12 +1790,12 @@ namespace EnemyManage
 
         Word::Word_LoadAll(bank);                                                                                           // load word lists
 
-        if (Graphics::font_id >= 0) {
-            AEGfxDestroyFont(Graphics::font_id);
+        if (Graphics::g_font_id >= 0) {
+            AEGfxDestroyFont(Graphics::g_font_id);
         }
 
-        Graphics::font_id = AEGfxCreateFont("Assets/Pixel-Game.otf", 80);                                                   // load font
-        AE_ASSERT_MESG(Graphics::font_id >= 0, "Failed to load font: Assets/Pixel-Game.otf");                               // stop if font fails
+        Graphics::g_font_id = AEGfxCreateFont("Assets/Pixel-Game.otf", 80);                                                   // load font
+        AE_ASSERT_MESG(Graphics::g_font_id >= 0, "Failed to load font: Assets/Pixel-Game.otf");                               // stop if font fails
     }
 
     /*
@@ -1812,32 +1812,32 @@ namespace EnemyManage
     {
         Data::Meshes meshes{};                                                                                              // create mesh container
 
-        Graphics::friendly_texture = AEGfxTextureLoad("Assets/princessEnemy.png");                                          // load princess npc texture
-        AE_ASSERT_MESG(Graphics::friendly_texture, "Failed to load: Assets/princessEnemy.png");                             // stop if missing
+        Graphics::s_friendly_texture = AEGfxTextureLoad("Assets/princessEnemy.png");                                          // load princess npc texture
+        AE_ASSERT_MESG(Graphics::s_friendly_texture, "Failed to load: Assets/princessEnemy.png");                             // stop if missing
 
-        Graphics::shield_texture = AEGfxTextureLoad("Assets/shieldEnemy.png");                                              // load shield enemy texture
-        AE_ASSERT_MESG(Graphics::shield_texture, "Failed to load: Assets/shieldEnemy.png");                                 // stop if missing
+        Graphics::s_shield_texture = AEGfxTextureLoad("Assets/shieldEnemy.png");                                              // load shield enemy texture
+        AE_ASSERT_MESG(Graphics::s_shield_texture, "Failed to load: Assets/shieldEnemy.png");                                 // stop if missing
 
-        Graphics::enemy_textures[3] = AEGfxTextureLoad("Assets/3letterEnemy.png");                                          // load 3-letter enemy texture
-        AE_ASSERT_MESG(Graphics::enemy_textures[3], "Failed to load: Assets/3letterEnemy.png");                             // stop if missing
+        Graphics::s_enemy_textures[3] = AEGfxTextureLoad("Assets/3letterEnemy.png");                                          // load 3-letter enemy texture
+        AE_ASSERT_MESG(Graphics::s_enemy_textures[3], "Failed to load: Assets/3letterEnemy.png");                             // stop if missing
 
-        Graphics::enemy_textures[4] = AEGfxTextureLoad("Assets/4letterEnemy.png");                                          // load 4-letter enemy texture
-        AE_ASSERT_MESG(Graphics::enemy_textures[4], "Failed to load: Assets/4letterEnemy.png");                             // stop if missing
+        Graphics::s_enemy_textures[4] = AEGfxTextureLoad("Assets/4letterEnemy.png");                                          // load 4-letter enemy texture
+        AE_ASSERT_MESG(Graphics::s_enemy_textures[4], "Failed to load: Assets/4letterEnemy.png");                             // stop if missing
 
-        Graphics::enemy_textures[5] = AEGfxTextureLoad("Assets/5letterEnemy.png");                                          // load 5-letter enemy texture
-        AE_ASSERT_MESG(Graphics::enemy_textures[5], "Failed to load: Assets/5letterEnemy.png");                             // stop if missing
+        Graphics::s_enemy_textures[5] = AEGfxTextureLoad("Assets/5letterEnemy.png");                                          // load 5-letter enemy texture
+        AE_ASSERT_MESG(Graphics::s_enemy_textures[5], "Failed to load: Assets/5letterEnemy.png");                             // stop if missing
 
-        Graphics::enemy_textures[6] = AEGfxTextureLoad("Assets/6letterEnemy.png");                                          // load 6-letter enemy texture
-        AE_ASSERT_MESG(Graphics::enemy_textures[6], "Failed to load: Assets/6letterEnemy.png");                             // stop if missing
+        Graphics::s_enemy_textures[6] = AEGfxTextureLoad("Assets/6letterEnemy.png");                                          // load 6-letter enemy texture
+        AE_ASSERT_MESG(Graphics::s_enemy_textures[6], "Failed to load: Assets/6letterEnemy.png");                             // stop if missing
 
-        Graphics::enemy_textures[7] = AEGfxTextureLoad("Assets/7letterEnemy.png");                                          // load 7-letter enemy texture
-        AE_ASSERT_MESG(Graphics::enemy_textures[7], "Failed to load: Assets/7letterEnemy.png");                             // stop if missing
+        Graphics::s_enemy_textures[7] = AEGfxTextureLoad("Assets/7letterEnemy.png");                                          // load 7-letter enemy texture
+        AE_ASSERT_MESG(Graphics::s_enemy_textures[7], "Failed to load: Assets/7letterEnemy.png");                             // stop if missing
 
-        Graphics::enemy_textures[8] = AEGfxTextureLoad("Assets/8letterEnemy.png");                                          // load 8-letter enemy texture
-        AE_ASSERT_MESG(Graphics::enemy_textures[8], "Failed to load: Assets/8letterEnemy.png");                             // stop if missing
+        Graphics::s_enemy_textures[8] = AEGfxTextureLoad("Assets/8letterEnemy.png");                                          // load 8-letter enemy texture
+        AE_ASSERT_MESG(Graphics::s_enemy_textures[8], "Failed to load: Assets/8letterEnemy.png");                             // stop if missing
 
-        Graphics::heart_texture = AEGfxTextureLoad("Assets/hearts.png");                                                    // load heart health icon sprite sheet
-        AE_ASSERT_MESG(Graphics::heart_texture, "Failed to load: Assets/hearts.png");                                       // stop if missing
+        Graphics::s_heart_texture = AEGfxTextureLoad("Assets/hearts.png");                                                    // load heart health icon sprite sheet
+        AE_ASSERT_MESG(Graphics::s_heart_texture, "Failed to load: Assets/hearts.png");                                       // stop if missing
 
         // build 2-row mesh (normal enemies)
         {
@@ -1929,26 +1929,26 @@ namespace EnemyManage
 
         for (int i = 3; i <= 8; ++i)                                                                                        // loop through enemy texture slots
         {
-            if (Graphics::enemy_textures[i])                                                                                // check if texture exists
+            if (Graphics::s_enemy_textures[i])                                                                                // check if texture exists
             {
-                AEGfxTextureUnload(Graphics::enemy_textures[i]);                                                            // unload texture
-                Graphics::enemy_textures[i] = nullptr;                                                                      // clear pointer
+                AEGfxTextureUnload(Graphics::s_enemy_textures[i]);                                                            // unload texture
+                Graphics::s_enemy_textures[i] = nullptr;                                                                      // clear pointer
             }
         }
 
-        if (Graphics::friendly_texture) AEGfxTextureUnload(Graphics::friendly_texture);                                     // unload princess npc texture
-        Graphics::friendly_texture = nullptr;                                                                               // clear pointer
+        if (Graphics::s_friendly_texture) AEGfxTextureUnload(Graphics::s_friendly_texture);                                     // unload princess npc texture
+        Graphics::s_friendly_texture = nullptr;                                                                               // clear pointer
 
-        if (Graphics::shield_texture) AEGfxTextureUnload(Graphics::shield_texture);                                         // unload shield enemy texture
-        Graphics::shield_texture = nullptr;                                                                                 // clear pointer
+        if (Graphics::s_shield_texture) AEGfxTextureUnload(Graphics::s_shield_texture);                                         // unload shield enemy texture
+        Graphics::s_shield_texture = nullptr;                                                                                 // clear pointer
 
-        if (Graphics::heart_texture) AEGfxTextureUnload(Graphics::heart_texture);                                           // unload heart health icon texture
-        Graphics::heart_texture = nullptr;                                                                                  // clear pointer
+        if (Graphics::s_heart_texture) AEGfxTextureUnload(Graphics::s_heart_texture);                                           // unload heart health icon texture
+        Graphics::s_heart_texture = nullptr;                                                                                  // clear pointer
 
-        if (Graphics::font_id >= 0)                                                                                         // check if font exists
+        if (Graphics::g_font_id >= 0)                                                                                         // check if font exists
         {
-            AEGfxDestroyFont(Graphics::font_id);                                                                            // destroy font
-            Graphics::font_id = -1;                                                                                         // reset font id
+            AEGfxDestroyFont(Graphics::g_font_id);                                                                            // destroy font
+            Graphics::g_font_id = -1;                                                                                         // reset font id
         }
 
         std::deque<int>().swap(free_slots);                                                                                 // release free_slots internal buffer

@@ -374,7 +374,7 @@ meshes with a standard 2D transform.
 *//*_________________________________________________________________________________________________________________________________________________________________________________________________*/
 namespace Graphics
 {
-    extern s8 font_id;
+    extern s8 g_font_id;
     /*
     @function       Graphics_GetEnemyTextureByWordLength
     @params         word_length (int)
