@@ -2,12 +2,9 @@
 #include "Typing.h"
 
 
-/*
-@function       TR_DisplayWord
-@brief          Returns the word the player sees and must type.
-
-During Trick Room the word is reversed so the player types the last letter first.
-*//*______________________________________________________________________________________________*/
+// returns the display form of word - unchanged in normal mode, fully reversed
+// during Trick Room so the player must type the last letter first;
+// called by targeting and draw code to ensure both always agree on the same string
 static std::string TR_DisplayWord(const std::string& word)
 {
     if (!BossSystem::Boss_IsTrickRoomActive()) return word;   // normal mode: word unchanged
@@ -19,7 +16,9 @@ static std::string TR_DisplayWord(const std::string& word)
 
 namespace Utility
 {
-    //  check if what we type matches enemy, params are (string we are checking (enemy text), typed string we want to match to the front)
+    // returns true if typed is a prefix of text - compares char by char and
+    // rejects immediately if typed is longer than text; used to match partial
+    // input against an enemy's display word during target locking
     bool static String_StartsWith(const std::string& text, const std::string& typed)
     {
         if (typed.size() > text.size()) return false;// reject if prefix is longer than text
@@ -36,9 +35,11 @@ namespace Utility
 namespace EnemySystem
 {
 
-    // basically chooses which enemy should be targeted based on what the player has typed so far,and how close the enemy is to the ground, params are (pool of all enemies in the game, what we typed so far)
-    // this function also targets the most dangerous enemy IF 2 words have the same text, unlikely but jic
-    //return value >= 0 is the index of chosen enemy, if return -1 means no valid target
+    // scans the enemy pool and returns the index of the best target for the current
+    // typed prefix - a valid target must be active, not dying, and have a display word
+    // that starts with typed; among all matches the enemy closest to the ground
+    // (lowest enemy_position_y) wins, so the most dangerous enemy is always prioritised;
+    // returns -1 if nothing typed or no matching enemy exists
     int static Enemy_FindBestTargetByPrefix(const std::vector<Data::Enemy>& pool, const std::string& typed)
     {
         if (typed.empty()) return -1; // no target if nothing typed
@@ -67,6 +68,9 @@ namespace EnemySystem
 
 namespace UiSystem
 {
+    // renders the current score at the top-left of the screen - draws white text
+    // at night and black text during the day by querying DayCycle::IsNight();
+    // skips rendering entirely if the font has not been loaded (font_id < 0)
     void Ui_DrawScoreAndTyped(const Data::Score& score)
     {
         if (Graphics::font_id < 0) return;     // skip if font missing
@@ -95,7 +99,7 @@ namespace
     // for debug
     static bool s_debugSubmitted = false; // check for submission
     static bool s_debugCorrect = false; // check if submission correct
-    static std::string s_debugTyped; // str for whats typed
+    static std::string s_debugTyped; // str for whats s_typed
     static std::string s_debugTarget; // str for correct ans
     //
 
@@ -113,8 +117,8 @@ namespace
     static const float s_shakeTextDuration = 0.15f;
 
 
-    AEGfxTexture* lettersTex = nullptr; // texture for letters spritesheet
-    AEGfxVertexList* letterQuad = nullptr; //texture for single letter 
+    AEGfxTexture* s_lettersTex = nullptr; // texture for letters spritesheet
+    AEGfxVertexList* s_letterQuad = nullptr; //texture for single letter 
 
     const int COLS{ 8 }; //sheet grid cols
     const int ROWS{ 4 }; //sheet grid rows
@@ -122,21 +126,23 @@ namespace
     const float UV_H{ 1.0f / ROWS }; //uv height per letter
 
     //const char* target{ "BANANA" }; // target word, change to enemys one later
-    char typed[32]{}; // word typed enters this array
-    int typedLen{}; // length of typed word
+    char s_typed[32]{}; // word s_typed enters this array
+    int s_typedLen{}; // length of s_typed word
 
 
-    bool prevKey[256]{}; // stores last frames key state, basically makes sure u cannot hold the key down, is an array cuz one for every key
+    bool s_prevKey[256]{}; // stores last frames key state, basically makes sure u cannot hold the key down, is an array cuz one for every key
 
 
-    // converts lowercase to uppercase
+    // maps a lowercase letter to its uppercase equivalent; passes non-alpha chars through unchanged
     static char ToUpper(char c)
     {
         if (c >= 'a' && c <= 'z') return (char)(c - 'a' + 'A');
         return c;
     }
 
-    // make sure key is pressed once per frame so player cannot hold n spam one letter
+    // returns true only on the first frame a key transitions from up to down -
+    // maintains a persistent 512-entry bool array (maxKey) so holding a key
+    // never repeats; prevents the player from spamming a single letter by holding
     static bool KeyPressedOnce(int key)
     {
         static bool maxKey[512] = {}; // array of 512 bools js to cover all of alpha engine keycode idk dun ask me headache to get rid of one warning
@@ -152,7 +158,8 @@ namespace
 
 
 
-    //convert char to index for sprite sheet
+    // converts a letter character to its 0-based index into the spritesheet (A=0 … Z=25);
+    // returns -1 for any non-alpha character so the draw loop can safely skip it
     static int CharToIndex(char c)
     {
         c = (char)toupper((unsigned char)c);;// convert to upper
@@ -160,41 +167,45 @@ namespace
         return (c - 'A'); // return the index of letters for drawing of sprite
     }
 
-    // push char to typed array as str (typedLen = last char in array)
+    // uppercases c and appends it to s_typed if it is a letter (A-Z) and the
+    // buffer has room (max 31 chars + null terminator); always null-terminates
     static void PushChar(char c)
     {
         c = ToUpper(c); //conver to upper
         if (c < 'A' || c > 'Z') return; // reject nonletter
 
-        if (typedLen < (int)sizeof(typed) - 1) // max typable chars is 31 cuz null terminator so this caps our typing at 31 chars
+        if (s_typedLen < (int)sizeof(s_typed) - 1) // max typable chars is 31 cuz null terminator so this caps our typing at 31 chars
         {
-            typed[typedLen++] = c; // adds char into array and increment length for next one
-            typed[typedLen] = '\0';// end w null terminator
+            s_typed[s_typedLen++] = c; // adds char into array and increment length for next one
+            s_typed[s_typedLen] = '\0';// end w null terminator
 
-            std::cout << "Typed: " << typed << std::endl; //print what we typed so far
+            std::cout << "Typed: " << s_typed << std::endl; //print what we s_typed so far
         }
     }
 
-    //remove last char from typed array (basically backspace) (typedLen = last char in array)
+    // removes the last character from s_typed by decrementing s_typedLen and
+    // writing a null terminator - does nothing if the buffer is already empty
     static void PopChar()
     {
-        if (typedLen > 0) // check if got anyt to pop
+        if (s_typedLen > 0) // check if got anyt to pop
         {
-            typed[--typedLen] = '\0'; // decrement length and set new end to null terminator
-            std::cout << "Typed: " << typed << std::endl; // print 
+            s_typed[--s_typedLen] = '\0'; // decrement length and set new end to null terminator
+            std::cout << "Typed: " << s_typed << std::endl; // print 
         }
     }
 
 
 
-    //clear everyth typed
+    // resets s_typedLen to 0 and null-terminates s_typed, effectively emptying the input buffer
     static void ClearTyped()
     {
-        typedLen = 0;
-        typed[0] = '\0'; //set first char to null terminator
+        s_typedLen = 0;
+        s_typed[0] = '\0'; //set first char to null terminator
     }
 
-    //draws word, params are (word, xpos of first letter, ypos of first letter, w of each letter quad, h of <-, spacing between letters )
+    // renders word left-to-right starting at (x, y) - samples each letter's UV tile
+    // from the spritesheet using CharToIndex, advances the x cursor by (w + spacing)
+    // per character, and skips any character that has no valid spritesheet index
     static void DrawWord(const char* word, float x, float y, float w, float h, float spacing)
     {
         AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
@@ -212,14 +223,15 @@ namespace
             float u = col * UV_W;
             float v = row * UV_H;
 
-            AEGfxTextureSet(lettersTex, u, v);
+            AEGfxTextureSet(s_lettersTex, u, v);
 
             float px = x + i * (w + spacing); // calc next letter pos
-            Mesh_Renderer(letterQuad, px, y, w, h, 0.0f);
+            Mesh_Renderer(s_letterQuad, px, y, w, h, 0.0f);
         }
     }
 
-    // calculate start x pos to center word n call DrawWord params: (word, xpos of first letter, ypos of first letter, w of each letter quad, h of <-, spacing between letters )
+    // computes the total pixel width of word (letters + inter-letter spacing) then
+    // shifts the start x so the word is horizontally centred on centerX, then delegates to DrawWord
     static void DrawWordCentered(const char* word, float centerX, float y,
         float w, float h, float spacing)
     {
@@ -233,6 +245,9 @@ namespace
     }
 
 
+    // draws a thin blinking cursor rectangle immediately after the last letter of word,
+    // using the same centering math as DrawWordCentered so the cursor always aligns
+    // with the typed input display at the bottom of the screen
     static void DrawCursorAfterWordCentered(const char* word, float centerX, float y, float w, float h, float spacing) {
         int len = (int)strlen(word);
 
@@ -262,14 +277,16 @@ namespace
         AEGfxSetBlendColor(1.0f, 1.0f, 1.0f, 1.0f);
 
 
-        Mesh_Renderer(letterQuad, cursorX, y, cw, ch, 0.0f);
+        Mesh_Renderer(s_letterQuad, cursorX, y, cw, ch, 0.0f);
     }
 
+    // returns a read-only pointer to the current contents of s_typed
     const char* Typing_GetText()
     {
-        return typed; //return typed word
+        return s_typed; //return s_typed word
     }
 
+    // clears the input buffer - thin public wrapper around ClearTyped for external callers
     void Typing_Clear()
     {
         ClearTyped(); //clear 
@@ -284,23 +301,28 @@ namespace
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////namespace end
 
-// load letter spritesheet, create quad for single tile, clear typed array n reset keyboard hist
+// loads the letter spritesheet and creates the single-tile quad for rendering;
+// unloads any previously loaded texture/mesh first so it is safe to call on restart;
+// clears the input buffer and resets s_prevKey so no held keys bleed in from a prior state
 void Typing_Init()
 {
-    if (lettersTex) { AEGfxTextureUnload(lettersTex); lettersTex = nullptr; }
-    if (letterQuad) { AEGfxMeshFree(letterQuad);      letterQuad = nullptr; }
+    if (s_lettersTex) { AEGfxTextureUnload(s_lettersTex); s_lettersTex = nullptr; }
+    if (s_letterQuad) { AEGfxMeshFree(s_letterQuad);      s_letterQuad = nullptr; }
 
-    lettersTex = AEGfxTextureLoad("Assets/lettersheet-Sheet.png");
-    AE_ASSERT_MESG(lettersTex, "Failed to load letters spritesheet!");
+    s_lettersTex = AEGfxTextureLoad("Assets/lettersheet-Sheet.png");
+    AE_ASSERT_MESG(s_lettersTex, "Failed to load letters spritesheet!");
 
-    letterQuad = Sprite_Mesh(UV_W, UV_H);
+    s_letterQuad = Sprite_Mesh(UV_W, UV_H);
 
     ClearTyped();
-    for (int i = 0; i < 256; ++i) prevKey[i] = false;
+    for (int i = 0; i < 256; ++i) s_prevKey[i] = false;
 }
 
 
-// checks if any letters is pressed this fram, if yes apped to typed array. also checks for backspace = remove last char n submit = treats typed as a submitted word then checks if correct, then clears it
+// polls all letter keys (A-Z) and BACKSPACE each frame via KeyPressedOnce to
+// prevent hold-spam, pushing or popping from s_typed accordingly and playing a
+// typing sound effect on each keystroke; also advances the cursor blink timer
+// and counts down s_shakeTextTime, clearing the shake word when it expires
 void Typing_Update()
 {
     for (int k = AEVK_A; k <= AEVK_Z; ++k) // for all letters
@@ -308,7 +330,7 @@ void Typing_Update()
         if (KeyPressedOnce(k)) // if key pressed (not held)
         {
             char c = (char)('A' + (k - AEVK_A));// convert key code to actual char
-            PushChar(c); // push to typed array
+            PushChar(c); // push to s_typed array
             SoundManager::PlayTypingSfx();
         }
     }
@@ -341,7 +363,11 @@ void Typing_Update()
 }
 
 
-//draw whatever is currently in typed, no input logic
+// renders the player's current input at the bottom-centre of the screen - if a
+// wrong-word shake is active, draws s_shakeText with a random pixel offset each
+// frame for the shake duration; otherwise draws s_typed normally; appends a
+// blinking cursor rect after the last letter; in _DEBUG builds also prints
+// submit results (correct/wrong word and target) to stdout once per submission
 void Typing_Render()
 {
     float dx = 0.0f, dy = 0.0f;
@@ -355,13 +381,13 @@ void Typing_Render()
     }
     else
     {
-        DrawWordCentered(typed, 0.0f, -350.0f, 60.0f, 60.0f, 8.0f);
+        DrawWordCentered(s_typed, 0.0f, -350.0f, 60.0f, 60.0f, 8.0f);
     }
 
 
     if (s_cursorVisible)
     {
-        DrawCursorAfterWordCentered(typed, 0.0f + dx, -350.0f + dy, 60.0f, 60.0f, 8.0f);
+        DrawCursorAfterWordCentered(s_typed, 0.0f + dx, -350.0f + dy, 60.0f, 60.0f, 8.0f);
     }
 #ifdef _DEBUG                                                   // debug chunk
     static bool printed = false;
@@ -396,17 +422,20 @@ void Typing_Render()
 #endif
 }
 
+// frees the letter quad mesh and unloads the spritesheet texture, nulling both
+// pointers so re-entry via Typing_Init is safe
 void Typing_Exit()
 {
-    if (letterQuad) { AEGfxMeshFree(letterQuad); letterQuad = nullptr; } //freeee
-    if (lettersTex) { AEGfxTextureUnload(lettersTex); lettersTex = nullptr; }// freeeeeee
+    if (s_letterQuad) { AEGfxMeshFree(s_letterQuad); s_letterQuad = nullptr; } //freeee
+    if (s_lettersTex) { AEGfxTextureUnload(s_lettersTex); s_lettersTex = nullptr; }// freeeeeee
 }
 
-/*
-draws all active enemy words with typing highlight.
- The currently targeted enemy's word is split into a green typed prefix n
- black remaining suffix. All other enemies words drawn in black.
-*/
+// renders every active, non-dying enemy's word above its sprite using AEGfxPrint -
+// the targeted enemy's word is split at the typed prefix: already-typed letters
+// draw green, remaining letters draw black (day) or white (night) via DayCycle lerp;
+// all non-targeted enemies draw fully in the day/night untyped colour;
+// letters with the orbit effect enabled are smoothly blended from their baseline
+// position outward to full orbit radius so the word visibly circles the sprite
 void Typing_DrawEnemyWords(const std::vector<Data::Enemy>& enemy_pool)
 {
     if (Graphics::font_id < 0) return;                                                                                      // skip if font missing
@@ -445,9 +474,9 @@ void Typing_DrawEnemyWords(const std::vector<Data::Enemy>& enemy_pool)
         int word_len = (int)display_word.size();                                                                            // number of letters in the display word
         float cursor_x = draw_x;                                                                                            // tracks baseline x position as we step through letters
 
-        if (i == s_targetIndex && typedLen > 0)                                                                             // this enemy is targeted and player has typed something
+        if (i == s_targetIndex && s_typedLen > 0)                                                                             // this enemy is targeted and player has s_typed something
         {
-            int split = (typedLen < word_len) ? typedLen : word_len;                                                        // clamp split index to word length
+            int split = (s_typedLen < word_len) ? s_typedLen : word_len;                                                        // clamp split index to word length
 
             for (int li = 0; li < word_len; ++li)                                                                           // loop through every letter
             {
@@ -471,7 +500,7 @@ void Typing_DrawEnemyWords(const std::vector<Data::Enemy>& enemy_pool)
                     final_y = draw_y + (orbit_y - draw_y) * t;                                                              // blend baseline to orbit y
                 }
 
-                if (li < split)                                                                                             // typed portion, draw green
+                if (li < split)                                                                                             // s_typed portion, draw green
                     AEGfxPrint(Graphics::font_id, single, final_x, final_y, EnemyConfig::TEXT_SCALE, 0.1f, 0.65f, 0.1f, 1);
                 else                                                                                                        // untyped portion, lerp black->white at night
                     AEGfxPrint(Graphics::font_id, single, final_x, final_y, EnemyConfig::TEXT_SCALE, untypedR, untypedG, untypedB, 1);
@@ -518,17 +547,24 @@ void Typing_DrawEnemyWords(const std::vector<Data::Enemy>& enemy_pool)
 
 
 
-// main typing logic, called every frame from game update
-// handles input, target locking, submission and enemy killing
+// central typing game loop called every frame - drives Typing_Update to collect
+// input, then uses Enemy_FindBestTargetByPrefix to lock onto the closest matching
+// enemy; clears the lock if the typed buffer no longer matches the target's display
+// word; on ENTER checks for an exact match and dispatches the correct kill path:
+// FRIENDLY enemies trigger a heal + laser + streak update, SHIELDED enemies with
+// an intact shield call Enemy_BreakShield and spawn a shield-break particle,
+// all other enemies are killed normally with a laser + score + streak update;
+// a wrong submission stores the typed text as a shake animation and resets the
+// streak; always clears s_typed and the target lock after any submission
 void Typing_UpdateAndApplyToEnemies(std::vector<Data::Enemy>& enemy_pool, Data::Score& score, Data::Health& health) {
 
 
-    Typing_Update(); //call typing update logic, basicallly pushing whatever is typed to the buffer
+    Typing_Update(); //call typing update logic, basicallly pushing whatever is s_typed to the buffer
     bool submitted = KeyPressedOnce(AEVK_RETURN);    // check for enter
 
-    std::string typed_buffer = typed; // convert from char array to std::string
+    std::string typed_buffer = s_typed; // convert from char array to std::string
 
-    if (typed_buffer.empty()) //if nothing typed, unlock target and return
+    if (typed_buffer.empty()) //if nothing s_typed, unlock target and return
     {
         s_targetIndex = -1;
         for (int i = 0; i < (int)enemy_pool.size(); ++i)
@@ -538,7 +574,7 @@ void Typing_UpdateAndApplyToEnemies(std::vector<Data::Enemy>& enemy_pool, Data::
 
 
     if (s_targetIndex >= 0) // means have locked enemy target
-        //if index out of range OR enemy no longer active OR enemy_is_dying OR the typed letters no longer match the start of the display word, target lock clear (s_targetIndex =-1)
+        //if index out of range OR enemy no longer active OR enemy_is_dying OR the s_typed letters no longer match the start of the display word, target lock clear (s_targetIndex =-1)
         if (s_targetIndex >= (int)enemy_pool.size() || !enemy_pool[(size_t)s_targetIndex].enemy_is_active || enemy_pool[(size_t)s_targetIndex].enemy_is_dying || !Utility::String_StartsWith(TR_DisplayWord(enemy_pool[(size_t)s_targetIndex].enemy_word_text), typed_buffer)) s_targetIndex = -1;
 
     // if no target locked try to find one
@@ -565,7 +601,7 @@ void Typing_UpdateAndApplyToEnemies(std::vector<Data::Enemy>& enemy_pool, Data::
             Data::Enemy& target = enemy_pool[(size_t)s_targetIndex];
             s_debugTarget = target.enemy_word_text; //store its word for debug
 
-            //if enemy valid AND typed word matches including the reversed word during Trick Room)
+            //if enemy valid AND s_typed word matches including the reversed word during Trick Room)
             if (target.enemy_is_active && !target.enemy_is_dying && TR_DisplayWord(target.enemy_word_text) == typed_buffer)
             {
                 // -------------------------
@@ -611,7 +647,7 @@ void Typing_UpdateAndApplyToEnemies(std::vector<Data::Enemy>& enemy_pool, Data::
 
         if (!correct) //if not correct
         {
-            s_shakeText = typed_buffer;           // store what is typed
+            s_shakeText = typed_buffer;           // store what is s_typed
             s_shakeTextTime = s_shakeTextDuration;
             StreakSystem::OnStreakReset();
         }

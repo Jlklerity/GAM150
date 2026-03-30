@@ -4,11 +4,11 @@
 
 namespace
 {
-    AEGfxTexture* playerTexture = nullptr;
-    AEGfxVertexList* playerMesh = nullptr;
-    AEGfxTexture* bgTexture1 = nullptr;
-    AEGfxTexture* bgTexture2 = nullptr;
-    AEGfxVertexList* bgMesh = nullptr;
+    AEGfxTexture* player_texture = nullptr;
+    AEGfxVertexList* player_mesh = nullptr;
+    AEGfxTexture* bg_texture1 = nullptr;
+    AEGfxTexture* bg_texture2 = nullptr;
+    AEGfxVertexList* bg_mesh = nullptr;
 
     const float SPRITE_X = -700.0f;
     const float SPRITE_Y = -200.0f;
@@ -16,20 +16,20 @@ namespace
     const int   SPRITE_ROWS = 1;
     const float SPRITE_UV_WIDTH = 1.0f / SPRITE_COLS;
     const float SPRITE_UV_HEIGHT = 1.0f / SPRITE_ROWS;
-    float       animTimer = 0.0f;
-    float       animDuration = 0.1f;
-    int         currentFrameIndex = 0;
-    float       uvOffsetX = 0.0f;
-    float       uvOffsetY = 0.0f;
+    float       anim_timer = 0.0f;
+    float       anim_duration = 0.1f;
+    int         current_frame_index = 0;
+    float       uv_offset_x = 0.0f;
+    float       uv_offset_y = 0.0f;
 
-    bool isPaused = false;
-    bool wasPaused = false;
-    bool isDead = false;
-    bool isTimedOut = false;
-    bool isGameOver = false;
+    bool is_paused = false;
+    bool was_paused = false;
+    bool is_dead = false;
+    bool is_timed_out = false;
+    bool is_game_over = false;
     std::string temp_name;
-    bool scoreWritten = false;
-    bool openLeaderboard = false;
+    bool score_written = false;
+    bool open_leaderboard = false;
 
     Data::WordBank              word_bank{};
     Data::Health                health{};
@@ -59,9 +59,11 @@ namespace
     static const float FLASH_DURATION = 0.35f;
     static const float BLINK_INTERVAL = 0.35f;
 
+    // draws the countdown timer in the centre top of the screen, colour shifts from green to red as time runs out,
+    // triggers a red screen flash when the timer first hits 10 seconds, and makes the number blink in the last 10 seconds
     void DrawTimerEffects()
     {
-        if (!bgMesh || Graphics::font_id < 0) return;
+        if (!bg_mesh || Graphics::font_id < 0) return;
         float dt = (float)AEFrameRateControllerGetFrameTime();
         float pct = time_remaining / TOTAL_TIME;
 
@@ -80,7 +82,7 @@ namespace
             AEGfxSetTransparency(alpha);
             AEGfxSetColorToMultiply(1.0f, 0.1f, 0.1f, 1.0f);
             AEGfxSetColorToAdd(0.0f, 0.0f, 0.0f, 0.0f);
-            Mesh_Renderer(bgMesh, 0.0f, 0.0f, 1600.0f, 900.0f, 0.0f);
+            Mesh_Renderer(bg_mesh, 0.0f, 0.0f, 1600.0f, 900.0f, 0.0f);
         }
 
         if (time_remaining <= 10.0f)
@@ -94,36 +96,39 @@ namespace
         AEGfxSetTransparency(1.0f);
         int secs = (int)time_remaining + 1;
         if (secs > (int)TOTAL_TIME) secs = (int)TOTAL_TIME;
-        std::string timeStr = std::to_string(secs);
+        std::string time_str = std::to_string(secs);
         float cr = (pct < 0.5f) ? 1.0f : (1.0f - pct) * 2.0f;
         float cg = (pct > 0.5f) ? 1.0f : pct * 2.0f;
         float scale = (time_remaining <= 10.0f) ? 0.85f : 0.7f;
         float tw, th;
-        AEGfxGetPrintSize(Graphics::font_id, timeStr.c_str(), scale, &tw, &th);
+        AEGfxGetPrintSize(Graphics::font_id, time_str.c_str(), scale, &tw, &th);
         AEGfxSetBlendMode(AE_GFX_BM_BLEND);
-        AEGfxPrint(Graphics::font_id, timeStr.c_str(), -tw * 0.5f, 0.88f, scale, cr, cg, 0.1f, 1.0f);
+        AEGfxPrint(Graphics::font_id, time_str.c_str(), -tw * 0.5f, 0.88f, scale, cr, cg, 0.1f, 1.0f);
     }
 
 } // anonymous namespace
 
 
+// initialises the timed game mode - resets all state, loads assets, sets up the enemy pool,
+// typing system, leaderboard, powerups, particles, weather, debug console and sound,
+// call this in the game state manager when entering the timed mode game state
 void GameTimeMode_Init()
 {
-    animTimer = 0.0f; animDuration = 0.1f; currentFrameIndex = 0;
-    uvOffsetX = 0.0f; uvOffsetY = 0.0f;
-    isPaused = false; wasPaused = false; isDead = false; isTimedOut = false; isGameOver = false;
-    temp_name = ""; scoreWritten = false; openLeaderboard = false; lb_scroll = 0.0f;
+    anim_timer = 0.0f; anim_duration = 0.1f; current_frame_index = 0;
+    uv_offset_x = 0.0f; uv_offset_y = 0.0f;
+    is_paused = false; was_paused = false; is_dead = false; is_timed_out = false; is_game_over = false;
+    temp_name = ""; score_written = false; open_leaderboard = false; lb_scroll = 0.0f;
     time_remaining = TOTAL_TIME; score.score_value = 0;
     random_spawn_timer_seconds = 9999.0f;
     flash_triggered = false; flash_timer = 0.0f; blink_timer = 0.0f; blink_visible = true;
 
     DifficultySystem::Difficulty_Reset();
 
-    if (playerTexture) { AEGfxTextureUnload(playerTexture); playerTexture = nullptr; }
-    if (bgTexture1) { AEGfxTextureUnload(bgTexture1);    bgTexture1 = nullptr; }
-    if (bgTexture2) { AEGfxTextureUnload(bgTexture2);    bgTexture2 = nullptr; }
-    if (bgMesh) { AEGfxMeshFree(bgMesh);             bgMesh = nullptr; }
-    if (playerMesh) { AEGfxMeshFree(playerMesh);         playerMesh = nullptr; }
+    if (player_texture) { AEGfxTextureUnload(player_texture); player_texture = nullptr; }
+    if (bg_texture1) { AEGfxTextureUnload(bg_texture1);    bg_texture1 = nullptr; }
+    if (bg_texture2) { AEGfxTextureUnload(bg_texture2);    bg_texture2 = nullptr; }
+    if (bg_mesh) { AEGfxMeshFree(bg_mesh);             bg_mesh = nullptr; }
+    if (player_mesh) { AEGfxMeshFree(player_mesh);         player_mesh = nullptr; }
 
     GameClouds::Exit();
     DayCycle::Exit();
@@ -133,14 +138,14 @@ void GameTimeMode_Init()
     DeathTransition::Reset();
 
     const char* skinPath = Shop_GetActiveSkinPath();
-    playerTexture = AEGfxTextureLoad(skinPath);
-    AE_ASSERT_MESG(playerTexture, "Failed to load player skin!");
-    playerMesh = Sprite_Mesh(SPRITE_UV_WIDTH, SPRITE_UV_HEIGHT);
+    player_texture = AEGfxTextureLoad(skinPath);
+    AE_ASSERT_MESG(player_texture, "Failed to load player skin!");
+    player_mesh = Sprite_Mesh(SPRITE_UV_WIDTH, SPRITE_UV_HEIGHT);
 
-    bgTexture1 = AEGfxTextureLoad("Assets/transbackground.png");
-    bgTexture2 = AEGfxTextureLoad("Assets/background.png");
-    AE_ASSERT_MESG(bgTexture1, "Failed to load background!");
-    bgMesh = Rect_Mesh(1.0f, 1.0f, 0xFFFFFFFF);
+    bg_texture1 = AEGfxTextureLoad("Assets/transbackground.png");
+    bg_texture2 = AEGfxTextureLoad("Assets/background.png");
+    AE_ASSERT_MESG(bg_texture1, "Failed to load background!");
+    bg_mesh = Rect_Mesh(1.0f, 1.0f, 0xFFFFFFFF);
 
     GameClouds::Init();
     DayCycle::Init();
@@ -173,6 +178,10 @@ void GameTimeMode_Init()
 }
 
 
+// runs the timed mode game loop each frame - counts down the timer, spawns enemies at an
+// accelerated rate (TIMED_SPAWN_MULTIPLIER), handles pause/death/timeout states,
+// writes the score to the leaderboard when time runs out, and renders everything,
+// uses a goto to skip gameplay logic when the debug console is open or when paused/dead
 void GameTimeMode_Update()
 {
     AEGfxSetCamPosition(0.0f, 0.0f);
@@ -181,10 +190,10 @@ void GameTimeMode_Update()
     DebugConsole::Update();
     if (DebugConsole::IsOpen()) goto render_only;
 
-    if (AEInputCheckTriggered(AEVK_ESCAPE) && !isTimedOut && !isDead)
+    if (AEInputCheckTriggered(AEVK_ESCAPE) && !is_timed_out && !is_dead)
     {
 
-        if (isPaused)
+        if (is_paused)
         {
             // If a sub-menu is open, let the UI handle the ESC key! Do NOT unpause!
             if (UiPauseMenu::IsSettingsOpen() || UiPauseMenu::IsPopupOpen())
@@ -193,16 +202,16 @@ void GameTimeMode_Update()
             }
             else
             {
-                isPaused = false;
+                is_paused = false;
             }
         }
         else
         {
-            isPaused = true;
+            is_paused = true;
         }
     }
 
-    if (!isPaused && !isTimedOut && !isDead)
+    if (!is_paused && !is_timed_out && !is_dead)
     {
         float dt = (float)AEFrameRateControllerGetFrameTime();
 
@@ -210,8 +219,8 @@ void GameTimeMode_Update()
         if (time_remaining <= 0.0f)
         {
             time_remaining = 0.0f;
-            isTimedOut = true;
-            if (!isDead) { isDead = true; DeathTransition::Start(); SoundManager::PlayGameOverSfx(); }
+            is_timed_out = true;
+            if (!is_dead) { is_dead = true; DeathTransition::Start(); SoundManager::PlayGameOverSfx(); }
         }
 
         if (dt > 0.1f) dt = 0.01667f;
@@ -242,7 +251,7 @@ void GameTimeMode_Update()
             }
         }
 
-        float healthBefore = health.health_current;
+        float health_before = health.health_current;
 
         for (int i = 0; i < EnemyConfig::MAX_ENEMIES; ++i)
         {
@@ -260,14 +269,14 @@ void GameTimeMode_Update()
                 if (!was_damage_done && !was_dying) // fresh typed kill — not yet in dying state
                 {
                     Particles_SpawnDamageImpact(e.enemy_position_x, e.enemy_position_y);
-                   // LaserBeam_Fire(e.enemy_position_x, e.enemy_position_y);
+                    // LaserBeam_Fire(e.enemy_position_x, e.enemy_position_y);
                 }
                 else // landed OR finished dying fall
                     Particles_SpawnKillImpact(e.enemy_position_x, e.enemy_position_y, e.enemy_word_length);
             }
         }
 
-        if (health.health_current < healthBefore)
+        if (health.health_current < health_before)
             StreakSystem::OnStreakReset();
 
         EnemySystem::Enemy_ResolveLaneStacking(enemy_pool, enemy_area);
@@ -290,21 +299,21 @@ void GameTimeMode_Update()
         if (!Weather_IsPlayerFrozen() && !Weather_IsPlayerStunned() && !Weather_IsTypingLocked())
             Typing_UpdateAndApplyToEnemies(enemy_pool, score, health);
 
-        animTimer += (float)AEFrameRateControllerGetFrameTime();
-        if (animTimer >= animDuration)
+        anim_timer += (float)AEFrameRateControllerGetFrameTime();
+        if (anim_timer >= anim_duration)
         {
-            animTimer = 0.0f;
-            currentFrameIndex = (currentFrameIndex + 1) % SPRITE_COLS;
-            uvOffsetX = (currentFrameIndex % SPRITE_COLS) * SPRITE_UV_WIDTH;
-            uvOffsetY = (currentFrameIndex / SPRITE_COLS) * SPRITE_UV_HEIGHT;
+            anim_timer = 0.0f;
+            current_frame_index = (current_frame_index + 1) % SPRITE_COLS;
+            uv_offset_x = (current_frame_index % SPRITE_COLS) * SPRITE_UV_WIDTH;
+            uv_offset_y = (current_frame_index / SPRITE_COLS) * SPRITE_UV_HEIGHT;
         }
     }
 
-    if (isTimedOut && !scoreWritten)
+    if (is_timed_out && !score_written)
     {
         std::string name = Main_Menu_GetPlayerName();
         Leaderboard_System::Write_TimeLeaderboard(name, score.score_value);
-        scoreWritten = true;
+        score_written = true;
     }
 
 render_only:
@@ -314,7 +323,7 @@ render_only:
     AEGfxSetBlendMode(AE_GFX_BM_NONE);
     AEGfxSetTransparency(1.0f);
     AEGfxSetColorToMultiply(0.53f, 0.81f, 0.92f, 1.0f);
-    Mesh_Renderer(bgMesh, 0.0f, 0.0f, 1600.0f, 900.0f, 0.0f);
+    Mesh_Renderer(bg_mesh, 0.0f, 0.0f, 1600.0f, 900.0f, 0.0f);
 
     // 2. DayCycle sky + sun (behind clouds)
     DayCycle::Draw();
@@ -327,9 +336,9 @@ render_only:
     AEGfxSetBlendMode(AE_GFX_BM_BLEND);
     AEGfxSetTransparency(1.0f);
     AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);
-    AEGfxTexture* activeBg = (gShopBgID == 0) ? bgTexture1 : bgTexture2;
-    AEGfxTextureSet(activeBg, 0.0f, 0.0f);
-    Mesh_Renderer(bgMesh, 0.0f, 0.0f, 1600.0f, 900.0f, 0.0f);
+    AEGfxTexture* active_bg = (gShopBgID == 0) ? bg_texture1 : bg_texture2;
+    AEGfxTextureSet(active_bg, 0.0f, 0.0f);
+    Mesh_Renderer(bg_mesh, 0.0f, 0.0f, 1600.0f, 900.0f, 0.0f);
 
     AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
     AEGfxSetBlendMode(AE_GFX_BM_BLEND);
@@ -341,8 +350,8 @@ render_only:
     AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
     AEGfxSetBlendMode(AE_GFX_BM_BLEND);
     AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);
-    AEGfxTextureSet(playerTexture, uvOffsetX, uvOffsetY);
-    Mesh_Renderer(playerMesh, SPRITE_X, SPRITE_Y, 150.0f, 150.0f, 0.0f);
+    AEGfxTextureSet(player_texture, uv_offset_x, uv_offset_y);
+    Mesh_Renderer(player_mesh, SPRITE_X, SPRITE_Y, 150.0f, 150.0f, 0.0f);
     StreakSystem::Draw();
 
     Typing_Render();
@@ -366,34 +375,36 @@ render_only:
     PowerUpSystem::Draw();
     DrawTimerEffects();
 
-    UiPauseMenu::Check_Paused(isPaused, isTimedOut, bgMesh);
+    UiPauseMenu::Check_Paused(is_paused, is_timed_out, bg_mesh);
 
     // --- Audio Pause Tracking ---
-    if (isPaused && !wasPaused) {
+    if (is_paused && !was_paused) {
         SoundManager::PauseGameplaySounds();
     }
-    else if (!isPaused && wasPaused) {
+    else if (!is_paused && was_paused) {
         SoundManager::ResumeGameplaySounds();
     }
-    wasPaused = isPaused;
+    was_paused = is_paused;
 
-    if (isDead)
+    if (is_dead)
     {
         float _dt = (float)AEFrameRateControllerGetFrameTime();
         DeathTransition::Update(_dt);
-        DeathTransition::Draw(playerMesh, playerTexture, uvOffsetX, uvOffsetY);
+        DeathTransition::Draw(player_mesh, player_texture, uv_offset_x, uv_offset_y);
         if (DeathTransition::IsComplete())
         {
-            if (!openLeaderboard)
-                UiGameOver::DrawTimeoutScreen(score, bgMesh, openLeaderboard);
+            if (!open_leaderboard)
+                UiGameOver::DrawTimeoutScreen(score, bg_mesh, open_leaderboard);
             else
-                Leaderboard_System::Display_TimeLeaderboard(openLeaderboard);
+                Leaderboard_System::Display_TimeLeaderboard(open_leaderboard);
         }
     }
 
     DebugConsole::Render();
 }
 
+// frees all assets and shuts down all systems used by the timed mode,
+// call this in the game state manager when leaving the timed mode game state
 void GameTimeMode_Exit()
 {
     EnemyManage::EnemyManage_Free(meshes, enemy_pool, free_slot_queue);
@@ -411,9 +422,9 @@ void GameTimeMode_Exit()
     UiGameOver::Exit();
     SoundManager::Exit();
 
-    if (playerMesh) { AEGfxMeshFree(playerMesh);          playerMesh = nullptr; }
-    if (bgMesh) { AEGfxMeshFree(bgMesh);              bgMesh = nullptr; }
-    if (bgTexture1) { AEGfxTextureUnload(bgTexture1);     bgTexture1 = nullptr; }
-    if (bgTexture2) { AEGfxTextureUnload(bgTexture2);     bgTexture2 = nullptr; }
-    if (playerTexture) { AEGfxTextureUnload(playerTexture);  playerTexture = nullptr; }
+    if (player_mesh) { AEGfxMeshFree(player_mesh);          player_mesh = nullptr; }
+    if (bg_mesh) { AEGfxMeshFree(bg_mesh);              bg_mesh = nullptr; }
+    if (bg_texture1) { AEGfxTextureUnload(bg_texture1);     bg_texture1 = nullptr; }
+    if (bg_texture2) { AEGfxTextureUnload(bg_texture2);     bg_texture2 = nullptr; }
+    if (player_texture) { AEGfxTextureUnload(player_texture);  player_texture = nullptr; }
 }

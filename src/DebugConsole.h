@@ -22,50 +22,28 @@ Freeze check:
 
 namespace DebugConsole
 {
-    /*
-    @function   Init
-    @brief      Initialises the console. Must be called once in Game_Init().
-                Stores references/pointers to all game state the console commands need.
-    */
+    // stores references to all game state the commands need, must be called once in Game_Init()
     void Init(
-        bool&                       is_enemy_area_box_visible,
-        bool&                       is_random_spawning_enabled,
-        bool&                       is_difficulty_debug_visible,
-        Data::Health&               health,
-        std::vector<Data::Enemy>&   enemy_pool,
-        std::deque<int>&            free_slot_queue,
-        Data::EnemyArea&            enemy_area,
-        Data::WordBank&             word_bank
+        bool& is_enemy_area_box_visible,
+        bool& is_random_spawning_enabled,
+        bool& is_difficulty_debug_visible,
+        Data::Health& health,
+        std::vector<Data::Enemy>& enemy_pool,
+        std::deque<int>& free_slot_queue,
+        Data::EnemyArea& enemy_area,
+        Data::WordBank& word_bank
     );
 
-    /*
-    @function   Update
-    @brief      Handles console open/close toggle and all keyboard input while open.
-                Call every frame BEFORE the gameplay freeze check.
-    */
+    // handles the '/' toggle and all keyboard input, call every frame BEFORE the gameplay freeze check
     void Update();
 
-    /*
-    @function   Render
-    @brief      Draws the console overlay (input bar + scrollable history).
-                Call every frame AFTER all other rendering so it sits on top.
-    */
+    // draws the input bar and scrollable history panel, call every frame AFTER all other rendering
     void Render();
 
-    /*
-    @function   Exit
-    @brief      Frees any mesh resources created by the console. Call in Game_Exit().
-    */
+    // frees mesh resources, call in Game_Exit()
     void Exit();
 
-    /*
-    @function   IsOpen
-    @brief      Returns true while the console is open.
-                Use this in game.cpp to freeze all gameplay logic:
-
-                    DebugConsole::Update();
-                    if (DebugConsole::IsOpen()) goto render; // or early-return pattern
-    */
+    // returns true while the console is open, use this to freeze gameplay logic
     bool IsOpen();
 
 } // namespace DebugConsole

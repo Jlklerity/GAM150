@@ -109,9 +109,9 @@ namespace
     AEGfxTexture* g_tex_shield_break = nullptr;   // shieldbreaksheet.png
     AEGfxTexture* g_tex_friendly_heal = nullptr;  // friendlyeffect.png
 
-    // builds a quad mesh whose UVs cover exactly one frame of a horizontal sprite sheet.
-    // u0 = left UV edge of the frame, u1 = right UV edge (u0 + 1.0/frame_count).
-    // caller must free the returned mesh after drawing.
+    // builds a quad mesh whose UVs cover exactly one frame of a horizontal sprite sheet,
+    // params u0 and u1 are the left and right UV edges of the frame (e.g. frame 2 of 4 = u0=0.5, u1=0.75),
+    // caller is responsible for freeing the returned mesh after drawing - don't hold onto it
     AEGfxVertexList* BuildFrameQuad(float u0, float u1)
     {
         AEGfxMeshStart();
@@ -138,7 +138,8 @@ namespace
 
     AEGfxVertexList* g_quad_mesh = nullptr;      // 1x1 unit rect, reused for all particles and lines
 
-    // scans pool for first inactive sprite effect slot
+    // scans the sprite effect pool for the first free slot, returns its index or -1 if the pool is full,
+    // caller should always check for -1 before using the returned index
     int AllocSpriteEffect()
     {
         for (int i = 0; i < MAX_SPRITE_EFFECTS; ++i)
@@ -152,19 +153,20 @@ namespace
     //  Utility helpers
     // ===========================================================
 
-    // returns a random float between 0 and 1
+    // returns a random float between 0.0 and 1.0, used as a base for all randomised particle values
     float Rand01()
     {
         return (float)std::rand() / (float)RAND_MAX;
     }
 
-    // returns a random float between a and b
+    // returns a random float between a and b, used to scatter particle position, speed, size, and lifespan
     float RandRange(float a, float b)
     {
         return a + (b - a) * Rand01();
     }
 
-    // scans pool for first inactive slot, returns index or -1 if pool is full
+    // scans the particle pool for the first free slot, returns its index or -1 if the pool is full,
+    // using a pool avoids dynamic allocation - particles are reused in-place when they die
     int AllocParticle()
     {
         for (int i = 0; i < MAX_PARTICLES; ++i)
@@ -172,7 +174,7 @@ namespace
         return -1; // pool full, caller should check for -1 before using
     }
 
-    // scans pool for first inactive line slot, returns index or -1 if pool is full
+    // scans the impact line pool for the first free slot, returns its index or -1 if the pool is full
     int AllocLine()
     {
         for (int i = 0; i < MAX_IMPACT_LINES; ++i)
@@ -180,7 +182,9 @@ namespace
         return -1; // pool full, caller should check for -1 before using
     }
 
-    // maps enemy word length (3-8) to an RGB burst color for kill impact
+    // maps an enemy word length (3-8) to an RGB burst colour for the kill impact effect,
+    // colours match the enemy sprite colour coding so the burst feels tied to the enemy type,
+    // outputs via the r, g, b reference params - defaults to white for any out-of-range value
     void WordLengthToColor(int word_length, float& r, float& g, float& b)
     {
         switch (word_length)
@@ -195,7 +199,8 @@ namespace
         }
     }
 
-    // draws a colored quad at world position using the shared unit mesh
+    // draws a solid colour square at the given world position using the shared unit mesh,
+    // params are world x/y centre, size in pixels, rgb colour, and alpha for fade-out
     void DrawQuad(float x, float y, float size, float r, float g, float b, float alpha)
     {
         if (!g_quad_mesh) return; // safety check
@@ -216,7 +221,8 @@ namespace
         AEGfxMeshDraw(g_quad_mesh, AE_GFX_MDM_TRIANGLES);
     }
 
-    // draws a line between two world points as a thin elongated quad
+    // draws a 3px thick line between two world positions by scaling and rotating the shared unit mesh,
+    // params are the start and end world positions, rgb colour, and alpha for fade-out
     void DrawLine(float x1, float y1, float x2, float y2,
         float r, float g, float b, float alpha)
     {
@@ -255,6 +261,8 @@ namespace
 //  Public
 // ============================================================================
 
+// builds the shared unit quad mesh used by all particle and line draws, clears all pool slots,
+// loads the shield break and friendly heal sprite sheet textures, safe to call on restart
 void Particles_Init()
 {
     if (g_quad_mesh)
@@ -291,6 +299,7 @@ void Particles_Init()
     g_tex_friendly_heal = AEGfxTextureLoad("Assets/friendlyeffect.png");
 }
 
+// frees the shared quad mesh and both sprite sheet textures, call this in Game_Exit() to avoid memory leaks
 void Particles_Free()
 {
     // free shared quad mesh if it exists
@@ -312,6 +321,9 @@ void Particles_Free()
     if (g_tex_friendly_heal) { AEGfxTextureUnload(g_tex_friendly_heal); g_tex_friendly_heal = nullptr; }
 }
 
+// advances all active particles, impact lines, sprite effects, screen shake and flash each frame,
+// param is dt in seconds (should already be time-scaled from the caller if TimeSlow is active),
+// also applies the camera shake offset via AEGfxSetCamPosition and resets it when shake ends
 void Particles_Update(float dt)
 {
     // --- Particles ---
@@ -399,6 +411,9 @@ void Particles_Update(float dt)
     }
 }
 
+// renders all active impact lines, particles, sprite sheet effects, and the screen flash overlay,
+// drawn in that order so lines are behind particles, particles are behind sprites, flash is on top,
+// call this after drawing enemies and before drawing UI so effects sit between them
 void Particles_Draw()
 {
     if (!g_quad_mesh) return; // safety check, mesh must be initialised
@@ -478,6 +493,9 @@ void Particles_Draw()
     AEGfxSetTransparency(1.0f);
 }
 
+// spawns the full damage combo effect at the given world position - grey/white dust particles,
+// radiating yellow impact lines, a brief white screen flash, and a camera shake,
+// call this when an enemy lands and deals damage to the player
 void Particles_SpawnDamageImpact(float x, float y)
 {
     // --- Dust particles ---
@@ -547,6 +565,9 @@ void Particles_SpawnDamageImpact(float x, float y)
     g_shake.intensity = DAMAGE_SHAKE_INTENSITY; // max camera offset
 }
 
+// spawns a coloured burst of particles at the given world position when the player kills an enemy,
+// colour is chosen by word_length (3=blue, 4=green, 5=yellow, 6=orange, 7=red, 8=purple),
+// no shake or flash since this is a positive reward event, not a punishment
 void Particles_SpawnKillImpact(float x, float y, int word_length)
 {
     // get primary burst color based on word length (3=blue, 4=green ... 8=purple)
@@ -585,8 +606,9 @@ void Particles_SpawnKillImpact(float x, float y, int word_length)
     // note: no screen shake or flash � kill is a reward event, not a punishment
 }
 
-#pragma warning(push)
-#pragma warning(disable: 26440)  // suppress 'function can be made static' - intentionally nonstatic declared in Particles.h
+// starts a screen shake with the given duration in seconds and max pixel intensity,
+// overwrites any currently running shake - safe to call at any time,
+// used directly by lightning powerup and other systems that need custom shake strength
 void Particles_TriggerShake(float duration, float intensity)
 {
     // overwrite any ongoing shake with new values
@@ -595,6 +617,9 @@ void Particles_TriggerShake(float duration, float intensity)
     g_shake.intensity = intensity;
 }
 
+// plays the shield break sprite sheet animation centred on the enemy position,
+// call this when a shielded enemy's shield is broken by the player typing the first word,
+// silently skips if the sprite effect pool is full
 void Particles_SpawnShieldBreak(float x, float y)
 {
     int slot = AllocSpriteEffect();
@@ -612,6 +637,9 @@ void Particles_SpawnShieldBreak(float x, float y)
     se.type = SpriteEffectType::SHIELD_BREAK;
 }
 
+// plays the friendly heal sprite sheet animation centred on the enemy position,
+// call this when a friendly enemy is typed and flies away, giving the player health,
+// silently skips if the sprite effect pool is full
 void Particles_SpawnFriendlyHeal(float x, float y)
 {
     int slot = AllocSpriteEffect();

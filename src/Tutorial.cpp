@@ -37,7 +37,7 @@ enum TutorialStage
     STAGE_COUNT
 };
 
-static const char* STAGE_MESSAGES[STAGE_COUNT] =
+static const char* s_STAGE_MESSAGES[STAGE_COUNT] =
 {
     "Type the word above the\nenemy and press ENTER\nto defeat it!",
     "Watch out! I'll let this\none land so you can see\nwhat damage looks like...",
@@ -50,7 +50,7 @@ static const char* STAGE_MESSAGES[STAGE_COUNT] =
     "After 60 seconds a BOSS\nappears! Type its words\nto deal damage.\nGood luck - go play!"
 };
 
-static const char* STAGE_OBJECTIVES[STAGE_COUNT] =
+static const char* s_STAGE_OBJECTIVES[STAGE_COUNT] =
 {
     "Objective: Kill the enemy",
     "Objective: Watch the enemy land",
@@ -111,9 +111,10 @@ namespace
     static const float SPRITE_UV_W = 1.0f / 8.0f;
     static const float SPRITE_UV_H = 1.0f;
 
-    // -----------------------------------------------------------------------
-    // Enemy update helper - mirrors GameEnemyBoss.cpp particle logic exactly
-    // -----------------------------------------------------------------------
+    // steps every active enemy forward by dt, recycles its slot on death,
+    // spawns a damage-impact particle on a typed kill and optionally fires
+    // the laser beam (allowLaser=false for stages where the laser is suppressed),
+    // spawns a kill-impact particle and resets the streak when an enemy lands
     void UpdateEnemies(float dt, bool allowLaser)
     {
         for (int i = 0; i < (int)s_pool.size(); ++i)
@@ -144,6 +145,8 @@ namespace
         }
     }
 
+    // clears s_pool to 40 inactive slots and rebuilds s_freeSlots from scratch,
+    // called at the start of every stage to guarantee a clean enemy state
     void ResetPool()
     {
         s_pool.clear();
@@ -156,6 +159,9 @@ namespace
         }
     }
 
+    // claims the next free slot and places a standard falling enemy at the top
+    // of the enemy area with the given word - orbit is pre-initialised to keep
+    // the word stationary so it stays readable during tutorial explanations
     void SpawnNormalEnemy(const std::string& word)
     {
         if (s_freeSlots.empty()) return;
@@ -178,6 +184,8 @@ namespace
         e.enemy_orbit_initialised = true;                                                                                   // disable orbit so the tutorial word stays in place
     }
 
+    // same as SpawnNormalEnemy but sets type to FRIENDLY (princess sprite, 3-row sheet),
+    // typing the word frees her and restores health instead of dealing damage
     void SpawnFriendlyEnemy(const std::string& word)
     {
         if (s_freeSlots.empty()) return;
@@ -200,6 +208,8 @@ namespace
         e.enemy_orbit_initialised = true;                                                                                   // disable orbit so the tutorial word stays in place
     }
 
+    // places a shielded enemy that requires two words - word1 breaks the shield,
+    // word2 finishes the kill; enemy_shield_intact is set true on spawn
     void SpawnShieldedEnemy(const std::string& word1, const std::string& word2)
     {
         if (s_freeSlots.empty()) return;
@@ -224,6 +234,8 @@ namespace
         e.enemy_orbit_initialised = true;                                                                                   // disable orbit so the tutorial word stays in place
     }
 
+    // spawns a normal enemy from the s_streakWords pool for the streak stage,
+    // orbit is suppressed so the word stays fixed while the player builds their combo
     void SpawnStreakEnemy(const std::string& word)
     {
         if (s_freeSlots.empty()) return;
@@ -246,6 +258,9 @@ namespace
         e.enemy_orbit_initialised = true;                                                                                   // disable orbit so the tutorial word stays in place
     }
 
+    // spawns a normal enemy with orbit explicitly enabled - sets enemy_has_orbit_effect
+    // and seeds the orbit phase/timer so the word visibly circles the sprite from the start,
+    // used exclusively in STAGE_ORBIT to demonstrate the mechanic
     void SpawnOrbitEnemy(const std::string& word)
     {
         if (s_freeSlots.empty()) return;
@@ -275,6 +290,8 @@ namespace
         e.enemy_orbit_timer = 0.0f;
     }
 
+    // returns true if at least one slot in s_pool is still active,
+    // used by stages to gate objective completion until the screen is clear
     bool AnyEnemyActive()
     {
         for (const auto& e : s_pool)
@@ -282,6 +299,10 @@ namespace
         return false;
     }
 
+    // transitions to a new stage - resets all per-stage flags (objectiveMet,
+    // stageStarted, readyClicked, weatherFreezeStarted), clears timers and
+    // streak/powerup sub-phase state, calls ResetPool, and re-initialises
+    // Typing and StreakSystem so carry-over input never bleeds between stages
     void StartStage(TutorialStage stage)
     {
         s_stage = stage;
@@ -299,6 +320,10 @@ namespace
         StreakSystem::Init();
     }
 
+    // renders the teacher speech bubble in the lower-left quadrant - draws a gold-bordered
+    // dark panel with a left-pointing tail, prints the current stage message and objective
+    // text (green when met, white when pending), and shows a context-sensitive ENTER hint
+    // at the bottom (yellow = not started, blue = complete or boss stage)
     void DrawSpeechBubble(bool objectiveMet)
     {
         if (!s_rectMesh || Graphics::font_id < 0) return;
@@ -332,7 +357,7 @@ namespace
         AEGfxSetBlendMode(AE_GFX_BM_BLEND);
         AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);
 
-        std::string msg = STAGE_MESSAGES[s_stage];
+        std::string msg = s_STAGE_MESSAGES[s_stage];
         float lineY = ndcY;
         std::string line;
         for (size_t i = 0; i <= msg.size(); ++i)
@@ -354,12 +379,12 @@ namespace
         {
             float ndcObjX = (BUBBLE_X - BUBBLE_W * 0.5f + 18.0f) / (s_winW * 0.5f);
             float ndcObjY = (BUBBLE_Y - BUBBLE_H * 0.5f + 55.0f) / (s_winH * 0.5f);
-            float or_ = objectiveMet ? 0.2f : 1.0f;
-            float og_ = objectiveMet ? 1.0f : 0.85f;
-            float ob_ = objectiveMet ? 0.2f : 0.1f;
+            float obj_r = objectiveMet ? 0.2f : 1.0f;
+            float obj_g = objectiveMet ? 1.0f : 0.85f;
+            float obj_b = objectiveMet ? 0.2f : 0.1f;
             AEGfxPrint(Graphics::font_id,
-                objectiveMet ? "Objective complete!" : STAGE_OBJECTIVES[s_stage],
-                ndcObjX, ndcObjY, 0.38f, or_, og_, ob_, 1.0f);
+                objectiveMet ? "Objective complete!" : s_STAGE_OBJECTIVES[s_stage],
+                ndcObjX, ndcObjY, 0.38f, obj_r, obj_g, obj_b, 1.0f);
         }
 
         // ENTER hint text at bottom of bubble
@@ -398,11 +423,16 @@ namespace
 
     }
 
+    // thin wrapper around AEInputCheckTriggered(AEVK_RETURN) - centralises
+    // the key query so stages and the bubble hint always agree on the same input
     bool EnterPressed()
     {
         return AEInputCheckTriggered(AEVK_RETURN);
     }
 
+    // returns true when the left mouse button is triggered and the cursor falls
+    // within the NEXT/PLAY button bounds (world-space AABB converted from screen coords),
+    // only used on the final boss-warning stage where the button ends the tutorial
     bool PlayButtonClicked()
     {
         // PLAY > button on final stage � kept as mouse click
@@ -418,6 +448,11 @@ namespace
     }
 }
 
+// initialises all tutorial subsystems from a clean slate - unloads any leftover
+// state from a previous run (textures, meshes, pools, subsystem exits), then loads
+// the background and player sprite sheet, sets up the enemy area spawn boundary,
+// initialises PowerUpSystem, Weather, Particles, Streaks, LaserBeam, and clouds,
+// configures the heart animation, and kicks off STAGE_BASIC_TYPING via StartStage
 void Tutorial_Init()
 {
     s_winW = (float)AEGfxGetWindowWidth();
@@ -491,6 +526,15 @@ void Tutorial_Init()
     StartStage(STAGE_BASIC_TYPING);
 }
 
+// runs the tutorial game loop each frame - handles the fade-to-black transition on
+// completion, toggles pause via ESC (respecting settings/popup sub-menus), advances
+// the player sprite animation, and dispatches per-stage logic through a switch on
+// s_stage; each stage waits for ENTER (s_readyClicked) before spawning its enemy,
+// runs the appropriate typing/enemy/weather update, and sets s_objectiveMet when
+// its condition is satisfied; pressing ENTER again after completion calls StartStage
+// for the next stage, or begins the fade on STAGE_BOSS_WARNING; renders background,
+// clouds, enemies, words, power-ups, weather, particles, laser, streak, player sprite,
+// HUD, and the speech bubble every frame; syncs audio pause state with s_isPaused
 void Tutorial_Update()
 {
     s_winW = (float)AEGfxGetWindowWidth();
@@ -1052,6 +1096,10 @@ void Tutorial_Update()
     s_wasPaused = s_isPaused;
 }
 
+// shuts down every subsystem initialised by Tutorial_Init in reverse order -
+// exits Typing, PowerUpSystem, Weather, Particles, Streaks, parallax, clouds,
+// and LaserBeam; frees the enemy pool via EnemyManage; unloads all textures
+// and meshes (bg, player, rect); resets the camera to the origin
 void Tutorial_Exit()
 {
     Typing_Exit();

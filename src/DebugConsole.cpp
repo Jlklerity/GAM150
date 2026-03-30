@@ -1,11 +1,3 @@
-/*!
-@file           DebugConsole.cpp
-@brief          Minecraft-style debug console overlay for the typing game.
-
-All console state, input handling, command parsing, and rendering lives here.
-game.cpp only calls Init / Update / Render / Exit / IsOpen.
-*/
-
 #pragma warning(disable: 26426)
 #define NOMINMAX
 #include "pch.h"
@@ -15,40 +7,40 @@ game.cpp only calls Init / Update / Render / Exit / IsOpen.
 namespace
 {
     //  Game state references (set in init) 
-    bool* s_pEnemyAreaVisible = nullptr;
-    bool* s_pAutoSpawn = nullptr;
-    bool* s_pDifficultyVisible = nullptr;
-    Data::Health* s_pHealth = nullptr;
-    std::vector<Data::Enemy>* s_pEnemyPool = nullptr;
-    std::deque<int>* s_pFreeSlots = nullptr;
-    Data::EnemyArea* s_pEnemyArea = nullptr;
-    Data::WordBank* s_pWordBank = nullptr;
+    bool* s_p_enemy_area_visible = nullptr;
+    bool* s_p_auto_spawn = nullptr;
+    bool* s_p_difficulty_visible = nullptr;
+    Data::Health* s_p_health = nullptr;
+    std::vector<Data::Enemy>* s_p_enemy_pool = nullptr;
+    std::deque<int>* s_p_free_slots = nullptr;
+    Data::EnemyArea* s_p_enemy_area = nullptr;
+    Data::WordBank* s_p_word_bank = nullptr;
 
     //  Console open/close 
-    bool s_isOpen = false;
+    bool s_is_open = false;
 
     //  Input buffer 
-    static char     s_inputBuf[64]{};
-    static int      s_inputLen = 0;
+    static char     s_input_buf[64]{};
+    static int      s_input_len = 0;
 
     //  History 
     struct HistoryEntry
     {
         std::string text;
-        bool        isError; // red if true, white if false
+        bool        is_error; // red if true, white if false
     };
 
     static std::vector<HistoryEntry> s_history;
     static const int MAX_HISTORY = 64;   // max stored entries
     static const int VISIBLE_LINES = 8;    // lines shown at once
-    static int s_scrollOffset = 0;    // 0 = bottom (most recent)
+    static int s_scroll_offset = 0;    // 0 = bottom (most recent)
 
     //  Cursor blink 
-    static float s_cursorTimer = 0.0f;
-    static bool  s_cursorVisible = true;
+    static float s_cursor_timer = 0.0f;
+    static bool  s_cursor_visible = true;
 
     //  Rendering 
-    static AEGfxVertexList* s_pPanelMesh = nullptr; // reusable quad for background panels
+    static AEGfxVertexList* s_p_panel_mesh = nullptr; // reusable quad for background panels
 
     //  Layout constants (world space, 1600x900 ) 
     static const float SCREEN_W = 1600.0f;
@@ -63,27 +55,33 @@ namespace
     static const float HISTORY_PANEL_Y = INPUT_BAR_Y + INPUT_BAR_H * 0.5f + HISTORY_PANEL_H * 0.5f + 2.0f;
 
     //  check if key held (independent from typing.cpp) 
-    static bool s_prevKeys[256]{};
+    static bool s_prev_keys[256]{};
 
+    // checks if a key was just pressed this frame (not held), param is the AE key code,
+    // tracks previous frame state independently from typing.cpp so the console doesn't interfere with gameplay input
     bool KeyTriggered(int key)
     {
         if (key < 0 || key >= 256) return false;
         bool curr = (AEInputCheckCurr(static_cast<u8>(key)) != 0);
-        bool triggered = curr && !s_prevKeys[key];
-        s_prevKeys[key] = curr;
+        bool triggered = curr && !s_prev_keys[key];
+        s_prev_keys[key] = curr;
         return triggered;
     }
 
     // History helpers
-    void PushHistory(const std::string& text, bool isError = false)
+    // adds a line to the command history, param is the text and whether it's an error (red) or normal (white),
+    // drops the oldest entry if we exceed MAX_HISTORY, and snaps the scroll back to the bottom so the new entry is visible
+    void PushHistory(const std::string& text, bool is_error = false)
     {
-        s_history.push_back({ text, isError });
+        s_history.push_back({ text, is_error });
         if ((int)s_history.size() > MAX_HISTORY)
             s_history.erase(s_history.begin()); // drop oldest
-        s_scrollOffset = 0; // snap back to bottom on new entry
+        s_scroll_offset = 0; // snap back to bottom on new entry
     }
 
     // Command parsing helpers
+    // splits a command string into tokens by whitespace, e.g. "spawn 5" -> ["spawn", "5"],
+    // used by ExecuteCommand to separate the command name from its arguments
     std::vector<std::string> Tokenise(const std::string& line)
     {
         std::vector<std::string> tokens;
@@ -94,6 +92,8 @@ namespace
     }
 
     // Case-insensitive compare
+    // case-insensitive string compare, so "/Spawn" and "/spawn" both work,
+    // returns true if both strings are the same length and all chars match when lowercased
     bool IEquals(const std::string& a, const std::string& b)
     {
         if (a.size() != b.size()) return false;
@@ -103,6 +103,9 @@ namespace
     }
 
     // Command execution
+    // parses and runs a command string entered by the player, param is the raw input including the leading '/',
+    // echoes the command into history, strips the slash, tokenises, then dispatches to the matching handler,
+    // pushes an error message to history if the command is unknown or used incorrectly
     void ExecuteCommand(const std::string& raw)
     {
         // Echo the typed command into history (white)
@@ -130,7 +133,7 @@ namespace
             if (IEquals(tokens[1], "friendly"))
             {
                 int max_len = DifficultySystem::Difficulty_GetUnlockedMaxWordLength();
-                EnemySystem::Enemy_SpawnFriendlyFromPool(*s_pEnemyPool, *s_pFreeSlots, *s_pEnemyArea, *s_pWordBank, 3, max_len, 1.15f);
+                EnemySystem::Enemy_SpawnFriendlyFromPool(*s_p_enemy_pool, *s_p_free_slots, *s_p_enemy_area, *s_p_word_bank, 3, max_len, 1.15f);
                 PushHistory("Spawned friendly enemy.", false);
                 return;
             }
@@ -139,7 +142,7 @@ namespace
             if (IEquals(tokens[1], "shield"))
             {
                 int max_len = DifficultySystem::Difficulty_GetUnlockedMaxWordLength();
-                EnemySystem::Enemy_SpawnShieldedFromPool(*s_pEnemyPool, *s_pFreeSlots, *s_pEnemyArea, *s_pWordBank, 3, max_len, 1.05f);
+                EnemySystem::Enemy_SpawnShieldedFromPool(*s_p_enemy_pool, *s_p_free_slots, *s_p_enemy_area, *s_p_word_bank, 3, max_len, 1.05f);
                 PushHistory("Spawned shielded enemy.", false);
                 return;
             }
@@ -161,7 +164,7 @@ namespace
                     return;
                 }
                 int len = Utility::Utility_RandInt(BossConfig::BOSS_WORD_MIN_LEN, BossConfig::BOSS_WORD_MAX_LEN);
-                EnemySystem::Enemy_SpawnFromPool(*s_pEnemyPool, *s_pFreeSlots, *s_pEnemyArea, *s_pWordBank, len);
+                EnemySystem::Enemy_SpawnFromPool(*s_p_enemy_pool, *s_p_free_slots, *s_p_enemy_area, *s_p_word_bank, len);
                 PushHistory("Spawned boss minion (word length " + std::to_string(len) + ").", false);
                 return;
             }
@@ -182,7 +185,7 @@ namespace
                 PushHistory("Error: word length must be between 3 and 8.", true);
                 return;
             }
-            EnemySystem::Enemy_SpawnFromPool(*s_pEnemyPool, *s_pFreeSlots, *s_pEnemyArea, *s_pWordBank, len);
+            EnemySystem::Enemy_SpawnFromPool(*s_p_enemy_pool, *s_p_free_slots, *s_p_enemy_area, *s_p_word_bank, len);
             PushHistory("Spawned enemy with word length " + std::to_string(len) + ".", false);
             return;                                                         // must return or falls through to unknown command
         }
@@ -202,7 +205,7 @@ namespace
             }
             if (IEquals(tokens[1], "boss"))
             {
-                BossSystem::Boss_ForceKill(*s_pEnemyPool, *s_pFreeSlots);
+                BossSystem::Boss_ForceKill(*s_p_enemy_pool, *s_p_free_slots);
                 PushHistory("Boss force-killed.", false);
             }
             else
@@ -222,11 +225,11 @@ namespace
             }
             if (IEquals(tokens[1], "add"))
             {
-                HealthSystem::Health_Add(*s_pHealth, 10.0f);
-                PushHistory("Added 10 HP. Current: " + std::to_string((int)s_pHealth->health_current), false);
+                HealthSystem::Health_Add(*s_p_health, 10.0f);
+                PushHistory("Added 10 HP. Current: " + std::to_string((int)s_p_health->health_current), false);
             }
             else if (IEquals(tokens[1], "die")) {
-                s_pHealth->health_current = 0;
+                s_p_health->health_current = 0;
                 PushHistory("Player killed.", false);
             }
             else
@@ -259,8 +262,8 @@ namespace
             }
             else if (IEquals(tokens[1], "show"))
             {
-                *s_pDifficultyVisible = !*s_pDifficultyVisible;
-                PushHistory(std::string("Difficulty HUD: ") + (*s_pDifficultyVisible ? "ON" : "OFF"), false);
+                *s_p_difficulty_visible = !*s_p_difficulty_visible;
+                PushHistory(std::string("Difficulty HUD: ") + (*s_p_difficulty_visible ? "ON" : "OFF"), false);
             }
             else
             {
@@ -272,16 +275,16 @@ namespace
         // /debugbox - toggle enemy area debug box
         if (IEquals(cmd, "debugbox"))
         {
-            *s_pEnemyAreaVisible = !*s_pEnemyAreaVisible;
-            PushHistory(std::string("Debug box: ") + (*s_pEnemyAreaVisible ? "ON" : "OFF"), false);
+            *s_p_enemy_area_visible = !*s_p_enemy_area_visible;
+            PushHistory(std::string("Debug box: ") + (*s_p_enemy_area_visible ? "ON" : "OFF"), false);
             return;
         }
 
         // /autospawn - toggle automatic enemy spawning
         if (IEquals(cmd, "autospawn"))
         {
-            *s_pAutoSpawn = !*s_pAutoSpawn;
-            PushHistory(std::string("Auto-spawn: ") + (*s_pAutoSpawn ? "ON" : "OFF"), false);
+            *s_p_auto_spawn = !*s_p_auto_spawn;
+            PushHistory(std::string("Auto-spawn: ") + (*s_p_auto_spawn ? "ON" : "OFF"), false);
             return;
         }
 
@@ -353,22 +356,22 @@ namespace
             }
             if (IEquals(tokens[1], "snow"))
             {
-                Weather_ForceEvent(0, *s_pEnemyPool);
+                Weather_ForceEvent(0, *s_p_enemy_pool);
                 PushHistory("Triggered snow blizzard.", false);
             }
             else if (IEquals(tokens[1], "thunder"))
             {
-                Weather_ForceEvent(1, *s_pEnemyPool);
+                Weather_ForceEvent(1, *s_p_enemy_pool);
                 PushHistory("Triggered thunderstorm.", false);
             }
             else if (IEquals(tokens[1], "rainbow"))
             {
-                Weather_ForceEvent(2, *s_pEnemyPool);
+                Weather_ForceEvent(2, *s_p_enemy_pool);
                 PushHistory("Triggered rainbow.", false);
             }
             else if (IEquals(tokens[1], "ghost"))
             {
-                Weather_ForceEvent(3, *s_pEnemyPool);
+                Weather_ForceEvent(3, *s_p_enemy_pool);
                 PushHistory("Triggered ghost weather.", false);
             }
             else
@@ -402,19 +405,23 @@ namespace
     // ---------------------------------------------------------------------------
 
     // Draw a solid color quad in world space
+    // draws a solid colour rectangle in world space, params are centre x/y, width, height, and rgba colour,
+    // used for the input bar background, history panel background, and the green divider line
     void DrawPanel(float x, float y, float w, float h, float r, float g, float b, float a)
     {
-        if (!s_pPanelMesh) return;
+        if (!s_p_panel_mesh) return;
 
         AEGfxSetRenderMode(AE_GFX_RM_COLOR);
         AEGfxSetBlendMode(AE_GFX_BM_BLEND);
         AEGfxSetTransparency(1.0f);
         AEGfxSetColorToMultiply(r, g, b, a);
         AEGfxSetColorToAdd(0.0f, 0.0f, 0.0f, 0.0f);
-        Mesh_Renderer(s_pPanelMesh, x, y, w, h, 0.0f);
+        Mesh_Renderer(s_p_panel_mesh, x, y, w, h, 0.0f);
     }
 
     // Print text; nx/ny are already in NDC [-1,1]
+    // prints text at the given NDC position with the given scale and rgb colour,
+    // nx/ny must already be in NDC [-1, 1] range - use WorldXtoNDC/WorldYtoNDC to convert first
     void DrawText(const char* text, float nx, float ny, float scale,
         float r, float g, float b)
     {
@@ -424,7 +431,10 @@ namespace
     }
 
     // Convert world Y to NDC
+    // converts a world space Y coordinate to NDC [-1, 1] for use with AEGfxPrint
     float WorldYtoNDC(float wy) { return wy / HALF_H; }
+
+    // converts a world space X coordinate to NDC [-1, 1] for use with AEGfxPrint
     float WorldXtoNDC(float wx) { return wx / HALF_W; }
 
 } // anonymous namespace
@@ -432,6 +442,9 @@ namespace
 // public stuff
 namespace DebugConsole
 {
+    // sets up the console and stores references to all the game state the commands need to modify,
+    // must be called once in Game_Init() before any Update/Render calls,
+    // params are references to the spawning flags, health, enemy pool, free slots, enemy area, and word bank
     void Init(
         bool& is_enemy_area_box_visible,
         bool& is_random_spawning_enabled,
@@ -442,99 +455,102 @@ namespace DebugConsole
         Data::EnemyArea& enemy_area,
         Data::WordBank& word_bank)
     {
-        s_pEnemyAreaVisible = &is_enemy_area_box_visible;
-        s_pAutoSpawn = &is_random_spawning_enabled;
-        s_pDifficultyVisible = &is_difficulty_debug_visible;
-        s_pHealth = &health;
-        s_pEnemyPool = &enemy_pool;
-        s_pFreeSlots = &free_slot_queue;
-        s_pEnemyArea = &enemy_area;
-        s_pWordBank = &word_bank;
+        s_p_enemy_area_visible = &is_enemy_area_box_visible;
+        s_p_auto_spawn = &is_random_spawning_enabled;
+        s_p_difficulty_visible = &is_difficulty_debug_visible;
+        s_p_health = &health;
+        s_p_enemy_pool = &enemy_pool;
+        s_p_free_slots = &free_slot_queue;
+        s_p_enemy_area = &enemy_area;
+        s_p_word_bank = &word_bank;
 
-        s_isOpen = false;
-        s_inputLen = 0;
-        s_inputBuf[0] = '\0';
-        s_scrollOffset = 0;
+        s_is_open = false;
+        s_input_len = 0;
+        s_input_buf[0] = '\0';
+        s_scroll_offset = 0;
         s_history.clear();
 
-        s_cursorTimer = 0.0f;
-        s_cursorVisible = true;
+        s_cursor_timer = 0.0f;
+        s_cursor_visible = true;
 
-        for (int i = 0; i < 256; ++i) s_prevKeys[i] = false;
+        for (int i = 0; i < 256; ++i) s_prev_keys[i] = false;
 
-        if (s_pPanelMesh) { AEGfxMeshFree(s_pPanelMesh); s_pPanelMesh = nullptr; }
-        s_pPanelMesh = Rect_Mesh(1.0f, 1.0f, 0xFFFFFFFF);
+        if (s_p_panel_mesh) { AEGfxMeshFree(s_p_panel_mesh); s_p_panel_mesh = nullptr; }
+        s_p_panel_mesh = Rect_Mesh(1.0f, 1.0f, 0xFFFFFFFF);
     }
 
+    // handles the '/' key to open the console, and all keyboard input while it's open,
+    // call this every frame BEFORE the gameplay freeze check so the console can still respond when gameplay is paused,
+    // handles backspace, enter (submit or close), escape (close), letter/digit/space keys, and mouse wheel scrolling
     void Update()
     {
         float dt = (float)AEFrameRateControllerGetFrameTime();
 
         //  Toggle console open / 
         // AEVK_SLASH = 0xBF 
-        if (KeyTriggered(AEVK_SLASH) && !s_isOpen) //if console not open + / presed
+        if (KeyTriggered(AEVK_SLASH) && !s_is_open) //if console not open + / presed
         {
-            s_isOpen = true;
-            s_inputLen = 0;
-            s_inputBuf[0] = '\0';
-            s_cursorTimer = 0.0f;
-            s_cursorVisible = true;
-            s_inputBuf[s_inputLen++] = '/';                                 // pre-fill / 
-            s_inputBuf[s_inputLen] = '\0';
-            *s_pDifficultyVisible = true;                                   // auto-show difficulty HUD when console opens
+            s_is_open = true;
+            s_input_len = 0;
+            s_input_buf[0] = '\0';
+            s_cursor_timer = 0.0f;
+            s_cursor_visible = true;
+            s_input_buf[s_input_len++] = '/';                                 // pre-fill / 
+            s_input_buf[s_input_len] = '\0';
+            *s_p_difficulty_visible = true;                                   // auto-show difficulty HUD when console opens
             return;                                                         // consume the /
         }
 
-        if (!s_isOpen) return; // if console not open returb
+        if (!s_is_open) return; // if console not open returb
 
         //  Cursor blink 
-        s_cursorTimer += dt;
-        if (s_cursorTimer >= 0.5f)
+        s_cursor_timer += dt;
+        if (s_cursor_timer >= 0.5f)
         {
-            s_cursorTimer = 0.0f;
-            s_cursorVisible = !s_cursorVisible;
+            s_cursor_timer = 0.0f;
+            s_cursor_visible = !s_cursor_visible;
         }
 
         //  Scroll history with mouse wheel 
         {
             s32 wheel = 0;
             AEInputMouseWheelDelta(&wheel);
-            int maxScroll = ((int)s_history.size() - VISIBLE_LINES > 0) ? (int)s_history.size() - VISIBLE_LINES : 0;
-            if (wheel > 0) s_scrollOffset = (s_scrollOffset + 1 < maxScroll) ? s_scrollOffset + 1 : maxScroll; // scroll up (older)
-            if (wheel < 0) s_scrollOffset = (s_scrollOffset - 1 > 0) ? s_scrollOffset - 1 : 0;                 // scroll down (newer)
+            int max_scroll = ((int)s_history.size() - VISIBLE_LINES > 0) ? (int)s_history.size() - VISIBLE_LINES : 0;
+            if (wheel > 0) s_scroll_offset = (s_scroll_offset + 1 < max_scroll) ? s_scroll_offset + 1 : max_scroll; // scroll up (older)
+            if (wheel < 0) s_scroll_offset = (s_scroll_offset - 1 > 0) ? s_scroll_offset - 1 : 0;                 // scroll down (newer)
         }
 
         //  Escape closes without submitting 
         if (KeyTriggered(AEVK_ESCAPE))
         {
-            s_isOpen = false;
-            s_inputLen = 0;
-            s_inputBuf[0] = '\0';
-            *s_pDifficultyVisible = false;                                  // hide difficulty HUD when console closes
+            s_is_open = false;
+            s_input_len = 0;
+            s_input_buf[0] = '\0';
+            *s_p_difficulty_visible = false;                                  // hide difficulty HUD when console closes
             return;
         }
 
         //  Enter submits 
         if (KeyTriggered(AEVK_RETURN))
         {
-            std::string cmd(s_inputBuf);
+            std::string cmd(s_input_buf);
             while (!cmd.empty() && cmd.back() == ' ') cmd.pop_back();      // trim trailing spaces
 
             if (cmd.empty() || cmd == "/")
             {
-                s_isOpen = false;                                           // empty enter = close console
-                s_inputLen = 0;
-                s_inputBuf[0] = '\0';
-                s_scrollOffset = 0;
-                *s_pDifficultyVisible = false;                              // hide difficulty HUD when console closes
+                s_is_open = false;                                           // empty enter = close console
+                s_input_len = 0;
+                s_input_buf[0] = '\0';
+                s_scroll_offset = 0;
+                *s_p_difficulty_visible = false;                              // hide difficulty HUD when console closes
                 return;
             }
 
             ExecuteCommand(cmd);                                            // non-empty = run command and stay open
-            s_inputLen = 1;                                                 // reset buffer back to just '/'
-            s_inputBuf[0] = '/';
-            s_inputBuf[1] = '\0';
-            s_scrollOffset = 0;                                             // snap history to bottom after command
+            s_input_len = 1;                                                 // reset buffer back to just '/'
+            s_input_buf[0] = '/';
+            s_input_buf[1] = '\0';
+            s_scroll_offset = 0;                                             // snap history to bottom after command
             return;
         }
 
@@ -542,23 +558,23 @@ namespace DebugConsole
         if (KeyTriggered(AEVK_BACK))
         {
             // Don't let player delete the leading '/'
-            if (s_inputLen > 1)
+            if (s_input_len > 1)
             {
-                s_inputBuf[--s_inputLen] = '\0';
+                s_input_buf[--s_input_len] = '\0';
             }
             return;
         }
 
         //  Letter keys A-Z 
-        if (s_inputLen < (int)sizeof(s_inputBuf) - 2) // leave room for null
+        if (s_input_len < (int)sizeof(s_input_buf) - 2) // leave room for null
         {
             for (int k = AEVK_A; k <= AEVK_Z; ++k)
             {
                 if (KeyTriggered(k))
                 {
                     char c = (char)('a' + (k - AEVK_A)); // lowercase
-                    s_inputBuf[s_inputLen++] = c;
-                    s_inputBuf[s_inputLen] = '\0';
+                    s_input_buf[s_input_len++] = c;
+                    s_input_buf[s_input_len] = '\0';
                 }
             }
 
@@ -569,89 +585,92 @@ namespace DebugConsole
                 if (KeyTriggered(k))
                 {
                     char c = (char)('0' + (k - AEVK_0));
-                    s_inputBuf[s_inputLen++] = c;
-                    s_inputBuf[s_inputLen] = '\0';
+                    s_input_buf[s_input_len++] = c;
+                    s_input_buf[s_input_len] = '\0';
                 }
             }
 
             //  Space 
             if (KeyTriggered(AEVK_SPACE))
             {
-                s_inputBuf[s_inputLen++] = ' ';
-                s_inputBuf[s_inputLen] = '\0';
+                s_input_buf[s_input_len++] = ' ';
+                s_input_buf[s_input_len] = '\0';
             }
         }
     }
 
+    // draws the console UI on top of everything else, call this at the end of the render block,
+    // draws the scrollable history panel when the console is open, and the input bar with blinking cursor,
+    // also shows up/down scroll indicators when there are more history entries than visible lines
     void Render()
     {
         // History panel is always visible if there are entries (even when console is closed)
         // Input bar only visible when open
-        bool hasHistory = !s_history.empty();
+        bool has_history = !s_history.empty();
 
         //  Draw history panel background 
-        if (s_isOpen && hasHistory)
+        if (s_is_open && has_history)
         {
-            float panelY = s_isOpen ? HISTORY_PANEL_Y : -HALF_H + INPUT_BAR_H + HISTORY_PANEL_H * 0.5f + 4.0f;
+            float panel_y = s_is_open ? HISTORY_PANEL_Y : -HALF_H + INPUT_BAR_H + HISTORY_PANEL_H * 0.5f + 4.0f;
 
-            DrawPanel(0.0f, panelY, SCREEN_W, HISTORY_PANEL_H, 0.0f, 0.0f, 0.0f, 0.65f); // history panel background
+            DrawPanel(0.0f, panel_y, SCREEN_W, HISTORY_PANEL_H, 0.0f, 0.0f, 0.0f, 0.65f); // history panel background
 
             //  Draw history lines 
-            // s_scrollOffset=0 means show the newest VISIBLE_LINES entries
-            int totalEntries = (int)s_history.size();
+            // s_scroll_offset=0 means show the newest VISIBLE_LINES entries
+            int total_entries = (int)s_history.size();
             // The bottom of the visible window in history index terms:
-            int bottomIdx = totalEntries - 1 - s_scrollOffset;         // newest visible
-            int topIdx = bottomIdx - (VISIBLE_LINES - 1);           // oldest visible
+            int bottom_idx = total_entries - 1 - s_scroll_offset;         // newest visible
+            int top_idx = bottom_idx - (VISIBLE_LINES - 1);           // oldest visible
 
-            float textScale = 0.38f;
-            float lineStartY = panelY + (HISTORY_PANEL_H * 0.5f) - 4.0f; // top of panel
+            float text_scale = 0.38f;
+            float line_start_y = panel_y + (HISTORY_PANEL_H * 0.5f) - 4.0f; // top of panel
 
             // loop through each visible line slot in the history panel
             for (int line = 0; line < VISIBLE_LINES; ++line)
             {
                 // calculate which history entry maps to this row
-                int entryIdx = topIdx + line;
+                int entry_idx = top_idx + line;
 
                 // skip if out of bounds (<8)
-                if (entryIdx < 0 || entryIdx >= totalEntries) continue;
+                if (entry_idx < 0 || entry_idx >= total_entries) continue;
 
                 // grab the history entry at this index
-                const HistoryEntry& entry = s_history[(size_t)entryIdx];
+                const HistoryEntry& entry = s_history[(size_t)entry_idx];
 
                 // calculate world Y position for this row, gg downward each line
-                float worldY = lineStartY - (line * HISTORY_LINE_H) - HISTORY_LINE_H * 0.5f;
+                float world_y = line_start_y - (line * HISTORY_LINE_H) - HISTORY_LINE_H * 0.5f;
 
                 // convert to NDC for print
-                float ny = WorldYtoNDC(worldY);
+                float ny = WorldYtoNDC(world_y);
 
 
                 float nx = WorldXtoNDC(-HALF_W + 12.0f);
 
                 // pick red for errors, white for normal output
-                float r = entry.isError ? 1.0f : 1.0f;
-                float g = entry.isError ? 0.2f : 1.0f;
-                float b = entry.isError ? 0.2f : 1.0f;
+                float r = entry.is_error ? 1.0f : 1.0f;
+                float g = entry.is_error ? 0.2f : 1.0f;
+                float b = entry.is_error ? 0.2f : 1.0f;
 
                 // draw the text at the calculated position and color
-                DrawText(entry.text.c_str(), nx, ny, textScale, r, g, b);
+                DrawText(entry.text.c_str(), nx, ny, text_scale, r, g, b);
             }
 
             //  Scroll indicators 
-            int maxScroll = (totalEntries - VISIBLE_LINES > 0) ? totalEntries - VISIBLE_LINES : 0;
-            if (s_scrollOffset < maxScroll) // can scroll up (older entries above)
+            int max_scroll = (total_entries - VISIBLE_LINES > 0) ? total_entries - VISIBLE_LINES : 0;
+            if (s_scroll_offset < max_scroll) // can scroll up (older entries above)
             {
-                float ny = WorldYtoNDC(panelY + HISTORY_PANEL_H * 0.5f - 2.0f);
+                float ny = WorldYtoNDC(panel_y + HISTORY_PANEL_H * 0.5f - 2.0f);
                 DrawText("^", WorldXtoNDC(HALF_W - 30.0f), ny, 0.35f, 0.8f, 0.8f, 0.8f);
             }
-            if (s_scrollOffset > 0) // can scroll down (newer entries below)
+            if (s_scroll_offset > 0) // can scroll down (newer entries below)
             {
-                float ny = WorldYtoNDC(panelY - HISTORY_PANEL_H * 0.5f + 2.0f);
+                float ny = WorldYtoNDC(panel_y - HISTORY_PANEL_H * 0.5f + 2.0f);
                 DrawText("v", WorldXtoNDC(HALF_W - 30.0f), ny, 0.35f, 0.8f, 0.8f, 0.8f);
             }
         }
 
         //  Draw input bar (only when open) 
-        if (!s_isOpen) return;
+        if (!s_is_open) return;
 
         // Background bar
         DrawPanel(0.0f, INPUT_BAR_Y, SCREEN_W, INPUT_BAR_H, 0.08f, 0.08f, 0.08f, 0.92f);
@@ -662,33 +681,35 @@ namespace DebugConsole
         // Input text + cursor
         if (Graphics::font_id >= 0)
         {
-            std::string display = std::string(s_inputBuf);
-            if (s_cursorVisible) display += "_";
+            std::string display = std::string(s_input_buf);
+            if (s_cursor_visible) display += "_";
 
-            float textScale = 0.42f;
+            float text_scale = 0.42f;
             float nx = WorldXtoNDC(-HALF_W + 12.0f);
             float ny = WorldYtoNDC(INPUT_BAR_Y - 6.0f);
 
             AEGfxSetBlendMode(AE_GFX_BM_BLEND);
-            AEGfxPrint(Graphics::font_id, display.c_str(), nx, ny, textScale, 0.6f, 1.0f, 0.6f, 1.0f);
+            AEGfxPrint(Graphics::font_id, display.c_str(), nx, ny, text_scale, 0.6f, 1.0f, 0.6f, 1.0f);
         }
     }
 
+    // frees the panel mesh and clears history, call this in Game_Exit() to avoid memory leaks
     void Exit()
     {
-        if (s_pPanelMesh)
+        if (s_p_panel_mesh)
         {
-            AEGfxMeshFree(s_pPanelMesh);
-            s_pPanelMesh = nullptr;
+            AEGfxMeshFree(s_p_panel_mesh);
+            s_p_panel_mesh = nullptr;
         }
         s_history.clear();
-        s_isOpen = false;
-        s_inputLen = 0;
+        s_is_open = false;
+        s_input_len = 0;
     }
 
+    // returns true while the console is open, use this in game.cpp to freeze all gameplay logic
     bool IsOpen()
     {
-        return s_isOpen;
+        return s_is_open;
     }
 
 } // namespace DebugConsole

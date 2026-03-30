@@ -1,11 +1,9 @@
 #pragma once
-
-
 #include <AEEngine.h>
 
 namespace DeathTransition
 {
-    // Total duration of the full death animation in seconds
+    // total duration of the full death animation in seconds
     static const float DEATH_DURATION = 4.5f;
 
     void Start();

@@ -1,81 +1,35 @@
 #pragma once
 #include "AEEngine.h"
 
-/*
-@function   Particles_Init
-@brief      Creates the single shared quad mesh used by all particles.
-            Call once in Game_Init().
-*/
+// creates the shared quad mesh used by all particles and loads sprite sheet textures, call once in Game_Init()
 void Particles_Init();
 
-/*
-@function   Particles_Free
-@brief      Frees the shared quad mesh.
-            Call once in Game_Exit().
-*/
+// frees the shared quad mesh and sprite textures, call once in Game_Exit()
 void Particles_Free();
 
-/*
-@function   Particles_Update
-@brief      Advances all active particles, impact lines, shake and flash timers.
-            Call every frame inside the gameplay (non-paused) block.
-@param      dt  Delta time in seconds (already time-scaled from game.cpp).
-*/
+// advances all active particles, lines, sprite effects, shake and flash each frame,
+// param dt is delta time in seconds - should be time-scaled if TimeSlow is active
 void Particles_Update(float dt);
 
-/*
-@function   Particles_Draw
-@brief      Renders all active particles, impact lines and flash overlay.
-            Call after drawing enemies, before drawing UI overlays.
-*/
+// renders all active particles, impact lines, sprite effects and the flash overlay,
+// call after drawing enemies and before drawing UI overlays
 void Particles_Draw();
 
-/*
-@function   Particles_SpawnDamageImpact
-@brief      Spawns the full combo effect at the given world position:
-              - Grey/white dust particles with gravity
-              - Short radiating impact lines
-              - Brief white screen flash
-              - Screen shake proportional to landing speed
-@param      x   World X of the landing position.
-@param      y   World Y of the landing position.
-*/
+// spawns the full damage combo at the given world position: dust particles, impact lines,
+// screen flash and camera shake - call when an enemy lands and deals damage
 void Particles_SpawnDamageImpact(float x, float y);
 
-/*
-@function   Particles_SpawnKillImpact
-@brief      Spawns a colored burst splat at the given world position.
-            Color is chosen by word_length (matches enemy sprite color coding).
-            No screen shake - this is a positive/reward event.
-@param      x               World X of the landing position.
-@param      y               World Y of the landing position.
-@param      word_length     Enemy word length (3-8) used to pick burst color.
-*/
+// spawns a coloured burst at the given world position when the player kills an enemy,
+// colour is picked by word_length (3-8) to match the enemy sprite colour coding,
+// no shake or flash since this is a reward event
 void Particles_SpawnKillImpact(float x, float y, int word_length);
 
-/*
-@function   Particles_TriggerShake
-@brief      Starts a screen shake with custom duration and intensity.
-            Safe to call at any time; overwrites any ongoing shake.
-@param      duration    Seconds the shake lasts.
-@param      intensity   Max pixel offset per axis.
-*/
+// starts a screen shake with the given duration in seconds and max pixel intensity,
+// overwrites any ongoing shake - safe to call at any time
 void Particles_TriggerShake(float duration, float intensity);
 
-/*
-@function   Particles_SpawnShieldBreak
-@brief      Plays the shield-break sprite sheet animation centered on the enemy.
-            Call this when a shielded enemy's shield is broken.
-@param      x   World X of the enemy.
-@param      y   World Y of the enemy.
-*/
+// plays the shield break animation centred on the enemy, call when a shield is broken
 void Particles_SpawnShieldBreak(float x, float y);
 
-/*
-@function   Particles_SpawnFriendlyHeal
-@brief      Plays the friendly-heal sprite sheet animation centered on the enemy.
-            Call this when a friendly enemy is killed (player is healed).
-@param      x   World X of the enemy.
-@param      y   World Y of the enemy.
-*/
+// plays the friendly heal animation centred on the enemy, call when a friendly enemy is typed
 void Particles_SpawnFriendlyHeal(float x, float y);

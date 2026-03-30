@@ -1,9 +1,19 @@
 #pragma once
 #include "pch.h"
 
+// loads the letter spritesheet and creates the single-tile quad for rendering;
+// safe to call on restart - unloads any prior texture/mesh first
 void Typing_Init();
+
+// polls A-Z and BACKSPACE each frame, pushes/pops from the input buffer,
+// advances the cursor blink timer, and counts down the wrong-word shake timer
 void Typing_Update();
+
+// renders the current input buffer at the bottom-centre of the screen with a
+// blinking cursor; shakes the text on a wrong submission for s_shakeTextDuration
 void Typing_Render();
+
+// frees the letter quad mesh and unloads the spritesheet texture
 void Typing_Exit();
 
 // forward declare to avoid heavy includes if you want
@@ -15,9 +25,15 @@ namespace Data { struct Health; }
 
 namespace UiSystem
 {
+    // renders the current score at top-left; white at night, black during the day
     void Ui_DrawScoreAndTyped(const Data::Score& score);
 }
 
+// central per-frame typing loop - locks a target by prefix match, handles ENTER
+// submission for normal/friendly/shielded enemies, triggers shake on wrong input,
+// and always clears the buffer and target lock after submission
 void Typing_UpdateAndApplyToEnemies(std::vector<Data::Enemy>& enemy_pool, Data::Score& score, Data::Health& health);
 
+// renders every active enemy's word above its sprite with a green typed prefix
+// and a day/night-lerped untyped suffix; supports orbit word animation
 void Typing_DrawEnemyWords(const std::vector<Data::Enemy>& enemy_pool);
