@@ -17,33 +17,33 @@ namespace ButtonTweenCfg
 struct ButtonTween
 {
     float scale = ButtonTweenCfg::NORMAL_SCALE;
-    float targetScale = ButtonTweenCfg::NORMAL_SCALE;
-    bool  wasClicked = false;
+    float target_scale = ButtonTweenCfg::NORMAL_SCALE;
+    bool  was_clicked = false;
 };
 
 inline void ButtonTween_Reset(ButtonTween& btn)
 {
     btn.scale = ButtonTweenCfg::NORMAL_SCALE;
-    btn.targetScale = ButtonTweenCfg::NORMAL_SCALE;
-    btn.wasClicked = false;
+    btn.target_scale = ButtonTweenCfg::NORMAL_SCALE;
+    btn.was_clicked = false;
 }
 
 inline void ButtonTween_Update(ButtonTween& btn, bool hovered, bool clicked, float dt)
 {
     using namespace ButtonTweenCfg;
 
-    if (clicked && !btn.wasClicked)
+    if (clicked && !btn.was_clicked)
     {
         btn.scale = CLICK_SCALE;
-        btn.targetScale = hovered ? HOVER_SCALE : NORMAL_SCALE;
-        btn.wasClicked = true;
+        btn.target_scale = hovered ? HOVER_SCALE : NORMAL_SCALE;
+        btn.was_clicked = true;
     }
     else
     {
-        btn.wasClicked = clicked;
-        btn.targetScale = hovered ? HOVER_SCALE : NORMAL_SCALE;
+        btn.was_clicked = clicked;
+        btn.target_scale = hovered ? HOVER_SCALE : NORMAL_SCALE;
     }
 
     float t = 1.0f - std::expf(-LERP_SPEED * dt);
-    btn.scale = btn.scale + (btn.targetScale - btn.scale) * t;
+    btn.scale = btn.scale + (btn.target_scale - btn.scale) * t;
 }

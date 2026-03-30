@@ -3,307 +3,314 @@
 #include <AEEngine.h>
 
 
-
-namespace 
+namespace
 {
-	float scroll_offset = 0.0f; //scroll initial position
-	int highest_zen_score = 0;
-	int highest_time_score = 0;
-	int highest_score = 0;
-	// NEW: How many lines to show on screen at once
-	const int ENTRIES_PER_PAGE = 5;
-	const int MAX_LEADERBOARD_SIZE = 50;
-	float lb_scroll = 0.0f;
-	const int LB_VISIBLE = 5;
-	AEGfxVertexList* overlayMesh = nullptr;
+    static float s_scroll_offset = 0.0f;
+    static int   s_highest_zen_score = 0;
+    static int   s_highest_time_score = 0;
+    static int   s_highest_score = 0;
 
-	std::vector<Leaderboard_Data::ZenEntry> leaderboard_list;
-	std::vector<Leaderboard_Data::TimedEntry> s_timedBoard;
+    constexpr int MAX_LEADERBOARD_SIZE = 50;
+    constexpr int ENTRIES_PER_PAGE = 5;
+    constexpr int LB_VISIBLE = 5;
+
+    static float s_lb_scroll = 0.0f;
+
+    static AEGfxVertexList* s_overlay_mesh = nullptr;
+
+    static std::vector<Leaderboard_Data::ZenEntry>   s_leaderboard_list;
+    static std::vector<Leaderboard_Data::TimedEntry> s_timed_board;
 }
 
 namespace Leaderboard_System
 {
-	void Init() {
-		if (overlayMesh)
-		{
-			AEGfxMeshFree(overlayMesh); // release old mesh from GPU memory
-			overlayMesh = nullptr; // clear pointer before rebuilding
-		}
-		// Create a dedicated 1x1 white mesh just for the leaderboard overlay
-		overlayMesh = Rect_Mesh(1.0f, 1.0f, 0xFFFFFFFF);
+    void Init()
+    {
+        if (s_overlay_mesh)
+        {
+            AEGfxMeshFree(s_overlay_mesh);
+            s_overlay_mesh = nullptr;
+        }
+        s_overlay_mesh = Rect_Mesh(1.0f, 1.0f, 0xFFFFFFFF);
+    }
 
-	}
+    void Free()
+    {
+        if (s_overlay_mesh)
+        {
+            AEGfxMeshFree(s_overlay_mesh);
+            s_overlay_mesh = nullptr;
+        }
+        s_leaderboard_list.clear();
+        s_leaderboard_list.shrink_to_fit();
+        s_timed_board.clear();
+        s_timed_board.shrink_to_fit();
+    }
 
-	void Free() {
-		if (overlayMesh) {
-			AEGfxMeshFree(overlayMesh);
-			overlayMesh = nullptr;
-		}
-		leaderboard_list.clear();
-		leaderboard_list.shrink_to_fit();
-		s_timedBoard.clear();
-		s_timedBoard.shrink_to_fit();
-	}
+    int GetHighestScore()
+    {
+        Read_ZenLeaderboard();
+        Read_TimeLeaderboard();
+        s_highest_score = (s_highest_time_score > s_highest_zen_score) ? s_highest_time_score : s_highest_zen_score;
+        return s_highest_score;
+    }
 
-	int GetHighestScore() {
-		Read_ZenLeaderboard();
-		Read_TimeLeaderboard();
-		highest_score = (highest_time_score > highest_zen_score) ? highest_time_score : highest_zen_score;
-		return highest_score;
-	}
+    static bool CompareZenScores(const Leaderboard_Data::ZenEntry& a, const Leaderboard_Data::ZenEntry& b)
+    {
+        return a.player_score > b.player_score;
+    }
 
+    static bool CompareTimedScores(const Leaderboard_Data::TimedEntry& a, const Leaderboard_Data::TimedEntry& b)
+    {
+        return a.player_score > b.player_score;
+    }
 
-	static bool CompareZenScores(const Leaderboard_Data::ZenEntry& a, const Leaderboard_Data::ZenEntry& b) {
-		return a.player_score > b.player_score;
-	}
+    void Read_ZenLeaderboard()
+    {
+        s_leaderboard_list.clear();
+        const char* leaderboard_filepath = "Assets/leaderboard.txt";
+        std::ifstream file_stream(leaderboard_filepath);
+        if (!file_stream.is_open())
+        {
+            std::cout << "Unable to open zen leaderboard\n";
+            return;
+        }
 
-	static bool CompareTimedScores(const Leaderboard_Data::TimedEntry& a, const Leaderboard_Data::TimedEntry& b) {
-		return a.player_score > b.player_score;
-	}
+        std::string player_name;
+        int player_score;
+        while (file_stream >> player_name >> player_score)
+        {
+            Leaderboard_Data::ZenEntry new_entry{ player_name, player_score };
+            if (player_score > s_highest_zen_score) s_highest_zen_score = player_score;
+            s_leaderboard_list.push_back(new_entry);
+            std::cout << new_entry.player_name << new_entry.player_score << "\n";
+        }
+        file_stream.close();
+    }
 
-	void Read_ZenLeaderboard() {
+    void Read_TimeLeaderboard()
+    {
+        s_timed_board.clear();
+        s_lb_scroll = 0.0f;
 
-		leaderboard_list.clear(); //clean vector for new upcoming data from text file
-		const char* leaderboard_filepath = "Assets/leaderboard.txt";
-		std::ifstream file_stream(leaderboard_filepath);
-		if (!file_stream.is_open()) {
-			std::cout << "Unable to open zen leaderboard\n";
-			return;
-		}
-		std::string player_name;
-		int player_score;
-		while (file_stream >> player_name >> player_score) { //store file data to vector for displaying or writing 
-			Leaderboard_Data::ZenEntry newEntry{ player_name, player_score };
-			if (player_score > highest_zen_score) highest_zen_score = player_score;
-			leaderboard_list.push_back(newEntry);
-			std::cout << newEntry.player_name << newEntry.player_score << "\n";
-		}
+        const char* TIMED_LB_PATH = "Assets/leaderboard_timed.txt";
+        std::ifstream f(TIMED_LB_PATH);
+        if (!f.is_open()) return;
 
-		file_stream.close();
-	}
+        std::string n;
+        int s;
+        while (f >> n >> s)
+        {
+            if (s > s_highest_time_score) s_highest_time_score = s;
+            s_timed_board.push_back({ n, s });
+        }
+        f.close();
+    }
 
-	void Read_TimeLeaderboard() {
+    void Write_ZenLeaderboard(const std::string& player_name, const int& player_score)
+    {
+        Read_ZenLeaderboard();
+        Leaderboard_Data::ZenEntry new_entry{ player_name, player_score };
+        std::cout << "\n";
 
-		s_timedBoard.clear();                                               // flush previous data before reading
-		lb_scroll = 0.0f;
-		const char* TIMED_LB_PATH = "Assets/leaderboard_timed.txt";
-		std::ifstream f(TIMED_LB_PATH);
-		if (!f.is_open()) return;                                           // file may not exist on first run, thats fine
-		std::string n; int s;
-		while (f >> n >> s) {
-			if (s > highest_time_score) highest_time_score = s;
-			s_timedBoard.push_back({ n, s });                               // push each name-score pair into the vector
-		}
-		f.close();
-	}
+        s_leaderboard_list.push_back(new_entry);
+        std::sort(s_leaderboard_list.begin(), s_leaderboard_list.end(), CompareZenScores);
 
-	void Write_ZenLeaderboard(const std::string& player_name, const int& player_score) {
+        const char* leaderboard_filepath = "Assets/leaderboard.txt";
+        std::ofstream file_stream(leaderboard_filepath);
+        if (!file_stream.is_open())
+        {
+            std::cout << "Unable to open leaderboard\n";
+            return;
+        }
 
-		Read_ZenLeaderboard();
-		Leaderboard_Data::ZenEntry newEntry{ player_name, player_score };
-		std::cout << "\n";
+        for (const auto& entry : s_leaderboard_list)
+            file_stream << entry.player_name << " " << entry.player_score << "\n";
 
-		leaderboard_list.push_back(newEntry);
+        file_stream.close();
+    }
 
-		//sort players from highest to lowest score		
-		std::sort(leaderboard_list.begin(), leaderboard_list.end(), CompareZenScores);
+    void Write_TimeLeaderboard(const std::string& player_name, const int& player_score)
+    {
+        Read_TimeLeaderboard();
+        s_timed_board.push_back({ player_name, player_score });
+        std::sort(s_timed_board.begin(), s_timed_board.end(), CompareTimedScores);
 
-		const char* leaderboard_filepath = "Assets/leaderboard.txt";
-		std::ofstream file_stream(leaderboard_filepath);
+        const char* TIMED_LB_PATH = "Assets/leaderboard_timed.txt";
+        std::ofstream f(TIMED_LB_PATH);
+        if (!f.is_open()) return;
 
-		if (!file_stream.is_open()) {
-			std::cout << "Unable to open leaderboard\n";
-			return;
-		}
+        for (const auto& e : s_timed_board)
+            f << e.player_name << " " << e.player_score << "\n";
 
-		for (const auto& entry : leaderboard_list) { //send new sorted leaderboard data to text file
-			file_stream << entry.player_name << " " << entry.player_score << "\n";
-		}
-		file_stream.close();
+        f.close();
+    }
 
-	}
+    void Display_ZenLeaderboard(bool& open_leaderboard)
+    {
+        AEGfxSetRenderMode(AE_GFX_RM_COLOR);
+        AEGfxSetBlendMode(AE_GFX_BM_BLEND);
+        AEGfxSetTransparency(0.85f);
+        AEGfxSetColorToMultiply(0.0f, 0.0f, 0.0f, 1.0f);
+        Mesh_Renderer(s_overlay_mesh, 0.0f, 0.0f, 1600.0f, 900.0f, 0.0f);
+        AEGfxSetTransparency(1.0f);
 
-	void Write_TimeLeaderboard(const std::string& player_name, const int& player_score) {
+        if (Graphics::g_font_id < 0) return;
 
-		Read_TimeLeaderboard();                                                     // load existing entries first so we dont overwrite them
-		s_timedBoard.push_back({ player_name, player_score });                            // add the new entry
-		std::sort(s_timedBoard.begin(), s_timedBoard.end(), CompareTimedScores); // sort highest to lowest
-		const char* TIMED_LB_PATH = "Assets/leaderboard_timed.txt";
-		std::ofstream f(TIMED_LB_PATH);
-		if (!f.is_open()) return;                                           // cant write if file fails to open
-		for (const auto& e : s_timedBoard)
-			f << e.player_name << " " << e.player_score << "\n";                         // write each entry as "name score" on its own line
-		f.close();
+        // ---- Title ----
+        const char* title = "ZEN MODE - LEADERBOARD";
+        float tw, th;
+        AEGfxGetPrintSize(Graphics::g_font_id, title, 0.7f, &tw, &th);
+        AEGfxPrint(Graphics::g_font_id, title, -tw * 0.5f, 0.75f, 0.7f, 1.0f, 0.85f, 0.2f, 1.0f);
 
-	}
+        // ---- Mouse wheel scrolling ----
+        s32 wheel = 0;
+        AEInputMouseWheelDelta(&wheel);
+        int max_scroll = ((int)s_leaderboard_list.size() - LB_VISIBLE > 0)
+            ? (int)s_leaderboard_list.size() - LB_VISIBLE : 0;
+        if (wheel > 0) s_scroll_offset = (s_scroll_offset - 1.0f < 0.0f) ? 0.0f : s_scroll_offset - 1.0f;
+        if (wheel < 0) s_scroll_offset = (s_scroll_offset + 1.0f > (float)max_scroll) ? (float)max_scroll : s_scroll_offset + 1.0f;
 
-	void Display_ZenLeaderboard(bool& openLeaderboard) {
+        constexpr float START_Y = 0.5f;
+        constexpr float SPACING = 0.2f;
 
-		AEGfxSetRenderMode(AE_GFX_RM_COLOR);
-		AEGfxSetBlendMode(AE_GFX_BM_BLEND);
-		AEGfxSetTransparency(0.85f);                                        // semi-transparent black background
-		AEGfxSetColorToMultiply(0.0f, 0.0f, 0.0f, 1.0f);
-		Mesh_Renderer(overlayMesh, 0.0f, 0.0f, 1600.0f, 900.0f, 0.0f);
-		AEGfxSetTransparency(1.0f);                                         // reset transparency for text
+        for (int i = 0; i < LB_VISIBLE; ++i)
+        {
+            int idx = (int)s_scroll_offset + i;
+            if (idx >= (int)s_leaderboard_list.size()) break;
 
-		if (Graphics::font_id < 0) return;
+            const auto& e = s_leaderboard_list[(size_t)idx];
+            std::string line = std::to_string(idx + 1) + ".   " + e.player_name + "   " + std::to_string(e.player_score);
+            float y = START_Y - (i * SPACING);
 
-		// ---- Title ----
-		const char* title = "ZEN MODE - LEADERBOARD";
-		float tw, th;
-		AEGfxGetPrintSize(Graphics::font_id, title, 0.7f, &tw, &th);
-		AEGfxPrint(Graphics::font_id, title, -tw * 0.5f, 0.75f, 0.7f, 1.0f, 0.85f, 0.2f, 1.0f); // centered, gold color
+            if (idx == 0)
+                AEGfxPrint(Graphics::g_font_id, line.c_str(), -0.3f, y, 0.9f, 1.0f, 1.0f, 0.0f, 1.0f); // yellow
+            else
+                AEGfxPrint(Graphics::g_font_id, line.c_str(), -0.3f, y, 0.9f, 1.0f, 1.0f, 1.0f, 1.0f); // white
+        }
 
-		// ---- Mouse wheel scrolling ----
-		s32 wheel = 0;
-		AEInputMouseWheelDelta(&wheel);
-		int maxScroll = ((int)leaderboard_list.size() - LB_VISIBLE > 0) ? (int)leaderboard_list.size() - LB_VISIBLE : 0; // max scroll = entries that dont fit
-		if (wheel > 0) scroll_offset = (scroll_offset - 1.0f < 0.0f) ? 0.0f : scroll_offset - 1.0f;          // scroll up toward older entries
-		if (wheel < 0) scroll_offset = (scroll_offset + 1.0f > (float)maxScroll) ? (float)maxScroll : scroll_offset + 1.0f; // scroll down toward newer
+        // ---- Scroll indicators ----
+        if (s_scroll_offset > 0)
+            AEGfxPrint(Graphics::g_font_id, "^", 0.4f, 0.6f, 0.8f, 0.8f, 0.8f, 0.8f, 1.0f);
+        if ((int)s_scroll_offset < max_scroll)
+            AEGfxPrint(Graphics::g_font_id, "v", 0.4f, -0.6f, 0.8f, 0.8f, 0.8f, 0.8f, 1.0f);
 
-		float startY = 0.5f;
-		float spacing = 0.2f;
+        // ---- Return prompt ----
+        const char* prompt = "Press ESC or Click to Return";
+        float pw, ph;
+        AEGfxGetPrintSize(Graphics::g_font_id, prompt, 0.45f, &pw, &ph);
+        AEGfxPrint(Graphics::g_font_id, prompt, -pw * 0.5f, -0.85f, 0.45f, 1.0f, 1.0f, 0.0f, 1.0f);
 
-		for (int i = 0; i < LB_VISIBLE; ++i)
-		{
-			int idx = (int)scroll_offset + i;
-			if (idx >= (int)leaderboard_list.size()) break;                     // stop if past end of list
+        if (AEInputCheckTriggered(AEVK_ESCAPE))
+        {
+            open_leaderboard = false;
+        }
+        else if (AEInputCheckTriggered(AEVK_LBUTTON))
+        {
+            s32 mx, my;
+            AEInputGetCursorPosition(&mx, &my);
 
-			const auto& e = leaderboard_list[(size_t)idx];
-			std::string line = std::to_string(idx + 1) + ".   " + e.player_name + "   " + std::to_string(e.player_score); // format as "rank. name score"
-			float y = startY - (i * spacing);
-			
-			if (idx == 0) {
-				AEGfxPrint(Graphics::font_id, line.c_str(), -0.3f, y, 0.9f, 1.0f, 1.0f, 0.0f, 1.0f); // RGB: 1, 1, 0 (Yellow)
-			}
-			else {
-				AEGfxPrint(Graphics::font_id, line.c_str(), -0.3f, y, 0.9f, 1.0f, 1.0f, 1.0f, 1.0f); // RGB: 1, 1, 1 (White)
-			}
-		}
+            float win_h = (float)AEGfxGetWindowHeight();
+            float win_w = (float)AEGfxGetWindowWidth();
+            float wx = (float)mx - (win_w * 0.5f);
+            float wy = (win_h * 0.5f) - (float)my;
 
-		// ---- Scroll indicators ----
-		if (scroll_offset > 0)
-			AEGfxPrint(Graphics::font_id, "^", 0.4f, 0.6f, 0.8f, 0.8f, 0.8f, 0.8f, 1.0f);        // more entries above
-		if ((int)scroll_offset < maxScroll)
-			AEGfxPrint(Graphics::font_id, "v", 0.4f, -0.6f, 0.8f, 0.8f, 0.8f, 0.8f, 1.0f);       // more entries below
+            constexpr float ARROW_W = 80.0f;
+            constexpr float ARROW_H = 80.0f;
+            constexpr float ARROW_Y = 0.0f;
 
-		// ---- Return prompt ----
-		const char* prompt = "Press ESC or Click to Return";
-		float pw, ph;
-		AEGfxGetPrintSize(Graphics::font_id, prompt, 0.45f, &pw, &ph);
-		AEGfxPrint(Graphics::font_id, prompt, -pw * 0.5f, -0.85f, 0.45f, 1.0f, 1.0f, 0.0f, 1.0f); // yellow
+            // Zen arrow is on the RIGHT side
+            float arrow_x = (win_w * 0.5f) - 380.0f;
 
-		if (AEInputCheckTriggered(AEVK_ESCAPE)) {
-			openLeaderboard = false;
-		}
-		else if (AEInputCheckTriggered(AEVK_LBUTTON)) {
-			s32 mx, my;
-			AEInputGetCursorPosition(&mx, &my);
+            if (!(wx >= arrow_x - ARROW_W * 1.5f && wx <= arrow_x + ARROW_W * 1.5f &&
+                wy >= ARROW_Y - ARROW_H * 1.2f && wy <= ARROW_Y + ARROW_H * 1.2f))
+            {
+                open_leaderboard = false;
+            }
+        }
+    }
 
-			float winH = (float)AEGfxGetWindowHeight();
-			float winW = (float)AEGfxGetWindowWidth();
+    void Display_TimeLeaderboard(bool& open_leaderboard)
+    {
+        AEGfxSetRenderMode(AE_GFX_RM_COLOR);
+        AEGfxSetBlendMode(AE_GFX_BM_BLEND);
+        AEGfxSetTransparency(0.85f);
+        AEGfxSetColorToMultiply(0.0f, 0.0f, 0.0f, 1.0f);
+        Mesh_Renderer(s_overlay_mesh, 0.0f, 0.0f, 1600.0f, 900.0f, 0.0f);
+        AEGfxSetTransparency(1.0f);
 
-			float wx = (float)mx - (winW * 0.5f);
-			float wy = (winH * 0.5f) - (float)my;
+        if (Graphics::g_font_id < 0) return;
 
-			float arrowW = 80.0f;
-			float arrowH = 80.0f;
-			float arrowY = 0.0f;
+        // ---- Title ----
+        const char* title = "TIMED MODE - LEADERBOARD";
+        float tw, th;
+        AEGfxGetPrintSize(Graphics::g_font_id, title, 0.7f, &tw, &th);
+        AEGfxPrint(Graphics::g_font_id, title, -tw * 0.5f, 0.75f, 0.7f, 1.0f, 0.85f, 0.2f, 1.0f);
 
-			// FIXED: Zen arrow is on the RIGHT side!
-			float arrowX = (winW * 0.5f) - 380.0f;
+        // ---- Mouse wheel scrolling ----
+        s32 wheel = 0;
+        AEInputMouseWheelDelta(&wheel);
+        int max_scroll = ((int)s_timed_board.size() - LB_VISIBLE > 0)
+            ? (int)s_timed_board.size() - LB_VISIBLE : 0;
+        if (wheel > 0) s_lb_scroll = (s_lb_scroll - 1.0f < 0.0f) ? 0.0f : s_lb_scroll - 1.0f;
+        if (wheel < 0) s_lb_scroll = (s_lb_scroll + 1.0f > (float)max_scroll) ? (float)max_scroll : s_lb_scroll + 1.0f;
 
-			// Only close if they click OUTSIDE the forgiving hitbox
-			if (!(wx >= arrowX - arrowW * 1.5f && wx <= arrowX + arrowW * 1.5f &&
-				wy >= arrowY - arrowH * 1.2f && wy <= arrowY + arrowH * 1.2f)) {
-				openLeaderboard = false;
-			}
-		}
-	}
+        constexpr float START_Y = 0.5f;
+        constexpr float SPACING = 0.2f;
 
-	void Display_TimeLeaderboard(bool& openLeaderboard) {
+        for (int i = 0; i < LB_VISIBLE; ++i)
+        {
+            int idx = (int)s_lb_scroll + i;
+            if (idx >= (int)s_timed_board.size()) break;
 
-		AEGfxSetRenderMode(AE_GFX_RM_COLOR);
-		AEGfxSetBlendMode(AE_GFX_BM_BLEND);
-		AEGfxSetTransparency(0.85f);                                        // semi-transparent black background
-		AEGfxSetColorToMultiply(0.0f, 0.0f, 0.0f, 1.0f);
-		Mesh_Renderer(overlayMesh, 0.0f, 0.0f, 1600.0f, 900.0f, 0.0f);
-		AEGfxSetTransparency(1.0f);                                         // reset transparency for text
+            const auto& e = s_timed_board[(size_t)idx];
+            std::string line = std::to_string(idx + 1) + ".   " + e.player_name + "   " + std::to_string(e.player_score);
+            float y = START_Y - (i * SPACING);
 
-		if (Graphics::font_id < 0) return;
+            if (idx == 0)
+                AEGfxPrint(Graphics::g_font_id, line.c_str(), -0.3f, y, 0.9f, 1.0f, 1.0f, 0.0f, 1.0f); // yellow
+            else
+                AEGfxPrint(Graphics::g_font_id, line.c_str(), -0.3f, y, 0.9f, 1.0f, 1.0f, 1.0f, 1.0f); // white
+        }
 
-		// ---- Title ----
-		const char* title = "TIMED MODE - LEADERBOARD";
-		float tw, th;
-		AEGfxGetPrintSize(Graphics::font_id, title, 0.7f, &tw, &th);
-		AEGfxPrint(Graphics::font_id, title, -tw * 0.5f, 0.75f, 0.7f, 1.0f, 0.85f, 0.2f, 1.0f); // centered, gold color
+        // ---- Scroll indicators ----
+        if (s_lb_scroll > 0)
+            AEGfxPrint(Graphics::g_font_id, "^", 0.4f, 0.6f, 0.8f, 0.8f, 0.8f, 0.8f, 1.0f);
+        if ((int)s_lb_scroll < max_scroll)
+            AEGfxPrint(Graphics::g_font_id, "v", 0.4f, -0.6f, 0.8f, 0.8f, 0.8f, 0.8f, 1.0f);
 
-		// ---- Mouse wheel scrolling ----
-		s32 wheel = 0;
-		AEInputMouseWheelDelta(&wheel);
-		int maxScroll = ((int)s_timedBoard.size() - LB_VISIBLE > 0) ? (int)s_timedBoard.size() - LB_VISIBLE : 0; // max scroll = entries that dont fit
-		if (wheel > 0) lb_scroll = (lb_scroll - 1.0f < 0.0f) ? 0.0f : lb_scroll - 1.0f;          // scroll up toward older entries
-		if (wheel < 0) lb_scroll = (lb_scroll + 1.0f > (float)maxScroll) ? (float)maxScroll : lb_scroll + 1.0f; // scroll down toward newer
+        // ---- Return prompt ----
+        const char* prompt = "Press ESC or Click to Return";
+        float pw, ph;
+        AEGfxGetPrintSize(Graphics::g_font_id, prompt, 0.45f, &pw, &ph);
+        AEGfxPrint(Graphics::g_font_id, prompt, -pw * 0.5f, -0.85f, 0.45f, 1.0f, 1.0f, 0.0f, 1.0f);
 
-		float startY = 0.5f;
-		float spacing = 0.2f;
+        if (AEInputCheckTriggered(AEVK_ESCAPE))
+        {
+            open_leaderboard = false;
+        }
+        else if (AEInputCheckTriggered(AEVK_LBUTTON))
+        {
+            s32 mx, my;
+            AEInputGetCursorPosition(&mx, &my);
 
-		for (int i = 0; i < LB_VISIBLE; ++i)
-		{
-			int idx = (int)lb_scroll + i;
-			if (idx >= (int)s_timedBoard.size()) break;                     // stop if past end of list
+            float win_h = (float)AEGfxGetWindowHeight();
+            float win_w = (float)AEGfxGetWindowWidth();
+            float wx = (float)mx - (win_w * 0.5f);
+            float wy = (win_h * 0.5f) - (float)my;
 
-			const auto& e = s_timedBoard[(size_t)idx];
-			std::string line = std::to_string(idx + 1) + ".   " + e.player_name + "   " + std::to_string(e.player_score); // format as "rank. name score"
-			float y = startY - (i * spacing);
-			
-			if (idx == 0) {
-				AEGfxPrint(Graphics::font_id, line.c_str(), -0.3f, y, 0.9f, 1.0f, 1.0f, 0.0f, 1.0f); // RGB: 1, 1, 0 (Yellow)
-			}
-			else {
-				AEGfxPrint(Graphics::font_id, line.c_str(), -0.3f, y, 0.9f, 1.0f, 1.0f, 1.0f, 1.0f); // RGB: 1, 1, 1 (White)
-			}			
-		}
+            constexpr float ARROW_W = 80.0f;
+            constexpr float ARROW_H = 80.0f;
+            constexpr float ARROW_Y = 0.0f;
 
-		// ---- Scroll indicators ----
-		if (lb_scroll > 0)
-			AEGfxPrint(Graphics::font_id, "^", 0.4f, 0.6f, 0.8f, 0.8f, 0.8f, 0.8f, 1.0f);        // more entries above
-		if ((int)lb_scroll < maxScroll)
-			AEGfxPrint(Graphics::font_id, "v", 0.4f, -0.6f, 0.8f, 0.8f, 0.8f, 0.8f, 1.0f);       // more entries below
+            // Time arrow is on the LEFT side
+            float arrow_x = -(win_w * 0.5f) + 380.0f;
 
-		// ---- Return prompt ----
-		const char* prompt = "Press ESC or Click to Return";
-		float pw, ph;
-		AEGfxGetPrintSize(Graphics::font_id, prompt, 0.45f, &pw, &ph);
-		AEGfxPrint(Graphics::font_id, prompt, -pw * 0.5f, -0.85f, 0.45f, 1.0f, 1.0f, 0.0f, 1.0f); // yellow
-
-		if (AEInputCheckTriggered(AEVK_ESCAPE)) {
-			openLeaderboard = false;
-		}
-		else if (AEInputCheckTriggered(AEVK_LBUTTON)) {
-			s32 mx, my;
-			AEInputGetCursorPosition(&mx, &my);
-
-			float winH = (float)AEGfxGetWindowHeight();
-			float winW = (float)AEGfxGetWindowWidth();
-
-			float wx = (float)mx - (winW * 0.5f);
-			float wy = (winH * 0.5f) - (float)my;
-
-			float arrowW = 80.0f;
-			float arrowH = 80.0f;
-			float arrowY = 0.0f;
-
-			// FIXED: Time arrow is on the LEFT side!
-			float arrowX = -(winW * 0.5f) + 380.0f;
-
-			// Only close if they click OUTSIDE the forgiving hitbox
-			if (!(wx >= arrowX - arrowW * 1.5f && wx <= arrowX + arrowW * 1.5f &&
-				wy >= arrowY - arrowH * 1.2f && wy <= arrowY + arrowH * 1.2f)) {
-				openLeaderboard = false;
-			}
-		}
-	}
+            if (!(wx >= arrow_x - ARROW_W * 1.5f && wx <= arrow_x + ARROW_W * 1.5f &&
+                wy >= ARROW_Y - ARROW_H * 1.2f && wy <= ARROW_Y + ARROW_H * 1.2f))
+            {
+                open_leaderboard = false;
+            }
+        }
+    }
 }
-
- 

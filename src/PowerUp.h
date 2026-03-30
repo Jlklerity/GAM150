@@ -38,9 +38,9 @@ namespace PowerUpSystem
      */
     enum class PowerType
     {
-        Lightning = 0, /**< Instantly kills all active enemies on screen. */
-        Shield,        /**< Makes player immune to damage for a duration. */
-        TimeSlow       /**< Slows the game for a duration by returning a time scale < 1.0f. */
+        LIGHTNING = 0, /**< Instantly kills all active enemies on screen. */
+        SHIELD,        /**< Makes player immune to damage for a duration. */
+        TIME_SLOW      /**< Slows the game for a duration by returning a time scale < 1.0f. */
     };
 
     /** @brief Initialises power-up resources. Call once in Game_Init(). */
@@ -63,7 +63,7 @@ namespace PowerUpSystem
      * @brief No-op stub retained for link compatibility with game.cpp.
      *        Mouse clicks no longer activate power-ups.
      */
-    void OnMouseClick(float mouseX, float mouseY, std::vector<Data::Enemy>& enemy_pool);
+    void OnMouseClick(float mouse_x, float mouse_y, std::vector<Data::Enemy>& enemy_pool);
 
     /** @brief Draws all active drops (sprite + slot number + effect timers). */
     void Draw();
@@ -79,10 +79,10 @@ namespace PowerUpSystem
 
     /**
      * @brief Sets the random drop spawn interval.
-     * @param minSeconds  Minimum seconds between spawns (clamped >= 0.2).
-     * @param maxSeconds  Maximum seconds between spawns (clamped >= minSeconds).
+     * @param min_seconds  Minimum seconds between spawns (clamped >= 0.2).
+     * @param max_seconds  Maximum seconds between spawns (clamped >= min_seconds).
      */
-    void SetDropSpawnInterval(float minSeconds, float maxSeconds);
+    void SetDropSpawnInterval(float min_seconds, float max_seconds);
 
     /**
      * @brief Debug helper: force-spawns a drop of the given type into a free slot.

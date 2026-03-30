@@ -29,7 +29,7 @@ namespace
     constexpr float HALF_W = 800.0f;
     constexpr float HALF_H = 450.0f;
 
-    // Trigger timing 
+    // Trigger timing
     constexpr float TRIGGER_MIN_SEC = 15.0f;   // earliest
     constexpr float TRIGGER_MAX_SEC = 30.0f;   // latest
 
@@ -38,11 +38,11 @@ namespace
     constexpr float THAW_DUR = 3.0f;
 
     // Spacebar break free mechanic
-    constexpr int   SPACES_NEEDED = 20;
+    constexpr int SPACES_NEEDED = 20;
 
     // Particle counts
-    constexpr int   AMBIENT_COUNT = 80;
-    constexpr int   BLIZZARD_COUNT = 140;
+    constexpr int AMBIENT_COUNT = 80;
+    constexpr int BLIZZARD_COUNT = 140;
 
     // Particle speed range
     constexpr float AMB_SPEED_MIN = 60.0f;
@@ -60,13 +60,13 @@ namespace
     constexpr float DRIFT_RANGE = 30.0f;   // max horizontal speed
 
     // Rain particle constants
-    constexpr int   RAIN_COUNT = 200;      // number of raindrops
-    constexpr float RAIN_SPEED_MIN = 500.0f;   // downward fall 
+    constexpr int   RAIN_COUNT = 200;       // number of raindrops
+    constexpr float RAIN_SPEED_MIN = 500.0f;    // downward fall
     constexpr float RAIN_SPEED_MAX = 1000.0f;
-    constexpr float RAIN_DRIFT = 80.0f;    // -ve for left, +ve for right
-    constexpr float RAIN_W_MIN = 2.0f;     // width
+    constexpr float RAIN_DRIFT = 80.0f;     // -ve for left, +ve for right
+    constexpr float RAIN_W_MIN = 2.0f;      // width
     constexpr float RAIN_W_MAX = 3.0f;
-    constexpr float RAIN_H_MIN = 14.0f;    // height
+    constexpr float RAIN_H_MIN = 14.0f;     // height
     constexpr float RAIN_H_MAX = 24.0f;
 
     // Overlay (RGB, Alpha)
@@ -86,21 +86,13 @@ namespace
     // ================================================================
     //  Thunderstorm constants
     // ================================================================
-
     constexpr float STORM_DURATION = 20.0f;
-
-    constexpr float BOLT_INTERVAL = 4.0f; // lightning strike
-
-    constexpr float BRACE_WARNING_DUR = 1.0f; // BRACE! warning shown x seconds before the strike
-
-    constexpr float STRIKE_FLASH_DUR = 0.15f; // White flash duration on strike
-
-    constexpr float STUN_DUR = 0.5f; // Input stun duration on strike
-
-    constexpr float LUNGE_DUR = 2.5f; // How long the struck enemy falls at boosted speed 
-
+    constexpr float BOLT_INTERVAL = 4.0f;    // lightning strike
+    constexpr float BRACE_WARNING_DUR = 1.0f;    // BRACE! warning shown x seconds before the strike
+    constexpr float STRIKE_FLASH_DUR = 0.15f;   // White flash duration on strike
+    constexpr float STUN_DUR = 0.5f;    // Input stun duration on strike
+    constexpr float LUNGE_DUR = 2.5f;    // How long the struck enemy falls at boosted speed
     constexpr float LUNGE_SPEED_MUL = 3.5f;
-
     constexpr float STORM_OVL_ALPHA_MAX = 0.25f;
 
     // Storm overlay colour (dark grey)
@@ -108,9 +100,9 @@ namespace
     constexpr float STORM_OVL_G = 0.08f;
     constexpr float STORM_OVL_B = 0.18f;
 
-    // Thunderstorm sprite animation (thunderstorm.png — 4 frames horizontal)
+    // Thunderstorm sprite animation (thunderstorm.png — 3 frames horizontal)
     constexpr int   TSTRIKE_FRAME_COUNT = 3;
-    constexpr float TSTRIKE_FRAME_TIME = 0.12f;   // ~12 fps, snappy
+    constexpr float TSTRIKE_FRAME_TIME = 0.12f;                              // ~12 fps, snappy
     constexpr float TSTRIKE_UV_W = 1.0f / (float)TSTRIKE_FRAME_COUNT;
     constexpr float TSTRIKE_DISPLAY_W = 120.0f;
     constexpr float TSTRIKE_DISPLAY_H = 200.0f;
@@ -121,27 +113,23 @@ namespace
         float x = 0.0f;
         float y = 0.0f;
         int   frame = 0;
-        float frameTimer = 0.0f;
+        float frame_timer = 0.0f;
     };
 
-    static TStrikeAnim      s_tStrike{};
-    static AEGfxTexture* s_tStrikeTex = nullptr;
-    static AEGfxVertexList* s_tStrikeMesh = nullptr;   // single-frame-width UV quad
+    static TStrikeAnim       s_t_strike{};
+    static AEGfxTexture* s_t_strike_tex = nullptr;
+    static AEGfxVertexList* s_t_strike_mesh = nullptr;   // single-frame-width UV quad
 
     // ================================================================
     //  Rainbow constants
     // ================================================================
     constexpr float RAINBOW_DURATION = 10.0f;   // total event length
-    constexpr float RAINBOW_POWERUP_INTERVAL = 5.0f;  // spawn a power-up every N seconds
-    constexpr int   RAINBOW_FRAME_COUNT = 9;        // frames in the sprite sheet
+    constexpr float RAINBOW_POWERUP_INTERVAL = 5.0f;    // spawn a power-up every N seconds
+    constexpr int   RAINBOW_FRAME_COUNT = 9;       // frames in the sprite sheet
     constexpr float RAINBOW_FRAME_TIME = 0.12f;   // seconds per frame (~8 fps)
     constexpr float RAINBOW_DISPLAY_W = 1600.0f; // stretch to full screen width
-    // Height derived from frame aspect ratio: each frame is a square slice of the sheet,
-    // so display height = display_width / frame_count to preserve pixel proportions.
-    // e.g. if the sheet is 900x100 px (9 frames x 100px wide, 100px tall) each frame is square.
-    // We want it to fill the top ~1/5 of the screen without covering the play area.
     constexpr float RAINBOW_DISPLAY_H = 80.0f;
-    constexpr float RAINBOW_Y = 250.0f;          // upper sky area, well above enemies
+    constexpr float RAINBOW_Y = 250.0f;  // upper sky area, well above enemies
     constexpr float RAINBOW_FADE_TIME = 1.5f;    // fade-in / fade-out duration
 
     // ================================================================
@@ -152,19 +140,19 @@ namespace
     constexpr float GHOST_LOCK_DUR = 3.0f;    // typing locked duration
     constexpr float GHOST_SPEED_MIN = 80.0f;
     constexpr float GHOST_SPEED_MAX = 160.0f;
-    constexpr float GHOST_SIZE = 120.0f;   // display size (px)
+    constexpr float GHOST_SIZE = 120.0f;  // display size (px)
     // Sprite sheet: 16 frames in one row (walk cycle)
     constexpr int   GHOST_FRAME_COUNT = 16;
     constexpr float GHOST_FRAME_TIME = 0.07f;   // seconds per frame
-    constexpr float GHOST_LABEL_OFFSET_Y = 38.0f;   // px above ghost centre for digit label
+    constexpr float GHOST_LABEL_OFFSET_Y = 38.0f;  // px above ghost centre for digit label
     constexpr float GHOST_SPAWN_MARGIN = 80.0f;   // off-screen spawn margin
 
     // Inline helpers
     static inline float RandF(float lo, float hi)
     {
-        return lo + (hi - lo) * ((float)rand() / (float)RAND_MAX); // lower + (higher - lower) * cast to float (random num / random max num)
+        return lo + (hi - lo) * ((float)rand() / (float)RAND_MAX);
     }
-    static inline float Clamp01(float v) { return v < 0.0f ? 0.0f : (v > 1.0f ? 1.0f : v); } // if less than 0, clamp to 0 else if more than 1, clamp to 1
+    static inline float Clamp01(float v) { return v < 0.0f ? 0.0f : (v > 1.0f ? 1.0f : v); }
 }
 
 // ============================================================
@@ -184,7 +172,7 @@ namespace
         THAWING     // event over, overlay fading out
     };
 
-    // Thunderstrom specific bolt phases 
+    // Thunderstorm specific bolt phases
     enum class BoltPhase
     {
         WAITING,    // counting down to next bolt
@@ -193,74 +181,74 @@ namespace
     };
 
     // Snow particle
-    struct Snowflake { float x, y, speedY, driftX, size, alpha; bool isBlizzard; };
+    struct Snowflake { float x, y, speed_y, drift_x, size, alpha; bool is_blizzard; };
 
     // Rain particle
-    struct Raindrop { float x, y, speedY, w, h, alpha; };
+    struct Raindrop { float x, y, speed_y, w, h, alpha; };
 
     // Ghost particle (ghost weather)
     struct Ghost
     {
         float x, y;          // world-space position
-        float velX, velY;    // velocity (px/s)
-        int   digit;         // 5–9 assigned digit
+        float vel_x, vel_y;  // velocity (px/s)
+        int   digit;         // 5-9 assigned digit
         bool  alive;         // false once killed by player
         int   frame;         // current animation frame
-        float frameTimer;    // accumulator for frame advance
+        float frame_timer;   // accumulator for frame advance
     };
 
     // Shared state
-    static WeatherState s_state = WeatherState::IDLE; // curent state, changes based on Update()
-    static WeatherType  s_activeType = WeatherType::SNOW; // placeholder, activate state will change based on Update()
-    static float        s_triggerTimer = 0.0f;
-    static float        s_triggerTarget = 0.0f; // when triggertimer > triggertarget, fire weather event
-    static float        s_phaseTimer = 0.0f; // timer resets to 0 when entering new phase, used to check how long each phase lasts
+    static WeatherState s_state = WeatherState::IDLE;
+    static WeatherType  s_active_type = WeatherType::SNOW;
+    static float        s_trigger_timer = 0.0f;
+    static float        s_trigger_target = 0.0f;
+    static float        s_phase_timer = 0.0f;
 
     // Snow state
-    static int   s_spacePresses = 0;
-    static float s_flashTimer = 0.0f;
-    static bool  s_spaceWasHeld = false; // prevent player from holding space
+    static int   s_space_presses = 0;
+    static float s_flash_timer = 0.0f;
+    static bool  s_space_was_held = false;
 
     // Thunderstorm state
-    static float     s_stormTimer = 0.0f;    // total time remaining in storm
-    static float     s_boltTimer = 0.0f;    // time until next bolt
-    static BoltPhase s_boltPhase = BoltPhase::WAITING;
-    static float     s_boltPhaseTimer = 0.0f;    // timer within current bolt phase
-    static float     s_stunTimer = 0.0f;    // input stun remaining
-    static float     s_strikeFlash = 0.0f;
-    static int       s_lungeEnemyIdx = -1;       // index of enemy currently lunging, sentinel val of -1 indicate no enemy lunging
-    static float     s_lungeTimer = 0.0f;    // lunge boost duration remaining
-    static float     s_lungeOrigSpeed = 0.0f;    // original speed before lunge boost
+    static float     s_storm_timer = 0.0f;
+    static float     s_bolt_timer = 0.0f;
+    static BoltPhase s_bolt_phase = BoltPhase::WAITING;
+    static float     s_bolt_phase_timer = 0.0f;
+    static float     s_stun_timer = 0.0f;
+    static float     s_strike_flash = 0.0f;
+    static int       s_lunge_enemy_idx = -1;
+    static float     s_lunge_timer = 0.0f;
+    static float     s_lunge_orig_speed = 0.0f;
 
     // Rainbow state
-    static float            s_rainbowTimer = 0.0f;  // seconds remaining in event
-    static float            s_rainbowPowerupTimer = 0.0f;  // countdown to next power-up spawn
-    static int              s_rainbowFrame = 0;     // current animation frame
-    static float            s_rainbowFrameTimer = 0.0f;  // time accumulator for frame advance
-    static AEGfxTexture* s_rainbowTex = nullptr;
-    static AEGfxVertexList* s_rainbowMesh = nullptr; // single-frame UV quad
+    static float            s_rainbow_timer = 0.0f;
+    static float            s_rainbow_powerup_timer = 0.0f;
+    static int              s_rainbow_frame = 0;
+    static float            s_rainbow_frame_timer = 0.0f;
+    static AEGfxTexture* s_rainbow_tex = nullptr;
+    static AEGfxVertexList* s_rainbow_mesh = nullptr;
 
     // Running pulse timer (always increments, used for sine-wave text pulsing)
-    static float            s_weatherPulseTimer = 0.0f;
+    static float s_weather_pulse_timer = 0.0f;
 
     // Short popup timers: text shows briefly on event start then disappears
     constexpr float WEATHER_POPUP_DUR = 1.8f;
     constexpr float WEATHER_POPUP_FADE = 0.5f;
-    static float            s_rainbowPopupTimer = 0.0f;
-    static float            s_ghostPopupTimer = 0.0f;
+    static float s_rainbow_popup_timer = 0.0f;
+    static float s_ghost_popup_timer = 0.0f;
 
     // Ghost weather state
     static Ghost            s_ghosts[GHOST_COUNT]{};
-    static float            s_ghostLifeTimer = 0.0f; // counts up; triggers lock at GHOST_LIFETIME
-    static float            s_ghostLockTimer = 0.0f; // counts down; >0 means typing locked
-    static bool             s_ghostEventActive = false;
-    static AEGfxTexture* s_ghostTex = nullptr;
-    static AEGfxVertexList* s_ghostMesh = nullptr;   // single-frame UV quad (1/GHOST_FRAME_COUNT wide)
+    static float            s_ghost_life_timer = 0.0f;
+    static float            s_ghost_lock_timer = 0.0f;
+    static bool             s_ghost_event_active = false;
+    static AEGfxTexture* s_ghost_tex = nullptr;
+    static AEGfxVertexList* s_ghost_mesh = nullptr;
 
     // Ghost pre-event announcement (shown for 3s before ghosts actually spawn)
     constexpr float GHOST_ANNOUNCE_DUR = 3.0f;
-    static float            s_ghostAnnounceTimer = 0.0f; // counts down; ghosts spawn when it hits 0
-    static bool             s_ghostAnnouncePending = false; // true during the 3s pre-spawn window
+    static float    s_ghost_announce_timer = 0.0f;
+    static bool     s_ghost_announce_pending = false;
 
     // ---- Particles ----
     static Snowflake s_ambient[AMBIENT_COUNT]{};
@@ -280,10 +268,10 @@ namespace
     static void  ResetTriggerTimer();
     static void  SpawnAmbientFlake(Snowflake& f);
     static void  SpawnBlizzardFlake(Snowflake& f);
-    static void  UpdateFlake(Snowflake& f, float dt, float speedMul);
+    static void  UpdateFlake(Snowflake& f, float dt, float speed_mul);
     static float GetBlizzardIntensity();
-    static void  DrawFullscreenOverlay(float r, float g, float b, float alpha); // shared overlay helper
-    static void  Snow_DrawParticles(float blizzardIntensity);
+    static void  DrawFullscreenOverlay(float r, float g, float b, float alpha);
+    static void  Snow_DrawParticles(float blizzard_intensity);
     static void  DrawFreezeHUD();
     static void  DrawProgressBar();
 
@@ -296,7 +284,7 @@ namespace
     static void  Thunder_StartStorm();
     static void  Thunder_Update(float dt, std::vector<Data::Enemy>& enemy_pool);
     static void  Thunder_FireBolt(std::vector<Data::Enemy>& enemy_pool);
-    static void  Thunder_RestoreLunge(std::vector<Data::Enemy>& enemy_pool); // require enemy vector to strike random enemy
+    static void  Thunder_RestoreLunge(std::vector<Data::Enemy>& enemy_pool);
     static void  Thunder_DrawHUD();
     static void  Thunder_DrawStrikeFlash();
     static void  Thunder_DrawStrikeAnim();
@@ -317,7 +305,7 @@ namespace
     static void  Ghost_DrawHUD();
     static void  Ghost_SpawnOne(Ghost& g, int digit);
 
-    static void  DrawCentredText(const char* text, float ndcY, float scale,
+    static void  DrawCentredText(const char* text, float ndc_y, float scale,
         float r, float g, float b, float alpha);
 }
 
@@ -328,50 +316,51 @@ void Weather_Init()
 
     // Shared reset
     s_state = WeatherState::IDLE;
-    s_phaseTimer = 0.0f;
+    s_phase_timer = 0.0f;
 
     // Snow reset
-    s_spacePresses = 0;
-    s_flashTimer = 0.0f;
-    s_spaceWasHeld = false;
+    s_space_presses = 0;
+    s_flash_timer = 0.0f;
+    s_space_was_held = false;
 
     // Thunder reset
-    s_stormTimer = 0.0f;
-    s_boltTimer = 0.0f;
-    s_boltPhase = BoltPhase::WAITING;
-    s_boltPhaseTimer = 0.0f;
-    s_stunTimer = 0.0f;
-    s_strikeFlash = 0.0f;
-    s_lungeEnemyIdx = -1;
-    s_lungeTimer = 0.0f;
-    s_lungeOrigSpeed = 0.0f;
+    s_storm_timer = 0.0f;
+    s_bolt_timer = 0.0f;
+    s_bolt_phase = BoltPhase::WAITING;
+    s_bolt_phase_timer = 0.0f;
+    s_stun_timer = 0.0f;
+    s_strike_flash = 0.0f;
+    s_lunge_enemy_idx = -1;
+    s_lunge_timer = 0.0f;
+    s_lunge_orig_speed = 0.0f;
 
-    // Rainbow reset – free then reload to avoid double-load on re-init
-    if (s_rainbowTex) { AEGfxTextureUnload(s_rainbowTex);  s_rainbowTex = nullptr; }
-    if (s_rainbowMesh) { AEGfxMeshFree(s_rainbowMesh);      s_rainbowMesh = nullptr; }
-    s_rainbowTimer = 0.0f;
-    s_rainbowPowerupTimer = 0.0f;
-    s_rainbowFrame = 0;
-    s_rainbowFrameTimer = 0.0f;
-    s_rainbowTex = AEGfxTextureLoad("Assets/rainbowvfx.png");
+    // Rainbow reset - free then reload to avoid double-load on re-init
+    if (s_rainbow_tex) { AEGfxTextureUnload(s_rainbow_tex);  s_rainbow_tex = nullptr; }
+    if (s_rainbow_mesh) { AEGfxMeshFree(s_rainbow_mesh);      s_rainbow_mesh = nullptr; }
+    s_rainbow_timer = 0.0f;
+    s_rainbow_powerup_timer = 0.0f;
+    s_rainbow_frame = 0;
+    s_rainbow_frame_timer = 0.0f;
+    s_rainbow_tex = AEGfxTextureLoad("Assets/rainbowvfx.png");
     Rainbow_BuildMesh();
 
     // Thunderstorm strike animation
-    if (s_tStrikeTex) { AEGfxTextureUnload(s_tStrikeTex);  s_tStrikeTex = nullptr; }
-    if (s_tStrikeMesh) { AEGfxMeshFree(s_tStrikeMesh);      s_tStrikeMesh = nullptr; }
-    s_tStrikeTex = AEGfxTextureLoad("Assets/thunderstorm.png");
-    s_tStrikeMesh = Sprite_Mesh(TSTRIKE_UV_W, 1.0f);
-    s_tStrike = {};
-    s_weatherPulseTimer = 0.0f;
-    s_rainbowPopupTimer = 0.0f;
-    s_ghostPopupTimer = 0.0f;
+    if (s_t_strike_tex) { AEGfxTextureUnload(s_t_strike_tex);  s_t_strike_tex = nullptr; }
+    if (s_t_strike_mesh) { AEGfxMeshFree(s_t_strike_mesh);      s_t_strike_mesh = nullptr; }
+    s_t_strike_tex = AEGfxTextureLoad("Assets/thunderstorm.png");
+    s_t_strike_mesh = Sprite_Mesh(TSTRIKE_UV_W, 1.0f);
+    s_t_strike = {};
+
+    s_weather_pulse_timer = 0.0f;
+    s_rainbow_popup_timer = 0.0f;
+    s_ghost_popup_timer = 0.0f;
 
     // Ghost weather init
-    s_ghostTex = AEGfxTextureLoad("Assets/ghost.png");
+    s_ghost_tex = AEGfxTextureLoad("Assets/ghost.png");
     Ghost_BuildMesh();
-    s_ghostEventActive = false;
-    s_ghostLifeTimer = 0.0f;
-    s_ghostLockTimer = 0.0f;
+    s_ghost_event_active = false;
+    s_ghost_life_timer = 0.0f;
+    s_ghost_lock_timer = 0.0f;
     for (int i = 0; i < GHOST_COUNT; ++i) s_ghosts[i].alive = false;
 
     ResetTriggerTimer();
@@ -396,49 +385,48 @@ void Weather_Init()
 void Weather_Update(float dt, std::vector<Data::Enemy>& enemy_pool)
 {
     // Always tick the pulse timer (used for sine-wave text effects)
-    s_weatherPulseTimer += dt;
-    if (s_rainbowPopupTimer > 0.0f) { s_rainbowPopupTimer -= dt; if (s_rainbowPopupTimer < 0.0f) s_rainbowPopupTimer = 0.0f; }
-    if (s_ghostPopupTimer > 0.0f) { s_ghostPopupTimer -= dt; if (s_ghostPopupTimer < 0.0f) s_ghostPopupTimer = 0.0f; }
+    s_weather_pulse_timer += dt;
+    if (s_rainbow_popup_timer > 0.0f) { s_rainbow_popup_timer -= dt; if (s_rainbow_popup_timer < 0.0f) s_rainbow_popup_timer = 0.0f; }
+    if (s_ghost_popup_timer > 0.0f) { s_ghost_popup_timer -= dt; if (s_ghost_popup_timer < 0.0f) s_ghost_popup_timer = 0.0f; }
 
     // Advance thunderstorm on-enemy strike animation
-    if (s_tStrike.active)
+    if (s_t_strike.active)
     {
-        s_tStrike.frameTimer += dt;
-        if (s_tStrike.frameTimer >= TSTRIKE_FRAME_TIME)
+        s_t_strike.frame_timer += dt;
+        if (s_t_strike.frame_timer >= TSTRIKE_FRAME_TIME)
         {
-            s_tStrike.frameTimer -= TSTRIKE_FRAME_TIME;
-            ++s_tStrike.frame;
-            if (s_tStrike.frame >= TSTRIKE_FRAME_COUNT)
-                s_tStrike.active = false;
+            s_t_strike.frame_timer -= TSTRIKE_FRAME_TIME;
+            ++s_t_strike.frame;
+            if (s_t_strike.frame >= TSTRIKE_FRAME_COUNT)
+                s_t_strike.active = false;
         }
     }
 
     // Advance trigger timer when no weather active
     if (s_state == WeatherState::IDLE)
     {
-        s_triggerTimer += dt;
-        if (s_triggerTimer >= s_triggerTarget)
+        s_trigger_timer += dt;
+        if (s_trigger_timer >= s_trigger_target)
         {
             // Weighted pick: Snow 30%, Thunder 30%, Ghost 30%, Rainbow 10%
             int pick = rand() % 10;
-            if (pick < 3) s_activeType = WeatherType::SNOW;
-            else if (pick < 6) s_activeType = WeatherType::THUNDER;
-            else if (pick < 9) s_activeType = WeatherType::GHOST;
-            else               s_activeType = WeatherType::RAINBOW;
+            if (pick < 3) s_active_type = WeatherType::SNOW;
+            else if (pick < 6) s_active_type = WeatherType::THUNDER;
+            else if (pick < 9) s_active_type = WeatherType::GHOST;
+            else               s_active_type = WeatherType::RAINBOW;
 
-            if (s_activeType == WeatherType::SNOW)
+            if (s_active_type == WeatherType::SNOW)
             {
                 s_state = WeatherState::FREEZING;
-                s_phaseTimer = 0.0f;
-                s_spacePresses = 0;
-
+                s_phase_timer = 0.0f;
+                s_space_presses = 0;
                 SoundManager::PlaySnowAmbient();
             }
-            else if (s_activeType == WeatherType::THUNDER)
+            else if (s_active_type == WeatherType::THUNDER)
             {
                 Thunder_StartStorm();
             }
-            else if (s_activeType == WeatherType::RAINBOW)
+            else if (s_active_type == WeatherType::RAINBOW)
             {
                 Rainbow_Start();
             }
@@ -452,48 +440,48 @@ void Weather_Update(float dt, std::vector<Data::Enemy>& enemy_pool)
     // ================================================================
     //  SNOW path
     // ================================================================
-    if (s_activeType == WeatherType::SNOW)
+    if (s_active_type == WeatherType::SNOW)
     {
         // FREEZING phase
         if (s_state == WeatherState::FREEZING)
         {
-            s_phaseTimer += dt;
-            if (s_phaseTimer >= FREEZE_IN_DUR) { s_state = WeatherState::FROZEN; s_phaseTimer = 0.0f; }
+            s_phase_timer += dt;
+            if (s_phase_timer >= FREEZE_IN_DUR) { s_state = WeatherState::FROZEN; s_phase_timer = 0.0f; }
         }
 
-        // FROZEN phase count space presses
+        // FROZEN phase: count space presses
         if (s_state == WeatherState::FROZEN)
         {
-            bool spaceHeld = (AEInputCheckCurr(AEVK_SPACE) != 0); // is space pressed this frame?
-            bool spaceEdge = spaceHeld && !s_spaceWasHeld; // true only if it is pressed this frame and not pressed last frame
-            s_spaceWasHeld = spaceHeld; // track last frame
+            bool space_held = (AEInputCheckCurr(AEVK_SPACE) != 0);
+            bool space_edge = space_held && !s_space_was_held;
+            s_space_was_held = space_held;
 
-            if (spaceEdge)
+            if (space_edge)
             {
-                ++s_spacePresses;
-                s_flashTimer = FLASH_DUR;
-                if (s_spacePresses >= SPACES_NEEDED) { s_state = WeatherState::THAWING; s_phaseTimer = 0.0f; SoundManager::StopSnowAmbient(); }
+                ++s_space_presses;
+                s_flash_timer = FLASH_DUR;
+                if (s_space_presses >= SPACES_NEEDED) { s_state = WeatherState::THAWING; s_phase_timer = 0.0f; SoundManager::StopSnowAmbient(); }
             }
-            if (s_flashTimer > 0.0f) s_flashTimer -= dt;
+            if (s_flash_timer > 0.0f) s_flash_timer -= dt;
         }
 
         // THAWING phase
         if (s_state == WeatherState::THAWING)
         {
-            s_phaseTimer += dt;
-            if (s_phaseTimer >= THAW_DUR) { s_state = WeatherState::IDLE; ResetTriggerTimer(); }
+            s_phase_timer += dt;
+            if (s_phase_timer >= THAW_DUR) { s_state = WeatherState::IDLE; ResetTriggerTimer(); }
         }
 
         // Update snow particles
-        for (int i = 0; i < AMBIENT_COUNT; ++i) UpdateFlake(s_ambient[i], dt, 1.0f);
-        float blzMul = 0.3f + GetBlizzardIntensity() * 1.4f;
-        for (int i = 0; i < BLIZZARD_COUNT; ++i) UpdateFlake(s_blizzard[i], dt, blzMul);
+        for (int i = 0; i < AMBIENT_COUNT; ++i)  UpdateFlake(s_ambient[i], dt, 1.0f);
+        float blz_mul = 0.3f + GetBlizzardIntensity() * 1.4f;
+        for (int i = 0; i < BLIZZARD_COUNT; ++i) UpdateFlake(s_blizzard[i], dt, blz_mul);
     }
 
     // ================================================================
     //  THUNDER path
     // ================================================================
-    if (s_activeType == WeatherType::THUNDER && s_state != WeatherState::IDLE)
+    if (s_active_type == WeatherType::THUNDER && s_state != WeatherState::IDLE)
     {
         Thunder_Update(dt, enemy_pool);
         for (int i = 0; i < RAIN_COUNT; ++i) UpdateRaindrop(s_rain[i], dt);
@@ -502,7 +490,7 @@ void Weather_Update(float dt, std::vector<Data::Enemy>& enemy_pool)
     // ================================================================
     //  RAINBOW path
     // ================================================================
-    if (s_activeType == WeatherType::RAINBOW && s_state != WeatherState::IDLE)
+    if (s_active_type == WeatherType::RAINBOW && s_state != WeatherState::IDLE)
     {
         Rainbow_Update(dt);
     }
@@ -510,7 +498,7 @@ void Weather_Update(float dt, std::vector<Data::Enemy>& enemy_pool)
     // ================================================================
     //  GHOST path
     // ================================================================
-    if (s_activeType == WeatherType::GHOST && s_ghostEventActive)
+    if (s_active_type == WeatherType::GHOST && s_ghost_event_active)
     {
         Ghost_Update(dt);
     }
@@ -520,7 +508,7 @@ void Weather_Update(float dt, std::vector<Data::Enemy>& enemy_pool)
 void Weather_DrawBackground()
 {
     // Rainbow is drawn BEFORE enemies so it sits behind them in the scene
-    if (s_activeType == WeatherType::RAINBOW && s_state != WeatherState::IDLE)
+    if (s_active_type == WeatherType::RAINBOW && s_state != WeatherState::IDLE)
         Rainbow_DrawSprite();
 }
 
@@ -528,34 +516,34 @@ void Weather_DrawBackground()
 void Weather_Draw()
 {
     // Ghost weather has its own active flag, not bound to the shared state machine
-    bool ghostVisible = (s_activeType == WeatherType::GHOST && s_ghostEventActive);
-    if (!s_quad || (s_state == WeatherState::IDLE && !ghostVisible)) return;
+    bool ghost_visible = (s_active_type == WeatherType::GHOST && s_ghost_event_active);
+    if (!s_quad || (s_state == WeatherState::IDLE && !ghost_visible)) return;
 
-    if (s_activeType == WeatherType::SNOW)
+    if (s_active_type == WeatherType::SNOW)
     {
         float intensity = GetBlizzardIntensity();
         Snow_DrawParticles(intensity);
         DrawFullscreenOverlay(OVL_R, OVL_G, OVL_B, OVL_ALPHA_MAX * intensity);
         if (s_state == WeatherState::FROZEN) { DrawFreezeHUD(); DrawProgressBar(); }
     }
-    else if (s_activeType == WeatherType::THUNDER)
+    else if (s_active_type == WeatherType::THUNDER)
     {
         Thunder_DrawRain();
         // Dark stormy overlay fades in over first 2 seconds of storm
-        float elapsed = STORM_DURATION - s_stormTimer;
+        float elapsed = STORM_DURATION - s_storm_timer;
         DrawFullscreenOverlay(STORM_OVL_R, STORM_OVL_G, STORM_OVL_B,
             STORM_OVL_ALPHA_MAX * Clamp01(elapsed / 2.0f));
         Thunder_DrawStrikeAnim();
         Thunder_DrawHUD();
         Thunder_DrawStrikeFlash();
     }
-    // RAINBOW: sprite drawn in Weather_DrawBackground() — HUD drawn here
-    if (s_activeType == WeatherType::RAINBOW && s_state != WeatherState::IDLE)
+    // RAINBOW: sprite drawn in Weather_DrawBackground() - HUD drawn here
+    if (s_active_type == WeatherType::RAINBOW && s_state != WeatherState::IDLE)
     {
         Rainbow_DrawHUD();
     }
     // GHOST: ghosts + HUD drawn here
-    if (s_activeType == WeatherType::GHOST && s_ghostEventActive)
+    if (s_active_type == WeatherType::GHOST && s_ghost_event_active)
     {
         Ghost_Draw();
         Ghost_DrawHUD();
@@ -566,72 +554,67 @@ void Weather_Exit()
 {
     SoundManager::StopSnowAmbient();
     SoundManager::StopRainAmbient();
-    if (s_quad) { AEGfxMeshFree(s_quad);             s_quad = nullptr; }
-    if (s_rainbowTex) { AEGfxTextureUnload(s_rainbowTex);  s_rainbowTex = nullptr; }
-    if (s_rainbowMesh) { AEGfxMeshFree(s_rainbowMesh);      s_rainbowMesh = nullptr; }
-    if (s_tStrikeTex) { AEGfxTextureUnload(s_tStrikeTex);  s_tStrikeTex = nullptr; }
-    if (s_tStrikeMesh) { AEGfxMeshFree(s_tStrikeMesh);      s_tStrikeMesh = nullptr; }
-    if (s_ghostTex) { AEGfxTextureUnload(s_ghostTex);    s_ghostTex = nullptr; }
-    if (s_ghostMesh) { AEGfxMeshFree(s_ghostMesh);        s_ghostMesh = nullptr; }
+    if (s_quad) { AEGfxMeshFree(s_quad);              s_quad = nullptr; }
+    if (s_rainbow_tex) { AEGfxTextureUnload(s_rainbow_tex);  s_rainbow_tex = nullptr; }
+    if (s_rainbow_mesh) { AEGfxMeshFree(s_rainbow_mesh);      s_rainbow_mesh = nullptr; }
+    if (s_t_strike_tex) { AEGfxTextureUnload(s_t_strike_tex);  s_t_strike_tex = nullptr; }
+    if (s_t_strike_mesh) { AEGfxMeshFree(s_t_strike_mesh);      s_t_strike_mesh = nullptr; }
+    if (s_ghost_tex) { AEGfxTextureUnload(s_ghost_tex);    s_ghost_tex = nullptr; }
+    if (s_ghost_mesh) { AEGfxMeshFree(s_ghost_mesh);        s_ghost_mesh = nullptr; }
 }
 
-// Functions used in game.cpp to prevent certain game mechanics
 bool Weather_IsPlayerFrozen() { return s_state == WeatherState::FROZEN; }
-bool Weather_IsPlayerStunned() { return (s_activeType == WeatherType::THUNDER && s_stunTimer > 0.0f); }
-bool Weather_IsTypingLocked() { return (s_activeType == WeatherType::GHOST && s_ghostLockTimer > 0.0f); }
+bool Weather_IsPlayerStunned() { return (s_active_type == WeatherType::THUNDER && s_stun_timer > 0.0f); }
+bool Weather_IsTypingLocked() { return (s_active_type == WeatherType::GHOST && s_ghost_lock_timer > 0.0f); }
 
-// Used in debugconsole
 void Weather_ForceEvent(int type, std::vector<Data::Enemy>& enemy_pool)
 {
     // Restore any active lunge before cancelling (prevents permanent speed boost)
     Thunder_RestoreLunge(enemy_pool);
     SoundManager::StopSnowAmbient();
     SoundManager::StopRainAmbient();
+
     // Cancel any active event first, reset to a clean IDLE state
     s_state = WeatherState::IDLE;
-    s_phaseTimer = 0.0f;
-    s_spacePresses = 0;
-    s_flashTimer = 0.0f;
-    s_spaceWasHeld = false;
-    s_stunTimer = 0.0f;
-    s_strikeFlash = 0.0f;
-    s_tStrike = {};
+    s_phase_timer = 0.0f;
+    s_space_presses = 0;
+    s_flash_timer = 0.0f;
+    s_space_was_held = false;
+    s_stun_timer = 0.0f;
+    s_strike_flash = 0.0f;
+    s_t_strike = {};
+
     // Ghost reset
-    s_ghostEventActive = false;
-    s_ghostLifeTimer = 0.0f;
-    s_ghostLockTimer = 0.0f;
-    s_rainbowPopupTimer = 0.0f;
-    s_ghostPopupTimer = 0.0f;
+    s_ghost_event_active = false;
+    s_ghost_life_timer = 0.0f;
+    s_ghost_lock_timer = 0.0f;
+    s_rainbow_popup_timer = 0.0f;
+    s_ghost_popup_timer = 0.0f;
     for (int i = 0; i < GHOST_COUNT; ++i) s_ghosts[i].alive = false;
 
     if (type == 0)
     {
-        // Force snow blizzard, skip IDLE, jump straight to FREEZING
-        s_activeType = WeatherType::SNOW;
+        s_active_type = WeatherType::SNOW;
         s_state = WeatherState::FREEZING;
-        s_phaseTimer = 0.0f;
+        s_phase_timer = 0.0f;
         SoundManager::PlaySnowAmbient();
     }
     else if (type == 1)
     {
-        // Force thunderstorm
-        s_activeType = WeatherType::THUNDER;
+        s_active_type = WeatherType::THUNDER;
         Thunder_StartStorm();
     }
     else if (type == 2)
     {
-        // Force rainbow
-        s_activeType = WeatherType::RAINBOW;
+        s_active_type = WeatherType::RAINBOW;
         Rainbow_Start();
     }
     else
     {
-        // Force ghost weather
-        s_activeType = WeatherType::GHOST;
+        s_active_type = WeatherType::GHOST;
         Ghost_Start();
     }
 
-    // Reset the trigger timer so the next random event fires on schedule after this one
     ResetTriggerTimer();
 }
 
@@ -641,69 +624,62 @@ void Weather_ForceEvent(int type, std::vector<Data::Enemy>& enemy_pool)
 // ============================================================
 namespace
 {
-    // Pick a new random interval and reset the countdown
     static void ResetTriggerTimer()
     {
-        s_triggerTimer = 0.0f;
-        s_triggerTarget = RandF(TRIGGER_MIN_SEC, TRIGGER_MAX_SEC);
+        s_trigger_timer = 0.0f;
+        s_trigger_target = RandF(TRIGGER_MIN_SEC, TRIGGER_MAX_SEC);
     }
 
-    // Initialise / respawn one ambient flake above the screen at a random X
     static void SpawnAmbientFlake(Snowflake& f)
     {
         f.x = RandF(-HALF_W, HALF_W);
-        f.y = HALF_H + RandF(0.0f, 60.0f);    // just off-screen top
-        f.speedY = RandF(AMB_SPEED_MIN, AMB_SPEED_MAX);
-        f.driftX = RandF(-DRIFT_RANGE, DRIFT_RANGE);
+        f.y = HALF_H + RandF(0.0f, 60.0f);
+        f.speed_y = RandF(AMB_SPEED_MIN, AMB_SPEED_MAX);
+        f.drift_x = RandF(-DRIFT_RANGE, DRIFT_RANGE);
         f.size = RandF(FLAKE_SIZE_MIN, FLAKE_SIZE_MAX);
         f.alpha = RandF(0.4f, 0.85f);
-        f.isBlizzard = false;
+        f.is_blizzard = false;
     }
 
-    // Initialise / respawn one blizzard flake (used only during events)
     static void SpawnBlizzardFlake(Snowflake& f)
     {
         f.x = RandF(-HALF_W, HALF_W);
         f.y = HALF_H + RandF(0.0f, 80.0f);
-        f.speedY = RandF(BLZ_SPEED_MIN, BLZ_SPEED_MAX);
-        f.driftX = RandF(-DRIFT_RANGE * 2.0f, DRIFT_RANGE * 2.0f);
+        f.speed_y = RandF(BLZ_SPEED_MIN, BLZ_SPEED_MAX);
+        f.drift_x = RandF(-DRIFT_RANGE * 2.0f, DRIFT_RANGE * 2.0f);
         f.size = RandF(FLAKE_SIZE_MIN, FLAKE_SIZE_MAX - 1.0f);
         f.alpha = RandF(0.5f, 1.0f);
-        f.isBlizzard = true;
+        f.is_blizzard = true;
     }
 
-    // Move one flake, respawn when it exits the bottom
-    static void UpdateFlake(Snowflake& f, float dt, float speedMul)
+    static void UpdateFlake(Snowflake& f, float dt, float speed_mul)
     {
-        f.y -= f.speedY * speedMul * dt;
-        f.x += f.driftX * speedMul * dt;
+        f.y -= f.speed_y * speed_mul * dt;
+        f.x += f.drift_x * speed_mul * dt;
 
-        // Wrap horizontally so flakes dont disappear off the side of screen
+        // Wrap horizontally so flakes don't disappear off the side of screen
         if (f.x < -HALF_W) f.x += SCREEN_W;
         if (f.x > HALF_W) f.x -= SCREEN_W;
 
         // Respawn when below the screen
         if (f.y < -HALF_H - 20.0f)
-            f.isBlizzard ? SpawnBlizzardFlake(f) : SpawnAmbientFlake(f);
+            f.is_blizzard ? SpawnBlizzardFlake(f) : SpawnAmbientFlake(f);
     }
 
-    // Returns a 0..1 intensity for the blizzard based on state + phaseTimer
     static float GetBlizzardIntensity()
     {
-        // Thunder doesnt use snow blizzard particles
-        if (s_activeType == WeatherType::THUNDER) return 0.0f;
+        if (s_active_type == WeatherType::THUNDER) return 0.0f;
 
         switch (s_state)
         {
         case WeatherState::IDLE:     return 0.0f;
-        case WeatherState::FREEZING: return Clamp01(s_phaseTimer / FREEZE_IN_DUR);
-        case WeatherState::FROZEN:   return 1.0f + (s_flashTimer > 0.0f ? 0.15f * (s_flashTimer / FLASH_DUR) : 0.0f);
-        case WeatherState::THAWING:  return Clamp01(1.0f - s_phaseTimer / THAW_DUR);
+        case WeatherState::FREEZING: return Clamp01(s_phase_timer / FREEZE_IN_DUR);
+        case WeatherState::FROZEN:   return 1.0f + (s_flash_timer > 0.0f ? 0.15f * (s_flash_timer / FLASH_DUR) : 0.0f);
+        case WeatherState::THAWING:  return Clamp01(1.0f - s_phase_timer / THAW_DUR);
         }
         return 0.0f;
     }
 
-    // Shared helper draws a full screen coloured overlay quad at the given alpha
     static void DrawFullscreenOverlay(float r, float g, float b, float alpha)
     {
         if (alpha <= 0.001f) return;
@@ -717,8 +693,7 @@ namespace
         AEGfxSetTransparency(1.0f);
     }
 
-    // Draw snow particles (ambient + blizzard burst) snow weather only
-    static void Snow_DrawParticles(float blizzardIntensity)
+    static void Snow_DrawParticles(float blizzard_intensity)
     {
         AEGfxSetRenderMode(AE_GFX_RM_COLOR);
         AEGfxSetBlendMode(AE_GFX_BM_ADD);   // bright, glowy snow
@@ -733,12 +708,12 @@ namespace
         }
 
         // Blizzard particles fade in with intensity
-        if (blizzardIntensity > 0.01f)
+        if (blizzard_intensity > 0.01f)
         {
             for (int i = 0; i < BLIZZARD_COUNT; ++i)
             {
                 const Snowflake& f = s_blizzard[i];
-                AEGfxSetTransparency(f.alpha * blizzardIntensity);
+                AEGfxSetTransparency(f.alpha * blizzard_intensity);
                 AEGfxSetColorToMultiply(0.8f, 0.92f, 1.0f, 1.0f);
                 Mesh_Renderer(s_quad, f.x, f.y, f.size, f.size, 0.0f);
             }
@@ -750,33 +725,28 @@ namespace
         AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);
     }
 
-    // Shared HUD text helper measures, centres, and prints one line
-    static void DrawCentredText(const char* text, float ndcY, float scale,
+    static void DrawCentredText(const char* text, float ndc_y, float scale,
         float r, float g, float b, float alpha)
     {
-        if (Graphics::font_id < 0) return; // check for valid font
+        if (Graphics::g_font_id < 0) return;
         float w, h;
-        AEGfxGetPrintSize(Graphics::font_id, text, scale, &w, &h);
-        AEGfxPrint(Graphics::font_id, text, -w * 0.5f, ndcY, scale, r, g, b, alpha);
+        AEGfxGetPrintSize(Graphics::g_font_id, text, scale, &w, &h);
+        AEGfxPrint(Graphics::g_font_id, text, -w * 0.5f, ndc_y, scale, r, g, b, alpha);
     }
 
-    // "SPAM SPACE TO BREAK FREE!" prompt text
     static void DrawFreezeHUD()
     {
-        if (Graphics::font_id < 0) return;
+        if (Graphics::g_font_id < 0) return;
 
         AEGfxSetBlendMode(AE_GFX_BM_BLEND);
-        // Main "FROZEN" title icy blue
         DrawCentredText("YOU ARE FROZEN!", 0.10f, 0.75f, 0.6f, 0.88f, 1.0f, 1.0f);
-        // Instruction – white
         DrawCentredText("SPAM SPACE TO BREAK FREE!", -0.10f, 0.55f, 1.0f, 1.0f, 1.0f, 1.0f);
     }
 
-    // Horizontal progress bar showing breakfree progress
     static void DrawProgressBar()
     {
-        float progress = Clamp01((float)s_spacePresses / (float)SPACES_NEEDED);
-        constexpr float barBorder = 4.0f;  // border thickness (px each side)
+        float progress = Clamp01((float)s_space_presses / (float)SPACES_NEEDED);
+        constexpr float BAR_BORDER = 4.0f;
 
         AEGfxSetRenderMode(AE_GFX_RM_COLOR);
         AEGfxSetBlendMode(AE_GFX_BM_BLEND);
@@ -784,29 +754,28 @@ namespace
         // Background (dark, slightly blue)
         AEGfxSetTransparency(0.85f);
         AEGfxSetColorToMultiply(0.1f, 0.15f, 0.25f, 1.0f);
-        Mesh_Renderer(s_quad, 0.0f, BAR_Y, BAR_W + barBorder * 2.0f, BAR_H + barBorder * 2.0f, 0.0f);
+        Mesh_Renderer(s_quad, 0.0f, BAR_Y, BAR_W + BAR_BORDER * 2.0f, BAR_H + BAR_BORDER * 2.0f, 0.0f);
 
         // Bar fill
         if (progress > 0.001f)
         {
-            float fillW = (BAR_W - barBorder * 2.0f) * progress;
-            float fillStartX = -(BAR_W * 0.5f) + barBorder + fillW * 0.5f;
+            float fill_w = (BAR_W - BAR_BORDER * 2.0f) * progress;
+            float fill_start_x = -(BAR_W * 0.5f) + BAR_BORDER + fill_w * 0.5f;
 
             // Lerp colour from ice blue (0% warm) to warm orange (100% warm)
             AEGfxSetTransparency(1.0f);
             AEGfxSetColorToMultiply(0.3f + 0.7f * progress,
                 0.5f + 0.1f * progress,
                 1.0f - 0.8f * progress, 1.0f);
-            Mesh_Renderer(s_quad, fillStartX, BAR_Y, fillW, BAR_H - barBorder * 2.0f, 0.0f);
+            Mesh_Renderer(s_quad, fill_start_x, BAR_Y, fill_w, BAR_H - BAR_BORDER * 2.0f, 0.0f);
         }
 
-        // --- Label above bar ---
+        // Label above bar
         AEGfxSetTransparency(1.0f);
         AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);
-        float barYndc = (BAR_Y + (BAR_H * 0.5f) + 20.0f) / HALF_H;
-        DrawCentredText("WARMTH", barYndc, 0.4f, 0.9f, 0.95f, 1.0f, 1.0f);
+        float bar_y_ndc = (BAR_Y + (BAR_H * 0.5f) + 20.0f) / HALF_H;
+        DrawCentredText("WARMTH", bar_y_ndc, 0.4f, 0.9f, 0.95f, 1.0f, 1.0f);
 
-        // Reset
         AEGfxSetTransparency(1.0f);
         AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);
     }
@@ -818,8 +787,8 @@ namespace
     static void SpawnRaindrop(Raindrop& r)
     {
         r.x = RandF(-HALF_W, HALF_W);
-        r.y = HALF_H + RandF(0.0f, 80.0f);   // just off-screen top
-        r.speedY = RandF(RAIN_SPEED_MIN, RAIN_SPEED_MAX);
+        r.y = HALF_H + RandF(0.0f, 80.0f);
+        r.speed_y = RandF(RAIN_SPEED_MIN, RAIN_SPEED_MAX);
         r.w = RandF(RAIN_W_MIN, RAIN_W_MAX);
         r.h = RandF(RAIN_H_MIN, RAIN_H_MAX);
         r.alpha = RandF(0.35f, 0.75f);
@@ -827,7 +796,7 @@ namespace
 
     static void UpdateRaindrop(Raindrop& r, float dt)
     {
-        r.y -= r.speedY * dt;
+        r.y -= r.speed_y * dt;
         r.x += RAIN_DRIFT * dt;   // wind-driven diagonal
 
         // Wrap horizontally
@@ -850,7 +819,6 @@ namespace
             Mesh_Renderer(s_quad, r.x, r.y, r.w, r.h, 0.0f);
         }
 
-        // Reset
         AEGfxSetTransparency(1.0f);
         AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);
     }
@@ -859,25 +827,22 @@ namespace
     //  Thunder helpers
     // ================================================================
 
-    // Kick off a new thunder storm session
     static void Thunder_StartStorm()
     {
         s_state = WeatherState::FREEZING;  // reuse FREEZING as "storm active" sentinel
-        s_stormTimer = STORM_DURATION;
-        s_boltTimer = BOLT_INTERVAL * 0.4f;    // first bolt comes faster to grab attention
-        s_boltPhase = BoltPhase::WAITING;
-        s_boltPhaseTimer = 0.0f;
-        s_stunTimer = 0.0f;
-        s_strikeFlash = 0.0f;
-        s_lungeEnemyIdx = -1;
-        s_lungeTimer = 0.0f;
+        s_storm_timer = STORM_DURATION;
+        s_bolt_timer = BOLT_INTERVAL * 0.4f;    // first bolt comes faster to grab attention
+        s_bolt_phase = BoltPhase::WAITING;
+        s_bolt_phase_timer = 0.0f;
+        s_stun_timer = 0.0f;
+        s_strike_flash = 0.0f;
+        s_lunge_enemy_idx = -1;
+        s_lunge_timer = 0.0f;
         SoundManager::PlayRainAmbient();
     }
 
-    // Pick a random active enemy and apply the lunge speed boost
     static void Thunder_FireBolt(std::vector<Data::Enemy>& enemy_pool)
     {
-        // Collect indices of valid targets
         static int candidates[64];
         int count = 0;
         for (int i = 0; i < (int)enemy_pool.size() && count < 64; ++i)
@@ -885,152 +850,135 @@ namespace
             const Data::Enemy& e = enemy_pool[(size_t)i];
             if (e.enemy_is_active && !e.enemy_is_dying) candidates[count++] = i;
         }
-        if (count == 0) return;  // no targets skip this bolt
+        if (count == 0) return;
 
         int chosen = candidates[rand() % count];
         Data::Enemy& target = enemy_pool[(size_t)chosen];
 
-        // Store original speed and apply boost
-        s_lungeEnemyIdx = chosen;
-        s_lungeOrigSpeed = target.enemy_fall_speed_units_per_second;
-        s_lungeTimer = LUNGE_DUR;
+        s_lunge_enemy_idx = chosen;
+        s_lunge_orig_speed = target.enemy_fall_speed_units_per_second;
+        s_lunge_timer = LUNGE_DUR;
         target.enemy_fall_speed_units_per_second *= LUNGE_SPEED_MUL;
 
-        // Spawn on-enemy strike animation
-        s_tStrike = { true, target.enemy_position_x, target.enemy_position_y, 0, 0.0f };
+        s_t_strike = { true, target.enemy_position_x, target.enemy_position_y, 0, 0.0f };
 
-        // Trigger stun + white flash
-        s_stunTimer = STUN_DUR;
-        s_strikeFlash = 1.0f;
+        s_stun_timer = STUN_DUR;
+        s_strike_flash = 1.0f;
         SoundManager::PlayLightningSfx();
     }
 
-    // Restore lunging enemy's original speed when lunge expires
     static void Thunder_RestoreLunge(std::vector<Data::Enemy>& enemy_pool)
     {
-        if (s_lungeEnemyIdx < 0 || s_lungeEnemyIdx >= (int)enemy_pool.size()) { s_lungeEnemyIdx = -1; s_lungeTimer = 0.0f; return; }
-        Data::Enemy& e = enemy_pool[(size_t)s_lungeEnemyIdx];
-        // Only restore if still active (might have been killed)
-        if (e.enemy_is_active) e.enemy_fall_speed_units_per_second = s_lungeOrigSpeed;
-        s_lungeEnemyIdx = -1;
-        s_lungeTimer = 0.0f;
+        if (s_lunge_enemy_idx < 0 || s_lunge_enemy_idx >= (int)enemy_pool.size()) { s_lunge_enemy_idx = -1; s_lunge_timer = 0.0f; return; }
+        Data::Enemy& e = enemy_pool[(size_t)s_lunge_enemy_idx];
+        if (e.enemy_is_active) e.enemy_fall_speed_units_per_second = s_lunge_orig_speed;
+        s_lunge_enemy_idx = -1;
+        s_lunge_timer = 0.0f;
     }
 
-    // Main thunder update — called every frame while storm is active
     static void Thunder_Update(float dt, std::vector<Data::Enemy>& enemy_pool)
     {
-        // Count down total storm duration
-        s_stormTimer -= dt;
-        if (s_stormTimer <= 0.0f)
+        s_storm_timer -= dt;
+        if (s_storm_timer <= 0.0f)
         {
-            // Storm over — restore lunge if still active, go IDLE
             Thunder_RestoreLunge(enemy_pool);
-            s_stunTimer = 0.0f;
-            s_strikeFlash = 0.0f;
+            s_stun_timer = 0.0f;
+            s_strike_flash = 0.0f;
             s_state = WeatherState::IDLE;
             ResetTriggerTimer();
             SoundManager::StopRainAmbient();
             return;
         }
 
-        // Decay stun
-        if (s_stunTimer > 0.0f) s_stunTimer -= dt;
-        // Decay white flash
-        if (s_strikeFlash > 0.0f) s_strikeFlash -= dt / STRIKE_FLASH_DUR;
-        if (s_strikeFlash < 0.0f) s_strikeFlash = 0.0f;
+        if (s_stun_timer > 0.0f) s_stun_timer -= dt;
 
-        // Decay lunge timer — restore when it expires
-        if (s_lungeTimer > 0.0f)
+        if (s_strike_flash > 0.0f) s_strike_flash -= dt / STRIKE_FLASH_DUR;
+        if (s_strike_flash < 0.0f) s_strike_flash = 0.0f;
+
+        if (s_lunge_timer > 0.0f)
         {
-            s_lungeTimer -= dt;
-            if (s_lungeTimer <= 0.0f) Thunder_RestoreLunge(enemy_pool);
+            s_lunge_timer -= dt;
+            if (s_lunge_timer <= 0.0f) Thunder_RestoreLunge(enemy_pool);
         }
 
         // Also restore lunge if struck enemy was killed mid-lunge
-        if (s_lungeEnemyIdx >= 0 && s_lungeEnemyIdx < (int)enemy_pool.size())
+        if (s_lunge_enemy_idx >= 0 && s_lunge_enemy_idx < (int)enemy_pool.size())
         {
-            const Data::Enemy& e = enemy_pool[(size_t)s_lungeEnemyIdx];
+            const Data::Enemy& e = enemy_pool[(size_t)s_lunge_enemy_idx];
             if (!e.enemy_is_active || e.enemy_is_dying) Thunder_RestoreLunge(enemy_pool);
         }
 
         // ---- Bolt phase state machine ----
-        s_boltPhaseTimer += dt;
+        s_bolt_phase_timer += dt;
 
-        switch (s_boltPhase)
+        switch (s_bolt_phase)
         {
         case BoltPhase::WAITING:
-            s_boltTimer -= dt;
-            if (s_boltTimer <= 0.0f)
+            s_bolt_timer -= dt;
+            if (s_bolt_timer <= 0.0f)
             {
-                // Transition to WARNING
-                s_boltPhase = BoltPhase::WARNING;
-                s_boltPhaseTimer = 0.0f;
+                s_bolt_phase = BoltPhase::WARNING;
+                s_bolt_phase_timer = 0.0f;
             }
             break;
 
         case BoltPhase::WARNING:
-            if (s_boltPhaseTimer >= BRACE_WARNING_DUR)
+            if (s_bolt_phase_timer >= BRACE_WARNING_DUR)
             {
-                // Fire the bolt
                 Thunder_FireBolt(enemy_pool);
-                s_boltPhase = BoltPhase::STRIKING;
-                s_boltPhaseTimer = 0.0f;
+                s_bolt_phase = BoltPhase::STRIKING;
+                s_bolt_phase_timer = 0.0f;
             }
             break;
 
         case BoltPhase::STRIKING:
-            // Stay in STRIKING while stun lasts, then set up next bolt
-            if (s_stunTimer <= 0.0f)
+            if (s_stun_timer <= 0.0f)
             {
-                s_boltPhase = BoltPhase::WAITING;
-                s_boltPhaseTimer = 0.0f;
-                s_boltTimer = BOLT_INTERVAL;
+                s_bolt_phase = BoltPhase::WAITING;
+                s_bolt_phase_timer = 0.0f;
+                s_bolt_timer = BOLT_INTERVAL;
             }
             break;
         }
     }
 
-    // "BRACE!" warning text and stun indicator
     static void Thunder_DrawHUD()
     {
-        if (Graphics::font_id < 0) return;
+        if (Graphics::g_font_id < 0) return;
         AEGfxSetBlendMode(AE_GFX_BM_BLEND);
 
-        if (s_boltPhase == BoltPhase::WARNING)
+        if (s_bolt_phase == BoltPhase::WARNING)
         {
-            // Blink speed increases as warning time runs out
-            float progress = Clamp01(s_boltPhaseTimer / BRACE_WARNING_DUR);
-            float blinkHz = 2.0f + progress * 6.0f;   // 2 Hz → 8 Hz
-            float pulse = ((int)(s_boltPhaseTimer * blinkHz * 2.0f) % 2 == 0) ? 1.0f : 0.4f;
-            DrawCentredText("BRACE!", 0.0f, 1.0f, 1.0f, 0.85f, 0.1f, pulse);   // yellow
+            float progress = Clamp01(s_bolt_phase_timer / BRACE_WARNING_DUR);
+            float blink_hz = 2.0f + progress * 6.0f;
+            float pulse = ((int)(s_bolt_phase_timer * blink_hz * 2.0f) % 2 == 0) ? 1.0f : 0.4f;
+            DrawCentredText("BRACE!", 0.0f, 1.0f, 1.0f, 0.85f, 0.1f, pulse);
         }
-        else if (s_boltPhase == BoltPhase::STRIKING && s_stunTimer > 0.0f)
+        else if (s_bolt_phase == BoltPhase::STRIKING && s_stun_timer > 0.0f)
         {
-            float alpha = Clamp01(s_stunTimer / STUN_DUR);
-            DrawCentredText("STUNNED!", 0.0f, 1.2f, 1.0f, 0.3f, 0.1f, alpha);   // red-orange, larger
+            float alpha = Clamp01(s_stun_timer / STUN_DUR);
+            DrawCentredText("STUNNED!", 0.0f, 1.2f, 1.0f, 0.3f, 0.1f, alpha);
         }
     }
 
-    // Full-screen white flash on strike
     static void Thunder_DrawStrikeFlash()
     {
-        if (s_strikeFlash <= 0.001f) return;
-        DrawFullscreenOverlay(1.0f, 1.0f, 0.85f, s_strikeFlash * 0.75f);   // warm white/yellow flash
+        if (s_strike_flash <= 0.001f) return;
+        DrawFullscreenOverlay(1.0f, 1.0f, 0.85f, s_strike_flash * 0.75f);
     }
 
-    // Per-enemy thunderstorm sprite played on the struck enemy
     static void Thunder_DrawStrikeAnim()
     {
-        if (!s_tStrike.active || !s_tStrikeTex || !s_tStrikeMesh) return;
+        if (!s_t_strike.active || !s_t_strike_tex || !s_t_strike_mesh) return;
 
-        float uOffset = s_tStrike.frame * TSTRIKE_UV_W;
+        float u_offset = s_t_strike.frame * TSTRIKE_UV_W;
 
         AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
         AEGfxSetBlendMode(AE_GFX_BM_ADD);
         AEGfxSetTransparency(1.0f);
         AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);
-        AEGfxTextureSet(s_tStrikeTex, uOffset, 0.0f);
-        Mesh_Renderer(s_tStrikeMesh, s_tStrike.x, s_tStrike.y,
+        AEGfxTextureSet(s_t_strike_tex, u_offset, 0.0f);
+        Mesh_Renderer(s_t_strike_mesh, s_t_strike.x, s_t_strike.y,
             TSTRIKE_DISPLAY_W, TSTRIKE_DISPLAY_H, 0.0f);
 
         AEGfxSetBlendMode(AE_GFX_BM_BLEND);
@@ -1042,105 +990,88 @@ namespace
     //  Rainbow helpers
     // ================================================================
 
-    // No persistent mesh needed — we build an exact UV-sliced mesh per frame in Rainbow_DrawSprite.
     static void Rainbow_BuildMesh()
     {
-        if (s_rainbowMesh) { AEGfxMeshFree(s_rainbowMesh); s_rainbowMesh = nullptr; }
-        // intentionally empty — per-frame meshes created in Rainbow_DrawSprite
+        if (s_rainbow_mesh) { AEGfxMeshFree(s_rainbow_mesh); s_rainbow_mesh = nullptr; }
+        // intentionally empty - per-frame meshes created in Rainbow_DrawSprite
     }
 
-    // Kick off a new rainbow event
     static void Rainbow_Start()
     {
         s_state = WeatherState::FREEZING;
-        s_rainbowTimer = RAINBOW_DURATION;
-        s_rainbowPowerupTimer = RAINBOW_POWERUP_INTERVAL;
-        s_rainbowFrame = 0;
-        s_rainbowFrameTimer = 0.0f;
-        s_rainbowPopupTimer = WEATHER_POPUP_DUR;
+        s_rainbow_timer = RAINBOW_DURATION;
+        s_rainbow_powerup_timer = RAINBOW_POWERUP_INTERVAL;
+        s_rainbow_frame = 0;
+        s_rainbow_frame_timer = 0.0f;
+        s_rainbow_popup_timer = WEATHER_POPUP_DUR;
     }
 
-    // Per-frame rainbow update: advance animation, trigger power-up spawns
     static void Rainbow_Update(float dt)
     {
-        // Count down total event duration
-        s_rainbowTimer -= dt;
-        if (s_rainbowTimer <= 0.0f)
+        s_rainbow_timer -= dt;
+        if (s_rainbow_timer <= 0.0f)
         {
-            // Event over — restore default power-up spawn rate and go idle
             PowerUpSystem::SetDropSpawnInterval(15.0f, 30.0f);
             s_state = WeatherState::IDLE;
             ResetTriggerTimer();
             return;
         }
 
-        // Advance sprite sheet animation
-        s_rainbowFrameTimer += dt;
-        if (s_rainbowFrameTimer >= RAINBOW_FRAME_TIME)
+        s_rainbow_frame_timer += dt;
+        if (s_rainbow_frame_timer >= RAINBOW_FRAME_TIME)
         {
-            s_rainbowFrameTimer -= RAINBOW_FRAME_TIME;
-            s_rainbowFrame = (s_rainbowFrame + 1) % RAINBOW_FRAME_COUNT;
+            s_rainbow_frame_timer -= RAINBOW_FRAME_TIME;
+            s_rainbow_frame = (s_rainbow_frame + 1) % RAINBOW_FRAME_COUNT;
         }
 
-        // Every RAINBOW_POWERUP_INTERVAL seconds, force the PowerUp system to
-        // spawn a drop almost immediately by shrinking its spawn window to near-zero.
-        // The interval is restored when the rainbow event ends (or exits).
-        s_rainbowPowerupTimer -= dt;
-        if (s_rainbowPowerupTimer <= 0.0f)
+        s_rainbow_powerup_timer -= dt;
+        if (s_rainbow_powerup_timer <= 0.0f)
         {
-            s_rainbowPowerupTimer = RAINBOW_POWERUP_INTERVAL;
+            s_rainbow_powerup_timer = RAINBOW_POWERUP_INTERVAL;
             PowerUpSystem::SetDropSpawnInterval(0.01f, 0.05f);
         }
     }
 
-    // Draw the animated rainbow sprite across the sky.
-    // Uses a fresh per-frame Spritesheet_Mesh so the UV slice is exact — no stretching.
     static void Rainbow_DrawSprite()
     {
-        if (!s_rainbowTex) return;
+        if (!s_rainbow_tex) return;
 
-        // Compute smooth fade-in / fade-out alpha
-        float elapsed = RAINBOW_DURATION - s_rainbowTimer;
-        float fadeIn = Clamp01(elapsed / RAINBOW_FADE_TIME);
-        float fadeOut = Clamp01(s_rainbowTimer / RAINBOW_FADE_TIME);
-        float alpha = fadeIn * fadeOut;
+        float elapsed = RAINBOW_DURATION - s_rainbow_timer;
+        float fade_in = Clamp01(elapsed / RAINBOW_FADE_TIME);
+        float fade_out = Clamp01(s_rainbow_timer / RAINBOW_FADE_TIME);
+        float alpha = fade_in * fade_out;
         if (alpha <= 0.001f) return;
 
-        // Build a mesh with the UV slice for the current frame baked in
-        constexpr float uvW = 1.0f / (float)RAINBOW_FRAME_COUNT;
-        float uMin = (float)s_rainbowFrame * uvW;
-        float uMax = uMin + uvW;
-        AEGfxVertexList* frameMesh = Spritesheet_Mesh(1.0f, 1.0f, uMin, 0.0f, uMax, 1.0f);
-        if (!frameMesh) return;
+        constexpr float uv_w = 1.0f / (float)RAINBOW_FRAME_COUNT;
+        float u_min = (float)s_rainbow_frame * uv_w;
+        float u_max = u_min + uv_w;
+        AEGfxVertexList* frame_mesh = Spritesheet_Mesh(1.0f, 1.0f, u_min, 0.0f, u_max, 1.0f);
+        if (!frame_mesh) return;
 
         AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
         AEGfxSetBlendMode(AE_GFX_BM_BLEND);
         AEGfxSetTransparency(alpha);
         AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);
-        AEGfxTextureSet(s_rainbowTex, 0.0f, 0.0f);  // no offset — UVs baked into mesh
-        Mesh_Renderer(frameMesh, 0.0f, RAINBOW_Y, RAINBOW_DISPLAY_W, RAINBOW_DISPLAY_H, 0.0f);
+        AEGfxTextureSet(s_rainbow_tex, 0.0f, 0.0f);
+        Mesh_Renderer(frame_mesh, 0.0f, RAINBOW_Y, RAINBOW_DISPLAY_W, RAINBOW_DISPLAY_H, 0.0f);
 
-        AEGfxMeshFree(frameMesh);
+        AEGfxMeshFree(frame_mesh);
 
-        // Reset render state
         AEGfxSetTransparency(1.0f);
         AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);
     }
 
-    // Rainbow HUD: cycling rainbow-coloured "POWER UPS GALORE!" + timer below
     static void Rainbow_DrawHUD()
     {
-        if (s_rainbowPopupTimer <= 0.0f || Graphics::font_id < 0) return;
+        if (s_rainbow_popup_timer <= 0.0f || Graphics::g_font_id < 0) return;
 
         AEGfxSetBlendMode(AE_GFX_BM_BLEND);
 
-        // Fade out over last WEATHER_POPUP_FADE seconds
-        float alpha = (s_rainbowPopupTimer < WEATHER_POPUP_FADE)
-            ? (s_rainbowPopupTimer / WEATHER_POPUP_FADE) : 1.0f;
+        float alpha = (s_rainbow_popup_timer < WEATHER_POPUP_FADE)
+            ? (s_rainbow_popup_timer / WEATHER_POPUP_FADE) : 1.0f;
 
-        // Cycle hue using the pulse timer
         constexpr float HUE_SPEED = 2.5f;
-        float h = fmodf(s_weatherPulseTimer * HUE_SPEED, 6.0f);
+        float h = fmodf(s_weather_pulse_timer * HUE_SPEED, 6.0f);
         float r, g, b;
         int   seg = (int)h;
         float f = h - (float)seg;
@@ -1151,12 +1082,12 @@ namespace
         case 2: r = 0.0f;     g = 1.0f;     b = f;        break;
         case 3: r = 0.0f;     g = 1.0f - f; b = 1.0f;     break;
         case 4: r = f;        g = 0.0f;     b = 1.0f;     break;
-        default: r = 1.0f;    g = 0.0f;     b = 1.0f - f; break;
+        default: r = 1.0f;   g = 0.0f;     b = 1.0f - f; break;
         }
 
         constexpr float BASE_SCALE = 0.75f;
         constexpr float PULSE_AMP = 0.08f;
-        float scale = BASE_SCALE + PULSE_AMP * sinf(s_weatherPulseTimer * 4.0f);
+        float scale = BASE_SCALE + PULSE_AMP * sinf(s_weather_pulse_timer * 4.0f);
 
         DrawCentredText("POWER UPS GALORE!", 0.0f, scale, r, g, b, alpha);
     }
@@ -1165,19 +1096,13 @@ namespace
     //  Ghost weather helpers
     // ================================================================
 
-    // Ghost mesh is rebuilt each draw call with exact UV coords for the current frame.
-    // No persistent mesh needed — we free/rebuild per-ghost per-frame using Spritesheet_Mesh.
     static void Ghost_BuildMesh()
     {
-        // Nothing to pre-build; per-frame meshes are created in Ghost_Draw.
-        // Free any stale mesh from a previous session.
-        if (s_ghostMesh) { AEGfxMeshFree(s_ghostMesh); s_ghostMesh = nullptr; }
+        if (s_ghost_mesh) { AEGfxMeshFree(s_ghost_mesh); s_ghost_mesh = nullptr; }
     }
 
-    // Spawn one ghost at a random screen edge with a random inward velocity.
     static void Ghost_SpawnOne(Ghost& g, int digit)
     {
-        // Pick a random edge: 0=top, 1=bottom, 2=left, 3=right
         int edge = rand() % 4;
         switch (edge)
         {
@@ -1199,45 +1124,37 @@ namespace
             break;
         }
 
-        // Random direction — ensure it has a non-trivial inward component
-        float angle = RandF(0.0f, 6.2832f); // full 2*pi
+        float angle = RandF(0.0f, 6.2832f);
         float speed = RandF(GHOST_SPEED_MIN, GHOST_SPEED_MAX);
-        g.velX = cosf(angle) * speed;
-        g.velY = sinf(angle) * speed;
-
+        g.vel_x = cosf(angle) * speed;
+        g.vel_y = sinf(angle) * speed;
         g.digit = digit;
         g.alive = true;
         g.frame = 0;
-        g.frameTimer = 0.0f;
+        g.frame_timer = 0.0f;
     }
 
-    // Kick off a new ghost weather event.
     static void Ghost_Start()
     {
-        // Move out of IDLE so the trigger timer stops advancing during the event,
-        // preventing a second weather type from overwriting s_activeType mid-ghost.
         s_state = WeatherState::FREEZING;
         ResetTriggerTimer();
 
-        s_ghostEventActive = true;
-        s_ghostLifeTimer = 0.0f;
-        s_ghostLockTimer = 0.0f;
-        s_ghostPopupTimer = 0.0f; // not used during announce phase
+        s_ghost_event_active = true;
+        s_ghost_life_timer = 0.0f;
+        s_ghost_lock_timer = 0.0f;
+        s_ghost_popup_timer = 0.0f;
 
-        // Start the 3-second pre-spawn announcement; ghosts spawn once it expires.
-        s_ghostAnnouncePending = true;
-        s_ghostAnnounceTimer = GHOST_ANNOUNCE_DUR;
+        s_ghost_announce_pending = true;
+        s_ghost_announce_timer = GHOST_ANNOUNCE_DUR;
 
-        // Mark all ghosts as dead until they are actually spawned after announcement
         for (int i = 0; i < GHOST_COUNT; ++i)
             s_ghosts[i].alive = false;
     }
 
-    // Spawn all 5 ghosts with shuffled digits — called after the announcement ends.
     static void Ghost_SpawnAll()
     {
         int digits[GHOST_COUNT] = { 5, 6, 7, 8, 9 };
-        // Fisher-Yates shuffle for variety
+        // Fisher-Yates shuffle
         for (int i = GHOST_COUNT - 1; i > 0; --i)
         {
             int j = rand() % (i + 1);
@@ -1247,27 +1164,26 @@ namespace
             Ghost_SpawnOne(s_ghosts[i], digits[i]);
     }
 
-    // Per-frame ghost update: movement, animation, digit input, lock timer.
     static void Ghost_Update(float dt)
     {
         // ---- Announcement phase: wait 3s before spawning ghosts ----
-        if (s_ghostAnnouncePending)
+        if (s_ghost_announce_pending)
         {
-            s_ghostAnnounceTimer -= dt;
-            if (s_ghostAnnounceTimer <= 0.0f)
+            s_ghost_announce_timer -= dt;
+            if (s_ghost_announce_timer <= 0.0f)
             {
-                s_ghostAnnouncePending = false;
-                s_ghostAnnounceTimer = 0.0f;
+                s_ghost_announce_pending = false;
+                s_ghost_announce_timer = 0.0f;
                 Ghost_SpawnAll();
             }
-            return; // don't process ghosts yet
+            return;
         }
 
-        // ---- Lock timer: count down ----
-        if (s_ghostLockTimer > 0.0f)
+        // ---- Lock timer ----
+        if (s_ghost_lock_timer > 0.0f)
         {
-            s_ghostLockTimer -= dt;
-            if (s_ghostLockTimer < 0.0f) s_ghostLockTimer = 0.0f;
+            s_ghost_lock_timer -= dt;
+            if (s_ghost_lock_timer < 0.0f) s_ghost_lock_timer = 0.0f;
         }
 
         // ---- Count still-alive ghosts ----
@@ -1276,9 +1192,9 @@ namespace
             if (s_ghosts[i].alive) ++alive;
 
         // Event ends when all ghosts are dead and no lock is pending
-        if (alive == 0 && s_ghostLockTimer <= 0.0f)
+        if (alive == 0 && s_ghost_lock_timer <= 0.0f)
         {
-            s_ghostEventActive = false;
+            s_ghost_event_active = false;
             s_state = WeatherState::IDLE;
             ResetTriggerTimer();
             return;
@@ -1287,12 +1203,11 @@ namespace
         // ---- Life timer: triggers lock if a ghost survives too long ----
         if (alive > 0)
         {
-            s_ghostLifeTimer += dt;
-            if (s_ghostLifeTimer >= GHOST_LIFETIME && s_ghostLockTimer <= 0.0f)
+            s_ghost_life_timer += dt;
+            if (s_ghost_life_timer >= GHOST_LIFETIME && s_ghost_lock_timer <= 0.0f)
             {
-                // Lock typing for GHOST_LOCK_DUR seconds
-                s_ghostLockTimer = GHOST_LOCK_DUR;
-                s_ghostLifeTimer = 0.0f; // reset so subsequent survivors can trigger again
+                s_ghost_lock_timer = GHOST_LOCK_DUR;
+                s_ghost_life_timer = 0.0f;
             }
         }
 
@@ -1302,35 +1217,31 @@ namespace
             Ghost& g = s_ghosts[i];
             if (!g.alive) continue;
 
-            g.x += g.velX * dt;
-            g.y += g.velY * dt;
+            g.x += g.vel_x * dt;
+            g.y += g.vel_y * dt;
 
-            // Bounce off screen edges to keep ghosts on screen
-            if (g.x < -HALF_W) { g.x = -HALF_W; g.velX = fabsf(g.velX); }
-            if (g.x > HALF_W) { g.x = HALF_W; g.velX = -fabsf(g.velX); }
-            if (g.y < -HALF_H) { g.y = -HALF_H; g.velY = fabsf(g.velY); }
-            if (g.y > HALF_H) { g.y = HALF_H; g.velY = -fabsf(g.velY); }
+            // Bounce off screen edges
+            if (g.x < -HALF_W) { g.x = -HALF_W; g.vel_x = fabsf(g.vel_x); }
+            if (g.x > HALF_W) { g.x = HALF_W; g.vel_x = -fabsf(g.vel_x); }
+            if (g.y < -HALF_H) { g.y = -HALF_H; g.vel_y = fabsf(g.vel_y); }
+            if (g.y > HALF_H) { g.y = HALF_H; g.vel_y = -fabsf(g.vel_y); }
 
-            // Advance animation frame
-            g.frameTimer += dt;
-            if (g.frameTimer >= GHOST_FRAME_TIME)
+            g.frame_timer += dt;
+            if (g.frame_timer >= GHOST_FRAME_TIME)
             {
-                g.frameTimer -= GHOST_FRAME_TIME;
+                g.frame_timer -= GHOST_FRAME_TIME;
                 g.frame = (g.frame + 1) % GHOST_FRAME_COUNT;
             }
         }
 
         // ---- Check digit input (only when typing is not locked) ----
-        if (s_ghostLockTimer <= 0.0f)
+        if (s_ghost_lock_timer <= 0.0f)
         {
-            // Check keys '5' through '9'
             for (int key = 5; key <= 9; ++key)
             {
-                // AEVK_0 = 0x30, so digit key = 0x30 + key
                 u8 vk = (u8)(0x30 + key);
                 if (AEInputCheckTriggered(vk))
                 {
-                    // Kill the first live ghost whose digit matches
                     for (int i = 0; i < GHOST_COUNT; ++i)
                     {
                         if (s_ghosts[i].alive && s_ghosts[i].digit == key)
@@ -1344,90 +1255,83 @@ namespace
         }
     }
 
-    // Draw all live ghosts (sprite + digit label above them).
     static void Ghost_Draw()
     {
-        if (!s_ghostTex) return;
+        if (!s_ghost_tex) return;
 
-        constexpr float uvW = 1.0f / (float)GHOST_FRAME_COUNT;
+        constexpr float uv_w = 1.0f / (float)GHOST_FRAME_COUNT;
 
         for (int i = 0; i < GHOST_COUNT; ++i)
         {
             const Ghost& g = s_ghosts[i];
             if (!g.alive) continue;
 
-            // ---- Build a fresh mesh with exact UV slice for this frame ----
-            float uMin = (float)g.frame * uvW;
-            float uMax = uMin + uvW;
-            AEGfxVertexList* frameMesh = Spritesheet_Mesh(1.0f, 1.0f, uMin, 0.0f, uMax, 1.0f);
-            if (!frameMesh) continue;
+            float u_min = (float)g.frame * uv_w;
+            float u_max = u_min + uv_w;
+            AEGfxVertexList* frame_mesh = Spritesheet_Mesh(1.0f, 1.0f, u_min, 0.0f, u_max, 1.0f);
+            if (!frame_mesh) continue;
 
-            // ---- Draw sprite ----
             AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
             AEGfxSetBlendMode(AE_GFX_BM_BLEND);
             AEGfxSetTransparency(1.0f);
             AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);
             AEGfxSetColorToAdd(0.0f, 0.0f, 0.0f, 0.0f);
-            AEGfxTextureSet(s_ghostTex, 0.0f, 0.0f); // no extra offset; UVs are baked
-            Mesh_Renderer(frameMesh, g.x, g.y, GHOST_SIZE, GHOST_SIZE, 0.0f);
+            AEGfxTextureSet(s_ghost_tex, 0.0f, 0.0f);
+            Mesh_Renderer(frame_mesh, g.x, g.y, GHOST_SIZE, GHOST_SIZE, 0.0f);
 
-            AEGfxMeshFree(frameMesh);
+            AEGfxMeshFree(frame_mesh);
 
-            // ---- Draw digit label above the ghost ----
-            if (Graphics::font_id >= 0)
+            // Draw digit label above the ghost
+            if (Graphics::g_font_id >= 0)
             {
                 char label[2] = { (char)('0' + g.digit), '\0' };
                 constexpr float DIGIT_SCALE = 0.6f;
 
                 float hw = (float)AEGfxGetWindowWidth() * 0.5f;
                 float hh = (float)AEGfxGetWindowHeight() * 0.5f;
-                float ndcX = (hw > 0.0f) ? (g.x / hw) : 0.0f;
-                float ndcY = (hh > 0.0f) ? ((g.y + GHOST_LABEL_OFFSET_Y) / hh) : 0.0f;
+                float ndc_x = (hw > 0.0f) ? (g.x / hw) : 0.0f;
+                float ndc_y = (hh > 0.0f) ? ((g.y + GHOST_LABEL_OFFSET_Y) / hh) : 0.0f;
 
                 float tw = 0.0f, th = 0.0f;
-                AEGfxGetPrintSize(Graphics::font_id, label, DIGIT_SCALE, &tw, &th);
-                ndcX -= tw * 0.5f;
+                AEGfxGetPrintSize(Graphics::g_font_id, label, DIGIT_SCALE, &tw, &th);
+                ndc_x -= tw * 0.5f;
 
                 AEGfxSetBlendMode(AE_GFX_BM_BLEND);
-                AEGfxPrint(Graphics::font_id, label, ndcX, ndcY, DIGIT_SCALE, 1.0f, 0.95f, 0.2f, 1.0f);
+                AEGfxPrint(Graphics::g_font_id, label, ndc_x, ndc_y, DIGIT_SCALE, 1.0f, 0.95f, 0.2f, 1.0f);
             }
         }
 
-        // Reset render state
         AEGfxSetRenderMode(AE_GFX_RM_COLOR);
         AEGfxSetTransparency(1.0f);
         AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);
         AEGfxSetColorToAdd(0.0f, 0.0f, 0.0f, 0.0f);
     }
 
-    // Draw "DEFEAT GHOSTS (PRESS NUMBERS)" announcement before ghosts spawn,
-    // then "GHOSTIFIED!" lock indicator when typing is locked.
     static void Ghost_DrawHUD()
     {
-        if (Graphics::font_id < 0) return;
+        if (Graphics::g_font_id < 0) return;
 
         AEGfxSetBlendMode(AE_GFX_BM_BLEND);
 
-        // ---- "DEFEAT GHOSTS (PRESS NUMBERS)" — shown for 3s before ghosts spawn ----
-        if (s_ghostAnnouncePending && s_ghostAnnounceTimer > 0.0f)
+        // "DEFEAT GHOSTS (PRESS NUMBERS)" - shown for 3s before ghosts spawn
+        if (s_ghost_announce_pending && s_ghost_announce_timer > 0.0f)
         {
-            // Fade out over the last 0.5s of the announcement
-            float alpha = (s_ghostAnnounceTimer < WEATHER_POPUP_FADE)
-                ? (s_ghostAnnounceTimer / WEATHER_POPUP_FADE) : 1.0f;
-            float brightness = fabsf(sinf(s_weatherPulseTimer * 2.5f));
-            float scale = 0.65f + 0.08f * sinf(s_weatherPulseTimer * 3.5f);
+            float alpha = (s_ghost_announce_timer < WEATHER_POPUP_FADE)
+                ? (s_ghost_announce_timer / WEATHER_POPUP_FADE) : 1.0f;
+            float brightness = fabsf(sinf(s_weather_pulse_timer * 2.5f));
+            float scale = 0.65f + 0.08f * sinf(s_weather_pulse_timer * 3.5f);
             DrawCentredText("DEFEAT GHOSTS (PRESS NUMBERS)", 0.0f, scale,
                 brightness, brightness, brightness, alpha);
         }
 
-        // ---- "GHOSTIFIED!" lock indicator ----
-        if (s_ghostLockTimer > 0.0f)
+        // "GHOSTIFIED!" lock indicator
+        if (s_ghost_lock_timer > 0.0f)
         {
-            float pulse = ((int)(s_ghostLockTimer * 6.0f) % 2 == 0) ? 1.0f : 0.55f;
+            float pulse = ((int)(s_ghost_lock_timer * 6.0f) % 2 == 0) ? 1.0f : 0.55f;
             DrawCentredText("GHOSTIFIED!", 0.10f, 0.85f, 1.0f, 0.15f, 0.15f, pulse);
 
             char buf[16];
-            snprintf(buf, sizeof(buf), "%d", (int)ceilf(s_ghostLockTimer));
+            snprintf(buf, sizeof(buf), "%d", (int)ceilf(s_ghost_lock_timer));
             DrawCentredText(buf, -0.05f, 0.65f, 1.0f, 1.0f, 1.0f, 1.0f);
         }
     }

@@ -4,40 +4,41 @@
 
 namespace
 {
-    AEGfxVertexList* s_quad = nullptr;
+    static AEGfxVertexList* s_quad = nullptr;
 
-    float bgmVol = 0.5f;
-    float sfxVol = 0.8f;
-    float ambVol = 0.6f;
+    static float s_bgm_vol = 0.5f;
+    static float s_sfx_vol = 0.8f;
+    static float s_amb_vol = 0.6f;
 
-    int draggingSlider = -1;
+    static int s_dragging_slider = -1;
 
-    const float SLIDER_W = 400.0f;
-    const float SLIDER_H = 15.0f;
-    const float KNOB_W = 20.0f;
-    const float KNOB_H = 40.0f;
+    constexpr float SLIDER_W = 400.0f;
+    constexpr float SLIDER_H = 15.0f;
+    constexpr float KNOB_W = 20.0f;
+    constexpr float KNOB_H = 40.0f;
 
-    const float BGM_Y = 120.0f;
-    const float SFX_Y = -10.0f;
-    const float AMB_Y = -140.0f;
+    constexpr float BGM_Y = 120.0f;
+    constexpr float SFX_Y = -10.0f;
+    constexpr float AMB_Y = -140.0f;
 
-    const float CLOSE_W = 200.0f;
-    const float CLOSE_H = 70.0f;
-    const float CLOSE_Y = -300.0f;
+    constexpr float CLOSE_W = 200.0f;
+    constexpr float CLOSE_H = 70.0f;
+    constexpr float CLOSE_Y = -300.0f;
 
-    const float BORDER = 5.0f;
+    constexpr float BORDER = 5.0f;
 
-    static ButtonTween tweenClose;
+    static ButtonTween s_tween_close;
 
-    float Clamp01(float v) { return v < 0.0f ? 0.0f : (v > 1.0f ? 1.0f : v); }
+    static float Clamp01(float v) { return v < 0.0f ? 0.0f : (v > 1.0f ? 1.0f : v); }
 
-    void DrawCentredText(const char* text, float ndcY, float scale, float r, float g, float b, float alpha)
+    static void DrawCentredText(const char* text, float ndc_y, float scale,
+        float r, float g, float b, float alpha)
     {
-        if (Graphics::font_id < 0) return;
+        if (Graphics::g_font_id < 0) return;
         float w, h;
-        AEGfxGetPrintSize(Graphics::font_id, text, scale, &w, &h);
+        AEGfxGetPrintSize(Graphics::g_font_id, text, scale, &w, &h);
         AEGfxSetBlendMode(AE_GFX_BM_BLEND);
-        AEGfxPrint(Graphics::font_id, text, -w * 0.5f, ndcY - (h * 0.5f), scale, r, g, b, alpha);
+        AEGfxPrint(Graphics::g_font_id, text, -w * 0.5f, ndc_y - (h * 0.5f), scale, r, g, b, alpha);
     }
 }
 
@@ -48,42 +49,42 @@ namespace SysSettings
         if (!s_quad)
             s_quad = Rect_Mesh(1.0f, 1.0f, 0xFFFFFFFF);
 
-        bgmVol = SoundManager::GetBGMVolume();
-        sfxVol = SoundManager::GetSFXVolume();
-        ambVol = SoundManager::GetAmbientVolume();
-        ButtonTween_Reset(tweenClose);
+        s_bgm_vol = SoundManager::GetBGMVolume();
+        s_sfx_vol = SoundManager::GetSFXVolume();
+        s_amb_vol = SoundManager::GetAmbientVolume();
+        ButtonTween_Reset(s_tween_close);
     }
 
     bool DisplaySettings()
     {
         if (!s_quad) Init();
 
-        s32 mouseX, mouseY;
-        AEInputGetCursorPosition(&mouseX, &mouseY);
-        float winW = (float)AEGfxGetWindowWidth();
-        float winH = (float)AEGfxGetWindowHeight();
-        float worldX = (float)mouseX - (winW * 0.5f);
-        float worldY = (winH * 0.5f) - (float)mouseY;
-        float ndcScale = winH > 0 ? (2.0f / winH) : 0.0022f;
+        s32 mouse_x, mouse_y;
+        AEInputGetCursorPosition(&mouse_x, &mouse_y);
+        float win_w = (float)AEGfxGetWindowWidth();
+        float win_h = (float)AEGfxGetWindowHeight();
+        float world_x = (float)mouse_x - (win_w * 0.5f);
+        float world_y = (win_h * 0.5f) - (float)mouse_y;
+        float ndc_scale = win_h > 0 ? (2.0f / win_h) : 0.0022f;
 
-        bool mouseHeld = (AEInputCheckCurr(AEVK_LBUTTON) != 0);
-        bool mouseTriggered = (AEInputCheckTriggered(AEVK_LBUTTON) != 0);
-        float startX = -(SLIDER_W * 0.5f);
+        bool mouse_held = (AEInputCheckCurr(AEVK_LBUTTON) != 0);
+        bool mouse_triggered = (AEInputCheckTriggered(AEVK_LBUTTON) != 0);
+        float start_x = -(SLIDER_W * 0.5f);
 
-        if (!mouseHeld) draggingSlider = -1;
+        if (!mouse_held) s_dragging_slider = -1;
 
         // Close button tween
         {
             float dt = (float)AEFrameRateControllerGetFrameTime();
-            bool hClose = (worldX >= -(CLOSE_W * 0.5f) && worldX <= (CLOSE_W * 0.5f) &&
-                worldY >= CLOSE_Y - (CLOSE_H * 0.5f) && worldY <= CLOSE_Y + (CLOSE_H * 0.5f));
-            ButtonTween_Update(tweenClose, hClose, hClose && mouseTriggered, dt);
+            bool h_close = (world_x >= -(CLOSE_W * 0.5f) && world_x <= (CLOSE_W * 0.5f) &&
+                world_y >= CLOSE_Y - (CLOSE_H * 0.5f) && world_y <= CLOSE_Y + (CLOSE_H * 0.5f));
+            ButtonTween_Update(s_tween_close, h_close, h_close && mouse_triggered, dt);
         }
 
         // Close button / ESC
-        if ((mouseTriggered && draggingSlider == -1 &&
-            worldX >= -(CLOSE_W * 0.5f) && worldX <= (CLOSE_W * 0.5f) &&
-            worldY >= CLOSE_Y - (CLOSE_H * 0.5f) && worldY <= CLOSE_Y + (CLOSE_H * 0.5f))
+        if ((mouse_triggered && s_dragging_slider == -1 &&
+            world_x >= -(CLOSE_W * 0.5f) && world_x <= (CLOSE_W * 0.5f) &&
+            world_y >= CLOSE_Y - (CLOSE_H * 0.5f) && world_y <= CLOSE_Y + (CLOSE_H * 0.5f))
             || AEInputCheckTriggered(AEVK_ESCAPE))
         {
             SoundManager::PlayClickBtnSfx();
@@ -91,24 +92,24 @@ namespace SysSettings
         }
 
         // Grab slider
-        if (mouseTriggered)
+        if (mouse_triggered)
         {
-            float hitBoxW = SLIDER_W + KNOB_W;
-            if (worldX >= -(hitBoxW * 0.5f) && worldX <= (hitBoxW * 0.5f))
+            float hit_box_w = SLIDER_W + KNOB_W;
+            if (world_x >= -(hit_box_w * 0.5f) && world_x <= (hit_box_w * 0.5f))
             {
-                if (worldY >= BGM_Y - KNOB_H && worldY <= BGM_Y + KNOB_H) draggingSlider = 0;
-                else if (worldY >= SFX_Y - KNOB_H && worldY <= SFX_Y + KNOB_H) draggingSlider = 1;
-                else if (worldY >= AMB_Y - KNOB_H && worldY <= AMB_Y + KNOB_H) draggingSlider = 2;
+                if (world_y >= BGM_Y - KNOB_H && world_y <= BGM_Y + KNOB_H) s_dragging_slider = 0;
+                else if (world_y >= SFX_Y - KNOB_H && world_y <= SFX_Y + KNOB_H) s_dragging_slider = 1;
+                else if (world_y >= AMB_Y - KNOB_H && world_y <= AMB_Y + KNOB_H) s_dragging_slider = 2;
             }
         }
 
         // Apply drag
-        if (draggingSlider != -1)
+        if (s_dragging_slider != -1)
         {
-            float percent = Clamp01((worldX - startX) / SLIDER_W);
-            if (draggingSlider == 0) { bgmVol = percent; SoundManager::SetBGMVolume(bgmVol); }
-            else if (draggingSlider == 1) { sfxVol = percent; SoundManager::SetSFXVolume(sfxVol); }
-            else if (draggingSlider == 2) { ambVol = percent; SoundManager::SetAmbientVolume(ambVol); }
+            float percent = Clamp01((world_x - start_x) / SLIDER_W);
+            if (s_dragging_slider == 0) { s_bgm_vol = percent; SoundManager::SetBGMVolume(s_bgm_vol); }
+            else if (s_dragging_slider == 1) { s_sfx_vol = percent; SoundManager::SetSFXVolume(s_sfx_vol); }
+            else if (s_dragging_slider == 2) { s_amb_vol = percent; SoundManager::SetAmbientVolume(s_amb_vol); }
         }
 
         // ----------------------------------------------------------------
@@ -120,11 +121,11 @@ namespace SysSettings
         AEGfxSetBlendMode(AE_GFX_BM_BLEND);
         AEGfxSetTransparency(0.75f);
         AEGfxSetColorToMultiply(0.05f, 0.03f, 0.08f, 1.0f);
-        Mesh_Renderer(s_quad, 0.0f, 0.0f, winW, winH, 0.0f);
+        Mesh_Renderer(s_quad, 0.0f, 0.0f, win_w, win_h, 0.0f);
 
         // Gold border panel
         AEGfxSetTransparency(1.0f);
-        AEGfxSetColorToMultiply(0.85f, 0.70f, 0.15f, 1.0f); // gold
+        AEGfxSetColorToMultiply(0.85f, 0.70f, 0.15f, 1.0f);
         Mesh_Renderer(s_quad, 0.0f, -20.0f, 620.0f, 820.0f, 0.0f);
 
         // Dark purple panel fill
@@ -135,60 +136,57 @@ namespace SysSettings
         AEGfxSetColorToMultiply(0.85f, 0.70f, 0.15f, 1.0f);
         Mesh_Renderer(s_quad, 0.0f, 260.0f, 540.0f, 3.0f, 0.0f);
 
-        // Title ? shadow then gold
-        // Shadow
+        // Title shadow then gold
         DrawCentredText("SOUND SETTINGS", 0.68f, 0.9f, 0.0f, 0.0f, 0.0f, 1.0f);
-        // Gold
         DrawCentredText("SOUND SETTINGS", 0.69f, 0.9f, 1.0f, 0.82f, 0.1f, 1.0f);
 
         // Sliders
-        auto DrawSlider = [&](float yPos, float currentVol, const char* label)
+        auto DrawSlider = [&](float y_pos, float current_vol, const char* label)
             {
-                // Label
-                DrawCentredText(label, (yPos + 50.0f) * ndcScale, 0.55f, 0.85f, 0.70f, 0.15f, 1.0f); // gold label
+                DrawCentredText(label, (y_pos + 50.0f) * ndc_scale, 0.55f, 0.85f, 0.70f, 0.15f, 1.0f);
 
-                // Track ? gold border then dark fill
                 AEGfxSetRenderMode(AE_GFX_RM_COLOR);
                 AEGfxSetBlendMode(AE_GFX_BM_BLEND);
                 AEGfxSetTransparency(1.0f);
                 AEGfxSetColorToMultiply(0.85f, 0.70f, 0.15f, 1.0f);
-                Mesh_Renderer(s_quad, 0.0f, yPos, SLIDER_W + BORDER * 2, SLIDER_H + BORDER * 2, 0.0f);
+                Mesh_Renderer(s_quad, 0.0f, y_pos, SLIDER_W + BORDER * 2, SLIDER_H + BORDER * 2, 0.0f);
 
                 AEGfxSetColorToMultiply(0.12f, 0.10f, 0.18f, 1.0f);
-                Mesh_Renderer(s_quad, 0.0f, yPos, SLIDER_W, SLIDER_H, 0.0f);
+                Mesh_Renderer(s_quad, 0.0f, y_pos, SLIDER_W, SLIDER_H, 0.0f);
 
-                // Gold fill
-                float fillW = SLIDER_W * currentVol;
-                float fillX = startX + (fillW * 0.5f);
-                if (fillW > 0.0f)
+                float fill_w = SLIDER_W * current_vol;
+                float fill_x = start_x + (fill_w * 0.5f);
+                if (fill_w > 0.0f)
                 {
                     AEGfxSetColorToMultiply(0.95f, 0.78f, 0.10f, 1.0f);
-                    Mesh_Renderer(s_quad, fillX, yPos, fillW, SLIDER_H, 0.0f);
+                    Mesh_Renderer(s_quad, fill_x, y_pos, fill_w, SLIDER_H, 0.0f);
                 }
 
-                // Knob ? gold border + dark fill
-                float knobX = startX + fillW;
+                float knob_x = start_x + fill_w;
                 AEGfxSetColorToMultiply(0.85f, 0.70f, 0.15f, 1.0f);
-                Mesh_Renderer(s_quad, knobX, yPos, KNOB_W + BORDER, KNOB_H + BORDER, 0.0f);
+                Mesh_Renderer(s_quad, knob_x, y_pos, KNOB_W + BORDER, KNOB_H + BORDER, 0.0f);
                 AEGfxSetColorToMultiply(0.15f, 0.12f, 0.20f, 1.0f);
-                Mesh_Renderer(s_quad, knobX, yPos, KNOB_W, KNOB_H, 0.0f);
+                Mesh_Renderer(s_quad, knob_x, y_pos, KNOB_W, KNOB_H, 0.0f);
             };
 
-        DrawSlider(BGM_Y, bgmVol, "MUSIC VOLUME");
-        DrawSlider(SFX_Y, sfxVol, "SFX VOLUME");
-        DrawSlider(AMB_Y, ambVol, "AMBIENT VOLUME");
+        DrawSlider(BGM_Y, s_bgm_vol, "MUSIC VOLUME");
+        DrawSlider(SFX_Y, s_sfx_vol, "SFX VOLUME");
+        DrawSlider(AMB_Y, s_amb_vol, "AMBIENT VOLUME");
 
         // Close button scaled by tween
         AEGfxSetRenderMode(AE_GFX_RM_COLOR);
         AEGfxSetBlendMode(AE_GFX_BM_BLEND);
         AEGfxSetTransparency(1.0f);
         AEGfxSetColorToMultiply(0.85f, 0.70f, 0.15f, 1.0f);
-        Mesh_Renderer(s_quad, 0.0f, CLOSE_Y, (CLOSE_W + BORDER * 2) * tweenClose.scale, (CLOSE_H + BORDER * 2) * tweenClose.scale, 0.0f);
+        Mesh_Renderer(s_quad, 0.0f, CLOSE_Y,
+            (CLOSE_W + BORDER * 2) * s_tween_close.scale,
+            (CLOSE_H + BORDER * 2) * s_tween_close.scale, 0.0f);
         AEGfxSetColorToMultiply(0.10f, 0.08f, 0.14f, 1.0f);
-        Mesh_Renderer(s_quad, 0.0f, CLOSE_Y, CLOSE_W * tweenClose.scale, CLOSE_H * tweenClose.scale, 0.0f);
+        Mesh_Renderer(s_quad, 0.0f, CLOSE_Y,
+            CLOSE_W * s_tween_close.scale,
+            CLOSE_H * s_tween_close.scale, 0.0f);
 
-        // TEXT LABELS
-        DrawCentredText("CLOSE", (CLOSE_Y)*ndcScale, 0.7f, 1.0f, 1.0f, 1.0f, 1.0f);
+        DrawCentredText("CLOSE", CLOSE_Y * ndc_scale, 0.7f, 1.0f, 1.0f, 1.0f, 1.0f);
 
         return true;
     }

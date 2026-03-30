@@ -4,254 +4,166 @@
 
 namespace
 {
-    AEAudioGroup bgmGroup;
-    AEAudioGroup sfxGroup;
-    AEAudioGroup ambientGroup;
-    AEAudioGroup uiGroup;
-    AEAudioGroup bossAlarmGroup;
+    static AEAudioGroup s_bgm_group;
+    static AEAudioGroup s_sfx_group;
+    static AEAudioGroup s_ambient_group;
+    static AEAudioGroup s_ui_group;
+    static AEAudioGroup s_boss_alarm_group;
 
+    static AEAudio s_bgm_track;
+    static AEAudio s_rain_track;
+    static AEAudio s_snow_track;
+    static AEAudio s_gameover_sfx;
+    static AEAudio s_player_hit_sfx;
+    static AEAudio s_enemy_death_sfx;
+    static AEAudio s_click_btn_sfx;
+    static AEAudio s_typing_sfx;
+    static AEAudio s_boss_sfx;
+    static AEAudio s_lightning_sfx;
+    static AEAudio s_shield_sfx;
+    static AEAudio s_slow_sfx;
 
-    AEAudio bgmTrack;
-    AEAudio rainTrack;
-    AEAudio snowTrack;
-    AEAudio gameoverSfx;
-    AEAudio playerhitSfx;
-    AEAudio enemydeathSfx;
-    AEAudio clickbtnSfx;
-    AEAudio typingSfx;
-    AEAudio bossSfx;
-    AEAudio lightningSfx;
-    AEAudio shieldSfx;
-    AEAudio slowSfx;
+    static bool  s_is_audio_loaded = false;
+    static float s_master_volume = 1.0f;
+    static float s_bgm_volume = 1.0f;
+    static float s_sfx_volume = 1.0f;
+    static float s_ambient_volume = 1.0f;
 
-    bool isAudioLoaded = false;
-    float masterVolume = 1.0f; 
-    float bgmVolume = 1.0f; 
-    float sfxVolume = 1.0f; 
-    float ambientVolume = 1.0f; 
-
-    void UpdateVolumes()
+    static void UpdateVolumes()
     {
-        // Multiply the specific volume by the master volume before telling the engine
-        AEAudioSetGroupVolume(bgmGroup, bgmVolume * masterVolume);
-        AEAudioSetGroupVolume(sfxGroup, sfxVolume * masterVolume);
-        AEAudioSetGroupVolume(ambientGroup, ambientVolume * masterVolume);
-        AEAudioSetGroupVolume(uiGroup, sfxVolume * masterVolume);
-        AEAudioSetGroupVolume(bossAlarmGroup, sfxVolume * masterVolume);
+        AEAudioSetGroupVolume(s_bgm_group, s_bgm_volume * s_master_volume);
+        AEAudioSetGroupVolume(s_sfx_group, s_sfx_volume * s_master_volume);
+        AEAudioSetGroupVolume(s_ambient_group, s_ambient_volume * s_master_volume);
+        AEAudioSetGroupVolume(s_ui_group, s_sfx_volume * s_master_volume);
+        AEAudioSetGroupVolume(s_boss_alarm_group, s_sfx_volume * s_master_volume);
     }
-   
 }
 
 namespace SoundManager
 {
     void Init()
     {
-        static bool isFirstBoot = false;
-        
-        if (isFirstBoot)
-        {
-            bgmVolume = 1.0f;
-            sfxVolume = 1.0f;
-            ambientVolume = 1.0f;
-            isFirstBoot = false;
-        }
-        // Create audio groups
-        if (!isAudioLoaded)
-        {
-            bgmGroup = AEAudioCreateGroup();
-            sfxGroup = AEAudioCreateGroup();
-            ambientGroup = AEAudioCreateGroup();
-            uiGroup = AEAudioCreateGroup();
-            bossAlarmGroup = AEAudioCreateGroup(); 
+        static bool s_is_first_boot = false;
 
-            bgmTrack = AEAudioLoadMusic("Assets/Game Sound/RUNNING THE BASS - Jazz MSCJAZ1_20.mp3");
+        if (s_is_first_boot)
+        {
+            s_bgm_volume = 1.0f;
+            s_sfx_volume = 1.0f;
+            s_ambient_volume = 1.0f;
+            s_is_first_boot = false;
+        }
+
+        if (!s_is_audio_loaded)
+        {
+            s_bgm_group = AEAudioCreateGroup();
+            s_sfx_group = AEAudioCreateGroup();
+            s_ambient_group = AEAudioCreateGroup();
+            s_ui_group = AEAudioCreateGroup();
+            s_boss_alarm_group = AEAudioCreateGroup();
+
+            s_bgm_track = AEAudioLoadMusic("Assets/Game Sound/RUNNING THE BASS - Jazz MSCJAZ1_20.mp3");
 
             // Load audio files
-            bgmTrack = AEAudioLoadMusic("Assets/Game Sound/RUNNING THE BASS - Jazz MSCJAZ1_20.mp3");
-            rainTrack = AEAudioLoadMusic("Assets/Game Sound/RAIN_GEN-HDF-19746.mp3");
-            snowTrack = AEAudioLoadMusic("Assets/Game Sound/SCI-FI-WIND_GEN-HDF-20895.mp3");
-            typingSfx = AEAudioLoadSound("Assets/Game Sound/COMPUTER-KEYBOARD_GEN-HDF-08220.wav");
-            gameoverSfx = AEAudioLoadSound("Assets/Game Sound/FluteComedy CTE05_42.3.wav");
-            playerhitSfx = AEAudioLoadSound("Assets/Game Sound/HUMAN-GRUNT_GEN-HDF-15069.wav");
-            enemydeathSfx = AEAudioLoadSound("Assets/Game Sound/HORROR_GEN-HDF-14351.wav");
-            clickbtnSfx = AEAudioLoadSound("Assets/Game Sound/COMPUTER-LAPTOP_GEN-HDF-08250.wav");
-            bossSfx = AEAudioLoadSound("Assets/Game Sound/ALARM-ELECTRONIC_GEN-HDF-00613(1).mp3");
-            lightningSfx = AEAudioLoadSound("Assets/Game Sound/Lightning_5sec CTE01_90.5.mp3");
-            shieldSfx = AEAudioLoadSound("Assets/Game Sound/HitMetal CTE01_70.3.wav");
-            slowSfx = AEAudioLoadSound("Assets/Game Sound/Scifi_Maltfuncti.mp3");
+            s_bgm_track = AEAudioLoadMusic("Assets/Game Sound/RUNNING THE BASS - Jazz MSCJAZ1_20.mp3");
+            s_rain_track = AEAudioLoadMusic("Assets/Game Sound/RAIN_GEN-HDF-19746.mp3");
+            s_snow_track = AEAudioLoadMusic("Assets/Game Sound/SCI-FI-WIND_GEN-HDF-20895.mp3");
+            s_typing_sfx = AEAudioLoadSound("Assets/Game Sound/COMPUTER-KEYBOARD_GEN-HDF-08220.wav");
+            s_gameover_sfx = AEAudioLoadSound("Assets/Game Sound/FluteComedy CTE05_42.3.wav");
+            s_player_hit_sfx = AEAudioLoadSound("Assets/Game Sound/HUMAN-GRUNT_GEN-HDF-15069.wav");
+            s_enemy_death_sfx = AEAudioLoadSound("Assets/Game Sound/HORROR_GEN-HDF-14351.wav");
+            s_click_btn_sfx = AEAudioLoadSound("Assets/Game Sound/COMPUTER-LAPTOP_GEN-HDF-08250.wav");
+            s_boss_sfx = AEAudioLoadSound("Assets/Game Sound/ALARM-ELECTRONIC_GEN-HDF-00613(1).mp3");
+            s_lightning_sfx = AEAudioLoadSound("Assets/Game Sound/Lightning_5sec CTE01_90.5.mp3");
+            s_shield_sfx = AEAudioLoadSound("Assets/Game Sound/HitMetal CTE01_70.3.wav");
+            s_slow_sfx = AEAudioLoadSound("Assets/Game Sound/Scifi_Maltfuncti.mp3");
 
-        isAudioLoaded = true;
-        isFirstBoot = true; // Flag that we just launched the game
+            s_is_audio_loaded = true;
+            s_is_first_boot = true;
         }
 
-        // Set default volumes
-        if (gGameStateCurr == GS_GAME || gGameStateCurr == GS_GAME_TIMEMODE || gGameStateCurr == GS_TUTORIAL)
+        if (g_game_state_curr == GS_GAME || g_game_state_curr == GS_GAME_TIMEMODE || g_game_state_curr == GS_TUTORIAL)
         {
-            // ALWAYS restart the music from 0:00 when a level begins!
-            AEAudioStopGroup(bgmGroup);
+            AEAudioStopGroup(s_bgm_group);
             PlayBackgroundMusic();
         }
-        // --- ENTERING ANY MENU MODE ---
         else
         {
-            // RESTART from 0:00 if returning from a game, OR if it's the first boot!
-            // (If moving between menus like Shop/Credits, this safely skips to keep music seamless)
-            if (gGameStatePrev == GS_GAME || gGameStatePrev == GS_GAME_TIMEMODE || gGameStatePrev == GS_TUTORIAL || isFirstBoot) {
-                AEAudioStopGroup(bgmGroup);
+            if (g_game_state_prev == GS_GAME || g_game_state_prev == GS_GAME_TIMEMODE ||
+                g_game_state_prev == GS_TUTORIAL || s_is_first_boot)
+            {
+                AEAudioStopGroup(s_bgm_group);
                 PlayBackgroundMusic();
             }
         }
 
-        UpdateVolumes();   // sets all group volumes from the module variables (removes the redundant hardcoded calls)        
+        UpdateVolumes();
     }
 
-    float GetBGMVolume() { return bgmVolume; }
-    float GetSFXVolume() { return sfxVolume; }
-    float GetAmbientVolume() { return ambientVolume; }
+    float GetBGMVolume() { return s_bgm_volume; }
+    float GetSFXVolume() { return s_sfx_volume; }
+    float GetAmbientVolume() { return s_ambient_volume; }
 
     void Exit()
     {
-        if (gGameStateNext == GS_QUIT)
+        if (g_game_state_next == GS_QUIT)
         {
-            // Unload individual sounds to free memory
-            if (!isAudioLoaded) return;  // nothing to unload
+            if (!s_is_audio_loaded) return;
 
-            AEAudioUnloadAudio(bgmTrack);
-            AEAudioUnloadAudio(rainTrack);
-            AEAudioUnloadAudio(snowTrack);
-            AEAudioUnloadAudio(gameoverSfx);
-            AEAudioUnloadAudio(playerhitSfx);
-            AEAudioUnloadAudio(enemydeathSfx);
-            AEAudioUnloadAudio(clickbtnSfx);
-            AEAudioUnloadAudio(typingSfx);
-            AEAudioUnloadAudio(bossSfx);
-            AEAudioUnloadAudio(lightningSfx);
-            AEAudioUnloadAudio(shieldSfx);
-            AEAudioUnloadAudio(slowSfx);
+            AEAudioUnloadAudio(s_bgm_track);
+            AEAudioUnloadAudio(s_rain_track);
+            AEAudioUnloadAudio(s_snow_track);
+            AEAudioUnloadAudio(s_gameover_sfx);
+            AEAudioUnloadAudio(s_player_hit_sfx);
+            AEAudioUnloadAudio(s_enemy_death_sfx);
+            AEAudioUnloadAudio(s_click_btn_sfx);
+            AEAudioUnloadAudio(s_typing_sfx);
+            AEAudioUnloadAudio(s_boss_sfx);
+            AEAudioUnloadAudio(s_lightning_sfx);
+            AEAudioUnloadAudio(s_shield_sfx);
+            AEAudioUnloadAudio(s_slow_sfx);
 
-            // Unload the groups
-            AEAudioUnloadAudioGroup(bgmGroup);
-            AEAudioUnloadAudioGroup(sfxGroup);
-            AEAudioUnloadAudioGroup(ambientGroup);
-            AEAudioUnloadAudioGroup(uiGroup);
-            AEAudioUnloadAudioGroup(bossAlarmGroup); 
-            isAudioLoaded = false;
+            AEAudioUnloadAudioGroup(s_bgm_group);
+            AEAudioUnloadAudioGroup(s_sfx_group);
+            AEAudioUnloadAudioGroup(s_ambient_group);
+            AEAudioUnloadAudioGroup(s_ui_group);
+            AEAudioUnloadAudioGroup(s_boss_alarm_group);
+
+            s_is_audio_loaded = false;
         }
     }
 
-    void PlayBackgroundMusic()
-    {
-        AEAudioPlay(bgmTrack, bgmGroup, 1.0f, 1.0f, -1);
-    }
-
-    void PlayRainAmbient()
-    {
-        AEAudioPlay(rainTrack, ambientGroup, 1.0f, 1.0f, -1);
-    }
-
-    void StopRainAmbient()
-    {
-        AEAudioStopGroup(ambientGroup);
-    }
-
-    void PlaySnowAmbient()
-    {
-        AEAudioPlay(snowTrack, ambientGroup, 1.0f, 1.0f, -1);
-    }
-
-    void StopSnowAmbient()
-    {
-        AEAudioStopGroup(ambientGroup);
-    }
-
-    void PlayGameOverSfx()
-    {
-        AEAudioPlay(gameoverSfx, sfxGroup, 1.0f, 1.0f, 0);
-    }
-
-    void PlayPlayerHitSfx()
-    {
-        AEAudioPlay(playerhitSfx, sfxGroup, 1.0f, 1.0f, 0);
-    }
-
-    void PlayEnemyDeathSfx()
-    {
-        AEAudioPlay(enemydeathSfx, sfxGroup, 1.0f, 1.0f, 0);
-    }
-
-    void PlayClickBtnSfx()
-    {
-        AEAudioPlay(clickbtnSfx, uiGroup, 1.0f, 1.0f, 0);
-    }
-
-    void PlayTypingSfx()
-    {
-        AEAudioPlay(typingSfx, sfxGroup, 1.0f, 1.0f, 0);
-    }
-
-    void PlayBossSfx()
-    {
-        AEAudioPlay(bossSfx, bossAlarmGroup, 1.0f, 1.0f, -1);
-    }
-
-    void StopBossSfx() {
-
-        AEAudioStopGroup(bossAlarmGroup);
-    }
-
-    void PlayLightningSfx()
-    {
-        AEAudioPlay(lightningSfx, sfxGroup, 1.0f, 1.0f, 0);
-    }
-
-    void PlayShieldSfx()
-    {
-        AEAudioPlay(shieldSfx, sfxGroup, 1.0f, 1.0f, 0);
-    }
-
-    void PlaySlowSfx()
-    {
-        AEAudioPlay(slowSfx, sfxGroup, 1.0f, 1.0f, 0);
-    }
+    void PlayBackgroundMusic() { AEAudioPlay(s_bgm_track, s_bgm_group, 1.0f, 1.0f, -1); }
+    void PlayRainAmbient() { AEAudioPlay(s_rain_track, s_ambient_group, 1.0f, 1.0f, -1); }
+    void StopRainAmbient() { AEAudioStopGroup(s_ambient_group); }
+    void PlaySnowAmbient() { AEAudioPlay(s_snow_track, s_ambient_group, 1.0f, 1.0f, -1); }
+    void StopSnowAmbient() { AEAudioStopGroup(s_ambient_group); }
+    void PlayGameOverSfx() { AEAudioPlay(s_gameover_sfx, s_sfx_group, 1.0f, 1.0f, 0); }
+    void PlayPlayerHitSfx() { AEAudioPlay(s_player_hit_sfx, s_sfx_group, 1.0f, 1.0f, 0); }
+    void PlayEnemyDeathSfx() { AEAudioPlay(s_enemy_death_sfx, s_sfx_group, 1.0f, 1.0f, 0); }
+    void PlayClickBtnSfx() { AEAudioPlay(s_click_btn_sfx, s_ui_group, 1.0f, 1.0f, 0); }
+    void PlayTypingSfx() { AEAudioPlay(s_typing_sfx, s_sfx_group, 1.0f, 1.0f, 0); }
+    void PlayBossSfx() { AEAudioPlay(s_boss_sfx, s_boss_alarm_group, 1.0f, 1.0f, -1); }
+    void StopBossSfx() { AEAudioStopGroup(s_boss_alarm_group); }
+    void PlayLightningSfx() { AEAudioPlay(s_lightning_sfx, s_sfx_group, 1.0f, 1.0f, 0); }
+    void PlayShieldSfx() { AEAudioPlay(s_shield_sfx, s_sfx_group, 1.0f, 1.0f, 0); }
+    void PlaySlowSfx() { AEAudioPlay(s_slow_sfx, s_sfx_group, 1.0f, 1.0f, 0); }
 
     void PauseGameplaySounds()
     {
-        AEAudioPauseGroup(ambientGroup); // Pauses weather/snow/thunder
-        AEAudioPauseGroup(sfxGroup);     // Pauses Boss alarm, explosions, typing
-        AEAudioPauseGroup(bossAlarmGroup); 
+        AEAudioPauseGroup(s_ambient_group);
+        AEAudioPauseGroup(s_sfx_group);
+        AEAudioPauseGroup(s_boss_alarm_group);
     }
 
     void ResumeGameplaySounds()
     {
-        AEAudioResumeGroup(ambientGroup);
-        AEAudioResumeGroup(sfxGroup);
-        AEAudioResumeGroup(bossAlarmGroup); 
+        AEAudioResumeGroup(s_ambient_group);
+        AEAudioResumeGroup(s_sfx_group);
+        AEAudioResumeGroup(s_boss_alarm_group);
     }
 
-    // ==========================================
-    // VOLUME SETTERS
-    // ==========================================
-    void SetMasterVolume(float volume)
-    {
-        masterVolume = volume;
-        UpdateVolumes();
-    }
-
-    void SetBGMVolume(float volume)
-    {
-        bgmVolume = volume;
-        UpdateVolumes();
-    }
-
-    void SetSFXVolume(float volume)
-    {
-        sfxVolume = volume;  
-        UpdateVolumes();
-    }
-
-    void SetAmbientVolume(float volume)
-    {
-        ambientVolume = volume;
-        UpdateVolumes();
-    }
+    void SetMasterVolume(float volume) { s_master_volume = volume; UpdateVolumes(); }
+    void SetBGMVolume(float volume) { s_bgm_volume = volume; UpdateVolumes(); }
+    void SetSFXVolume(float volume) { s_sfx_volume = volume; UpdateVolumes(); }
+    void SetAmbientVolume(float volume) { s_ambient_volume = volume; UpdateVolumes(); }
 }

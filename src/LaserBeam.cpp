@@ -37,7 +37,7 @@ namespace
     static const int   LASER_FRAME_COUNT = 4;
     static const float LASER_FRAME_TIME = TRAVEL_TIME / (float)LASER_FRAME_COUNT;
     static const float LASER_UV_W = 1.0f / (float)LASER_FRAME_COUNT;
-    static const float LASER_UV_H = 1.0f;   // one row
+    static const float LASER_UV_H = 1.0f;    // one row
     static const float LASER_HEIGHT = 100.0f;  // world-space height of beam quad
 
     // ---- Explosion sprite sheet ----
@@ -46,9 +46,9 @@ namespace
     static const float EXPLOSION_TOTAL_TIME = 0.20f;
     static const float EXPLOSION_FRAME_TIME = EXPLOSION_TOTAL_TIME / (float)EXPLOSION_FRAME_COUNT;
     static const float EXPLOSION_UV_W = 1.0f / (float)EXPLOSION_FRAME_COUNT;
-    static const float EXPLOSION_UV_H = 1.0f;   // one row
-    static const float EXPLOSION_SIZE_START = 80.0f;  // world-space size at frame 0
-    static const float EXPLOSION_SIZE_END = 140.0f; // world-space size at last frame
+    static const float EXPLOSION_UV_H = 1.0f;    // one row
+    static const float EXPLOSION_SIZE_START = 80.0f;   // world-space size at frame 0
+    static const float EXPLOSION_SIZE_END = 140.0f;  // world-space size at last frame
 
     // ----------------------------------------------------------------
     // Structs
@@ -56,20 +56,23 @@ namespace
     struct Beam
     {
         bool  active = false;
-        float fromX = 0.0f, fromY = 0.0f;
-        float toX = 0.0f, toY = 0.0f;
+        float from_x = 0.0f;
+        float from_y = 0.0f;
+        float to_x = 0.0f;
+        float to_y = 0.0f;
         float timer = 0.0f;   // total elapsed time for this beam
         int   frame = 0;      // current laser animation frame
-        float frameTmr = 0.0f;   // time accumulator for laser frame
+        float frame_tmr = 0.0f;   // time accumulator for laser frame
     };
 
     struct Explosion
     {
         bool  active = false;
-        float x = 0.0f, y = 0.0f;
+        float x = 0.0f;
+        float y = 0.0f;
         float timer = 0.0f;
         int   frame = 0;
-        float frameTmr = 0.0f;
+        float frame_tmr = 0.0f;
     };
 
     // ----------------------------------------------------------------
@@ -78,13 +81,13 @@ namespace
     static Beam       s_beams[MAX_BEAMS]{};
     static Explosion  s_explosions[MAX_EXPLOSIONS]{};
 
-    static AEGfxVertexList* s_laserMesh = nullptr;
-    static AEGfxVertexList* s_explosionMesh = nullptr;
-    static AEGfxTexture* s_laserTex = nullptr;
-    static AEGfxTexture* s_explosionTex = nullptr;
+    static AEGfxVertexList* s_laser_mesh = nullptr;
+    static AEGfxVertexList* s_explosion_mesh = nullptr;
+    static AEGfxTexture* s_laser_tex = nullptr;
+    static AEGfxTexture* s_explosion_tex = nullptr;
 
-    static float s_originX = -625.0f;
-    static float s_originY = -175.0f;
+    static float s_origin_x = -625.0f;
+    static float s_origin_y = -175.0f;
 
     // ----------------------------------------------------------------
     // Spawn an explosion at a world position
@@ -103,12 +106,12 @@ namespace
 
     // ----------------------------------------------------------------
     // Draw a textured quad centered at (cx,cy) with given size & angle.
-    // uvX/uvY are the UV offsets into the sprite sheet.
+    // uv_x/uv_y are the UV offsets into the sprite sheet.
     // ----------------------------------------------------------------
     static void DrawSprite(AEGfxVertexList* mesh, AEGfxTexture* tex,
         float cx, float cy,
         float w, float h, float angle,
-        float uvX, float uvY,
+        float uv_x, float uv_y,
         float alpha)
     {
         if (!mesh || !tex) return;
@@ -118,7 +121,7 @@ namespace
         AEGfxSetTransparency(alpha);
         AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);
         AEGfxSetColorToAdd(0.0f, 0.0f, 0.0f, 0.0f);
-        AEGfxTextureSet(tex, uvX, uvY);
+        AEGfxTextureSet(tex, uv_x, uv_y);
 
         // Build transform: Scale -> Rotate -> Translate
         AEMtx33 mS, mR, mT, mOut;
@@ -139,36 +142,36 @@ namespace
 void LaserBeam_Init()
 {
     // Reset pools
-    for (int i = 0; i < MAX_BEAMS; ++i) s_beams[i].active = false;
-    for (int i = 0; i < MAX_EXPLOSIONS; ++i) s_explosions[i].active = false;
+    for (int i = 0; i < MAX_BEAMS; ++i)       s_beams[i].active = false;
+    for (int i = 0; i < MAX_EXPLOSIONS; ++i)  s_explosions[i].active = false;
 
     // --- Laser mesh ---
     // A single-frame UV quad: maps [0,LASER_UV_W] x [0,1] so we shift
     // the UV offset each frame via AEGfxTextureSet offset.
-    if (s_laserMesh) { AEGfxMeshFree(s_laserMesh); s_laserMesh = nullptr; }
-    s_laserMesh = Sprite_Mesh(LASER_UV_W, LASER_UV_H);
+    if (s_laser_mesh) { AEGfxMeshFree(s_laser_mesh); s_laser_mesh = nullptr; }
+    s_laser_mesh = Sprite_Mesh(LASER_UV_W, LASER_UV_H);
 
     // --- Explosion mesh ---
-    if (s_explosionMesh) { AEGfxMeshFree(s_explosionMesh); s_explosionMesh = nullptr; }
-    s_explosionMesh = Sprite_Mesh(EXPLOSION_UV_W, EXPLOSION_UV_H);
+    if (s_explosion_mesh) { AEGfxMeshFree(s_explosion_mesh); s_explosion_mesh = nullptr; }
+    s_explosion_mesh = Sprite_Mesh(EXPLOSION_UV_W, EXPLOSION_UV_H);
 
     // --- Textures ---
-    if (s_laserTex) { AEGfxTextureUnload(s_laserTex);     s_laserTex = nullptr; }
-    if (s_explosionTex) { AEGfxTextureUnload(s_explosionTex); s_explosionTex = nullptr; }
+    if (s_laser_tex) { AEGfxTextureUnload(s_laser_tex);     s_laser_tex = nullptr; }
+    if (s_explosion_tex) { AEGfxTextureUnload(s_explosion_tex); s_explosion_tex = nullptr; }
 
-    s_laserTex = AEGfxTextureLoad("Assets/laser.png");
-    s_explosionTex = AEGfxTextureLoad("Assets/explosion.png");
+    s_laser_tex = AEGfxTextureLoad("Assets/laser.png");
+    s_explosion_tex = AEGfxTextureLoad("Assets/explosion.png");
 }
 
 void LaserBeam_Free()
 {
-    if (s_laserMesh) { AEGfxMeshFree(s_laserMesh);          s_laserMesh = nullptr; }
-    if (s_explosionMesh) { AEGfxMeshFree(s_explosionMesh);      s_explosionMesh = nullptr; }
-    if (s_laserTex) { AEGfxTextureUnload(s_laserTex);      s_laserTex = nullptr; }
-    if (s_explosionTex) { AEGfxTextureUnload(s_explosionTex);  s_explosionTex = nullptr; }
+    if (s_laser_mesh) { AEGfxMeshFree(s_laser_mesh);          s_laser_mesh = nullptr; }
+    if (s_explosion_mesh) { AEGfxMeshFree(s_explosion_mesh);      s_explosion_mesh = nullptr; }
+    if (s_laser_tex) { AEGfxTextureUnload(s_laser_tex);      s_laser_tex = nullptr; }
+    if (s_explosion_tex) { AEGfxTextureUnload(s_explosion_tex);  s_explosion_tex = nullptr; }
 
-    for (int i = 0; i < MAX_BEAMS; ++i) s_beams[i].active = false;
-    for (int i = 0; i < MAX_EXPLOSIONS; ++i) s_explosions[i].active = false;
+    for (int i = 0; i < MAX_BEAMS; ++i)       s_beams[i].active = false;
+    for (int i = 0; i < MAX_EXPLOSIONS; ++i)  s_explosions[i].active = false;
 }
 
 // ================================================================
@@ -176,27 +179,27 @@ void LaserBeam_Free()
 // ================================================================
 void LaserBeam_SetOrigin(float x, float y)
 {
-    s_originX = x;
-    s_originY = y;
+    s_origin_x = x;
+    s_origin_y = y;
 }
 
 // ================================================================
-// Event: fire a beam toward (toX, toY)
+// Event: fire a beam toward (to_x, to_y)
 // ================================================================
-void LaserBeam_Fire(float toX, float toY)
+void LaserBeam_Fire(float to_x, float to_y)
 {
     for (int i = 0; i < MAX_BEAMS; ++i)
     {
         if (!s_beams[i].active)
         {
             s_beams[i].active = true;
-            s_beams[i].fromX = s_originX;
-            s_beams[i].fromY = s_originY;
-            s_beams[i].toX = toX;
-            s_beams[i].toY = toY;
+            s_beams[i].from_x = s_origin_x;
+            s_beams[i].from_y = s_origin_y;
+            s_beams[i].to_x = to_x;
+            s_beams[i].to_y = to_y;
             s_beams[i].timer = 0.0f;
             s_beams[i].frame = 0;
-            s_beams[i].frameTmr = 0.0f;
+            s_beams[i].frame_tmr = 0.0f;
             return;
         }
     }
@@ -214,19 +217,19 @@ void LaserBeam_Update(float dt)
         Beam& b = s_beams[i];
 
         b.timer += dt;
-        b.frameTmr += dt;
+        b.frame_tmr += dt;
 
         // Advance laser animation frame
-        if (b.frameTmr >= LASER_FRAME_TIME)
+        if (b.frame_tmr >= LASER_FRAME_TIME)
         {
-            b.frameTmr -= LASER_FRAME_TIME;
+            b.frame_tmr -= LASER_FRAME_TIME;
             b.frame = (b.frame + 1) % LASER_FRAME_COUNT;
         }
 
         // When beam finishes travelling, spawn explosion then enter fade
         if (b.timer >= TRAVEL_TIME && b.timer - dt < TRAVEL_TIME)
         {
-            SpawnExplosion(b.toX, b.toY);
+            SpawnExplosion(b.to_x, b.to_y);
         }
 
         // Deactivate after travel + fade
@@ -241,12 +244,12 @@ void LaserBeam_Update(float dt)
         Explosion& e = s_explosions[i];
 
         e.timer += dt;
-        e.frameTmr += dt;
+        e.frame_tmr += dt;
 
         // Advance explosion frame
-        if (e.frameTmr >= EXPLOSION_FRAME_TIME)
+        if (e.frame_tmr >= EXPLOSION_FRAME_TIME)
         {
-            e.frameTmr -= EXPLOSION_FRAME_TIME;
+            e.frame_tmr -= EXPLOSION_FRAME_TIME;
             e.frame++;
         }
 
@@ -267,46 +270,46 @@ void LaserBeam_Draw()
         if (!s_beams[i].active) continue;
         const Beam& b = s_beams[i];
 
-        float dx = b.toX - b.fromX;
-        float dy = b.toY - b.fromY;
-        float fullLen = sqrtf(dx * dx + dy * dy);
-        if (fullLen < 1.0f) continue;
+        float dx = b.to_x - b.from_x;
+        float dy = b.to_y - b.from_y;
+        float full_len = sqrtf(dx * dx + dy * dy);
+        if (full_len < 1.0f) continue;
 
         float angle = atan2f(dy, dx);
 
         // Tip position during travel phase
-        float tipX, tipY, alpha;
+        float tip_x, tip_y, alpha;
         if (b.timer < TRAVEL_TIME)
         {
             float t = b.timer / TRAVEL_TIME;
-            tipX = b.fromX + dx * t;
-            tipY = b.fromY + dy * t;
+            tip_x = b.from_x + dx * t;
+            tip_y = b.from_y + dy * t;
             alpha = 1.0f;
         }
         else
         {
-            tipX = b.toX;
-            tipY = b.toY;
+            tip_x = b.to_x;
+            tip_y = b.to_y;
             alpha = 1.0f - (b.timer - TRAVEL_TIME) / FADE_TIME;
         }
 
         // Current drawn length
-        float segDx = tipX - b.fromX;
-        float segDy = tipY - b.fromY;
-        float drawLen = sqrtf(segDx * segDx + segDy * segDy);
-        if (drawLen < 1.0f) continue;
+        float seg_dx = tip_x - b.from_x;
+        float seg_dy = tip_y - b.from_y;
+        float draw_len = sqrtf(seg_dx * seg_dx + seg_dy * seg_dy);
+        if (draw_len < 1.0f) continue;
 
-        float cx = (b.fromX + tipX) * 0.5f;
-        float cy = (b.fromY + tipY) * 0.5f;
+        float cx = (b.from_x + tip_x) * 0.5f;
+        float cy = (b.from_y + tip_y) * 0.5f;
 
         // UV offset for current animation frame
-        float uvX = b.frame * LASER_UV_W;
+        float uv_x = b.frame * LASER_UV_W;
 
-        DrawSprite(s_laserMesh, s_laserTex,
+        DrawSprite(s_laser_mesh, s_laser_tex,
             cx, cy,
-            drawLen, LASER_HEIGHT,
+            draw_len, LASER_HEIGHT,
             angle,
-            uvX, 0.0f,
+            uv_x, 0.0f,
             alpha);
     }
 
@@ -320,13 +323,13 @@ void LaserBeam_Draw()
         float progress = (float)e.frame / (float)(EXPLOSION_FRAME_COUNT - 1);
         float size = EXPLOSION_SIZE_START + (EXPLOSION_SIZE_END - EXPLOSION_SIZE_START) * progress;
 
-        float uvX = e.frame * EXPLOSION_UV_W;
+        float uv_x = e.frame * EXPLOSION_UV_W;
 
-        DrawSprite(s_explosionMesh, s_explosionTex,
+        DrawSprite(s_explosion_mesh, s_explosion_tex,
             e.x, e.y,
             size, size,
             0.0f,
-            uvX, 0.0f,
+            uv_x, 0.0f,
             1.0f);
     }
 

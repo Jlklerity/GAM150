@@ -2,105 +2,93 @@
 #include "BackgroundParallex.h"
 
 
-namespace {
-
-    struct ParallaxLayer {
+namespace
+{
+    struct ParallaxLayer
+    {
         AEGfxTexture* texture;
-        float depthFactor; // 1.0 = foreground, 0.0 = infinitely far away
-        float uOffset; // Tracks the current horizontal position of the image
-        float uSpeed;  // How fast the image drifts sideways
-
+        float depth_factor;  // 1.0 = foreground, 0.0 = infinitely far away
+        float u_offset;      // Tracks the current horizontal position of the image
+        float u_speed;       // How fast the image drifts sideways
     };
 
     const int NUM_LAYERS = 6;
-    ParallaxLayer bgLayers[NUM_LAYERS];
-    AEGfxVertexList* fullScreenMesh = nullptr;
-    float manualPanOffset = 0.0f;
-
+    static ParallaxLayer    s_bg_layers[NUM_LAYERS];
+    static AEGfxVertexList* s_full_screen_mesh = nullptr;
+    static float            s_manual_pan_offset = 0.0f;
 }
 
 
-namespace BackgroundParallax{
-
-    void MenuParallax_SetPanOffset(float offset) {
-        manualPanOffset = offset;
+namespace BackgroundParallax
+{
+    void MenuParallax_SetPanOffset(float offset)
+    {
+        s_manual_pan_offset = offset;
     }
 
-    void MenuParallax_Init() 
+    void MenuParallax_Init()
     {
-        if (fullScreenMesh) return;
+        if (s_full_screen_mesh) return;
 
-        float winW = (float)AEGfxGetWindowWidth();                                                                                    // store window width
-        float winH = (float)AEGfxGetWindowHeight();
+        float win_w = (float)AEGfxGetWindowWidth();
+        float win_h = (float)AEGfxGetWindowHeight();
 
-        fullScreenMesh = Rect_Mesh(winW, winH, 0xFFFFFFFF);                     // Assuming you use your custom function
-        
-        bgLayers[0].texture = AEGfxTextureLoad("Assets/sun.png");
-        AE_ASSERT_MESG(bgLayers[0].texture, "Failed to load sun.png");
+        s_full_screen_mesh = Rect_Mesh(win_w, win_h, 0xFFFFFFFF);
 
+        s_bg_layers[0].texture = AEGfxTextureLoad("Assets/sun.png");
+        AE_ASSERT_MESG(s_bg_layers[0].texture, "Failed to load sun.png");
 
-        //clouds
-        bgLayers[1].texture = AEGfxTextureLoad("Assets/cloudextra.png");
-        AE_ASSERT_MESG(bgLayers[1].texture, "Failed to load cloudextra.png");
+        s_bg_layers[1].texture = AEGfxTextureLoad("Assets/cloudextra.png");
+        AE_ASSERT_MESG(s_bg_layers[1].texture, "Failed to load cloudextra.png");
 
-        // Far Mountains 
-        bgLayers[2].texture = AEGfxTextureLoad("Assets/layer1.png");
-        AE_ASSERT_MESG(bgLayers[2].texture, "Failed to load layer1.png");
+        s_bg_layers[2].texture = AEGfxTextureLoad("Assets/layer1.png");
+        AE_ASSERT_MESG(s_bg_layers[2].texture, "Failed to load layer1.png");
 
+        s_bg_layers[3].texture = AEGfxTextureLoad("Assets/layer2.png");
+        AE_ASSERT_MESG(s_bg_layers[3].texture, "Failed to load layer2.png");
 
-        // Middle Mountains
-        bgLayers[3].texture = AEGfxTextureLoad("Assets/layer2.png");
-        AE_ASSERT_MESG(bgLayers[3].texture, "Failed to load layer2.png");
+        s_bg_layers[4].texture = AEGfxTextureLoad("Assets/mist.png");
+        AE_ASSERT_MESG(s_bg_layers[4].texture, "Failed to load mist.png");
 
-        //mist
-        bgLayers[4].texture = AEGfxTextureLoad("Assets/mist.png");
-        AE_ASSERT_MESG(bgLayers[4].texture, "Failed to load mist.png");
+        s_bg_layers[5].texture = AEGfxTextureLoad("Assets/layer3.png");
+        AE_ASSERT_MESG(s_bg_layers[4].texture, "Failed to load layer3.png");
 
-
-        // Foreground Mountains 
-        bgLayers[5].texture = AEGfxTextureLoad("Assets/layer3.png");
-        AE_ASSERT_MESG(bgLayers[4].texture, "Failed to load layer3.png");                                                     // check texture success
-
-
-        bgLayers[0].depthFactor = 0.1f;
-        bgLayers[1].depthFactor = 0.3f;  //clouds
-        bgLayers[2].depthFactor = 0.4f;   
-        bgLayers[3].depthFactor = 0.6f;   
-        bgLayers[4].depthFactor = 0.8f;     //mist
-        bgLayers[5].depthFactor = 0.9f;
+        s_bg_layers[0].depth_factor = 0.1f;
+        s_bg_layers[1].depth_factor = 0.3f;  // clouds
+        s_bg_layers[2].depth_factor = 0.4f;
+        s_bg_layers[3].depth_factor = 0.6f;
+        s_bg_layers[4].depth_factor = 0.8f;  // mist
+        s_bg_layers[5].depth_factor = 0.9f;
 
         for (int i = 0; i < NUM_LAYERS; ++i)
         {
-            bgLayers[i].uOffset = 0.0f; // Start at 0
-            bgLayers[i].uSpeed = 0.0f;  // Default: do not drift horizontally
+            s_bg_layers[i].u_offset = 0.0f;
+            s_bg_layers[i].u_speed = 0.0f;
         }
-        bgLayers[1].uSpeed = 0.01f; // cloud speed
-        bgLayers[1].uOffset = 0.0f;
-        bgLayers[4].uSpeed = 0.04f;     // mist drifting
-        bgLayers[4].uOffset = 0.0f;
+        s_bg_layers[1].u_speed = 0.01f; // cloud speed
+        s_bg_layers[1].u_offset = 0.0f;
+        s_bg_layers[4].u_speed = 0.04f; // mist drifting
+        s_bg_layers[4].u_offset = 0.0f;
     }
+
     void MenuParallax_Update(float dt)
     {
         for (int i = 0; i < NUM_LAYERS; ++i)
         {
-            // Increase the offset by the natural drift speed + the camera pan speed
-            bgLayers[i].uOffset += bgLayers[i].uSpeed * dt;
+            s_bg_layers[i].u_offset += s_bg_layers[i].u_speed * dt;
+
             // Wrap the offset to prevent floating-point precision loss
-            // If a player sits on the menu for 5 hours,  stops the texture from glitching out!
-            if (bgLayers[i].uOffset > 1.0f)
-            {
-                bgLayers[i].uOffset -= 1.0f;
-            }
-            else if (bgLayers[i].uOffset < 0.0f)
-            {
-                bgLayers[i].uOffset += 1.0f;
-            }
+            if (s_bg_layers[i].u_offset > 1.0f)
+                s_bg_layers[i].u_offset -= 1.0f;
+            else if (s_bg_layers[i].u_offset < 0.0f)
+                s_bg_layers[i].u_offset += 1.0f;
         }
     }
-    void MenuParallax_Draw(float virtualCamY)
+
+    void MenuParallax_Draw(float virtual_cam_y)
     {
-        float camX, camY;
-        AEGfxGetCamPosition(&camX, &camY);
+        float cam_x, cam_y;
+        AEGfxGetCamPosition(&cam_x, &cam_y);
 
         AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
         AEGfxSetBlendMode(AE_GFX_BM_BLEND);
@@ -109,24 +97,27 @@ namespace BackgroundParallax{
 
         for (int i = 0; i < NUM_LAYERS; ++i)
         {
-
-            float renderY = camY - (virtualCamY * bgLayers[i].depthFactor);          // Add the physical camera so it stays properly aligned on the screen
-            float renderOffset = bgLayers[i].uOffset - (manualPanOffset * bgLayers[i].depthFactor);
-            AEGfxTextureSet(bgLayers[i].texture, renderOffset, 0.0f);
-            Mesh_Renderer(fullScreenMesh, camX, renderY, 1.0f, 1.0f, 0.0f);
+            float render_y = cam_y - (virtual_cam_y * s_bg_layers[i].depth_factor);
+            float render_offset = s_bg_layers[i].u_offset - (s_manual_pan_offset * s_bg_layers[i].depth_factor);
+            AEGfxTextureSet(s_bg_layers[i].texture, render_offset, 0.0f);
+            Mesh_Renderer(s_full_screen_mesh, cam_x, render_y, 1.0f, 1.0f, 0.0f);
         }
     }
 
-    void MenuParallax_Exit() {
-        if (fullScreenMesh) {
-            AEGfxMeshFree(fullScreenMesh);
-            fullScreenMesh = nullptr;
+    void MenuParallax_Exit()
+    {
+        if (s_full_screen_mesh)
+        {
+            AEGfxMeshFree(s_full_screen_mesh);
+            s_full_screen_mesh = nullptr;
         }
 
-        for (int i = 0; i < NUM_LAYERS; ++i) {
-            if (bgLayers[i].texture) {
-                AEGfxTextureUnload(bgLayers[i].texture);
-                bgLayers[i].texture = nullptr;
+        for (int i = 0; i < NUM_LAYERS; ++i)
+        {
+            if (s_bg_layers[i].texture)
+            {
+                AEGfxTextureUnload(s_bg_layers[i].texture);
+                s_bg_layers[i].texture = nullptr;
             }
         }
     }
@@ -139,28 +130,23 @@ namespace BackgroundParallax{
     AEGfxTexture* MenuParallax_GetLayerTexture(int index)
     {
         if (index < 0 || index >= NUM_LAYERS) return nullptr;
-        return bgLayers[index].texture;
+        return s_bg_layers[index].texture;
     }
 
     float MenuParallax_GetLayerDepth(int index)
     {
         if (index < 0 || index >= NUM_LAYERS) return 0.0f;
-        return bgLayers[index].depthFactor;
+        return s_bg_layers[index].depth_factor;
     }
 
     float MenuParallax_GetLayerUOffset(int index)
     {
         if (index < 0 || index >= NUM_LAYERS) return 0.0f;
-        return bgLayers[index].uOffset;
+        return s_bg_layers[index].u_offset;
     }
 
     float MenuParallax_GetManualPanOffset()
     {
-        return manualPanOffset;
+        return s_manual_pan_offset;
     }
 }
-
-
-
-
-

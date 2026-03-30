@@ -44,4 +44,4 @@ void LaserBeam_Draw();
 // ----------------------------------------------------------------
 // Event
 // ----------------------------------------------------------------
-void LaserBeam_Fire(float toX, float toY);
+void LaserBeam_Fire(float to_x, float to_y);

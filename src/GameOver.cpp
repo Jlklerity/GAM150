@@ -5,15 +5,15 @@
 
 namespace
 {
-    float s_fadeInTimer = 0.0f;
-    const float FADE_IN_DURATION = 0.5f;
-    bool  s_initialized = false;
+    static float s_fade_in_timer = 0.0f;
+    constexpr float FADE_IN_DURATION = 0.5f;
+    static bool s_initialized = false;
 
-    static ButtonTween tweenRestart;
-    static ButtonTween tweenLeaderboard;
-    static ButtonTween tweenMenu;
+    static ButtonTween s_tween_restart;
+    static ButtonTween s_tween_leaderboard;
+    static ButtonTween s_tween_menu;
 
-    AEGfxVertexList* s_mesh = nullptr;
+    static AEGfxVertexList* s_mesh = nullptr;
 
     void EnsureMesh()
     {
@@ -32,14 +32,13 @@ namespace
     {
         EnsureMesh();
 
-        float winW = (float)AEGfxGetWindowWidth();
-        float winH = (float)AEGfxGetWindowHeight();
+        float win_w = (float)AEGfxGetWindowWidth();
+        float win_h = (float)AEGfxGetWindowHeight();
 
-        // Hover + tween update
         s32 mx, my;
         AEInputGetCursorPosition(&mx, &my);
-        float wx = (float)mx - winW * 0.5f;
-        float wy = winH * 0.5f - (float)my;
+        float wx = (float)mx - win_w * 0.5f;
+        float wy = win_h * 0.5f - (float)my;
         bool hovered = (wx >= cx - w * 0.5f && wx <= cx + w * 0.5f &&
             wy >= cy - h * 0.5f && wy <= cy + h * 0.5f);
         bool clicked = AEInputCheckTriggered(AEVK_LBUTTON) && hovered;
@@ -47,27 +46,27 @@ namespace
         ButtonTween_Update(tween, hovered, clicked, dt);
 
         float sw = tween.scale;
-        float scaledW = w * sw;
-        float scaledH = h * sw;
+        float scaled_w = w * sw;
+        float scaled_h = h * sw;
 
         AEGfxSetRenderMode(AE_GFX_RM_COLOR);
         AEGfxSetBlendMode(AE_GFX_BM_BLEND);
         AEGfxSetTransparency(1.0f);
         AEGfxSetColorToMultiply(0.15f, 0.15f, 0.15f, 1.0f);
-        Mesh_Renderer(s_mesh, cx, cy, scaledW, scaledH, 0.0f);
+        Mesh_Renderer(s_mesh, cx, cy, scaled_w, scaled_h, 0.0f);
 
         AEGfxSetColorToMultiply(r, g, b, 1.0f);
-        Mesh_Renderer(s_mesh, cx, cy + scaledH * 0.5f - 3.0f, scaledW, 4.0f, 0.0f);
+        Mesh_Renderer(s_mesh, cx, cy + scaled_h * 0.5f - 3.0f, scaled_w, 4.0f, 0.0f);
 
-        if (Graphics::font_id >= 0)
+        if (Graphics::g_font_id >= 0)
         {
             float lw, lh;
-            AEGfxGetPrintSize(Graphics::font_id, label, 0.6f, &lw, &lh);
-            float ndcX = -lw * 0.5f;
-            float ndcY = (cy / (winH * 0.5f)) - lh * 0.5f;
+            AEGfxGetPrintSize(Graphics::g_font_id, label, 0.6f, &lw, &lh);
+            float ndc_x = -lw * 0.5f;
+            float ndc_y = (cy / (win_h * 0.5f)) - lh * 0.5f;
             AEGfxSetBlendMode(AE_GFX_BM_BLEND);
             AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);
-            AEGfxPrint(Graphics::font_id, label, ndcX, ndcY, 0.6f, 1.0f, 1.0f, 1.0f, 1.0f);
+            AEGfxPrint(Graphics::g_font_id, label, ndc_x, ndc_y, 0.6f, 1.0f, 1.0f, 1.0f, 1.0f);
         }
 
         return clicked;
@@ -83,168 +82,169 @@ namespace UiGameOver
             AEGfxMeshFree(s_mesh);
             s_mesh = nullptr;
         }
-        s_fadeInTimer = 0.0f;
+        s_fade_in_timer = 0.0f;
         s_initialized = false;
-        ButtonTween_Reset(tweenRestart);
-        ButtonTween_Reset(tweenLeaderboard);
-        ButtonTween_Reset(tweenMenu);
+        ButtonTween_Reset(s_tween_restart);
+        ButtonTween_Reset(s_tween_leaderboard);
+        ButtonTween_Reset(s_tween_menu);
     }
 
-    void Check_IfDead(bool& isDead, bool& isGameOver, bool& openLeaderboard,
-        AEGfxVertexList* bgMesh, std::string temp_name, const Data::Score& score)
+    void Check_IfDead(bool& is_dead, bool& is_game_over, bool& open_leaderboard,
+        AEGfxVertexList* bg_mesh, std::string temp_name, const Data::Score& score)
     {
-        (void)bgMesh;
-        if (!isDead) return;
+        (void)bg_mesh;
+        if (!is_dead) return;
 
-        if (!isGameOver)
+        if (!is_game_over)
         {
             temp_name = Main_Menu_GetPlayerName();
             Leaderboard_System::Write_ZenLeaderboard(temp_name, score.score_value);
-            isGameOver = true;
-            s_fadeInTimer = 0.0f;
+            is_game_over = true;
+            s_fade_in_timer = 0.0f;
         }
 
-        if (!openLeaderboard)
-            Ui_GameOverMenu(isGameOver, score, openLeaderboard, bgMesh, isDead);
+        if (!open_leaderboard)
+            Ui_GameOverMenu(is_game_over, score, open_leaderboard, bg_mesh, is_dead);
         else
-            Leaderboard_System::Display_ZenLeaderboard(openLeaderboard);
+            Leaderboard_System::Display_ZenLeaderboard(open_leaderboard);
     }
 
-    void Ui_GameOverMenu(bool& isGameOver, const Data::Score& score,
-        bool& openLeaderboard, AEGfxVertexList* bgMesh, bool& isDead)
+    void Ui_GameOverMenu(bool& is_game_over, const Data::Score& score,
+        bool& open_leaderboard, AEGfxVertexList* bg_mesh, bool& is_dead)
     {
-        (void)bgMesh;
-        (void)isGameOver;
+        (void)bg_mesh;
+        (void)is_game_over;
         EnsureMesh();
 
-        float winW = (float)AEGfxGetWindowWidth();
-        float winH = (float)AEGfxGetWindowHeight();
+        float win_w = (float)AEGfxGetWindowWidth();
+        float win_h = (float)AEGfxGetWindowHeight();
         float dt = (float)AEFrameRateControllerGetFrameTime();
 
-        s_fadeInTimer += dt;
-        float fadeAlpha = s_fadeInTimer / FADE_IN_DURATION;
-        if (fadeAlpha > 1.0f) fadeAlpha = 1.0f;
+        s_fade_in_timer += dt;
+        float fade_alpha = s_fade_in_timer / FADE_IN_DURATION;
+        if (fade_alpha > 1.0f) fade_alpha = 1.0f;
 
         AEGfxSetCamPosition(0.0f, 0.0f);
 
         AEGfxSetRenderMode(AE_GFX_RM_COLOR);
         AEGfxSetBlendMode(AE_GFX_BM_BLEND);
-        AEGfxSetTransparency(fadeAlpha);
+        AEGfxSetTransparency(fade_alpha);
         AEGfxSetColorToMultiply(0.0f, 0.0f, 0.0f, 1.0f);
-        Mesh_Renderer(s_mesh, 0.0f, 0.0f, winW, winH, 0.0f);
+        Mesh_Renderer(s_mesh, 0.0f, 0.0f, win_w, win_h, 0.0f);
 
-        if (Graphics::font_id < 0) return;
+        if (Graphics::g_font_id < 0) return;
 
-        const char* titleText = "GAME OVER";
+        const char* title_text = "GAME OVER";
         float tw, th;
-        AEGfxGetPrintSize(Graphics::font_id, titleText, 1.4f, &tw, &th);
+        AEGfxGetPrintSize(Graphics::g_font_id, title_text, 1.4f, &tw, &th);
         AEGfxSetBlendMode(AE_GFX_BM_BLEND);
-        AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, fadeAlpha);
-        AEGfxPrint(Graphics::font_id, titleText,
+        AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, fade_alpha);
+        AEGfxPrint(Graphics::g_font_id, title_text,
             -tw * 0.5f, 0.55f,
-            1.4f, 1.0f, 0.15f, 0.15f, fadeAlpha);
+            1.4f, 1.0f, 0.15f, 0.15f, fade_alpha);
 
-        std::string scoreStr = "SCORE:  " + std::to_string(score.score_value);
+        std::string score_str = "SCORE:  " + std::to_string(score.score_value);
         float sw, sh;
-        AEGfxGetPrintSize(Graphics::font_id, scoreStr.c_str(), 0.8f, &sw, &sh);
-        AEGfxPrint(Graphics::font_id, scoreStr.c_str(),
+        AEGfxGetPrintSize(Graphics::g_font_id, score_str.c_str(), 0.8f, &sw, &sh);
+        AEGfxPrint(Graphics::g_font_id, score_str.c_str(),
             -sw * 0.5f, 0.3f,
-            0.8f, 1.0f, 1.0f, 1.0f, fadeAlpha);
+            0.8f, 1.0f, 1.0f, 1.0f, fade_alpha);
 
-        if (fadeAlpha < 0.3f) return;
+        if (fade_alpha < 0.3f) return;
 
-        float btnW = 350.0f;
-        float btnH = 65.0f;
-        float btnX = 0.0f;
-        float gap = 90.0f;
+        constexpr float BTN_W = 350.0f;
+        constexpr float BTN_H = 65.0f;
+        constexpr float BTN_X = 0.0f;
+        constexpr float GAP = 90.0f;
 
-        float restartY = 50.0f;
-        float leaderboardY = restartY - gap;
-        float menuY = leaderboardY - gap;
+        float restart_y = 50.0f;
+        float leaderboard_y = restart_y - GAP;
+        float menu_y = leaderboard_y - GAP;
 
-        if (DrawButton("RESTART", btnX, restartY, btnW, btnH, 0.2f, 0.8f, 0.2f, tweenRestart))
+        if (DrawButton("RESTART", BTN_X, restart_y, BTN_W, BTN_H, 0.2f, 0.8f, 0.2f, s_tween_restart))
         {
-            isDead = false;
-            s_fadeInTimer = 0.0f;
-            gGameStateNext = GS_RESTART;
+            is_dead = false;
+            s_fade_in_timer = 0.0f;
+            g_game_state_next = GS_RESTART;
         }
 
-        if (DrawButton("LEADERBOARD", btnX, leaderboardY, btnW, btnH, 0.2f, 0.5f, 1.0f, tweenLeaderboard))
+        if (DrawButton("LEADERBOARD", BTN_X, leaderboard_y, BTN_W, BTN_H, 0.2f, 0.5f, 1.0f, s_tween_leaderboard))
         {
-            openLeaderboard = true;
+            open_leaderboard = true;
         }
 
-        if (DrawButton("MAIN MENU", btnX, menuY, btnW, btnH, 1.0f, 0.5f, 0.1f, tweenMenu))
+        if (DrawButton("MAIN MENU", BTN_X, menu_y, BTN_W, BTN_H, 1.0f, 0.5f, 0.1f, s_tween_menu))
         {
-            isDead = false;
-            s_fadeInTimer = 0.0f;
+            is_dead = false;
+            s_fade_in_timer = 0.0f;
             std::string blank = "";
             ResetPlayerName(blank);
-            gGameStateNext = GS_MAIN_MENU;
+            g_game_state_next = GS_MAIN_MENU;
         }
     }
 
-    void DrawTimeoutScreen(const Data::Score& score, AEGfxVertexList* bgMesh, bool& openLeaderboard)
+    void DrawTimeoutScreen(const Data::Score& score, AEGfxVertexList* bg_mesh, bool& open_leaderboard)
     {
-        (void)bgMesh;
+        (void)bg_mesh;
         EnsureMesh();
 
-        float winW = (float)AEGfxGetWindowWidth();
-        float winH = (float)AEGfxGetWindowHeight();
+        float win_w = (float)AEGfxGetWindowWidth();
+        float win_h = (float)AEGfxGetWindowHeight();
         float dt = (float)AEFrameRateControllerGetFrameTime();
 
-        s_fadeInTimer += dt;
-        float fadeAlpha = s_fadeInTimer / FADE_IN_DURATION;
-        if (fadeAlpha > 1.0f) fadeAlpha = 1.0f;
+        s_fade_in_timer += dt;
+        float fade_alpha = s_fade_in_timer / FADE_IN_DURATION;
+        if (fade_alpha > 1.0f) fade_alpha = 1.0f;
 
         AEGfxSetCamPosition(0.0f, 0.0f);
 
         AEGfxSetRenderMode(AE_GFX_RM_COLOR);
         AEGfxSetBlendMode(AE_GFX_BM_BLEND);
-        AEGfxSetTransparency(fadeAlpha);
+        AEGfxSetTransparency(fade_alpha);
         AEGfxSetColorToMultiply(0.0f, 0.0f, 0.0f, 1.0f);
-        Mesh_Renderer(s_mesh, 0.0f, 0.0f, winW, winH, 0.0f);
+        Mesh_Renderer(s_mesh, 0.0f, 0.0f, win_w, win_h, 0.0f);
 
-        if (Graphics::font_id < 0) return;
+        if (Graphics::g_font_id < 0) return;
 
         const char* header = "TIME'S UP!";
         float hw, hh;
-        AEGfxGetPrintSize(Graphics::font_id, header, 1.4f, &hw, &hh);
-        AEGfxPrint(Graphics::font_id, header,
+        AEGfxGetPrintSize(Graphics::g_font_id, header, 1.4f, &hw, &hh);
+        AEGfxPrint(Graphics::g_font_id, header,
             -hw * 0.5f, 0.55f,
-            1.4f, 1.0f, 0.85f, 0.1f, fadeAlpha);
+            1.4f, 1.0f, 0.85f, 0.1f, fade_alpha);
 
-        std::string scoreStr = "SCORE:  " + std::to_string(score.score_value);
+        std::string score_str = "SCORE:  " + std::to_string(score.score_value);
         float sw, sh;
-        AEGfxGetPrintSize(Graphics::font_id, scoreStr.c_str(), 0.8f, &sw, &sh);
-        AEGfxPrint(Graphics::font_id, scoreStr.c_str(),
+        AEGfxGetPrintSize(Graphics::g_font_id, score_str.c_str(), 0.8f, &sw, &sh);
+        AEGfxPrint(Graphics::g_font_id, score_str.c_str(),
             -sw * 0.5f, 0.3f,
-            0.8f, 1.0f, 1.0f, 1.0f, fadeAlpha);
+            0.8f, 1.0f, 1.0f, 1.0f, fade_alpha);
 
-        if (fadeAlpha < 0.3f) return;
+        if (fade_alpha < 0.3f) return;
 
-        float btnW = 350.0f;
-        float btnH = 65.0f;
-        float btnX = 0.0f;
-        float gap = 90.0f;
-        float restartY = 50.0f;
-        float leaderY = restartY - gap;
-        float menuY = leaderY - gap;
+        constexpr float BTN_W = 350.0f;
+        constexpr float BTN_H = 65.0f;
+        constexpr float BTN_X = 0.0f;
+        constexpr float GAP = 90.0f;
 
-        if (DrawButton("RESTART", btnX, restartY, btnW, btnH, 0.2f, 0.8f, 0.2f, tweenRestart))
-            gGameStateNext = GS_RESTART;
+        float restart_y = 50.0f;
+        float leader_y = restart_y - GAP;
+        float menu_y = leader_y - GAP;
 
-        if (DrawButton("LEADERBOARD", btnX, leaderY, btnW, btnH, 0.2f, 0.5f, 1.0f, tweenLeaderboard))
+        if (DrawButton("RESTART", BTN_X, restart_y, BTN_W, BTN_H, 0.2f, 0.8f, 0.2f, s_tween_restart))
+            g_game_state_next = GS_RESTART;
+
+        if (DrawButton("LEADERBOARD", BTN_X, leader_y, BTN_W, BTN_H, 0.2f, 0.5f, 1.0f, s_tween_leaderboard))
         {
             Leaderboard_System::Read_TimeLeaderboard();
-            openLeaderboard = true;
+            open_leaderboard = true;
         }
 
-        if (DrawButton("MAIN MENU", btnX, menuY, btnW, btnH, 1.0f, 0.5f, 0.1f, tweenMenu))
+        if (DrawButton("MAIN MENU", BTN_X, menu_y, BTN_W, BTN_H, 1.0f, 0.5f, 0.1f, s_tween_menu))
         {
             std::string blank = "";
             ResetPlayerName(blank);
-            gGameStateNext = GS_MAIN_MENU;
+            g_game_state_next = GS_MAIN_MENU;
         }
     }
 }

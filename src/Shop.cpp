@@ -3,465 +3,450 @@
 #include "ButtonTween.h"
 
 
+int g_shop_skin_id = 0;
+int g_shop_bg_id = 0;
 
-int gShopSkinID = 0;
-int gShopBgID = 0;
+namespace
+{
+    static AEGfxTexture* s_tex_shop_bg = nullptr;
+    static AEGfxTexture* s_tex_bg_options[3] = { nullptr };
+    static AEGfxTexture* s_tex_skin_options[3] = { nullptr };
+    static AEGfxTexture* s_tex_item_frame = nullptr;
+    static AEGfxTexture* s_tex_bg_frame = nullptr;
+    static AEGfxTexture* s_tex_back = nullptr;
 
-namespace {
-	AEGfxTexture* pTexShopBg = nullptr;
-	AEGfxTexture* pTexBgOptions[3] = { nullptr };
-	AEGfxTexture* pTexSkinOptions[3] = { nullptr };
-	AEGfxTexture* pTexItemFrame = nullptr;
-	AEGfxTexture* pTexBgFrame = nullptr;
-	AEGfxTexture* pTexBack = nullptr;
+    static AEGfxVertexList* s_mesh_back = nullptr;
+    static AEGfxVertexList* s_mesh_shop = nullptr;
+    static AEGfxVertexList* s_mesh_bg_item = nullptr;
+    static AEGfxVertexList* s_mesh_skin_item = nullptr;
 
-	AEGfxVertexList* pBack = nullptr;
-	AEGfxVertexList* pShop = nullptr;
-	AEGfxVertexList* pMeshBgItem = nullptr;
-	AEGfxVertexList* pMeshSkinItem = nullptr;
+    static float s_win_w = 0.0f;
+    static float s_win_h = 0.0f;
+    static float s_world_x = 0.0f;
+    static float s_world_y = 0.0f;
 
+    static float s_shop_bg_width = 0.0f;
+    static float s_shop_bg_height = 0.0f;
+    static float s_back_btn_width = 0.0f;
+    static float s_back_btn_height = 0.0f;
 
-	float winW;
-	float winH;
-	float worldX;
-	float worldY;
+    static float s_bg_item_width = 0.0f;
+    static float s_bg_item_height = 0.0f;
+    static float s_skin_item_width = 0.0f;
+    static float s_skin_item_height = 0.0f;
 
-	float SHOP_BG_WIDTH;
-	float SHOP_BG_HEIGHT;
-	float BACK_BTN_WIDTH;
-	float BACK_BTN_HEIGHT;
+    static float s_bg_left_x = 0.0f;
+    static float s_bg_top_y = 0.0f;
+    static float s_text_x = 0.0f;
+    static float s_text_y = 0.0f;
+    static float s_offset_x = 0.0f;
+    static float s_offset_y = 0.0f;
 
-	float BG_ITEM_WIDTH;
-	float BG_ITEM_HEIGHT;
-	float SKIN_ITEM_WIDTH;
-	float SKIN_ITEM_HEIGHT;
+    constexpr float SHOP_BG_Y = 0.0f;
+    constexpr float SHOP_BG_X = 0.0f;
 
-	float bgLeftX;
-	float bgTopY;
-	float textX;
-	float textY;
-	float offsetX;
-	float offsetY;
+    constexpr int SKIN_UNLOCK[3] = { 0, 1500, 3000 };
+    constexpr int BG_UNLOCK[3] = { 0, 2000, 5000 };
 
-	const float SHOP_BG_Y = 0.0f;
-	const float SHOP_BG_X = 0.0f;
+    static float s_back_btn_x = 0.0f;
+    static float s_back_btn_y = 0.0f;
 
-	const int SKIN_UNLOCK[3] = { 0, 1500, 3000 };
-	const int BG_UNLOCK[3] = { 0, 2000, 5000 };
+    static float s_bg_item_x[3] = {};
+    static float s_bg_item_y = 0.0f;
 
-	float BACK_BTN_X;
-	float BACK_BTN_Y;
+    static float s_skin_item_x[3] = {};
+    static float s_skin_item_y = 0.0f;
+    static int   s_score_amount = 0;
 
-	float BG_ITEM_X[3];
-	float BG_ITEM_Y;
+    static bool  s_is_transitioning_in = false;
+    static bool  s_is_transitioning_out = false;
+    static float s_shop_ui_offset_x = 0.0f;
 
-	float SKIN_ITEM_X[3];
-	float SKIN_ITEM_Y;
-	int SCORE_AMOUNT;
-
-	bool isTransitioningIn = false;
-	bool isTransitioningOut = false;
-	float shopUiOffsetX = 0.0f;
-
-	// ---------------------------------------------------------------------------
-	// BUTTON TWEENS
-	// ---------------------------------------------------------------------------
-	ButtonTween tweenBack;
-	ButtonTween tweenBgItem[3];
-	ButtonTween tweenSkinItem[3];
+    // ---------------------------------------------------------------------------
+    // BUTTON TWEENS
+    // ---------------------------------------------------------------------------
+    static ButtonTween s_tween_back;
+    static ButtonTween s_tween_bg_item[3];
+    static ButtonTween s_tween_skin_item[3];
 }
 
 
+void DisplayScore()
+{
+    if (Graphics::g_font_id < 0) return;
 
-void DisplayScore() {
+    s_bg_left_x = SHOP_BG_X - (s_shop_bg_width * 0.5f);
+    s_bg_top_y = SHOP_BG_Y + (s_shop_bg_height * 0.5f);
+    s_offset_x = s_shop_bg_width * 0.1f;
+    s_offset_y = s_shop_bg_height * 0.27f;
+    s_text_x = (s_bg_left_x + s_offset_x) / (s_win_w * 0.5f);
+    s_text_y = (s_bg_top_y - s_offset_y) / (s_win_h * 0.5f);
 
-	if (Graphics::font_id < 0) return;
-	bgLeftX = SHOP_BG_X - (SHOP_BG_WIDTH * 0.5f);
-	bgTopY = SHOP_BG_Y + (SHOP_BG_HEIGHT * 0.5f);
+    char score_buf[128];
+    std::snprintf(score_buf, sizeof(score_buf), "SCORE: %d", s_score_amount);
 
-	offsetX = SHOP_BG_WIDTH * 0.1f;
-	offsetY = SHOP_BG_HEIGHT * 0.27f;
-
-	textX = (bgLeftX + offsetX) / (winW * 0.5f);
-	textY = (bgTopY - offsetY) / (winH * 0.5f);
-	char s[128];      // text buffer for score
-	std::snprintf(s, sizeof(s), "SCORE: %d", SCORE_AMOUNT);    // format score line
-
-	AEGfxSetBlendMode(AE_GFX_BM_BLEND);
-	AEGfxPrint(Graphics::font_id, s, textX + shopUiOffsetX, textY, 1.0f, 1, 1, 1, 1);
+    AEGfxSetBlendMode(AE_GFX_BM_BLEND);
+    AEGfxPrint(Graphics::g_font_id, score_buf, s_text_x + s_shop_ui_offset_x, s_text_y, 1.0f, 1, 1, 1, 1);
 }
 
-void Shop_Init() {
+void Shop_Init()
+{
+    s_is_transitioning_in = true;
+    s_shop_ui_offset_x = (float)AEGfxGetWindowWidth();
+    ScreenTransitions::ScreenTransition_Init();
 
-	isTransitioningIn = true;
-	shopUiOffsetX = (float)AEGfxGetWindowWidth(); // Start the UI completely off-screen to the right
-	ScreenTransitions::ScreenTransition_Init(); // Restart the timer for the arrival pan
+    s_win_w = (float)AEGfxGetWindowWidth();
+    s_win_h = (float)AEGfxGetWindowHeight();
 
-	winW = (float)AEGfxGetWindowWidth();
-	winH = (float)AEGfxGetWindowHeight();
+    s_shop_bg_width = s_win_h * 1.2f;
+    s_shop_bg_height = s_win_h * 1.0f;
+    s_back_btn_width = 80.0f;
+    s_back_btn_height = 80.0f;
+    s_bg_item_width = s_win_w * 0.2f;
+    s_bg_item_height = s_bg_item_width * (120.0f / 450.0f);
+    s_skin_item_width = s_win_w * 0.25f;
+    s_skin_item_height = s_skin_item_width;
 
-	SHOP_BG_WIDTH = winH * 1.2f;
-	SHOP_BG_HEIGHT = winH * 1.0f;
-	BACK_BTN_WIDTH = 80.0f;
-	BACK_BTN_HEIGHT = 80.0f;
-	BG_ITEM_WIDTH = winW * 0.2f;
-	BG_ITEM_HEIGHT = BG_ITEM_WIDTH * (120.0f / 450.0f);
-	SKIN_ITEM_WIDTH = winW * 0.25f;
-	SKIN_ITEM_HEIGHT = SKIN_ITEM_WIDTH;
+    s_bg_item_y = s_win_h * 0.15f;
+    s_skin_item_y = -s_win_h * 0.15f;
+    s_back_btn_x = -s_win_w * 0.23f;
+    s_back_btn_y = -s_win_h * 0.3f;
 
-	BG_ITEM_Y = winH * 0.15f;
-	SKIN_ITEM_Y = winH * -0.15f;
-	BACK_BTN_X = winW * -0.23f;
-	BACK_BTN_Y = winH * -0.3f;
+    // Backgrounds
+    s_bg_item_x[0] = -s_win_w * 0.2f;
+    s_bg_item_x[1] = 0.0f;
+    s_bg_item_x[2] = s_win_w * 0.2f;
 
-	// Backgrounds
-	BG_ITEM_X[0] = winW * -0.2f; // Left
-	BG_ITEM_X[1] = 0.0f;          // Center
-	BG_ITEM_X[2] = winW * 0.2f;  // Right
+    // Skins
+    s_skin_item_x[0] = -s_win_w * 0.20f;
+    s_skin_item_x[1] = 0.0f;
+    s_skin_item_x[2] = s_win_w * 0.20f;
 
-	// Skins
-	SKIN_ITEM_X[0] = winW * -0.20f; // Left
-	SKIN_ITEM_X[1] = 0.0f;          // Center
-	SKIN_ITEM_X[2] = winW * 0.20f;  // Right
+    s_tex_shop_bg = AEGfxTextureLoad("Assets/shopBackground.png");
+    AE_ASSERT_MESG(s_tex_shop_bg, "Failed to load shopBackground.png");
 
+    s_tex_item_frame = AEGfxTextureLoad("Assets/shopItemFrame.png");
+    AE_ASSERT_MESG(s_tex_item_frame, "Failed to load shopItemFrame.png");
 
-	pTexShopBg = AEGfxTextureLoad("Assets/shopBackground.png");
-	AE_ASSERT_MESG(pTexShopBg, "Failed to load shopBackground.png");
+    s_tex_back = AEGfxTextureLoad("Assets/LeftRightButtons.png");
+    AE_ASSERT_MESG(s_tex_back, "Failed to load LeftRightButtons.png");
 
-	pTexItemFrame = AEGfxTextureLoad("Assets/shopItemFrame.png");
-	AE_ASSERT_MESG(pTexItemFrame, "Failed to load shopItemFrame.png");
+    s_tex_bg_frame = AEGfxTextureLoad("Assets/BackgroundSelectorFrame.png");
+    AE_ASSERT_MESG(s_tex_bg_frame, "Failed to load BackgroundSelectorFrame.png");
 
-	pTexBack = AEGfxTextureLoad("Assets/LeftRightButtons.png");
-	AE_ASSERT_MESG(pTexBack, "Failed to load LeftRightButtons.png");
+    s_tex_bg_options[0] = AEGfxTextureLoad("Assets/Background1.png");
+    AE_ASSERT_MESG(s_tex_bg_options, "Failed to load Background1.png");
+    s_tex_bg_options[1] = AEGfxTextureLoad("Assets/floorground2.png");
+    AE_ASSERT_MESG(s_tex_bg_options[1], "Failed to load floorground2shop.png");
+    s_tex_bg_options[2] = s_tex_bg_options[0]; // TODO: Change to bg2.png later
 
+    s_tex_skin_options[0] = AEGfxTextureLoad("Assets/skin1.png");
+    AE_ASSERT_MESG(s_tex_skin_options, "Failed to load skin1.png");
+    s_tex_skin_options[1] = AEGfxTextureLoad("Assets/skin2.png");
+    AE_ASSERT_MESG(s_tex_skin_options, "Failed to load skin2.png");
+    s_tex_skin_options[2] = AEGfxTextureLoad("Assets/skin3.png");
+    AE_ASSERT_MESG(s_tex_skin_options, "Failed to load skin3.png");
 
-	pTexBgFrame = AEGfxTextureLoad("Assets/BackgroundSelectorFrame.png");
-	AE_ASSERT_MESG(pTexBgFrame, "Failed to load BackgroundSelectorFrame.png");
+    s_mesh_shop = Sprite_Mesh(1.0f, 1.0f);
+    s_mesh_bg_item = Sprite_Mesh(1.0f, 1.0f);
+    s_mesh_skin_item = Sprite_Mesh(1.0f, 1.0f);
+    s_mesh_back = Spritesheet_Mesh(1.0f, 1.0f, 0.0f, 0.0f, 0.5f, 0.5f);
 
-	pTexBgOptions[0] = AEGfxTextureLoad("Assets/Background1.png");
-	AE_ASSERT_MESG(pTexBgOptions, "Failed to load Background1.png");
-	pTexBgOptions[1] = AEGfxTextureLoad("Assets/floorground2.png");
-	AE_ASSERT_MESG(pTexBgOptions[1], "Failed to load floorground2shop.png");
-	pTexBgOptions[2] = pTexBgOptions[0]; // TODO: Change to bg2.png later
+    s_score_amount = Leaderboard_System::GetHighestScore();
 
-	// Load Skin Options (Using a placeholder for now)
-	pTexSkinOptions[0] = AEGfxTextureLoad("Assets/skin1.png");
-	AE_ASSERT_MESG(pTexSkinOptions, "Failed to load skin1.png");
-	pTexSkinOptions[1] = AEGfxTextureLoad("Assets/skin2.png");
-	AE_ASSERT_MESG(pTexSkinOptions, "Failed to load skin2.png");
-	pTexSkinOptions[2] = AEGfxTextureLoad("Assets/skin3.png");
-	AE_ASSERT_MESG(pTexSkinOptions, "Failed to load skin3.png");
-
-
-
-	pShop = Sprite_Mesh(1.0f, 1.0f);
-
-	pMeshBgItem = Sprite_Mesh(1.0f, 1.0f);
-	pMeshSkinItem = Sprite_Mesh(1.0f, 1.0f);
-	pBack = Spritesheet_Mesh(1.0f, 1.0f, 0.0f, 0.0f, 0.5f, 0.5f);
-
-	SCORE_AMOUNT = Leaderboard_System::GetHighestScore();
-
-	ButtonTween_Reset(tweenBack);
-	for (int i = 0; i < 3; i++) { ButtonTween_Reset(tweenBgItem[i]); ButtonTween_Reset(tweenSkinItem[i]); }
+    ButtonTween_Reset(s_tween_back);
+    for (int i = 0; i < 3; i++)
+    {
+        ButtonTween_Reset(s_tween_bg_item[i]);
+        ButtonTween_Reset(s_tween_skin_item[i]);
+    }
 }
 
-void Shop_Update() {
+void Shop_Update()
+{
+    AEGfxSetCamPosition(0.0f, 0.0f);
+    AEGfxSetBackgroundColor(0.53f, 0.81f, 0.92f);
 
-	AEGfxSetCamPosition(0.0f, 0.0f);
-	AEGfxSetBackgroundColor(0.53f, 0.81f, 0.92f);
+    float dt = (float)AEFrameRateControllerGetFrameTime();
+    if (dt > 0.1f) dt = 0.01667f;
+    BackgroundParallax::MenuParallax_Update(dt);
 
+    s32 mouse_x, mouse_y;
+    AEInputGetCursorPosition(&mouse_x, &mouse_y);
 
-	float dt = (float)AEFrameRateControllerGetFrameTime();
-	if (dt > 0.1f) dt = 0.01667f;
-	BackgroundParallax::MenuParallax_Update(dt);
+    s_win_w = (float)AEGfxGetWindowWidth();
+    s_win_h = (float)AEGfxGetWindowHeight();
+    s_world_x = (float)mouse_x - (s_win_w * 0.5f);
+    s_world_y = (s_win_h * 0.5f) - (float)mouse_y;
 
-	s32 mouseX, mouseY;
-	AEInputGetCursorPosition(&mouseX, &mouseY);
+    // ---------------------------------------------------------------------------
+    // BUTTON TWEEN UPDATES
+    // ---------------------------------------------------------------------------
+    if (!s_is_transitioning_in && !s_is_transitioning_out)
+    {
+        float dt_tween = (float)AEFrameRateControllerGetFrameTime();
+        bool click = AEInputCheckTriggered(AEVK_LBUTTON);
 
-	winW = (float)AEGfxGetWindowWidth();
-	winH = (float)AEGfxGetWindowHeight();
+        bool h_back = (s_world_x >= s_back_btn_x - (s_back_btn_width * 0.5f) &&
+            s_world_x <= s_back_btn_x + (s_back_btn_width * 0.5f) &&
+            s_world_y >= s_back_btn_y - (s_back_btn_height * 0.5f) &&
+            s_world_y <= s_back_btn_y + (s_back_btn_height * 0.5f));
+        ButtonTween_Update(s_tween_back, h_back, h_back && click, dt_tween);
 
-	worldX = (float)mouseX - (winW * 0.5f);
-	worldY = (winH * 0.5f) - (float)mouseY;
+        for (int i = 0; i < 3; i++)
+        {
+            bool h_bg = (s_world_x >= s_bg_item_x[i] - (s_bg_item_width * 0.5f) &&
+                s_world_x <= s_bg_item_x[i] + (s_bg_item_width * 0.5f) &&
+                s_world_y >= s_bg_item_y - (s_bg_item_height * 0.5f) &&
+                s_world_y <= s_bg_item_y + (s_bg_item_height * 0.5f));
+            ButtonTween_Update(s_tween_bg_item[i], h_bg, h_bg && click, dt_tween);
 
-	// ---------------------------------------------------------------------------
-	// BUTTON TWEEN UPDATES
-	// ---------------------------------------------------------------------------
-	if (!isTransitioningIn && !isTransitioningOut)
-	{
-		float dt_tween = (float)AEFrameRateControllerGetFrameTime();
-		bool click = AEInputCheckTriggered(AEVK_LBUTTON);
+            float hit_box_w = s_skin_item_width * 0.65f;
+            float hit_box_h = s_skin_item_height * 0.65f;
+            float hit_box_x = s_skin_item_x[i] - 10.0f;
+            float hit_box_y = s_skin_item_y + 60.0f;
+            bool h_skin = (s_world_x >= hit_box_x - (hit_box_w * 0.5f) &&
+                s_world_x <= hit_box_x + (hit_box_w * 0.5f) &&
+                s_world_y >= hit_box_y - (hit_box_h * 0.5f) &&
+                s_world_y <= hit_box_y + (hit_box_h * 0.5f));
+            ButtonTween_Update(s_tween_skin_item[i], h_skin, h_skin && click, dt_tween);
+        }
+    }
 
-		bool hBack = (worldX >= BACK_BTN_X - (BACK_BTN_WIDTH * 0.5f) && worldX <= BACK_BTN_X + (BACK_BTN_WIDTH * 0.5f) &&
-			worldY >= BACK_BTN_Y - (BACK_BTN_HEIGHT * 0.5f) && worldY <= BACK_BTN_Y + (BACK_BTN_HEIGHT * 0.5f));
-		ButtonTween_Update(tweenBack, hBack, hBack && click, dt_tween);
+    if (s_is_transitioning_in)
+    {
+        ScreenTransitions::ScreenTransition_Update(dt);
+        float smooth_pan = ScreenTransitions::EaseOutExpo(ScreenTransitions::result);
 
-		for (int i = 0; i < 3; i++)
-		{
-			bool hBg = (worldX >= BG_ITEM_X[i] - (BG_ITEM_WIDTH * 0.5f) && worldX <= BG_ITEM_X[i] + (BG_ITEM_WIDTH * 0.5f) &&
-				worldY >= BG_ITEM_Y - (BG_ITEM_HEIGHT * 0.5f) && worldY <= BG_ITEM_Y + (BG_ITEM_HEIGHT * 0.5f));
-			ButtonTween_Update(tweenBgItem[i], hBg, hBg && click, dt_tween);
+        s_shop_ui_offset_x = s_win_w * (1.0f - smooth_pan);
+        BackgroundParallax::MenuParallax_SetPanOffset(-0.2f - (0.2f * smooth_pan));
 
-			float hitBoxW = SKIN_ITEM_WIDTH * 0.65f;
-			float hitBoxH = SKIN_ITEM_HEIGHT * 0.65f;
-			float hitBoxX = SKIN_ITEM_X[i] - 10.0f;
-			float hitBoxY = SKIN_ITEM_Y + 60.0f;
-			bool hSkin = (worldX >= hitBoxX - (hitBoxW * 0.5f) && worldX <= hitBoxX + (hitBoxW * 0.5f) &&
-				worldY >= hitBoxY - (hitBoxH * 0.5f) && worldY <= hitBoxY + (hitBoxH * 0.5f));
-			ButtonTween_Update(tweenSkinItem[i], hSkin, hSkin && click, dt_tween);
-		}
-	}
+        if (ScreenTransitions::result >= 0.3f)
+        {
+            s_shop_ui_offset_x = 0.0f;
+            s_is_transitioning_in = false;
+            BackgroundParallax::MenuParallax_SetPanOffset(-0.4f);
+        }
+    }
+    BackgroundParallax::MenuParallax_Draw(0.0f);
 
-	if (isTransitioningIn)
-	{
-		ScreenTransitions::ScreenTransition_Update(dt);
+    if (!s_is_transitioning_in && AEInputCheckTriggered(AEVK_ESCAPE))
+    {
+        s_is_transitioning_out = true;
+        ScreenTransitions::ScreenTransition_Init();
+    }
 
-		float smoothPan = ScreenTransitions::EaseOutExpo(ScreenTransitions::result);
+    if (!s_is_transitioning_in && AEInputCheckTriggered(AEVK_LBUTTON))
+    {
+        // Check Back Button
+        if (s_world_x >= s_back_btn_x - (s_back_btn_width * 0.5f) &&
+            s_world_x <= s_back_btn_x + (s_back_btn_width * 0.5f) &&
+            s_world_y >= s_back_btn_y - (s_back_btn_height * 0.5f) &&
+            s_world_y <= s_back_btn_y + (s_back_btn_height * 0.5f))
+        {
+            SoundManager::PlayClickBtnSfx();
+            s_is_transitioning_out = true;
+            ScreenTransitions::ScreenTransition_Init();
+        }
 
-		// Slide from the right side towards 0
-		shopUiOffsetX = winW * (1.0f - smoothPan);
+        // --- CHECK BACKGROUND SELECTION ---
+        for (int i = 0; i < 3; i++)
+        {
+            if (s_world_x >= s_bg_item_x[i] - (s_bg_item_width * 0.5f) &&
+                s_world_x <= s_bg_item_x[i] + (s_bg_item_width * 0.5f) &&
+                s_world_y >= s_bg_item_y - (s_bg_item_height * 0.5f) &&
+                s_world_y <= s_bg_item_y + (s_bg_item_height * 0.5f))
+            {
+                SoundManager::PlayClickBtnSfx();
+                if (s_score_amount >= BG_UNLOCK[i])
+                    g_shop_bg_id = i;
+            }
+        }
 
-		BackgroundParallax::MenuParallax_SetPanOffset(-0.2f - (0.2f * smoothPan));
+        // --- CHECK SKIN SELECTION ---
+        for (int i = 0; i < 3; i++)
+        {
+            float hit_box_w = s_skin_item_width * 0.65f;
+            float hit_box_h = s_skin_item_height * 0.65f;
+            float hit_box_x = s_skin_item_x[i] - 10.0f;
+            float hit_box_y = s_skin_item_y + 60.0f;
 
-		if (ScreenTransitions::result >= 0.3f)
-		{
-			shopUiOffsetX = 0.0f;
-			isTransitioningIn = false;
-			BackgroundParallax::MenuParallax_SetPanOffset(-0.4f); // Lock securely to center
-		}
-	}
-	BackgroundParallax::MenuParallax_Draw(0.0f);
+            if (s_world_x >= hit_box_x - (hit_box_w * 0.5f) &&
+                s_world_x <= hit_box_x + (hit_box_w * 0.5f) &&
+                s_world_y >= hit_box_y - (hit_box_h * 0.5f) &&
+                s_world_y <= hit_box_y + (hit_box_h * 0.5f))
+            {
+                SoundManager::PlayClickBtnSfx();
+                if (s_score_amount >= SKIN_UNLOCK[i])
+                    g_shop_skin_id = i;
+            }
+        }
+    }
 
-	if (!isTransitioningIn && AEInputCheckTriggered(AEVK_ESCAPE)) {
-		isTransitioningOut = true;
-		ScreenTransitions::ScreenTransition_Init();
-	}
+    if (s_is_transitioning_out)
+    {
+        ScreenTransitions::ScreenTransition_Update(dt);
+        float smooth_pan = ScreenTransitions::EaseOutExpo(ScreenTransitions::result);
 
-	if (!isTransitioningIn && AEInputCheckTriggered(AEVK_LBUTTON)) {
-		// Check Back Button
-		if (worldX >= BACK_BTN_X - (BACK_BTN_WIDTH * 0.5f) && worldX <= BACK_BTN_X + (BACK_BTN_WIDTH * 0.5f) &&
-			worldY >= BACK_BTN_Y - (BACK_BTN_HEIGHT * 0.5f) && worldY <= BACK_BTN_Y + (BACK_BTN_HEIGHT * 0.5f))
-		{
-			SoundManager::PlayClickBtnSfx();
-			isTransitioningOut = true;
-			ScreenTransitions::ScreenTransition_Init();
-		}
+        s_shop_ui_offset_x = s_win_w * smooth_pan;
+        BackgroundParallax::MenuParallax_SetPanOffset(-0.4f + (0.2f * smooth_pan));
 
-		// --- CHECK BACKGROUND SELECTION ---
-		for (int i = 0; i < 3; i++) {
-			if (worldX >= BG_ITEM_X[i] - (BG_ITEM_WIDTH * 0.5f) && worldX <= BG_ITEM_X[i] + (BG_ITEM_WIDTH * 0.5f) &&
-				worldY >= BG_ITEM_Y - (BG_ITEM_HEIGHT * 0.5f) && worldY <= BG_ITEM_Y + (BG_ITEM_HEIGHT * 0.5f)) {
-				SoundManager::PlayClickBtnSfx();
-				if (SCORE_AMOUNT >= BG_UNLOCK[i]) {
-					gShopBgID = i;
-				}
-			}
-		}
+        if (ScreenTransitions::result >= 0.3f)
+        {
+            s_is_transitioning_out = false;
+            BackgroundParallax::MenuParallax_SetPanOffset(0.2f);
+            g_game_state_next = GS_MAIN_MENU;
+        }
+    }
 
-		// --- CHECK SKIN SELECTION ---
-		for (int i = 0; i < 3; i++) {
-			float hitBoxW = SKIN_ITEM_WIDTH * 0.65f;
-			float hitBoxH = SKIN_ITEM_HEIGHT * 0.65f;
-			float hitBoxX = SKIN_ITEM_X[i] - 10.0f;
-			float hitBoxY = SKIN_ITEM_Y + 60.0f;
+    if (s_tex_shop_bg)
+    {
+        AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
+        AEGfxSetBlendMode(AE_GFX_BM_BLEND);
+        AEGfxSetTransparency(1.0f);
+        AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);
+        AEGfxTextureSet(s_tex_shop_bg, 0.0f, 0.0f);
+        Mesh_Renderer(s_mesh_shop, SHOP_BG_X + s_shop_ui_offset_x, SHOP_BG_Y, s_shop_bg_width, s_shop_bg_height, 0.0f);
+    }
 
-			if (worldX >= hitBoxX - (hitBoxW * 0.5f) && worldX <= hitBoxX + (hitBoxW * 0.5f) &&
-				worldY >= hitBoxY - (hitBoxH * 0.5f) && worldY <= hitBoxY + (hitBoxH * 0.5f)) {
-				SoundManager::PlayClickBtnSfx();
-				if (SCORE_AMOUNT >= SKIN_UNLOCK[i]) {
-					gShopSkinID = i;
-				}
-			}
-		}
-	}
+    // Draw the 3 Background Options
+    for (int i = 0; i < 3; i++)
+    {
+        if (s_tex_bg_options[i])
+        {
+            if (s_score_amount >= BG_UNLOCK[i])
+                AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f); // Bright (Unlocked)
+            else
+                AEGfxSetColorToMultiply(0.3f, 0.3f, 0.3f, 1.0f); // Dark (Locked)
 
-	if (isTransitioningOut)
-	{
-		ScreenTransitions::ScreenTransition_Update(dt);
-		float smoothPan = ScreenTransitions::EaseOutExpo(ScreenTransitions::result);
+            AEGfxTextureSet(s_tex_bg_options[i], 0.0f, 0.0f);
+            Mesh_Renderer(s_mesh_bg_item,
+                s_bg_item_x[i] + s_shop_ui_offset_x, s_bg_item_y,
+                s_bg_item_width * 0.7f * s_tween_bg_item[i].scale,
+                s_bg_item_height * 0.7f * s_tween_bg_item[i].scale, 0.0f);
 
-		// Slide the Shop UI out to the right
-		shopUiOffsetX = winW * smoothPan;
-		// Pan the background backwards 
-		BackgroundParallax::MenuParallax_SetPanOffset(-0.4f + (0.2f * smoothPan));
+            if (g_shop_bg_id == i && s_tex_bg_frame)
+            {
+                AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);
+                AEGfxTextureSet(s_tex_bg_frame, 0.0f, 0.0f);
+                Mesh_Renderer(s_mesh_bg_item,
+                    s_bg_item_x[i] + s_shop_ui_offset_x, s_bg_item_y,
+                    s_bg_item_width * 0.7f * s_tween_bg_item[i].scale,
+                    s_bg_item_height * 0.7f * s_tween_bg_item[i].scale, 0.0f);
+            }
 
-		if (ScreenTransitions::result >= 0.3f)
-		{
+            if ((s_score_amount < BG_UNLOCK[i]) && Graphics::g_font_id >= 0)
+            {
+                char price_str[32];
+                std::snprintf(price_str, sizeof(price_str), "%d", BG_UNLOCK[i]);
 
-			isTransitioningOut = false;
-			BackgroundParallax::MenuParallax_SetPanOffset(0.2f);
-			gGameStateNext = GS_MAIN_MENU;
-		}
-	}
+                float text_scale = 0.8f;
+                float text_w = 0.0f, text_h = 0.0f;
+                AEGfxGetPrintSize(Graphics::g_font_id, price_str, text_scale, &text_w, &text_h);
 
-	if (pTexShopBg)
-	{
-		AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
-		AEGfxSetBlendMode(AE_GFX_BM_BLEND);
-		AEGfxSetTransparency(1.0f);
-		AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);
+                float text_ndc_x = (s_bg_item_x[i] / (s_win_w * 0.5f)) - (text_w * 0.5f);
+                float text_ndc_y = (s_bg_item_y / (s_win_h * 0.5f)) - 0.025f;
+                AEGfxSetBlendMode(AE_GFX_BM_BLEND);
+                AEGfxPrint(Graphics::g_font_id, price_str,
+                    text_ndc_x + s_shop_ui_offset_x, text_ndc_y,
+                    text_scale, 1.0f, 1.0f, 1.0f, 1.0f);
+            }
+        }
+    }
 
-		AEGfxTextureSet(pTexShopBg, 0.0f, 0.0f);
-		Mesh_Renderer(pShop, SHOP_BG_X + shopUiOffsetX, SHOP_BG_Y, SHOP_BG_WIDTH, SHOP_BG_HEIGHT, 0.0f);
-	}
+    // Draw the 3 Skin Options
+    for (int i = 0; i < 3; i++)
+    {
+        if (s_tex_skin_options[i])
+        {
+            if (s_score_amount >= SKIN_UNLOCK[i])
+                AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f); // Bright (Unlocked)
+            else
+                AEGfxSetColorToMultiply(0.3f, 0.3f, 0.3f, 1.0f); // Dark (Locked)
 
-	// Draw the 3 Background Options
-	for (int i = 0; i < 3; i++) {
-		if (pTexBgOptions[i]) {
-			if (SCORE_AMOUNT >= BG_UNLOCK[i]) {
-				AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f); // Bright (Unlocked)
-			}
-			else {
-				AEGfxSetColorToMultiply(0.3f, 0.3f, 0.3f, 1.0f); // Dark (Locked)
-			}
-			AEGfxTextureSet(pTexBgOptions[i], 0.0f, 0.0f);
-			Mesh_Renderer(pMeshBgItem, BG_ITEM_X[i] + shopUiOffsetX, BG_ITEM_Y, BG_ITEM_WIDTH * 0.7f * tweenBgItem[i].scale, BG_ITEM_HEIGHT * 0.7f * tweenBgItem[i].scale, 0.0f);
+            AEGfxTextureSet(s_tex_skin_options[i], 0.0f, 0.0f);
+            Mesh_Renderer(s_mesh_skin_item,
+                s_skin_item_x[i] + s_shop_ui_offset_x, s_skin_item_y,
+                s_skin_item_width * s_tween_skin_item[i].scale,
+                s_skin_item_height * s_tween_skin_item[i].scale, 0.0f);
 
-			// Only draw the gold item frame if THIS background is the equipped one
-			if (gShopBgID == i && pTexBgFrame) {
-				AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);
-				AEGfxTextureSet(pTexBgFrame, 0.0f, 0.0f);
-				Mesh_Renderer(pMeshBgItem, BG_ITEM_X[i] + shopUiOffsetX, BG_ITEM_Y, BG_ITEM_WIDTH * 0.7f * tweenBgItem[i].scale, BG_ITEM_HEIGHT * 0.7f * tweenBgItem[i].scale, 0.0f);
-			}
+            if (g_shop_skin_id == i && s_tex_item_frame)
+            {
+                AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);
+                AEGfxTextureSet(s_tex_item_frame, 0.0f, 0.0f);
+                constexpr float FRAME_SCALE = 0.65f;
+                Mesh_Renderer(s_mesh_skin_item,
+                    s_skin_item_x[i] - 10.0f + s_shop_ui_offset_x, s_skin_item_y + 60.0f,
+                    s_skin_item_width * FRAME_SCALE * s_tween_skin_item[i].scale,
+                    s_skin_item_height * FRAME_SCALE * s_tween_skin_item[i].scale, 0.0f);
+            }
 
-			if ((SCORE_AMOUNT < BG_UNLOCK[i]) && Graphics::font_id >= 0) {
-				char priceStr[32];
-				std::snprintf(priceStr, sizeof(priceStr), "%d", BG_UNLOCK[i]);
+            if ((s_score_amount < SKIN_UNLOCK[i]) && Graphics::g_font_id >= 0)
+            {
+                char price_str[32];
+                std::snprintf(price_str, sizeof(price_str), "%d", SKIN_UNLOCK[i]);
 
-				float textScale = 0.8f;
-				float textW = 0.0f, textH = 0.0f;
-				AEGfxGetPrintSize(Graphics::font_id, priceStr, textScale, &textW, &textH);
+                float text_scale = 0.8f;
+                float text_w = 0.0f, text_h = 0.0f;
+                AEGfxGetPrintSize(Graphics::g_font_id, price_str, text_scale, &text_w, &text_h);
 
+                float text_ndc_x = (s_skin_item_x[i] / (s_win_w * 0.5f)) - (text_w * 0.5f);
+                float text_ndc_y = ((s_skin_item_y + 60.0f) / (s_win_h * 0.5f)) - 0.025f;
+                AEGfxSetBlendMode(AE_GFX_BM_BLEND);
+                AEGfxPrint(Graphics::g_font_id, price_str,
+                    text_ndc_x + s_shop_ui_offset_x, text_ndc_y,
+                    text_scale, 1.0f, 1.0f, 1.0f, 1.0f);
+            }
+        }
+    }
 
-				float textNdcX = (BG_ITEM_X[i] / (winW * 0.5f)) - (textW * 0.5f);
-				float textNdcY = (BG_ITEM_Y / (winH * 0.5f)) - 0.025f;
-				AEGfxSetBlendMode(AE_GFX_BM_BLEND);
-				AEGfxPrint(Graphics::font_id, priceStr, textNdcX + shopUiOffsetX, textNdcY, textScale, 1.0f, 1.0f, 1.0f, 1.0f);
-			}
-		}
-	}
+    if (s_mesh_back && s_tex_back)
+    {
+        AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
+        AEGfxSetBlendMode(AE_GFX_BM_BLEND);
+        AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);
+        AEGfxTextureSet(s_tex_back, 0.0f, 0.0f);
+        Mesh_Renderer(s_mesh_back,
+            s_back_btn_x + s_shop_ui_offset_x, s_back_btn_y,
+            s_back_btn_width * s_tween_back.scale,
+            s_back_btn_height * s_tween_back.scale, 0.0f);
+    }
 
-	// Draw the 3 Skin Options
-	for (int i = 0; i < 3; i++) {
-		if (pTexSkinOptions[i]) {
-			if (SCORE_AMOUNT >= SKIN_UNLOCK[i]) {
-				AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f); // Bright (Unlocked)
-			}
-			else {
-				AEGfxSetColorToMultiply(0.3f, 0.3f, 0.3f, 1.0f); // Dark (Locked)
-			}
-			AEGfxTextureSet(pTexSkinOptions[i], 0.0f, 0.0f);
-			Mesh_Renderer(pMeshSkinItem, SKIN_ITEM_X[i] + shopUiOffsetX, SKIN_ITEM_Y, SKIN_ITEM_WIDTH * tweenSkinItem[i].scale, SKIN_ITEM_HEIGHT * tweenSkinItem[i].scale, 0.0f);
-
-
-			if (gShopSkinID == i && pTexItemFrame) {
-				AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);
-				AEGfxTextureSet(pTexItemFrame, 0.0f, 0.0f);
-				float frameScale = 0.65f;
-
-				Mesh_Renderer(pMeshSkinItem, SKIN_ITEM_X[i] - 10.0f + shopUiOffsetX, SKIN_ITEM_Y + 60.0f, SKIN_ITEM_WIDTH * frameScale * tweenSkinItem[i].scale, SKIN_ITEM_HEIGHT * frameScale * tweenSkinItem[i].scale, 0.0f);
-			}
-
-			if ((SCORE_AMOUNT < SKIN_UNLOCK[i]) && Graphics::font_id >= 0) {
-				char priceStr[32];
-				std::snprintf(priceStr, sizeof(priceStr), "%d", SKIN_UNLOCK[i]);
-
-				float textScale = 0.8f;
-				float textW = 0.0f, textH = 0.0f;
-				AEGfxGetPrintSize(Graphics::font_id, priceStr, textScale, &textW, &textH);
-
-				float textNdcX = (SKIN_ITEM_X[i] / (winW * 0.5f)) - (textW * 0.5f);
-				float textNdcY = ((SKIN_ITEM_Y + 60.0f) / (winH * 0.5f)) - 0.025f;
-				AEGfxSetBlendMode(AE_GFX_BM_BLEND);
-				AEGfxPrint(Graphics::font_id, priceStr, textNdcX + shopUiOffsetX, textNdcY, textScale, 1.0f, 1.0f, 1.0f, 1.0f);
-			}
-		}
-	}
-
-	if (pBack && pTexBack)
-	{
-		AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);//exit button
-		AEGfxSetBlendMode(AE_GFX_BM_BLEND);
-		AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);
-		AEGfxTextureSet(pTexBack, 0.0f, 0.0f);
-		Mesh_Renderer(pBack, BACK_BTN_X + shopUiOffsetX, BACK_BTN_Y, BACK_BTN_WIDTH * tweenBack.scale, BACK_BTN_HEIGHT * tweenBack.scale, 0.0f);
-	}
-
-	DisplayScore();
+    DisplayScore();
 }
 
 const char* Shop_GetActiveSkinPath()
 {
-	if (gShopSkinID == 0) return "Assets/characterSheet.png";
-	if (gShopSkinID == 1) return "Assets/character2Sheet.png";
-	if (gShopSkinID == 2) return "Assets/catskin-Sheet.png";
-
-	return "Assets/characterSheet.png"; // Safe fallback to default skin
+    if (g_shop_skin_id == 0) return "Assets/characterSheet.png";
+    if (g_shop_skin_id == 1) return "Assets/character2Sheet.png";
+    if (g_shop_skin_id == 2) return "Assets/catskin-Sheet.png";
+    return "Assets/characterSheet.png"; // Safe fallback
 }
 
-void Shop_Exit() {
-	if (gGameStateNext != GS_MAIN_MENU) {
-		BackgroundParallax::MenuParallax_Exit();
-	}
+void Shop_Exit()
+{
+    if (g_game_state_next != GS_MAIN_MENU)
+        BackgroundParallax::MenuParallax_Exit();
 
-	if (pTexShopBg) {
-		AEGfxTextureUnload(pTexShopBg);
-		pTexShopBg = nullptr;
-	}
-	if (pTexItemFrame) {
-		AEGfxTextureUnload(pTexItemFrame);
-		pTexItemFrame = nullptr;
-	}
-	if (pTexBgFrame) {
-		AEGfxTextureUnload(pTexBgFrame);
-		pTexBgFrame = nullptr;
-	}
+    if (s_tex_shop_bg) { AEGfxTextureUnload(s_tex_shop_bg);  s_tex_shop_bg = nullptr; }
+    if (s_tex_item_frame) { AEGfxTextureUnload(s_tex_item_frame); s_tex_item_frame = nullptr; }
+    if (s_tex_bg_frame) { AEGfxTextureUnload(s_tex_bg_frame); s_tex_bg_frame = nullptr; }
 
-	// Null out any aliases BEFORE unloading to prevent double-free
-	// Currently [1] and [2] alias [0], so clear them first
-	if (pTexBgOptions[1] == pTexBgOptions[0]) pTexBgOptions[1] = nullptr;
-	if (pTexBgOptions[2] == pTexBgOptions[0]) pTexBgOptions[2] = nullptr;
-	if (pTexBgOptions[0]) {
-		AEGfxTextureUnload(pTexBgOptions[0]);
-		pTexBgOptions[0] = nullptr;
-	}
-	// These will only fire if real unique textures were assigned (i.e. TODOs completed)
-	if (pTexBgOptions[1]) { AEGfxTextureUnload(pTexBgOptions[1]); pTexBgOptions[1] = nullptr; }
-	if (pTexBgOptions[2]) { AEGfxTextureUnload(pTexBgOptions[2]); pTexBgOptions[2] = nullptr; }
+    // Null out aliases BEFORE unloading to prevent double-free
+    if (s_tex_bg_options[1] == s_tex_bg_options[0]) s_tex_bg_options[1] = nullptr;
+    if (s_tex_bg_options[2] == s_tex_bg_options[0]) s_tex_bg_options[2] = nullptr;
+    if (s_tex_bg_options[0]) { AEGfxTextureUnload(s_tex_bg_options[0]); s_tex_bg_options[0] = nullptr; }
+    if (s_tex_bg_options[1]) { AEGfxTextureUnload(s_tex_bg_options[1]); s_tex_bg_options[1] = nullptr; }
+    if (s_tex_bg_options[2]) { AEGfxTextureUnload(s_tex_bg_options[2]); s_tex_bg_options[2] = nullptr; }
 
-	// Same alias-safe pattern for skin options
-	// Currently [2] aliases [0]
-	if (pTexSkinOptions[2] == pTexSkinOptions[0]) pTexSkinOptions[2] = nullptr;
-	if (pTexSkinOptions[0]) {
-		AEGfxTextureUnload(pTexSkinOptions[0]);
-		pTexSkinOptions[0] = nullptr;
-	}
-	if (pTexSkinOptions[1]) {
-		AEGfxTextureUnload(pTexSkinOptions[1]);
-		pTexSkinOptions[1] = nullptr;
-	}
-	// Will only fire if a real unique texture was assigned to [2]
-	if (pTexSkinOptions[2]) { AEGfxTextureUnload(pTexSkinOptions[2]); pTexSkinOptions[2] = nullptr; }
+    if (s_tex_skin_options[2] == s_tex_skin_options[0]) s_tex_skin_options[2] = nullptr;
+    if (s_tex_skin_options[0]) { AEGfxTextureUnload(s_tex_skin_options[0]); s_tex_skin_options[0] = nullptr; }
+    if (s_tex_skin_options[1]) { AEGfxTextureUnload(s_tex_skin_options[1]); s_tex_skin_options[1] = nullptr; }
+    if (s_tex_skin_options[2]) { AEGfxTextureUnload(s_tex_skin_options[2]); s_tex_skin_options[2] = nullptr; }
 
-	if (pTexBack) {
-		AEGfxTextureUnload(pTexBack);
-		pTexBack = nullptr;
-	}
-	if (pShop) {
-		AEGfxMeshFree(pShop);
-		pShop = nullptr;
-	}
-	if (pBack) {
-		AEGfxMeshFree(pBack);
-		pBack = nullptr;
-	}
-	if (pMeshBgItem) {
-		AEGfxMeshFree(pMeshBgItem);
-		pMeshBgItem = nullptr;
-	}
-	if (pMeshSkinItem) {
-		AEGfxMeshFree(pMeshSkinItem);
-		pMeshSkinItem = nullptr;
-	}
+    if (s_tex_back) { AEGfxTextureUnload(s_tex_back);      s_tex_back = nullptr; }
+    if (s_mesh_shop) { AEGfxMeshFree(s_mesh_shop);          s_mesh_shop = nullptr; }
+    if (s_mesh_back) { AEGfxMeshFree(s_mesh_back);          s_mesh_back = nullptr; }
+    if (s_mesh_bg_item) { AEGfxMeshFree(s_mesh_bg_item);       s_mesh_bg_item = nullptr; }
+    if (s_mesh_skin_item) { AEGfxMeshFree(s_mesh_skin_item);     s_mesh_skin_item = nullptr; }
 }

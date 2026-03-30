@@ -13,300 +13,269 @@
 #include "ButtonTween.h"
 
 
-/*
-@namespace      Anonymous (Main Menu State)
-@brief          Local variables for UI elements, positions, and menu states.
-*//*_________________________________________________________________________________________________________________________________________________________________________________________________*/
 namespace
 {
     // ---------------------------------------------------------------------------
     // MESHES & TEXTURES
     // ---------------------------------------------------------------------------
-    AEGfxVertexList* pMeshLogo = nullptr;                                                                                   // mesh for the game logo
-    AEGfxVertexList* pMeshBtn = nullptr;                                                                                    // standard mesh for play & shop buttons
-    AEGfxVertexList* pMeshExitBtn = nullptr;                                                                                // mesh for exit button
-    AEGfxVertexList* pMeshSettingsBtn = nullptr;                                                                            // mesh for settings button
-    AEGfxVertexList* pMeshLeftArrow = nullptr;                                                                              // mesh for left arrow
-    AEGfxVertexList* pMeshRightArrow = nullptr;                                                                             // mesh for right arrow
-    AEGfxVertexList* pMeshLeaderboardBtn = nullptr;
-    AEGfxVertexList* pMeshEnterName = nullptr;
-    AEGfxVertexList* pMeshBackName = nullptr;
-    AEGfxVertexList* pMeshTutorialBtn = nullptr;
-    AEGfxVertexList* pMeshCreditsBtn = nullptr;
+    static AEGfxVertexList* s_mesh_logo = nullptr;
+    static AEGfxVertexList* s_mesh_btn = nullptr;
+    static AEGfxVertexList* s_mesh_exit_btn = nullptr;
+    static AEGfxVertexList* s_mesh_settings_btn = nullptr;
+    static AEGfxVertexList* s_mesh_left_arrow = nullptr;
+    static AEGfxVertexList* s_mesh_right_arrow = nullptr;
+    static AEGfxVertexList* s_mesh_leaderboard_btn = nullptr;
+    static AEGfxVertexList* s_mesh_enter_name = nullptr;
+    static AEGfxVertexList* s_mesh_back_name = nullptr;
+    static AEGfxVertexList* s_mesh_tutorial_btn = nullptr;
+    static AEGfxVertexList* s_mesh_credits_btn = nullptr;
 
-    AEGfxTexture* pTexPlay = nullptr;                                                                                       // play button texture
-    AEGfxTexture* pTexShop = nullptr;                                                                                       // shop button texture
-    AEGfxTexture* pTexArrows = nullptr;                                                                                     // arrow buttons texture
-    AEGfxTexture* pTexLeaderboard = nullptr;
-    AEGfxTexture* pTexSettings = nullptr;
-    AEGfxTexture* pTexLogo = nullptr;
-    AEGfxTexture* pTexEnterName = nullptr;
-    AEGfxTexture* pTexBackName = nullptr;
-    AEGfxTexture* pTexTutorial = nullptr;
-    AEGfxTexture* pTexCredits = nullptr;
-    AEGfxTexture* pTexExit = nullptr;                                                                                        // quit button texture
+    static AEGfxTexture* s_tex_play = nullptr;
+    static AEGfxTexture* s_tex_shop = nullptr;
+    static AEGfxTexture* s_tex_arrows = nullptr;
+    static AEGfxTexture* s_tex_leaderboard = nullptr;
+    static AEGfxTexture* s_tex_settings = nullptr;
+    static AEGfxTexture* s_tex_logo = nullptr;
+    static AEGfxTexture* s_tex_enter_name = nullptr;
+    static AEGfxTexture* s_tex_back_name = nullptr;
+    static AEGfxTexture* s_tex_tutorial = nullptr;
+    static AEGfxTexture* s_tex_credits = nullptr;
+    static AEGfxTexture* s_tex_exit = nullptr;
+
     // ---------------------------------------------------------------------------
     // WINDOW & CURSOR DATA
     // ---------------------------------------------------------------------------
-    float winW;                                                                                                             // window width
-    float winH;                                                                                                             // window height
-    float worldX;                                                                                                           // mouse world X coordinate
-    float worldY;                                                                                                           // mouse world Y coordinate
+    static float s_win_w = 0.0f;
+    static float s_win_h = 0.0f;
+    static float s_world_x = 0.0f;
+    static float s_world_y = 0.0f;
 
     // ---------------------------------------------------------------------------
     // UI DIMENSIONS (CONSTANTS)
     // ---------------------------------------------------------------------------
-    const float PLAY_WIDTH = 240.0f;                                                                                        // width of play button
-    const float PLAY_HEIGHT = 240.0f;                                                                                       // height of play button
-    const float SHOP_WIDTH = 240.0f;                                                                                        // width of shop button
-    const float SHOP_HEIGHT = 240.0f;                                                                                       // height of shop button
-    const float EXIT_WIDTH = 240.0f;                                                                                        // width of exit button
-    const float EXIT_HEIGHT = 240.0f;                                                                                       // height of exit button
-    const float LEADERBOARD_WIDTH = 240.0f;
-    const float LEADERBOARD_HEIGHT = 80.0f;
-
-    const float PLAY_HITBOX_WIDTH = 200.0f;                                                                                 // interactable width for play
-    const float PLAY_HITBOX_HEIGHT = 95.0f;                                                                                 // interactable height for play
-    const float SHOP_HITBOX_WIDTH = 200.0f;                                                                                 // interactable width for shop
-    const float SHOP_HITBOX_HEIGHT = 95.0f;                                                                                 // interactable height for shop
-
-    const float LOGO_WIDTH = 1000.0f;                                                                                        // width of title logo
-    const float LOGO_HEIGHT = 600.0f;                                                                                       // height of title logo
-
-    const float EXITNAME_WIDTH = 200.0f;                                                                                    // width of exit name button
-    const float EXITNAME_HEIGHT = 180.0f;                                                                                    // height of exit name button
-    const float ENTERGAME_WIDTH = 200.0f;                                                                                   // width of enter game button
-    const float ENTERGAME_HEIGHT = 180.0f;                                                                                   // height of enter game button
-
-    const float ZENMODE_WIDTH = 240.0f;                                                                                     // width of zen mode button
-    const float ZENMODE_HEIGHT = 80.0f;                                                                                     // height of zen mode button
-    const float TIMEMODE_WIDTH = 240.0f;                                                                                    // width of time mode button
-    const float TIMEMODE_HEIGHT = 80.0f;                                                                                    // height of time mode button
-
-    const float SETTINGS_WIDTH = 96.0f;                                                                                    // width of settings button
-    const float SETTINGS_HEIGHT = 96.0f;                                                                                    // height of settings button
-
-    const float TUTORIAL_WIDTH = 240.0f;
-    const float TUTORIAL_HEIGHT = 240.0f;
-    const float TUTORIAL_HITBOX_WIDTH = 200.0f;
-    const float TUTORIAL_HITBOX_HEIGHT = 95.0f;
-
-    const float LEFTARROW_WIDTH = 80.0f;                                                                                    // width of left arrow
-    const float LEFTARROW_HEIGHT = 80.0f;                                                                                   // height of left arrow
-    const float RIGHTARROW_WIDTH = 80.0f;                                                                                   // width of right arrow
-    const float RIGHTARROW_HEIGHT = 80.0f;                                                                                  // height of right arrow
-
-    const float CREDITS_WIDTH = 240.0f;
-    const float CREDITS_HEIGHT = 240.0f;
+    constexpr float PLAY_WIDTH = 240.0f;
+    constexpr float PLAY_HEIGHT = 240.0f;
+    constexpr float SHOP_WIDTH = 240.0f;
+    constexpr float SHOP_HEIGHT = 240.0f;
+    constexpr float EXIT_WIDTH = 240.0f;
+    constexpr float EXIT_HEIGHT = 240.0f;
+    constexpr float LEADERBOARD_WIDTH = 240.0f;
+    constexpr float LEADERBOARD_HEIGHT = 80.0f;
+    constexpr float PLAY_HITBOX_WIDTH = 200.0f;
+    constexpr float PLAY_HITBOX_HEIGHT = 95.0f;
+    constexpr float SHOP_HITBOX_WIDTH = 200.0f;
+    constexpr float SHOP_HITBOX_HEIGHT = 95.0f;
+    constexpr float LOGO_WIDTH = 1000.0f;
+    constexpr float LOGO_HEIGHT = 600.0f;
+    constexpr float EXITNAME_WIDTH = 200.0f;
+    constexpr float EXITNAME_HEIGHT = 180.0f;
+    constexpr float ENTERGAME_WIDTH = 200.0f;
+    constexpr float ENTERGAME_HEIGHT = 180.0f;
+    constexpr float ZENMODE_WIDTH = 240.0f;
+    constexpr float ZENMODE_HEIGHT = 80.0f;
+    constexpr float TIMEMODE_WIDTH = 240.0f;
+    constexpr float TIMEMODE_HEIGHT = 80.0f;
+    constexpr float SETTINGS_WIDTH = 96.0f;
+    constexpr float SETTINGS_HEIGHT = 96.0f;
+    constexpr float TUTORIAL_WIDTH = 240.0f;
+    constexpr float TUTORIAL_HEIGHT = 240.0f;
+    constexpr float TUTORIAL_HITBOX_WIDTH = 200.0f;
+    constexpr float TUTORIAL_HITBOX_HEIGHT = 95.0f;
+    constexpr float LEFTARROW_WIDTH = 80.0f;
+    constexpr float LEFTARROW_HEIGHT = 80.0f;
+    constexpr float RIGHTARROW_WIDTH = 80.0f;
+    constexpr float RIGHTARROW_HEIGHT = 80.0f;
+    constexpr float CREDITS_WIDTH = 240.0f;
+    constexpr float CREDITS_HEIGHT = 240.0f;
 
     // ---------------------------------------------------------------------------
     // UI POSITIONS (DYNAMIC)
     // ---------------------------------------------------------------------------
-    float LOGO_Y;                                                                                                           // Y pos for logo
-    float PLAY_BTN_Y;                                                                                                       // Y pos for play button
-    float SHOP_BTN_Y;                                                                                                       // Y pos for shop button
-    float EXIT_BTN_Y;                                                                                                       // Y pos for exit button
-    float EXITNAME_BTN_Y;                                                                                                   // Y pos for exit name button
-    float EXITNAME_BTN_X;                                                                                                   // X pos for exit name button
-    float ENTERGAME_BTN_Y;                                                                                                  // Y pos for enter game button
-    float ENTERGAME_BTN_X;                                                                                                  // X pos for enter game button
-    float ZENMODE_BTN_X;                                                                                                    // X pos for zen mode button
-    float ZENMODE_BTN_Y;                                                                                                    // Y pos for zen mode button
-    float TIMEMODE_BTN_X;                                                                                                   // X pos for time mode button
-    float TIMEMODE_BTN_Y;                                                                                                   // Y pos for time mode button
-    float SETTINGS_BTN_X;                                                                                                   // X pos for settings button
-    float SETTINGS_BTN_Y;                                                                                                   // Y pos for settings button
-    float LEFTARROW_BTN_X;                                                                                                  // X pos for left arrow
-    float LEFTARROW_BTN_Y;                                                                                                  // Y pos for left arrow
-    float RIGHTARROW_BTN_X;                                                                                                 // X pos for right arrow
-    float RIGHTARROW_BTN_Y;                                                                                                 // Y pos for right arrow
-    float LEADERBOARD_BTN_X;
-    float LEADERBOARD_BTN_Y;
-    float TUTORIAL_BTN_Y;
-    float CREDITS_BTN_X;
-    float CREDITS_BTN_Y;
-    float EMPTY_NAME_WARNING_TIMER;
-    float EMPTY_NAME_WARNING_X;
-    float EMPTY_NAME_WARNING_Y;
+    static float LOGO_Y = 0.0f;
+    static float PLAY_BTN_Y = 0.0f;
+    static float SHOP_BTN_Y = 0.0f;
+    static float EXIT_BTN_Y = 0.0f;
+    static float EXITNAME_BTN_Y = 0.0f;
+    static float EXITNAME_BTN_X = 0.0f;
+    static float ENTERGAME_BTN_Y = 0.0f;
+    static float ENTERGAME_BTN_X = 0.0f;
+    static float ZENMODE_BTN_X = 0.0f;
+    static float ZENMODE_BTN_Y = 0.0f;
+    static float TIMEMODE_BTN_X = 0.0f;
+    static float TIMEMODE_BTN_Y = 0.0f;
+    static float SETTINGS_BTN_X = 0.0f;
+    static float SETTINGS_BTN_Y = 0.0f;
+    static float LEFTARROW_BTN_X = 0.0f;
+    static float LEFTARROW_BTN_Y = 0.0f;
+    static float RIGHTARROW_BTN_X = 0.0f;
+    static float RIGHTARROW_BTN_Y = 0.0f;
+    static float LEADERBOARD_BTN_X = 0.0f;
+    static float LEADERBOARD_BTN_Y = 0.0f;
+    static float TUTORIAL_BTN_Y = 0.0f;
+    static float CREDITS_BTN_X = 0.0f;
+    static float CREDITS_BTN_Y = 0.0f;
+    static float EMPTY_NAME_WARNING_TIMER = 0.0f;
+    static float EMPTY_NAME_WARNING_X = 0.0f;
+    static float EMPTY_NAME_WARNING_Y = 0.0f;
 
     // ---------------------------------------------------------------------------
     // STATE & LOGIC VARIABLES
     // ---------------------------------------------------------------------------
-    bool isTransitioningToName = false;                                                                                     // flag for entering name screen
-    bool isTransitioningBack = false;                                                                                       // flag for returning to main menu
-    bool nameEntered = false;                                                                                               // flag indicating name submission
-    bool isEnteringName = false;                                                                                            // flag for current sub-state
-    bool inSettings = false;                                                                                                // flag for settings overlay
-    bool inLeaderboard = false;
-    bool cursorVisible = true;
-    bool transitioningToShop = false;
-    bool isReturningFromShop = false;
+    static bool s_is_transitioning_to_name = false;
+    static bool s_is_transitioning_back = false;
+    static bool s_name_entered = false;
+    static bool s_is_entering_name = false;
+    static bool s_in_settings = false;
+    static bool s_in_leaderboard = false;
+    static bool s_cursor_visible = true;
+    static bool s_transitioning_to_shop = false;
+    static bool s_is_returning_from_shop = false;
 
-    std::string player_name = "";                                                                                           // holds typed player name
-    std::string selected_mode = "";                                                                                         // holds currently selected game mode
-    std::string leaderboard_mode = "ZEN";
+    static std::string s_player_name = "";
+    static std::string s_selected_mode = "";
+    static std::string s_leaderboard_mode = "ZEN";
 
-    float uiOffsetX = 0.0f;
-    float cursorTimer = 0.0f;                                                                                               // timer for text cursor blink
+    static float s_ui_offset_x = 0.0f;
+    static float s_cursor_timer = 0.0f;
 
-
-    bool isZoomingToGame = false;
+    static bool s_is_zooming_to_game = false;
 
     // ---------------------------------------------------------------------------
     // BUTTON TWEENS
     // ---------------------------------------------------------------------------
-    ButtonTween tweenPlay;
-    ButtonTween tweenShop;
-    ButtonTween tweenTutorial;
-    ButtonTween tweenExit;
-    ButtonTween tweenSettings;
-    ButtonTween tweenLeaderboard;
-    ButtonTween tweenLeftArrow;
-    ButtonTween tweenRightArrow;
-    ButtonTween tweenCredits;
-    ButtonTween tweenEnterGame;
-    ButtonTween tweenBackName;
+    static ButtonTween s_tween_play;
+    static ButtonTween s_tween_shop;
+    static ButtonTween s_tween_tutorial;
+    static ButtonTween s_tween_exit;
+    static ButtonTween s_tween_settings;
+    static ButtonTween s_tween_leaderboard;
+    static ButtonTween s_tween_left_arrow;
+    static ButtonTween s_tween_right_arrow;
+    static ButtonTween s_tween_credits;
+    static ButtonTween s_tween_enter_game;
+    static ButtonTween s_tween_back_name;
 
     // ---------------------------------------------------------------------------
     // DIGIPEN SPLASH OVERLAY
     // ---------------------------------------------------------------------------
-    AEGfxTexture* pTexSplashLogo = nullptr;   // DigiPen logo texture
-    AEGfxVertexList* pMeshSplashQuad = nullptr;   // full-screen black quad
-    AEGfxVertexList* pMeshSplashLogo = nullptr;   // logo quad (centred)
+    static AEGfxTexture* s_tex_splash_logo = nullptr;
+    static AEGfxVertexList* s_mesh_splash_quad = nullptr;
+    static AEGfxVertexList* s_mesh_splash_logo = nullptr;
 
-    static constexpr float SPLASH_HOLD = 2.0f;   // seconds fully visible
-    static constexpr float SPLASH_FADE = 1.0f;   // seconds to fade out
-    float splashTimer = 0.0f;
-    bool  splashActive = false;                   // only true on first launch
-} // Anonymous namespace end
-/*___________________________________________________________________________________________________________________________________________________________________________________________________*/
+    static constexpr float SPLASH_HOLD = 2.0f;
+    static constexpr float SPLASH_FADE = 1.0f;
+    static float s_splash_timer = 0.0f;
+    static bool  s_splash_active = false;
+}
 
-/*
-@function       Main_Menu_GetPlayerName
-@brief          Retrieves the currently entered player name.
-@usage          Leaderboard, Game states
-*//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
 std::string Main_Menu_GetPlayerName()
 {
-    return player_name;                                                                                                     // return stored string
+    return s_player_name;
 }
 
-/*
-@function       Draw_Main_Menu
-@params         textNdcOffset (float)
-@brief          Helper function to render the normal menu elements (logo, buttons, mode text).
-@usage          Main_Menu_Update
-*//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
-void Draw_Main_Menu(float textNdcOffset)
+void Draw_Main_Menu(float text_ndc_offset)
 {
-    // ==========================================
-    // SETUP TEXTURE SHADER (For Play, Shop, Arrows)
-    // ==========================================
-    AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);                                                                                  // switch to texture mode
+    AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
     AEGfxSetBlendMode(AE_GFX_BM_BLEND);
-    AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);                                                                        // reset texture shader tint
-    AEGfxSetColorToAdd(0.0f, 0.0f, 0.0f, 0.0f);                                                                             // no additive color
-    AEGfxSetTransparency(1.0f);                                                                                             // force textures fully opaque
+    AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);
+    AEGfxSetColorToAdd(0.0f, 0.0f, 0.0f, 0.0f);
+    AEGfxSetTransparency(1.0f);
 
-    // Draw Logo
-    if (pTexLogo) {
-        AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
-        AEGfxTextureSet(pTexLogo, 0.0f, 0.0f);
-        Mesh_Renderer(pMeshLogo, 0.0f + uiOffsetX, LOGO_Y, LOGO_WIDTH, LOGO_HEIGHT, 0.0f);                                                               // render colored logo mesh
-    }
-    // Draw Arrows
-    if (pTexArrows)
-    {
-        AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);                                                                              // ensure texture mode active
-        AEGfxTextureSet(pTexArrows, 0.0f, 0.0f);                                                                            // bind arrow sprite sheet
-        Mesh_Renderer(pMeshLeftArrow, LEFTARROW_BTN_X + uiOffsetX, LEFTARROW_BTN_Y, LEFTARROW_WIDTH * tweenLeftArrow.scale, LEFTARROW_HEIGHT * tweenLeftArrow.scale, 0.0f);           // render left arrow
-        Mesh_Renderer(pMeshRightArrow, RIGHTARROW_BTN_X + uiOffsetX, RIGHTARROW_BTN_Y, RIGHTARROW_WIDTH * tweenRightArrow.scale, RIGHTARROW_HEIGHT * tweenRightArrow.scale, 0.0f);      // render right arrow
-    }
-
-    // Draw Mode Text
-    if (Graphics::font_id >= 0)
-    {
-        float textW = 0.0f, textH = 0.0f;                                                                                   // measurement containers
-        AEGfxGetPrintSize(Graphics::font_id, selected_mode.c_str(), 1.0f, &textW, &textH);                                  // measure text width/height
-        float textNdcX = 0.0f - (textW * 0.5f) + uiOffsetX;                                                                             // center text horizontally
-        float textNdcY = RIGHTARROW_BTN_Y / (winH * 0.5f) - 0.025f + textNdcOffset;                                         // calc Y and apply transition offset
-        AEGfxPrint(Graphics::font_id, selected_mode.c_str(), textNdcX, textNdcY, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f);             // render mode text
-    }
-
-    // Draw Play Button
-    if (pTexPlay)
-    {
-        AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);                                                                              // ensure texture mode active
-        AEGfxTextureSet(pTexPlay, 0.0f, 0.0f);                                                                              // bind play texture
-        Mesh_Renderer(pMeshBtn, 0.0f + uiOffsetX, PLAY_BTN_Y, PLAY_WIDTH * tweenPlay.scale, PLAY_HEIGHT * tweenPlay.scale, 0.0f);                                           // render play button
-    }
-
-    // Draw Shop Button
-    if (pTexShop)
-    {
-        AEGfxTextureSet(pTexShop, 0.0f, 0.0f);                                                                              // bind shop texture
-        Mesh_Renderer(pMeshBtn, 0.0f + uiOffsetX, SHOP_BTN_Y, SHOP_WIDTH * tweenShop.scale, SHOP_HEIGHT * tweenShop.scale, 0.0f);                                           // render shop button
-    }
-
-    if (pTexTutorial)
+    if (s_tex_logo)
     {
         AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
-        AEGfxSetBlendMode(AE_GFX_BM_BLEND);
-        AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);
-        AEGfxTextureSet(pTexTutorial, 0.0f, 0.0f);
-        Mesh_Renderer(pMeshBtn, 0.0f + uiOffsetX, TUTORIAL_BTN_Y, TUTORIAL_WIDTH * tweenTutorial.scale, TUTORIAL_HEIGHT * tweenTutorial.scale, 0.0f);
+        AEGfxTextureSet(s_tex_logo, 0.0f, 0.0f);
+        Mesh_Renderer(s_mesh_logo, 0.0f + s_ui_offset_x, LOGO_Y, LOGO_WIDTH, LOGO_HEIGHT, 0.0f);
     }
 
-    // Draw Leaderboard Button
-    if (pTexLeaderboard)
+    if (s_tex_arrows)
     {
         AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
-        AEGfxTextureSet(pTexLeaderboard, 0.0f, 0.0f);
-        Mesh_Renderer(pMeshLeaderboardBtn, LEADERBOARD_BTN_X + uiOffsetX, LEADERBOARD_BTN_Y, LEADERBOARD_WIDTH * tweenLeaderboard.scale, LEADERBOARD_HEIGHT * tweenLeaderboard.scale, 0.0f);
+        AEGfxTextureSet(s_tex_arrows, 0.0f, 0.0f);
+        Mesh_Renderer(s_mesh_left_arrow, LEFTARROW_BTN_X + s_ui_offset_x, LEFTARROW_BTN_Y,
+            LEFTARROW_WIDTH * s_tween_left_arrow.scale, LEFTARROW_HEIGHT * s_tween_left_arrow.scale, 0.0f);
+        Mesh_Renderer(s_mesh_right_arrow, RIGHTARROW_BTN_X + s_ui_offset_x, RIGHTARROW_BTN_Y,
+            RIGHTARROW_WIDTH * s_tween_right_arrow.scale, RIGHTARROW_HEIGHT * s_tween_right_arrow.scale, 0.0f);
     }
 
-    //Draw settings button
-    if (pTexSettings)
+    if (Graphics::g_font_id >= 0)
+    {
+        float text_w = 0.0f, text_h = 0.0f;
+        AEGfxGetPrintSize(Graphics::g_font_id, s_selected_mode.c_str(), 1.0f, &text_w, &text_h);
+        float text_ndc_x = 0.0f - (text_w * 0.5f) + s_ui_offset_x;
+        float text_ndc_y = RIGHTARROW_BTN_Y / (s_win_h * 0.5f) - 0.025f + text_ndc_offset;
+        AEGfxPrint(Graphics::g_font_id, s_selected_mode.c_str(), text_ndc_x, text_ndc_y, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f);
+    }
+
+    if (s_tex_play)
     {
         AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
-        AEGfxTextureSet(pTexSettings, 0.0f, 0.0f);
-        Mesh_Renderer(pMeshSettingsBtn, SETTINGS_BTN_X + uiOffsetX, SETTINGS_BTN_Y, SETTINGS_WIDTH * tweenSettings.scale, SETTINGS_HEIGHT * tweenSettings.scale, 0.0f);
+        AEGfxTextureSet(s_tex_play, 0.0f, 0.0f);
+        Mesh_Renderer(s_mesh_btn, 0.0f + s_ui_offset_x, PLAY_BTN_Y,
+            PLAY_WIDTH * s_tween_play.scale, PLAY_HEIGHT * s_tween_play.scale, 0.0f);
     }
 
-    if (pTexCredits)
+    if (s_tex_shop)
     {
-        AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
-        AEGfxTextureSet(pTexCredits, 0.0f, 0.0f);
-        Mesh_Renderer(pMeshCreditsBtn, CREDITS_BTN_X + uiOffsetX, CREDITS_BTN_Y, CREDITS_WIDTH * tweenCredits.scale, CREDITS_HEIGHT * tweenCredits.scale, 0.0f);
+        AEGfxTextureSet(s_tex_shop, 0.0f, 0.0f);
+        Mesh_Renderer(s_mesh_btn, 0.0f + s_ui_offset_x, SHOP_BTN_Y,
+            SHOP_WIDTH * s_tween_shop.scale, SHOP_HEIGHT * s_tween_shop.scale, 0.0f);
     }
 
-    // Draw Exit Button
-    if (pTexExit)
+    if (s_tex_tutorial)
     {
         AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
         AEGfxSetBlendMode(AE_GFX_BM_BLEND);
         AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);
-        AEGfxTextureSet(pTexExit, 0.0f, 0.0f);
-        Mesh_Renderer(pMeshExitBtn, 0.0f + uiOffsetX, EXIT_BTN_Y, EXIT_WIDTH * tweenExit.scale, EXIT_HEIGHT * tweenExit.scale, 0.0f);   // render quit button
+        AEGfxTextureSet(s_tex_tutorial, 0.0f, 0.0f);
+        Mesh_Renderer(s_mesh_btn, 0.0f + s_ui_offset_x, TUTORIAL_BTN_Y,
+            TUTORIAL_WIDTH * s_tween_tutorial.scale, TUTORIAL_HEIGHT * s_tween_tutorial.scale, 0.0f);
     }
 
+    if (s_tex_leaderboard)
+    {
+        AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
+        AEGfxTextureSet(s_tex_leaderboard, 0.0f, 0.0f);
+        Mesh_Renderer(s_mesh_leaderboard_btn, LEADERBOARD_BTN_X + s_ui_offset_x, LEADERBOARD_BTN_Y,
+            LEADERBOARD_WIDTH * s_tween_leaderboard.scale, LEADERBOARD_HEIGHT * s_tween_leaderboard.scale, 0.0f);
+    }
 
+    if (s_tex_settings)
+    {
+        AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
+        AEGfxTextureSet(s_tex_settings, 0.0f, 0.0f);
+        Mesh_Renderer(s_mesh_settings_btn, SETTINGS_BTN_X + s_ui_offset_x, SETTINGS_BTN_Y,
+            SETTINGS_WIDTH * s_tween_settings.scale, SETTINGS_HEIGHT * s_tween_settings.scale, 0.0f);
+    }
+
+    if (s_tex_credits)
+    {
+        AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
+        AEGfxTextureSet(s_tex_credits, 0.0f, 0.0f);
+        Mesh_Renderer(s_mesh_credits_btn, CREDITS_BTN_X + s_ui_offset_x, CREDITS_BTN_Y,
+            CREDITS_WIDTH * s_tween_credits.scale, CREDITS_HEIGHT * s_tween_credits.scale, 0.0f);
+    }
+
+    if (s_tex_exit)
+    {
+        AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
+        AEGfxSetBlendMode(AE_GFX_BM_BLEND);
+        AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);
+        AEGfxTextureSet(s_tex_exit, 0.0f, 0.0f);
+        Mesh_Renderer(s_mesh_exit_btn, 0.0f + s_ui_offset_x, EXIT_BTN_Y,
+            EXIT_WIDTH * s_tween_exit.scale, EXIT_HEIGHT * s_tween_exit.scale, 0.0f);
+    }
 }
 
-/*
-@function       Main_Menu_Input
-@brief          Helper function to handle mouse clicks for the primary menu buttons.
-@usage          Main_Menu_Update
-*//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
 void Main_Menu_Input()
 {
-    s32 mouseX, mouseY;                                                                                                     // raw mouse inputs
-    AEInputGetCursorPosition(&mouseX, &mouseY);                                                                             // grab cursor screen pos
+    s32 mouse_x, mouse_y;
+    AEInputGetCursorPosition(&mouse_x, &mouse_y);
 
-    worldX = (float)mouseX - (winW * 0.5f);                                                                                 // convert screen X to world X
-    worldY = (winH * 0.5f) - (float)mouseY;                                                                                 // convert screen Y to world Y
+    s_world_x = (float)mouse_x - (s_win_w * 0.5f);
+    s_world_y = (s_win_h * 0.5f) - (float)mouse_y;
 
-    if (selected_mode == "") selected_mode = "ZEN";                                                                         // default mode safety check
+    if (s_selected_mode == "") s_selected_mode = "ZEN";
 
     // ---------------------------------------------------------------------------
     // BUTTON TWEEN UPDATES
@@ -315,374 +284,337 @@ void Main_Menu_Input()
         float dt = (float)AEFrameRateControllerGetFrameTime();
         bool click = AEInputCheckTriggered(AEVK_LBUTTON);
 
-        bool hPlay = (worldX >= -(PLAY_HITBOX_WIDTH * 0.5f) && worldX <= (PLAY_HITBOX_WIDTH * 0.5f) &&
-            worldY >= PLAY_BTN_Y - (PLAY_HITBOX_HEIGHT * 0.5f) && worldY <= PLAY_BTN_Y + (PLAY_HITBOX_HEIGHT * 0.5f));
-        bool hShop = (worldX >= -(SHOP_HITBOX_WIDTH * 0.5f) && worldX <= (SHOP_HITBOX_WIDTH * 0.5f) &&
-            worldY >= SHOP_BTN_Y - (SHOP_HITBOX_HEIGHT * 0.5f) && worldY <= SHOP_BTN_Y + (SHOP_HITBOX_HEIGHT * 0.5f));
-        bool hTut = (worldX >= -(TUTORIAL_HITBOX_WIDTH * 0.5f) && worldX <= (TUTORIAL_HITBOX_WIDTH * 0.5f) &&
-            worldY >= TUTORIAL_BTN_Y - (TUTORIAL_HITBOX_HEIGHT * 0.5f) && worldY <= TUTORIAL_BTN_Y + (TUTORIAL_HITBOX_HEIGHT * 0.5f));
-        bool hExit = (worldX >= -(EXIT_WIDTH * 0.5f) && worldX <= (EXIT_WIDTH * 0.5f) &&
-            worldY >= EXIT_BTN_Y - (EXIT_HEIGHT * 0.5f) && worldY <= EXIT_BTN_Y + (EXIT_HEIGHT * 0.5f));
-        bool hSet = (worldX >= SETTINGS_BTN_X - (SETTINGS_WIDTH * 0.5f) && worldX <= SETTINGS_BTN_X + (SETTINGS_WIDTH * 0.5f) &&
-            worldY >= SETTINGS_BTN_Y - (SETTINGS_HEIGHT * 0.5f) && worldY <= SETTINGS_BTN_Y + (SETTINGS_HEIGHT * 0.5f));
-        bool hLdr = (worldX >= LEADERBOARD_BTN_X - (LEADERBOARD_WIDTH * 0.5f) && worldX <= LEADERBOARD_BTN_X + (LEADERBOARD_WIDTH * 0.5f) &&
-            worldY >= LEADERBOARD_BTN_Y - (LEADERBOARD_HEIGHT * 0.5f) && worldY <= LEADERBOARD_BTN_Y + (LEADERBOARD_HEIGHT * 0.5f));
-        bool hLArr = (worldX >= LEFTARROW_BTN_X - (LEFTARROW_WIDTH * 0.5f) && worldX <= LEFTARROW_BTN_X + (LEFTARROW_WIDTH * 0.5f) &&
-            worldY >= LEFTARROW_BTN_Y - (LEFTARROW_HEIGHT * 0.5f) && worldY <= LEFTARROW_BTN_Y + (LEFTARROW_HEIGHT * 0.5f));
-        bool hRArr = (worldX >= RIGHTARROW_BTN_X - (RIGHTARROW_WIDTH * 0.5f) && worldX <= RIGHTARROW_BTN_X + (RIGHTARROW_WIDTH * 0.5f) &&
-            worldY >= RIGHTARROW_BTN_Y - (RIGHTARROW_HEIGHT * 0.5f) && worldY <= RIGHTARROW_BTN_Y + (RIGHTARROW_HEIGHT * 0.5f));
-        bool hCred = (worldX >= CREDITS_BTN_X - (CREDITS_WIDTH * 0.5f) && worldX <= CREDITS_BTN_X + (CREDITS_WIDTH * 0.5f) &&
-            worldY >= CREDITS_BTN_Y - (CREDITS_HEIGHT * 0.5f) && worldY <= CREDITS_BTN_Y + (CREDITS_HEIGHT * 0.5f));
+        bool h_play = (s_world_x >= -(PLAY_HITBOX_WIDTH * 0.5f) && s_world_x <= (PLAY_HITBOX_WIDTH * 0.5f) &&
+            s_world_y >= PLAY_BTN_Y - (PLAY_HITBOX_HEIGHT * 0.5f) && s_world_y <= PLAY_BTN_Y + (PLAY_HITBOX_HEIGHT * 0.5f));
+        bool h_shop = (s_world_x >= -(SHOP_HITBOX_WIDTH * 0.5f) && s_world_x <= (SHOP_HITBOX_WIDTH * 0.5f) &&
+            s_world_y >= SHOP_BTN_Y - (SHOP_HITBOX_HEIGHT * 0.5f) && s_world_y <= SHOP_BTN_Y + (SHOP_HITBOX_HEIGHT * 0.5f));
+        bool h_tut = (s_world_x >= -(TUTORIAL_HITBOX_WIDTH * 0.5f) && s_world_x <= (TUTORIAL_HITBOX_WIDTH * 0.5f) &&
+            s_world_y >= TUTORIAL_BTN_Y - (TUTORIAL_HITBOX_HEIGHT * 0.5f) && s_world_y <= TUTORIAL_BTN_Y + (TUTORIAL_HITBOX_HEIGHT * 0.5f));
+        bool h_exit = (s_world_x >= -(EXIT_WIDTH * 0.5f) && s_world_x <= (EXIT_WIDTH * 0.5f) &&
+            s_world_y >= EXIT_BTN_Y - (EXIT_HEIGHT * 0.5f) && s_world_y <= EXIT_BTN_Y + (EXIT_HEIGHT * 0.5f));
+        bool h_set = (s_world_x >= SETTINGS_BTN_X - (SETTINGS_WIDTH * 0.5f) && s_world_x <= SETTINGS_BTN_X + (SETTINGS_WIDTH * 0.5f) &&
+            s_world_y >= SETTINGS_BTN_Y - (SETTINGS_HEIGHT * 0.5f) && s_world_y <= SETTINGS_BTN_Y + (SETTINGS_HEIGHT * 0.5f));
+        bool h_ldr = (s_world_x >= LEADERBOARD_BTN_X - (LEADERBOARD_WIDTH * 0.5f) && s_world_x <= LEADERBOARD_BTN_X + (LEADERBOARD_WIDTH * 0.5f) &&
+            s_world_y >= LEADERBOARD_BTN_Y - (LEADERBOARD_HEIGHT * 0.5f) && s_world_y <= LEADERBOARD_BTN_Y + (LEADERBOARD_HEIGHT * 0.5f));
+        bool h_l_arr = (s_world_x >= LEFTARROW_BTN_X - (LEFTARROW_WIDTH * 0.5f) && s_world_x <= LEFTARROW_BTN_X + (LEFTARROW_WIDTH * 0.5f) &&
+            s_world_y >= LEFTARROW_BTN_Y - (LEFTARROW_HEIGHT * 0.5f) && s_world_y <= LEFTARROW_BTN_Y + (LEFTARROW_HEIGHT * 0.5f));
+        bool h_r_arr = (s_world_x >= RIGHTARROW_BTN_X - (RIGHTARROW_WIDTH * 0.5f) && s_world_x <= RIGHTARROW_BTN_X + (RIGHTARROW_WIDTH * 0.5f) &&
+            s_world_y >= RIGHTARROW_BTN_Y - (RIGHTARROW_HEIGHT * 0.5f) && s_world_y <= RIGHTARROW_BTN_Y + (RIGHTARROW_HEIGHT * 0.5f));
+        bool h_cred = (s_world_x >= CREDITS_BTN_X - (CREDITS_WIDTH * 0.5f) && s_world_x <= CREDITS_BTN_X + (CREDITS_WIDTH * 0.5f) &&
+            s_world_y >= CREDITS_BTN_Y - (CREDITS_HEIGHT * 0.5f) && s_world_y <= CREDITS_BTN_Y + (CREDITS_HEIGHT * 0.5f));
 
-
-        if (!splashActive) {
-            ButtonTween_Update(tweenPlay, hPlay, hPlay && click, dt);
-            ButtonTween_Update(tweenShop, hShop, hShop && click, dt);
-            ButtonTween_Update(tweenTutorial, hTut, hTut && click, dt);
-            ButtonTween_Update(tweenExit, hExit, hExit && click, dt);
-            ButtonTween_Update(tweenSettings, hSet, hSet && click, dt);
-            ButtonTween_Update(tweenLeaderboard, hLdr, hLdr && click, dt);
-            ButtonTween_Update(tweenLeftArrow, hLArr, hLArr && click, dt);
-            ButtonTween_Update(tweenRightArrow, hRArr, hRArr && click, dt);
-            ButtonTween_Update(tweenCredits, hCred, hCred && click, dt);
+        if (!s_splash_active)
+        {
+            ButtonTween_Update(s_tween_play, h_play, h_play && click, dt);
+            ButtonTween_Update(s_tween_shop, h_shop, h_shop && click, dt);
+            ButtonTween_Update(s_tween_tutorial, h_tut, h_tut && click, dt);
+            ButtonTween_Update(s_tween_exit, h_exit, h_exit && click, dt);
+            ButtonTween_Update(s_tween_settings, h_set, h_set && click, dt);
+            ButtonTween_Update(s_tween_leaderboard, h_ldr, h_ldr && click, dt);
+            ButtonTween_Update(s_tween_left_arrow, h_l_arr, h_l_arr && click, dt);
+            ButtonTween_Update(s_tween_right_arrow, h_r_arr, h_r_arr && click, dt);
+            ButtonTween_Update(s_tween_credits, h_cred, h_cred && click, dt);
         }
     }
+
     if (UiPauseMenu::IsPopupOpen()) return;
 
-    if (!splashActive && !isTransitioningToName && !transitioningToShop && !isReturningFromShop && AEInputCheckTriggered(AEVK_ESCAPE))
+    if (!s_splash_active && !s_is_transitioning_to_name && !s_transitioning_to_shop && !s_is_returning_from_shop
+        && AEInputCheckTriggered(AEVK_ESCAPE))
     {
         SoundManager::PlayClickBtnSfx();
         UiPauseMenu::OpenPopup(UiPauseMenu::POPUP_QUIT);
     }
-    if (!splashActive && !isTransitioningToName && !transitioningToShop && !isReturningFromShop && AEInputCheckTriggered(AEVK_LBUTTON))                                                                                // check for left click
-    {
-        // --- Check Play Button ---
-        if (worldX >= 0.0f - (PLAY_HITBOX_WIDTH * 0.5f) && worldX <= 0.0f + (PLAY_HITBOX_WIDTH * 0.5f) &&
-            worldY >= PLAY_BTN_Y - (PLAY_HITBOX_HEIGHT * 0.5f) && worldY <= PLAY_BTN_Y + (PLAY_HITBOX_HEIGHT * 0.5f))
-        {
-            SoundManager::PlayClickBtnSfx();
-            isTransitioningToName = true;                                                                                   // set forward transition flag
-            ScreenTransitions::ScreenTransition_Init();                                                                     // start drop animation
-        }
-        // --- Check Shop Button ---
-        else if (worldX >= 0.0f - (SHOP_HITBOX_WIDTH * 0.5f) && worldX <= 0.0f + (SHOP_HITBOX_WIDTH * 0.5f) &&
-            worldY >= SHOP_BTN_Y - (SHOP_HITBOX_HEIGHT * 0.5f) && worldY <= SHOP_BTN_Y + (SHOP_HITBOX_HEIGHT * 0.5f))
-        {
-            SoundManager::PlayClickBtnSfx();
-            transitioningToShop = true;
-            ScreenTransitions::ScreenTransition_Init();                                                                     // Start the transition timer
-        }
-        // --- Check Exit Button ---
-        else if (worldX >= 0.0f - (EXIT_WIDTH * 0.5f) && worldX <= 0.0f + (EXIT_WIDTH * 0.5f) &&
-            worldY >= EXIT_BTN_Y - (EXIT_HEIGHT * 0.5f) && worldY <= EXIT_BTN_Y + (EXIT_HEIGHT * 0.5f))
-        {
-            SoundManager::PlayClickBtnSfx();
-            UiPauseMenu::OpenPopup(UiPauseMenu::POPUP_QUIT);                                                                                      // queue application quit
-        }
-        // --- Check Settings Button ---
-        else if (worldX >= SETTINGS_BTN_X - (SETTINGS_WIDTH * 0.5f) && worldX <= SETTINGS_BTN_X + (SETTINGS_WIDTH * 0.5f) &&
-            worldY >= SETTINGS_BTN_Y - (SETTINGS_HEIGHT * 0.5f) && worldY <= SETTINGS_BTN_Y + (SETTINGS_HEIGHT * 0.5f))
-        {
-            SoundManager::PlayClickBtnSfx();
-            inSettings = true;                                                                                              // toggle settings overlay
-        }
-        // --- Check Left Arrow Button ---
-        else if (worldX >= LEFTARROW_BTN_X - (LEFTARROW_WIDTH * 0.5f) && worldX <= LEFTARROW_BTN_X + (LEFTARROW_WIDTH * 0.5f) &&
-            worldY >= LEFTARROW_BTN_Y - (LEFTARROW_HEIGHT * 0.5f) && worldY <= LEFTARROW_BTN_Y + (LEFTARROW_HEIGHT * 0.5f))
-        {
-            SoundManager::PlayClickBtnSfx();
-            selected_mode = (selected_mode == "ZEN") ? "TIME" : "ZEN";                                                      // toggle game mode
-        }
-        // --- Check Right Arrow Button ---
-        else if (worldX >= RIGHTARROW_BTN_X - (RIGHTARROW_WIDTH * 0.5f) && worldX <= RIGHTARROW_BTN_X + (RIGHTARROW_WIDTH * 0.5f) &&
-            worldY >= RIGHTARROW_BTN_Y - (RIGHTARROW_HEIGHT * 0.5f) && worldY <= RIGHTARROW_BTN_Y + (RIGHTARROW_HEIGHT * 0.5f))
-        {
-            SoundManager::PlayClickBtnSfx();
-            selected_mode = (selected_mode == "ZEN") ? "TIME" : "ZEN";                                                      // toggle game mode
-        }
-        // --- Check Leaderboard Button ---
-        else if (worldX >= LEADERBOARD_BTN_X - (LEADERBOARD_WIDTH * 0.5f) && worldX <= LEADERBOARD_BTN_X + (LEADERBOARD_WIDTH * 0.5f) &&
-            worldY >= LEADERBOARD_BTN_Y - (LEADERBOARD_HEIGHT * 0.5f) && worldY <= LEADERBOARD_BTN_Y + (LEADERBOARD_HEIGHT * 0.5f))
-        {
-            SoundManager::PlayClickBtnSfx();
-            leaderboard_mode = "ZEN";
-            inLeaderboard = true; //                                                                                              
-        }
-        // --- Check Tutorial Button ---
 
-        else if (worldX >= 0.0f - (TUTORIAL_HITBOX_WIDTH * 0.5f) && worldX <= 0.0f + (TUTORIAL_HITBOX_WIDTH * 0.5f) &&
-            worldY >= TUTORIAL_BTN_Y - (TUTORIAL_HITBOX_HEIGHT * 0.5f) && worldY <= TUTORIAL_BTN_Y + (TUTORIAL_HITBOX_HEIGHT * 0.5f))
+    if (!s_splash_active && !s_is_transitioning_to_name && !s_transitioning_to_shop && !s_is_returning_from_shop
+        && AEInputCheckTriggered(AEVK_LBUTTON))
+    {
+        if (s_world_x >= 0.0f - (PLAY_HITBOX_WIDTH * 0.5f) && s_world_x <= 0.0f + (PLAY_HITBOX_WIDTH * 0.5f) &&
+            s_world_y >= PLAY_BTN_Y - (PLAY_HITBOX_HEIGHT * 0.5f) && s_world_y <= PLAY_BTN_Y + (PLAY_HITBOX_HEIGHT * 0.5f))
         {
             SoundManager::PlayClickBtnSfx();
-            isZoomingToGame = true;
+            s_is_transitioning_to_name = true;
+            ScreenTransitions::ScreenTransition_Init();
+        }
+        else if (s_world_x >= 0.0f - (SHOP_HITBOX_WIDTH * 0.5f) && s_world_x <= 0.0f + (SHOP_HITBOX_WIDTH * 0.5f) &&
+            s_world_y >= SHOP_BTN_Y - (SHOP_HITBOX_HEIGHT * 0.5f) && s_world_y <= SHOP_BTN_Y + (SHOP_HITBOX_HEIGHT * 0.5f))
+        {
+            SoundManager::PlayClickBtnSfx();
+            s_transitioning_to_shop = true;
+            ScreenTransitions::ScreenTransition_Init();
+        }
+        else if (s_world_x >= 0.0f - (EXIT_WIDTH * 0.5f) && s_world_x <= 0.0f + (EXIT_WIDTH * 0.5f) &&
+            s_world_y >= EXIT_BTN_Y - (EXIT_HEIGHT * 0.5f) && s_world_y <= EXIT_BTN_Y + (EXIT_HEIGHT * 0.5f))
+        {
+            SoundManager::PlayClickBtnSfx();
+            UiPauseMenu::OpenPopup(UiPauseMenu::POPUP_QUIT);
+        }
+        else if (s_world_x >= SETTINGS_BTN_X - (SETTINGS_WIDTH * 0.5f) && s_world_x <= SETTINGS_BTN_X + (SETTINGS_WIDTH * 0.5f) &&
+            s_world_y >= SETTINGS_BTN_Y - (SETTINGS_HEIGHT * 0.5f) && s_world_y <= SETTINGS_BTN_Y + (SETTINGS_HEIGHT * 0.5f))
+        {
+            SoundManager::PlayClickBtnSfx();
+            s_in_settings = true;
+        }
+        else if (s_world_x >= LEFTARROW_BTN_X - (LEFTARROW_WIDTH * 0.5f) && s_world_x <= LEFTARROW_BTN_X + (LEFTARROW_WIDTH * 0.5f) &&
+            s_world_y >= LEFTARROW_BTN_Y - (LEFTARROW_HEIGHT * 0.5f) && s_world_y <= LEFTARROW_BTN_Y + (LEFTARROW_HEIGHT * 0.5f))
+        {
+            SoundManager::PlayClickBtnSfx();
+            s_selected_mode = (s_selected_mode == "ZEN") ? "TIME" : "ZEN";
+        }
+        else if (s_world_x >= RIGHTARROW_BTN_X - (RIGHTARROW_WIDTH * 0.5f) && s_world_x <= RIGHTARROW_BTN_X + (RIGHTARROW_WIDTH * 0.5f) &&
+            s_world_y >= RIGHTARROW_BTN_Y - (RIGHTARROW_HEIGHT * 0.5f) && s_world_y <= RIGHTARROW_BTN_Y + (RIGHTARROW_HEIGHT * 0.5f))
+        {
+            SoundManager::PlayClickBtnSfx();
+            s_selected_mode = (s_selected_mode == "ZEN") ? "TIME" : "ZEN";
+        }
+        else if (s_world_x >= LEADERBOARD_BTN_X - (LEADERBOARD_WIDTH * 0.5f) && s_world_x <= LEADERBOARD_BTN_X + (LEADERBOARD_WIDTH * 0.5f) &&
+            s_world_y >= LEADERBOARD_BTN_Y - (LEADERBOARD_HEIGHT * 0.5f) && s_world_y <= LEADERBOARD_BTN_Y + (LEADERBOARD_HEIGHT * 0.5f))
+        {
+            SoundManager::PlayClickBtnSfx();
+            s_leaderboard_mode = "ZEN";
+            s_in_leaderboard = true;
+        }
+        else if (s_world_x >= 0.0f - (TUTORIAL_HITBOX_WIDTH * 0.5f) && s_world_x <= 0.0f + (TUTORIAL_HITBOX_WIDTH * 0.5f) &&
+            s_world_y >= TUTORIAL_BTN_Y - (TUTORIAL_HITBOX_HEIGHT * 0.5f) && s_world_y <= TUTORIAL_BTN_Y + (TUTORIAL_HITBOX_HEIGHT * 0.5f))
+        {
+            SoundManager::PlayClickBtnSfx();
+            s_is_zooming_to_game = true;
             ParallaxZoom::Start(GS_TUTORIAL);
         }
-        // --- Check Credits Button ---
-        else if (worldX >= CREDITS_BTN_X - (CREDITS_WIDTH * 0.5f) && worldX <= CREDITS_BTN_X + (CREDITS_WIDTH * 0.5f) &&
-            worldY >= CREDITS_BTN_Y - (CREDITS_HEIGHT * 0.5f) && worldY <= CREDITS_BTN_Y + (CREDITS_HEIGHT * 0.5f))
+        else if (s_world_x >= CREDITS_BTN_X - (CREDITS_WIDTH * 0.5f) && s_world_x <= CREDITS_BTN_X + (CREDITS_WIDTH * 0.5f) &&
+            s_world_y >= CREDITS_BTN_Y - (CREDITS_HEIGHT * 0.5f) && s_world_y <= CREDITS_BTN_Y + (CREDITS_HEIGHT * 0.5f))
         {
             SoundManager::PlayClickBtnSfx();
-            gGameStateNext = GS_CREDITS;
+            g_game_state_next = GS_CREDITS;
         }
     }
 }
 
-/*
-@function       ResetPlayerName
-@params         reset_name (std::string&)
-@brief          Overrides the current stored player name string.
-@usage          State cleanup, Game Over
-*//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
 void ResetPlayerName(std::string& reset_name)
 {
-    player_name = reset_name;                                                                                               // apply new string to player name
+    s_player_name = reset_name;
 }
 
-/*
-@function       Main_Menu_EnterName
-@params         worldYOffset (float), ndcYOffset (float), allowInput (bool)
-@brief          Handles rendering and input logic for the Name Entry sub-state.
-@usage          Main_Menu_Update
-*//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
-void Main_Menu_EnterName(float worldYOffset, float ndcYOffset, bool allowInput)
+void Main_Menu_EnterName(float world_y_offset, float ndc_y_offset, bool allow_input)
 {
-    //AEGfxSetBackgroundColor(0.0f, 0.0f, 0.0f);                                                                              // force clear background color
-    s32 mouseX, mouseY;                                                                                                     // raw mouse inputs
-    AEInputGetCursorPosition(&mouseX, &mouseY);                                                                             // grab cursor screen pos
+    s32 mouse_x, mouse_y;
+    AEInputGetCursorPosition(&mouse_x, &mouse_y);
 
-    worldX = (float)mouseX - (winW * 0.5f);                                                                                 // convert screen X to world X
-    worldY = (winH * 0.5f) - (float)mouseY;                                                                                 // convert screen Y to world Y
+    s_world_x = (float)mouse_x - (s_win_w * 0.5f);
+    s_world_y = (s_win_h * 0.5f) - (float)mouse_y;
 
-    if (allowInput)                                                                                                         // only process input if allowed
+    if (allow_input)
     {
-        //Separate the input triggers so the Enter key doesn't care where the mouse is
-        bool enterPressed = AEInputCheckTriggered(AEVK_RETURN);
-        bool enterClicked = AEInputCheckTriggered(AEVK_LBUTTON) &&
-            (worldX >= ENTERGAME_BTN_X - (EXITNAME_WIDTH * 0.5f) && worldX <= ENTERGAME_BTN_X + (EXITNAME_WIDTH * 0.5f) &&
-                worldY >= ENTERGAME_BTN_Y - (ENTERGAME_HEIGHT * 0.5f) && worldY <= ENTERGAME_BTN_Y + (ENTERGAME_HEIGHT * 0.5f));
+        bool enter_pressed = AEInputCheckTriggered(AEVK_RETURN);
+        bool enter_clicked = AEInputCheckTriggered(AEVK_LBUTTON) &&
+            (s_world_x >= ENTERGAME_BTN_X - (EXITNAME_WIDTH * 0.5f) && s_world_x <= ENTERGAME_BTN_X + (EXITNAME_WIDTH * 0.5f) &&
+                s_world_y >= ENTERGAME_BTN_Y - (ENTERGAME_HEIGHT * 0.5f) && s_world_y <= ENTERGAME_BTN_Y + (ENTERGAME_HEIGHT * 0.5f));
 
-        bool exitClicked = AEInputCheckTriggered(AEVK_LBUTTON) &&
-            (worldX >= EXITNAME_BTN_X - (EXITNAME_WIDTH * 0.5f) && worldX <= EXITNAME_BTN_X + (EXITNAME_WIDTH * 0.5f) &&
-                worldY >= EXITNAME_BTN_Y - (EXITNAME_HEIGHT * 0.5f) && worldY <= EXITNAME_BTN_Y + (EXITNAME_HEIGHT * 0.5f));
+        bool exit_clicked = AEInputCheckTriggered(AEVK_LBUTTON) &&
+            (s_world_x >= EXITNAME_BTN_X - (EXITNAME_WIDTH * 0.5f) && s_world_x <= EXITNAME_BTN_X + (EXITNAME_WIDTH * 0.5f) &&
+                s_world_y >= EXITNAME_BTN_Y - (EXITNAME_HEIGHT * 0.5f) && s_world_y <= EXITNAME_BTN_Y + (EXITNAME_HEIGHT * 0.5f));
 
-        // Update name-entry button tweens
         float dt = (float)AEFrameRateControllerGetFrameTime();
-        bool hEnter = (worldX >= ENTERGAME_BTN_X - (EXITNAME_WIDTH * 0.5f) && worldX <= ENTERGAME_BTN_X + (EXITNAME_WIDTH * 0.5f) &&
-            worldY >= ENTERGAME_BTN_Y - (ENTERGAME_HEIGHT * 0.5f) && worldY <= ENTERGAME_BTN_Y + (ENTERGAME_HEIGHT * 0.5f));
-        bool hBack = (worldX >= EXITNAME_BTN_X - (EXITNAME_WIDTH * 0.5f) && worldX <= EXITNAME_BTN_X + (EXITNAME_WIDTH * 0.5f) &&
-            worldY >= EXITNAME_BTN_Y - (EXITNAME_HEIGHT * 0.5f) && worldY <= EXITNAME_BTN_Y + (EXITNAME_HEIGHT * 0.5f));
-        ButtonTween_Update(tweenEnterGame, hEnter, enterClicked, dt);
-        ButtonTween_Update(tweenBackName, hBack, exitClicked, dt);
+        bool h_enter = (s_world_x >= ENTERGAME_BTN_X - (EXITNAME_WIDTH * 0.5f) && s_world_x <= ENTERGAME_BTN_X + (EXITNAME_WIDTH * 0.5f) &&
+            s_world_y >= ENTERGAME_BTN_Y - (ENTERGAME_HEIGHT * 0.5f) && s_world_y <= ENTERGAME_BTN_Y + (ENTERGAME_HEIGHT * 0.5f));
+        bool h_back = (s_world_x >= EXITNAME_BTN_X - (EXITNAME_WIDTH * 0.5f) && s_world_x <= EXITNAME_BTN_X + (EXITNAME_WIDTH * 0.5f) &&
+            s_world_y >= EXITNAME_BTN_Y - (EXITNAME_HEIGHT * 0.5f) && s_world_y <= EXITNAME_BTN_Y + (EXITNAME_HEIGHT * 0.5f));
+        ButtonTween_Update(s_tween_enter_game, h_enter, enter_clicked, dt);
+        ButtonTween_Update(s_tween_back_name, h_back, exit_clicked, dt);
 
-        // --- Check Enter Game (Triggered by Mouse Click OR Keyboard Enter) ---
-        if ((enterPressed || enterClicked) && !player_name.empty() && selected_mode != "")
+        if ((enter_pressed || enter_clicked) && !s_player_name.empty() && s_selected_mode != "")
         {
             SoundManager::PlayClickBtnSfx();
-            isEnteringName = false;
-            isZoomingToGame = true;
-            int zoomTarget = (selected_mode == "TIME") ? GS_GAME_TIMEMODE : GS_GAME;
-            ParallaxZoom::Start(zoomTarget);
+            s_is_entering_name = false;
+            s_is_zooming_to_game = true;
+            int zoom_target = (s_selected_mode == "TIME") ? GS_GAME_TIMEMODE : GS_GAME;
+            ParallaxZoom::Start(zoom_target);
         }
-        // --Draw no name pop up
-        else if ((enterPressed || enterClicked) && player_name.empty() && selected_mode != "")
+        else if ((enter_pressed || enter_clicked) && s_player_name.empty() && s_selected_mode != "")
         {
             SoundManager::PlayClickBtnSfx();
             EMPTY_NAME_WARNING_TIMER = 1.5f;
             EMPTY_NAME_WARNING_X = 0.0f;
             EMPTY_NAME_WARNING_Y = 0.05f;
         }
-        else if (exitClicked)
+        else if (exit_clicked)
         {
             SoundManager::PlayClickBtnSfx();
-            isTransitioningBack = true;
+            s_is_transitioning_back = true;
             ScreenTransitions::ScreenTransition_Init();
-            isEnteringName = false;
-            selected_mode = "ZEN";
+            s_is_entering_name = false;
+            s_selected_mode = "ZEN";
         }
 
-        if (AEInputCheckTriggered(AEVK_ESCAPE))                                                                             // check escape key
+        if (AEInputCheckTriggered(AEVK_ESCAPE))
         {
-            isTransitioningBack = true;                                                                                     // trigger reverse transition
-            ScreenTransitions::ScreenTransition_Init();                                                                     // start transition
-            isEnteringName = false;                                                                                         // leave sub-state
-            selected_mode = "ZEN";                                                                                          // default back to zen
+            s_is_transitioning_back = true;
+            ScreenTransitions::ScreenTransition_Init();
+            s_is_entering_name = false;
+            s_selected_mode = "ZEN";
         }
 
-        if (AEInputCheckTriggered(AEVK_BACK) && !player_name.empty())                                                       // check backspace key
-        {
-            player_name.pop_back();                                                                                         // remove last char
-        }
+        if (AEInputCheckTriggered(AEVK_BACK) && !s_player_name.empty())
+            s_player_name.pop_back();
 
-        if (player_name.length() < 12)                                                                                      // cap name length at 12
+        if (s_player_name.length() < 12)
         {
-            for (int k = AEVK_A; k <= AEVK_Z; ++k)                                                                          // loop A-Z keycodes
+            for (int k = AEVK_A; k <= AEVK_Z; ++k)
             {
-                if (AEInputCheckTriggered(static_cast<u8>(k)))                                                              // if specific key hit
+                if (AEInputCheckTriggered(static_cast<u8>(k)))
                 {
-                    char c = (char)('A' + (k - AEVK_A));                                                                    // convert code to char
-                    player_name += c;                                                                                       // append to string
-                    std::cout << player_name << "\n";                                                                       // debug print
+                    char c = (char)('A' + (k - AEVK_A));
+                    s_player_name += c;
+                    std::cout << s_player_name << "\n";
                 }
             }
         }
 
-        cursorTimer += (float)AEFrameRateControllerGetFrameTime();                                                          // accumulate cursor time
-        if (cursorTimer >= 0.5f)                                                                                            // toggle every 0.5 sec
+        s_cursor_timer += (float)AEFrameRateControllerGetFrameTime();
+        if (s_cursor_timer >= 0.5f)
         {
-            cursorVisible = !cursorVisible;                                                                                 // flip visibility
-            cursorTimer = 0.0f;                                                                                             // reset timer
+            s_cursor_visible = !s_cursor_visible;
+            s_cursor_timer = 0.0f;
         }
     }
 
-    // AEGfxSetBackgroundColor(0.53f, 0.81f, 0.92f);                                                                              // clear screen to black
-
-     // Draw Exit Name Button
-    if (pTexBackName) {
-        AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);                                                                                    // set to texture mode
-        AEGfxSetBlendMode(AE_GFX_BM_BLEND);                                                                                     // enable alpha blend
-        AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);
-        AEGfxTextureSet(pTexBackName, 0.0f, 0.0f);
-        Mesh_Renderer(pMeshBackName, EXITNAME_BTN_X, EXITNAME_BTN_Y + worldYOffset, EXITNAME_WIDTH * tweenBackName.scale, EXITNAME_HEIGHT * tweenBackName.scale, 0.0f);                           // render exit button
-    }
-    // Draw Enter Game Button
-    if (pTexEnterName) {
-        AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);                                                                                    // set to texture mode
-        AEGfxSetBlendMode(AE_GFX_BM_BLEND);                                                                                     // enable alpha blend
-        AEGfxSetColorToMultiply(1.0f, 1.0f, 0.0f, 1.0f);                                                                        // tint green
-        AEGfxTextureSet(pTexEnterName, 0.0f, 0.0f);
-        Mesh_Renderer(pMeshEnterName, ENTERGAME_BTN_X, ENTERGAME_BTN_Y + worldYOffset, ENTERGAME_WIDTH * tweenEnterGame.scale, ENTERGAME_HEIGHT * tweenEnterGame.scale, 0.0f);                         // render enter button
-    }
-    // Draw Text Elements
-    if (Graphics::font_id >= 0)                                                                                             // check if font valid
+    if (s_tex_back_name)
     {
-        AEGfxSetBlendMode(AE_GFX_BM_BLEND);                                                                                 // ensure blending active
+        AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
+        AEGfxSetBlendMode(AE_GFX_BM_BLEND);
+        AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);
+        AEGfxTextureSet(s_tex_back_name, 0.0f, 0.0f);
+        Mesh_Renderer(s_mesh_back_name, EXITNAME_BTN_X, EXITNAME_BTN_Y + world_y_offset,
+            EXITNAME_WIDTH * s_tween_back_name.scale, EXITNAME_HEIGHT * s_tween_back_name.scale, 0.0f);
+    }
 
-        const char* promptText = "Enter Name:";                                                                             // prompt string
-        float promptWidth = 0.0f, promptHeight = 0.0f;                                                                      // prompt dimensions
-        float promptScale = 1.0f;                                                                                           // prompt scale
-        float promptY = 0.4f + ndcYOffset;                                                                                  // calculate Y pos
+    if (s_tex_enter_name)
+    {
+        AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
+        AEGfxSetBlendMode(AE_GFX_BM_BLEND);
+        AEGfxSetColorToMultiply(1.0f, 1.0f, 0.0f, 1.0f);
+        AEGfxTextureSet(s_tex_enter_name, 0.0f, 0.0f);
+        Mesh_Renderer(s_mesh_enter_name, ENTERGAME_BTN_X, ENTERGAME_BTN_Y + world_y_offset,
+            ENTERGAME_WIDTH * s_tween_enter_game.scale, ENTERGAME_HEIGHT * s_tween_enter_game.scale, 0.0f);
+    }
 
-        AEGfxGetPrintSize(Graphics::font_id, promptText, promptScale, &promptWidth, &promptHeight);                         // measure string
-        float promptStartX = 0.0f - (promptWidth * 0.5f);                                                                   // center horizontally
-        AEGfxPrint(Graphics::font_id, promptText, promptStartX, promptY, promptScale, 0.0f, 0.0f, 0.0f, 1.0f);              // draw prompt
+    if (Graphics::g_font_id >= 0)
+    {
+        AEGfxSetBlendMode(AE_GFX_BM_BLEND);
 
-        float modeY = -0.35f + ndcYOffset;                                                                                  // mode string Y pos
-        float textY = 0.2f + ndcYOffset;                                                                                    // input string Y pos
-        std::string modeDisplay = "Mode: " + selected_mode;                                                                 // concat mode text
+        const char* prompt_text = "Enter Name:";
+        float prompt_width = 0.0f, prompt_height = 0.0f;
+        constexpr float PROMPT_SCALE = 1.0f;
+        float prompt_y = 0.4f + ndc_y_offset;
 
-        float modeWidth = 0.0f, modeHeight = 0.0f;                                                                          // mode dimensions
-        float modeScale = 1.0f;                                                                                             // mode scale
+        AEGfxGetPrintSize(Graphics::g_font_id, prompt_text, PROMPT_SCALE, &prompt_width, &prompt_height);
+        float prompt_start_x = 0.0f - (prompt_width * 0.5f);
+        AEGfxPrint(Graphics::g_font_id, prompt_text, prompt_start_x, prompt_y, PROMPT_SCALE, 0.0f, 0.0f, 0.0f, 1.0f);
 
-        AEGfxGetPrintSize(Graphics::font_id, modeDisplay.c_str(), modeScale, &modeWidth, &modeHeight);                      // measure mode string
-        float modeStartX = 0.0f - (modeWidth * 0.5f);                                                                       // center horizontally
+        float mode_y = -0.35f + ndc_y_offset;
+        float text_y = 0.2f + ndc_y_offset;
+        std::string mode_display = "Mode: " + s_selected_mode;
 
-        AEGfxSetBlendMode(AE_GFX_BM_BLEND);                                                                                 // re-apply blend mode
-        AEGfxPrint(Graphics::font_id, modeDisplay.c_str(), modeStartX, modeY, modeScale, 0.0f, 0.0f, 0.0f, 1.0f);           // render current mode text
+        float mode_width = 0.0f, mode_height = 0.0f;
+        constexpr float MODE_SCALE = 1.0f;
 
-        float textWidth = 0.0f, textHeight = 0.0f;                                                                          // name string dimensions
-        float textScale = 1.0f;                                                                                             // name string scale
-        float startX = 0.0f;                                                                                                // name string start X
-        textY = 0.2f;                                                                                                       // explicit overwrite (as in orig)
+        AEGfxGetPrintSize(Graphics::g_font_id, mode_display.c_str(), MODE_SCALE, &mode_width, &mode_height);
+        float mode_start_x = 0.0f - (mode_width * 0.5f);
+        AEGfxSetBlendMode(AE_GFX_BM_BLEND);
+        AEGfxPrint(Graphics::g_font_id, mode_display.c_str(), mode_start_x, mode_y, MODE_SCALE, 0.0f, 0.0f, 0.0f, 1.0f);
 
+        float text_width = 0.0f, text_height = 0.0f;
+        constexpr float TEXT_SCALE = 1.0f;
+        float start_x = 0.0f;
+        text_y = 0.2f;
 
-        if (selected_mode == "ZEN")                                                                                         // specific logic block for ZEN
+        if (s_selected_mode == "ZEN")
         {
-            AEGfxGetPrintSize(Graphics::font_id, modeDisplay.c_str(), modeScale, &modeWidth, &modeHeight);                  // re-measure mode text
-            modeStartX = 0.0f - (modeWidth * 0.5f);                                                                         // center horizontally
-            AEGfxSetBlendMode(AE_GFX_BM_BLEND);                                                                             // re-apply blend
-            AEGfxPrint(Graphics::font_id, modeDisplay.c_str(), modeStartX, modeY, modeScale, 0.0f, 0.0f, 0.0f, 1.0f);       // print zen mode again
+            AEGfxGetPrintSize(Graphics::g_font_id, mode_display.c_str(), MODE_SCALE, &mode_width, &mode_height);
+            mode_start_x = 0.0f - (mode_width * 0.5f);
+            AEGfxSetBlendMode(AE_GFX_BM_BLEND);
+            AEGfxPrint(Graphics::g_font_id, mode_display.c_str(), mode_start_x, mode_y, MODE_SCALE, 0.0f, 0.0f, 0.0f, 1.0f);
         }
 
-        if (selected_mode == "TIME")                                                                                        // specific logic block for TIME
+        if (s_selected_mode == "TIME")
         {
-            AEGfxGetPrintSize(Graphics::font_id, modeDisplay.c_str(), modeScale, &modeWidth, &modeHeight);                  // re-measure mode text
-            modeStartX = 0.0f - (modeWidth * 0.5f);                                                                         // center horizontally
-            AEGfxSetBlendMode(AE_GFX_BM_BLEND);                                                                             // re-apply blend
-            AEGfxPrint(Graphics::font_id, modeDisplay.c_str(), modeStartX, modeY, modeScale, 0.0f, 0.0f, 0.0f, 1.0f);       // print time mode again
+            AEGfxGetPrintSize(Graphics::g_font_id, mode_display.c_str(), MODE_SCALE, &mode_width, &mode_height);
+            mode_start_x = 0.0f - (mode_width * 0.5f);
+            AEGfxSetBlendMode(AE_GFX_BM_BLEND);
+            AEGfxPrint(Graphics::g_font_id, mode_display.c_str(), mode_start_x, mode_y, MODE_SCALE, 0.0f, 0.0f, 0.0f, 1.0f);
         }
 
-        textY = 0.2f + ndcYOffset;                                                                                          // re-apply transition offset
-        if (!player_name.empty())                                                                                           // check if name has chars
+        text_y = 0.2f + ndc_y_offset;
+        if (!s_player_name.empty())
         {
-            AEGfxGetPrintSize(Graphics::font_id, player_name.c_str(), textScale, &textWidth, &textHeight);                  // measure name string
-            startX = 0.0f - (textWidth * 0.5f);                                                                             // center horizontally
-            AEGfxSetBlendMode(AE_GFX_BM_BLEND);                                                                             // re-apply blend
-            AEGfxPrint(Graphics::font_id, player_name.c_str(), startX, textY, textScale, 0.0f, 0.0f, 0.0f, 1.0f);           // print typed name
+            AEGfxGetPrintSize(Graphics::g_font_id, s_player_name.c_str(), TEXT_SCALE, &text_width, &text_height);
+            start_x = 0.0f - (text_width * 0.5f);
+            AEGfxSetBlendMode(AE_GFX_BM_BLEND);
+            AEGfxPrint(Graphics::g_font_id, s_player_name.c_str(), start_x, text_y, TEXT_SCALE, 0.0f, 0.0f, 0.0f, 1.0f);
         }
-        // ========================================================================
-        // DRAW EMPTY NAME WARNING POPUP
-        // ========================================================================
+
         if (EMPTY_NAME_WARNING_TIMER > 0.0f)
         {
-            // 1. Calculate fade-out alpha based on time left
             float alpha = EMPTY_NAME_WARNING_TIMER / 0.5f;
-            if (alpha > 1.0f) alpha = 1.0f; // Stays fully solid for 1 second, fades out for 0.5s
+            if (alpha > 1.0f) alpha = 1.0f;
 
             const char* warning_text = "PLEASE ENTER A NAME";
             float tw, th;
-            float warningScale = 0.85f;
-            AEGfxGetPrintSize(Graphics::font_id, warning_text, warningScale, &tw, &th);
+            constexpr float WARNING_SCALE = 0.85f;
+            AEGfxGetPrintSize(Graphics::g_font_id, warning_text, WARNING_SCALE, &tw, &th);
 
-            // 3. Draw the red warning text
             AEGfxSetBlendMode(AE_GFX_BM_BLEND);
             AEGfxSetTransparency(1.0f);
 
-            float ndcX = 0.0f - (tw * 0.5f);
-            float ndcY = EMPTY_NAME_WARNING_Y + ndcYOffset;
-
-            // Print the text (R, G, B, Alpha)
-            AEGfxPrint(Graphics::font_id, warning_text, ndcX, ndcY, warningScale, 1.0f, 0.2f, 0.2f, alpha);
+            float ndc_x = 0.0f - (tw * 0.5f);
+            float ndc_y = EMPTY_NAME_WARNING_Y + ndc_y_offset;
+            AEGfxPrint(Graphics::g_font_id, warning_text, ndc_x, ndc_y, WARNING_SCALE, 1.0f, 0.2f, 0.2f, alpha);
         }
 
-        if (cursorVisible)                                                                                                  // check cursor flag
+        if (s_cursor_visible)
         {
-            float cursorX = startX + textWidth;                                                                             // append cursor to end of word
-            AEGfxSetBlendMode(AE_GFX_BM_BLEND);                                                                             // re-apply blend
-            AEGfxPrint(Graphics::font_id, "_", cursorX, textY, textScale, 0.0f, 0.0f, 0.0f, 1.0f);                          // print underscore cursor
+            float cursor_x = start_x + text_width;
+            AEGfxSetBlendMode(AE_GFX_BM_BLEND);
+            AEGfxPrint(Graphics::g_font_id, "_", cursor_x, text_y, TEXT_SCALE, 0.0f, 0.0f, 0.0f, 1.0f);
         }
     }
 }
 
-/*
-@function       Main_Menu_Init
-@brief          Initializes variables, fonts, textures, and meshes used by the Main Menu.
-@usage          GameStateManager
-*//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
 void Main_Menu_Init()
 {
+    // Safety cleanup before reload
+    if (s_tex_logo) { AEGfxTextureUnload(s_tex_logo);           s_tex_logo = nullptr; }
+    if (s_tex_leaderboard) { AEGfxTextureUnload(s_tex_leaderboard);    s_tex_leaderboard = nullptr; }
+    if (s_tex_play) { AEGfxTextureUnload(s_tex_play);           s_tex_play = nullptr; }
+    if (s_tex_shop) { AEGfxTextureUnload(s_tex_shop);           s_tex_shop = nullptr; }
+    if (s_tex_arrows) { AEGfxTextureUnload(s_tex_arrows);         s_tex_arrows = nullptr; }
+    if (s_tex_enter_name) { AEGfxTextureUnload(s_tex_enter_name);     s_tex_enter_name = nullptr; }
+    if (s_tex_back_name) { AEGfxTextureUnload(s_tex_back_name);      s_tex_back_name = nullptr; }
+    if (s_tex_settings) { AEGfxTextureUnload(s_tex_settings);       s_tex_settings = nullptr; }
+    if (s_tex_tutorial) { AEGfxTextureUnload(s_tex_tutorial);       s_tex_tutorial = nullptr; }
+    if (s_tex_credits) { AEGfxTextureUnload(s_tex_credits);        s_tex_credits = nullptr; }
+    if (s_tex_exit) { AEGfxTextureUnload(s_tex_exit);           s_tex_exit = nullptr; }
 
-    // Add at the top of Main_Menu_Init(), before any TextureLoad:
-    if (pTexLogo) { AEGfxTextureUnload(pTexLogo);        pTexLogo = nullptr; }
-    if (pTexLeaderboard) { AEGfxTextureUnload(pTexLeaderboard);  pTexLeaderboard = nullptr; }
-    if (pTexPlay) { AEGfxTextureUnload(pTexPlay);         pTexPlay = nullptr; }
-    if (pTexShop) { AEGfxTextureUnload(pTexShop);         pTexShop = nullptr; }
-    if (pTexArrows) { AEGfxTextureUnload(pTexArrows);       pTexArrows = nullptr; }
-    if (pTexEnterName) { AEGfxTextureUnload(pTexEnterName);    pTexEnterName = nullptr; }
-    if (pTexBackName) { AEGfxTextureUnload(pTexBackName);     pTexBackName = nullptr; }
-    if (pTexSettings) { AEGfxTextureUnload(pTexSettings);     pTexSettings = nullptr; }
-    if (pTexTutorial) { AEGfxTextureUnload(pTexTutorial);     pTexTutorial = nullptr; }
-    if (pTexCredits) { AEGfxTextureUnload(pTexCredits);      pTexCredits = nullptr; }
-    if (pTexExit) { AEGfxTextureUnload(pTexExit);         pTexExit = nullptr; }
+    if (s_mesh_logo) { AEGfxMeshFree(s_mesh_logo);           s_mesh_logo = nullptr; }
+    if (s_mesh_btn) { AEGfxMeshFree(s_mesh_btn);            s_mesh_btn = nullptr; }
+    if (s_mesh_exit_btn) { AEGfxMeshFree(s_mesh_exit_btn);       s_mesh_exit_btn = nullptr; }
+    if (s_mesh_enter_name) { AEGfxMeshFree(s_mesh_enter_name);     s_mesh_enter_name = nullptr; }
+    if (s_mesh_back_name) { AEGfxMeshFree(s_mesh_back_name);      s_mesh_back_name = nullptr; }
+    if (s_mesh_leaderboard_btn) { AEGfxMeshFree(s_mesh_leaderboard_btn); s_mesh_leaderboard_btn = nullptr; }
+    if (s_mesh_credits_btn) { AEGfxMeshFree(s_mesh_credits_btn);    s_mesh_credits_btn = nullptr; }
+    if (s_mesh_left_arrow) { AEGfxMeshFree(s_mesh_left_arrow);     s_mesh_left_arrow = nullptr; }
+    if (s_mesh_right_arrow) { AEGfxMeshFree(s_mesh_right_arrow);    s_mesh_right_arrow = nullptr; }
+    if (s_mesh_settings_btn) { AEGfxMeshFree(s_mesh_settings_btn);   s_mesh_settings_btn = nullptr; }
+    if (s_mesh_tutorial_btn) { AEGfxMeshFree(s_mesh_tutorial_btn);   s_mesh_tutorial_btn = nullptr; }
 
-    if (pMeshLogo) { AEGfxMeshFree(pMeshLogo);         pMeshLogo = nullptr; }
-    if (pMeshBtn) { AEGfxMeshFree(pMeshBtn);          pMeshBtn = nullptr; }
-    if (pMeshExitBtn) { AEGfxMeshFree(pMeshExitBtn);      pMeshExitBtn = nullptr; }
-    if (pMeshEnterName) { AEGfxMeshFree(pMeshEnterName);    pMeshEnterName = nullptr; }
-    if (pMeshBackName) { AEGfxMeshFree(pMeshBackName);     pMeshBackName = nullptr; }
-    if (pMeshLeaderboardBtn) { AEGfxMeshFree(pMeshLeaderboardBtn); pMeshLeaderboardBtn = nullptr; }
-    if (pMeshCreditsBtn) { AEGfxMeshFree(pMeshCreditsBtn);   pMeshCreditsBtn = nullptr; }
-    if (pMeshLeftArrow) { AEGfxMeshFree(pMeshLeftArrow);    pMeshLeftArrow = nullptr; }
-    if (pMeshRightArrow) { AEGfxMeshFree(pMeshRightArrow);   pMeshRightArrow = nullptr; }
-    if (pMeshSettingsBtn) { AEGfxMeshFree(pMeshSettingsBtn);  pMeshSettingsBtn = nullptr; }
-    if (pMeshTutorialBtn) { AEGfxMeshFree(pMeshTutorialBtn);  pMeshTutorialBtn = nullptr; }
-    uiOffsetX = 0.0f;
-    transitioningToShop = false;
-    inLeaderboard = false;
+    s_ui_offset_x = 0.0f;
+    s_transitioning_to_shop = false;
+    s_in_leaderboard = false;
     UiPauseMenu::ClosePopup();
     Leaderboard_System::Init();
     Leaderboard_System::Read_ZenLeaderboard();
     Leaderboard_System::Read_TimeLeaderboard();
-    isZoomingToGame = false;
+    s_is_zooming_to_game = false;
     ParallaxZoom::Reset();
 
     EMPTY_NAME_WARNING_TIMER = 0.0f;
@@ -693,96 +625,91 @@ void Main_Menu_Init()
     SysSettings::Init();
     BackgroundParallax::MenuParallax_Init();
 
-    selected_mode = "ZEN";                                                                                                  // default selected mode
-    inSettings = false;                                                                                                     // default settings closed
-    isTransitioningToName = false;                                                                                          // clear transition flag
+    s_selected_mode = "ZEN";
+    s_in_settings = false;
+    s_is_transitioning_to_name = false;
 
-    if (Graphics::font_id < 0)                                                                                              // check if font uninitialized
+    if (Graphics::g_font_id < 0)
+        Graphics::g_font_id = AEGfxCreateFont("Assets/Pixel-Game.otf", 48);
+
+    s_tex_logo = AEGfxTextureLoad("Assets/title.png");
+    AE_ASSERT_MESG(s_tex_logo, "Failed to load title.png");
+
+    s_tex_leaderboard = AEGfxTextureLoad("Assets/leaderboardt.png");
+    AE_ASSERT_MESG(s_tex_leaderboard, "Failed to load leaderboardt.png")
+
+        s_tex_play = AEGfxTextureLoad("Assets/play.png");
+    AE_ASSERT_MESG(s_tex_play, "Failed to load play.png");
+
+    s_tex_shop = AEGfxTextureLoad("Assets/shop.png");
+    AE_ASSERT_MESG(s_tex_shop, "Failed to load shop.png");
+
+    s_tex_arrows = AEGfxTextureLoad("Assets/LeftRightButtons.png");
+    AE_ASSERT_MESG(s_tex_arrows, "Failed to load LeftRightButtons.png");
+
+    s_tex_enter_name = AEGfxTextureLoad("Assets/playbutton.png");
+    AE_ASSERT_MESG(s_tex_enter_name, "Failed to load playbutton.png");
+
+    s_tex_back_name = AEGfxTextureLoad("Assets/backbutton.png");
+    AE_ASSERT_MESG(s_tex_back_name, "Failed to load backbutton.png");
+
+    s_tex_settings = AEGfxTextureLoad("Assets/settingshover.png");
+    AE_ASSERT_MESG(s_tex_settings, "Failed to load settingshover.png");
+
+    s_tex_tutorial = AEGfxTextureLoad("Assets/tutorial.png");
+    AE_ASSERT_MESG(s_tex_tutorial, "Failed to load tutorial.png");
+
+    s_tex_credits = AEGfxTextureLoad("Assets/credits.png");
+    AE_ASSERT_MESG(s_tex_credits, "Failed to load credits.png");
+
+    s_tex_exit = AEGfxTextureLoad("Assets/quit.png");
+    AE_ASSERT_MESG(s_tex_exit, "Failed to load quit.png");
+
+    s_mesh_logo = Sprite_Mesh(1.0f, 1.0f);
+    s_mesh_btn = Sprite_Mesh(1.0f, 1.0f);
+    s_mesh_exit_btn = Sprite_Mesh(1.0f, 1.0f);
+    s_mesh_enter_name = Sprite_Mesh(1.0f, 1.0f);
+    s_mesh_back_name = Sprite_Mesh(1.0f, 1.0f);
+    s_mesh_leaderboard_btn = Sprite_Mesh(1.0f, 1.0f);
+    s_mesh_credits_btn = Sprite_Mesh(1.0f, 1.0f);
+
+    s_mesh_left_arrow = Spritesheet_Mesh(1.0f, 1.0f, 0.0f, 0.0f, 0.5f, 0.5f);
+    s_mesh_right_arrow = Spritesheet_Mesh(1.0f, 1.0f, 0.0f, 0.5f, 0.5f, 1.0f);
+    s_mesh_settings_btn = Spritesheet_Mesh(1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.5f);
+    s_mesh_tutorial_btn = Sprite_Mesh(1.0f, 1.0f);
+
+    if (g_game_state_prev == GS_SHOP)
     {
-        Graphics::font_id = AEGfxCreateFont("Assets/Pixel-Game.otf", 48);                                                   // load UI font
-    }
-
-    pTexLogo = AEGfxTextureLoad("Assets/title.png");
-    AE_ASSERT_MESG(pTexLogo, "Failed to load title.png");
-
-    pTexLeaderboard = AEGfxTextureLoad("Assets/leaderboardt.png");
-    AE_ASSERT_MESG(pTexLeaderboard, "Failed to load leaderboardt.png")                                                  // check texture success
-
-        pTexPlay = AEGfxTextureLoad("Assets/play.png");                                                                         // load play texture
-    AE_ASSERT_MESG(pTexPlay, "Failed to load play.png");                                                                    // check texture success
-
-    pTexShop = AEGfxTextureLoad("Assets/shop.png");                                                                         // load shop texture
-    AE_ASSERT_MESG(pTexShop, "Failed to load shop.png");                                                                    // check texture success
-
-    pTexArrows = AEGfxTextureLoad("Assets/LeftRightButtons.png");                                                           // load arrow texture
-    AE_ASSERT_MESG(pTexArrows, "Failed to load LeftRightButtons.png");                                                      // check texture success
-
-    pTexEnterName = AEGfxTextureLoad("Assets/playbutton.png");
-    AE_ASSERT_MESG(pTexEnterName, "Failed to load playbutton.png");
-
-    pTexBackName = AEGfxTextureLoad("Assets/backbutton.png");
-    AE_ASSERT_MESG(pTexBackName, "Failed to load backbutton.png");
-
-    pTexSettings = AEGfxTextureLoad("Assets/settingshover.png");
-    AE_ASSERT_MESG(pTexSettings, "Failed to load settingshover.png");
-
-    pTexTutorial = AEGfxTextureLoad("Assets/tutorial.png");
-    AE_ASSERT_MESG(pTexTutorial, "Failed to load tutorial.png");
-
-    pTexCredits = AEGfxTextureLoad("Assets/credits.png");
-    AE_ASSERT_MESG(pTexCredits, "Failed to load credits.png");
-
-    pTexExit = AEGfxTextureLoad("Assets/quit.png");                                                                          // load quit button texture
-    AE_ASSERT_MESG(pTexExit, "Failed to load quit.png");
-
-    pMeshLogo = Sprite_Mesh(1.0f, 1.0f);                                                            // build logo  
-    pMeshBtn = Sprite_Mesh(1.0f, 1.0f);                                                                                     // build standard button mesh
-    pMeshExitBtn = Sprite_Mesh(1.0f, 1.0f);                                                                                  // build exit button mesh
-    pMeshEnterName = Sprite_Mesh(1.0f, 1.0f);
-    pMeshBackName = Sprite_Mesh(1.0f, 1.0f);
-    pMeshLeaderboardBtn = Sprite_Mesh(1.0f, 1.0f);
-    pMeshCreditsBtn = Sprite_Mesh(1.0f, 1.0f);
-
-    pMeshLeftArrow = Spritesheet_Mesh(1.0f, 1.0f, 0.0f, 0.0f, 0.5f, 0.5f);                                                  // slice left arrow mesh
-    pMeshRightArrow = Spritesheet_Mesh(1.0f, 1.0f, 0.0f, 0.5f, 0.5f, 1.0f);                                                 // slice right arrow mesh
-    pMeshSettingsBtn = Spritesheet_Mesh(1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.5f);
-    pMeshTutorialBtn = Sprite_Mesh(1.0f, 1.0f);
-
-    // just came from the Shop, set up the arrival animation
-    if (gGameStatePrev == GS_SHOP) {
-        isReturningFromShop = true;
-        uiOffsetX = -winW; // Start UI completely off-screen to the left
+        s_is_returning_from_shop = true;
+        s_ui_offset_x = -s_win_w;
         ScreenTransitions::ScreenTransition_Init();
     }
-    else {
-        isReturningFromShop = false;
-        uiOffsetX = 0.0f;
+    else
+    {
+        s_is_returning_from_shop = false;
+        s_ui_offset_x = 0.0f;
     }
 
-    // Reset button tweens
-    ButtonTween_Reset(tweenPlay);
-    ButtonTween_Reset(tweenShop);
-    ButtonTween_Reset(tweenTutorial);
-    ButtonTween_Reset(tweenExit);
-    ButtonTween_Reset(tweenSettings);
-    ButtonTween_Reset(tweenLeaderboard);
-    ButtonTween_Reset(tweenLeftArrow);
-    ButtonTween_Reset(tweenRightArrow);
-    ButtonTween_Reset(tweenCredits);
-    ButtonTween_Reset(tweenEnterGame);
-    ButtonTween_Reset(tweenBackName);
+    ButtonTween_Reset(s_tween_play);
+    ButtonTween_Reset(s_tween_shop);
+    ButtonTween_Reset(s_tween_tutorial);
+    ButtonTween_Reset(s_tween_exit);
+    ButtonTween_Reset(s_tween_settings);
+    ButtonTween_Reset(s_tween_leaderboard);
+    ButtonTween_Reset(s_tween_left_arrow);
+    ButtonTween_Reset(s_tween_right_arrow);
+    ButtonTween_Reset(s_tween_credits);
+    ButtonTween_Reset(s_tween_enter_game);
+    ButtonTween_Reset(s_tween_back_name);
 
-    // ---------------------------------------------------------------------------
-    // SPLASH OVERLAY ? only on very first launch (gGameStatePrev == GS_NONE)
-    // ---------------------------------------------------------------------------
-    splashTimer = 0.0f;
-    splashActive = (gGameStatePrev == GS_NONE);
+    // Splash overlay — only on very first launch
+    s_splash_timer = 0.0f;
+    s_splash_active = (g_game_state_prev == GS_NONE);
 
-    if (splashActive)
+    if (s_splash_active)
     {
-        pTexSplashLogo = AEGfxTextureLoad("Assets/DigiPen_BLACK.png");
+        s_tex_splash_logo = AEGfxTextureLoad("Assets/DigiPen_BLACK.png");
 
-        // Full-screen solid black quad (unit quad, scaled by world half-extents in Update)
         AEGfxMeshStart();
         AEGfxTriAdd(-1.f, -1.f, 0xFF000000, 0.f, 1.f,
             1.f, -1.f, 0xFF000000, 1.f, 1.f,
@@ -790,9 +717,8 @@ void Main_Menu_Init()
         AEGfxTriAdd(1.f, -1.f, 0xFF000000, 1.f, 1.f,
             1.f, 1.f, 0xFF000000, 1.f, 0.f,
             -1.f, 1.f, 0xFF000000, 0.f, 0.f);
-        pMeshSplashQuad = AEGfxMeshEnd();
+        s_mesh_splash_quad = AEGfxMeshEnd();
 
-        // Logo quad
         AEGfxMeshStart();
         AEGfxTriAdd(-1.f, -1.f, 0xFFFFFFFF, 0.f, 1.f,
             1.f, -1.f, 0xFFFFFFFF, 1.f, 1.f,
@@ -800,340 +726,269 @@ void Main_Menu_Init()
         AEGfxTriAdd(1.f, -1.f, 0xFFFFFFFF, 1.f, 1.f,
             1.f, 1.f, 0xFFFFFFFF, 1.f, 0.f,
             -1.f, 1.f, 0xFFFFFFFF, 0.f, 0.f);
-        pMeshSplashLogo = AEGfxMeshEnd();
+        s_mesh_splash_logo = AEGfxMeshEnd();
     }
 }
 
-/*
-@function       Main_Menu_Update
-@brief          Calculates dynamic screen coordinates, updates transition math, and dictates current sub-state loop.
-@usage          GameStateManager
-*//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
 void Main_Menu_Update()
 {
-
-    winW = (float)AEGfxGetWindowWidth();                                                                                    // store window width
-    winH = (float)AEGfxGetWindowHeight();                                                                                   // store window height
+    s_win_w = (float)AEGfxGetWindowWidth();
+    s_win_h = (float)AEGfxGetWindowHeight();
 
     float dt = (float)AEFrameRateControllerGetFrameTime();
-    if (dt > 0.1f) dt = 0.01667f;                                                                                           // dt clamp
+    if (dt > 0.1f) dt = 0.01667f;
 
     if (EMPTY_NAME_WARNING_TIMER > 0.0f)
-    {
         EMPTY_NAME_WARNING_TIMER -= dt;
-    }
 
     BackgroundParallax::MenuParallax_Update(dt);
 
-    if (transitioningToShop) {
-
-        ScreenTransitions::ScreenTransition_Update(dt);                                                                     //normalized bounce (0.0 to 1.0)
-        float smoothPan = ScreenTransitions::EaseOutExpo(ScreenTransitions::result);
-        uiOffsetX = -winW * smoothPan;
-
-        BackgroundParallax::MenuParallax_SetPanOffset(-0.2f * smoothPan);
-
-        // Makes sure the timer doesnt exceed the set amount of seconds
-        if (ScreenTransitions::result >= 0.3f)
-        {
-            transitioningToShop = false; // Stop transition
-            uiOffsetX = -winW;           // Lock UI offscreen
-            BackgroundParallax::MenuParallax_SetPanOffset(-0.2f);
-            gGameStateNext = GS_SHOP;    // Switch to Shop state!
-        }
-    }
-
-    if (isReturningFromShop) {
+    if (s_transitioning_to_shop)
+    {
         ScreenTransitions::ScreenTransition_Update(dt);
-        float smoothPan = ScreenTransitions::EaseOutExpo(ScreenTransitions::result);
-
-        // Slide the UI from the left (-winW) back to the center (0)
-        uiOffsetX = -winW * (1.0f - smoothPan);
-
-        // Animate the background offset from -0.2f back to 0.0f
-        BackgroundParallax::MenuParallax_SetPanOffset(-0.2f + (0.2f * smoothPan));
+        float smooth_pan = ScreenTransitions::EaseOutExpo(ScreenTransitions::result);
+        s_ui_offset_x = -s_win_w * smooth_pan;
+        BackgroundParallax::MenuParallax_SetPanOffset(-0.2f * smooth_pan);
 
         if (ScreenTransitions::result >= 0.3f)
         {
-            isReturningFromShop = false;
-            uiOffsetX = 0.0f;
-            BackgroundParallax::MenuParallax_SetPanOffset(0.0f); // Lock securely to center
+            s_transitioning_to_shop = false;
+            s_ui_offset_x = -s_win_w;
+            BackgroundParallax::MenuParallax_SetPanOffset(-0.2f);
+            g_game_state_next = GS_SHOP;
         }
     }
 
-    LOGO_Y = winH * 0.35f;                                                                                                  // set logo Y pos
-    PLAY_BTN_Y = winH * 0.15f;                                                                                              // set play button Y pos
-    TUTORIAL_BTN_Y = winH * -0.04f;                                                                                         // set tutorial button Y pos
-    SHOP_BTN_Y = winH * -0.23f;                                                                                             // set shop button Y pos
-    EXIT_BTN_Y = winH * -0.42f;                                                                                             // set exit button Y pos
+    if (s_is_returning_from_shop)
+    {
+        ScreenTransitions::ScreenTransition_Update(dt);
+        float smooth_pan = ScreenTransitions::EaseOutExpo(ScreenTransitions::result);
+        s_ui_offset_x = -s_win_w * (1.0f - smooth_pan);
+        BackgroundParallax::MenuParallax_SetPanOffset(-0.2f + (0.2f * smooth_pan));
 
-    EXITNAME_BTN_Y = winH * -0.35f;                                                                                         // set exit name Y pos
-    EXITNAME_BTN_X = winW * -0.35f;                                                                                         // set exit name X pos
+        if (ScreenTransitions::result >= 0.3f)
+        {
+            s_is_returning_from_shop = false;
+            s_ui_offset_x = 0.0f;
+            BackgroundParallax::MenuParallax_SetPanOffset(0.0f);
+        }
+    }
 
-    ENTERGAME_BTN_X = winW * 0.35f;                                                                                         // set enter game X pos
-    ENTERGAME_BTN_Y = winH * -0.35f;                                                                                        // set enter game Y pos
+    LOGO_Y = s_win_h * 0.35f;
+    PLAY_BTN_Y = s_win_h * 0.15f;
+    TUTORIAL_BTN_Y = -s_win_h * 0.04f;
+    SHOP_BTN_Y = -s_win_h * 0.23f;
+    EXIT_BTN_Y = -s_win_h * 0.42f;
 
-    ZENMODE_BTN_X = winW * -0.12f;                                                                                          // set zen mode X pos
-    ZENMODE_BTN_Y = winH * 0.0f;                                                                                            // set zen mode Y pos
+    EXITNAME_BTN_Y = -s_win_h * 0.35f;
+    EXITNAME_BTN_X = -s_win_w * 0.35f;
+    ENTERGAME_BTN_X = s_win_w * 0.35f;
+    ENTERGAME_BTN_Y = -s_win_h * 0.35f;
 
-    TIMEMODE_BTN_X = winW * 0.12f;                                                                                          // set time mode X pos
-    TIMEMODE_BTN_Y = winH * 0.0f;                                                                                           // set time mode Y pos
+    ZENMODE_BTN_X = -s_win_w * 0.12f;
+    ZENMODE_BTN_Y = s_win_h * 0.0f;
+    TIMEMODE_BTN_X = s_win_w * 0.12f;
+    TIMEMODE_BTN_Y = s_win_h * 0.0f;
 
-    SETTINGS_BTN_X = winW * -0.35f;                                                                                         // set settings X pos
-    SETTINGS_BTN_Y = winH * -0.4f;                                                                                          // set settings Y pos
+    SETTINGS_BTN_X = -s_win_w * 0.35f;
+    SETTINGS_BTN_Y = -s_win_h * 0.4f;
+    LEADERBOARD_BTN_X = -s_win_w * 0.23f;
+    LEADERBOARD_BTN_Y = -s_win_h * 0.4f;
 
-    LEADERBOARD_BTN_X = winW * -0.23f;
-    LEADERBOARD_BTN_Y = winH * -0.4f;
+    LEFTARROW_BTN_X = -s_win_h * 0.12f;
+    LEFTARROW_BTN_Y = PLAY_BTN_Y + 85.0f;
+    RIGHTARROW_BTN_X = s_win_h * 0.12f;
+    RIGHTARROW_BTN_Y = PLAY_BTN_Y + 85.0f;
 
-    LEFTARROW_BTN_X = winH * -0.12f;                                                                                        // set left arrow X pos
-    LEFTARROW_BTN_Y = PLAY_BTN_Y + 85.0f;                                                                                   // set left arrow Y pos (above play button)
+    CREDITS_BTN_X = s_win_w * 0.23f;
+    CREDITS_BTN_Y = -s_win_h * 0.4f;
 
-    RIGHTARROW_BTN_X = winH * 0.12f;                                                                                        // set right arrow X pos
-    RIGHTARROW_BTN_Y = PLAY_BTN_Y + 85.0f;                                                                                  // set right arrow Y pos (above play button)
-
-    CREDITS_BTN_X = winW * 0.23f;
-    CREDITS_BTN_Y = winH * -0.4f;
-
-
-
-    AEGfxSetCamPosition(0.0f, 0.0f);                                                                                        // reset camera explicitly
-    if (isZoomingToGame || ParallaxZoom::IsActive())
+    AEGfxSetCamPosition(0.0f, 0.0f);
+    if (s_is_zooming_to_game || ParallaxZoom::IsActive())
         AEGfxSetBackgroundColor(0.0f, 0.0f, 0.0f);
     else
         AEGfxSetBackgroundColor(0.53f, 0.81f, 0.92f);
 
-    float camY = 0.0f;                                                                                                      // initialize camera Y variable
-    float textNdcOffset = 0.0f;                                                                                             // initialize text offset variable
+    float cam_y = 0.0f;
+    float text_ndc_offset = 0.0f;
 
-    // --- FORWARD TRANSITION ---
-    if (isTransitioningToName)                                                                                              // check drop-down transition
+    if (s_is_transitioning_to_name)
     {
-        ScreenTransitions::ScreenTransition_Update((float)AEFrameRateControllerGetFrameTime());                             // advance math timer
+        ScreenTransitions::ScreenTransition_Update((float)AEFrameRateControllerGetFrameTime());
+        float bounce = ScreenTransitions::EaseOutExpo(ScreenTransitions::result);
 
-        float bounce = ScreenTransitions::EaseOutExpo(ScreenTransitions::result);                                           // fetch normalized bounce
+        cam_y = s_win_h * bounce;
+        AEGfxSetCamPosition(0.0f, cam_y);
+        text_ndc_offset = -(2.0f * bounce);
 
-        camY = winH * bounce;                                                                                               // apply bounce to world camera
-        AEGfxSetCamPosition(0.0f, camY);                                                                                    // set camera
-
-
-        textNdcOffset = -(2.0f * bounce);                                                                                   // manually apply bounce to NDC
-
-        if (ScreenTransitions::result >= 0.6f)                                                     // check if math complete
+        if (ScreenTransitions::result >= 0.6f)
         {
-            isTransitioningToName = false;                                                                                  // stop transition
-            isEnteringName = true;                                                                                          // finalize state swap
-            camY = 0.0f;                                                                                                    // lock camera back
-            textNdcOffset = 0.0f;                                                                                           // lock text back
+            s_is_transitioning_to_name = false;
+            s_is_entering_name = true;
+            cam_y = 0.0f;
+            text_ndc_offset = 0.0f;
         }
     }
-    // --- REVERSE TRANSITION ---
-    else if (isTransitioningBack)                                                                                           // check slide-up transition
+    else if (s_is_transitioning_back)
     {
-        ScreenTransitions::ScreenTransition_Update((float)AEFrameRateControllerGetFrameTime());                             // advance math timer
-        float bounce = ScreenTransitions::EaseOutExpo(ScreenTransitions::result);                                           // fetch normalized bounce
+        ScreenTransitions::ScreenTransition_Update((float)AEFrameRateControllerGetFrameTime());
+        float bounce = ScreenTransitions::EaseOutExpo(ScreenTransitions::result);
+        float reverse_bounce = 1.0f - bounce;
 
-        float reverseBounce = 1.0f - bounce;                                                                                // invert drop math
+        cam_y = s_win_h * reverse_bounce;
+        text_ndc_offset = -(2.0f * reverse_bounce);
 
-        camY = winH * reverseBounce;                                                                                        // apply inverted bounce to cam
-        textNdcOffset = -(2.0f * reverseBounce);                                                                            // manually apply inverted bounce to NDC
-
-        if (ScreenTransitions::result >= 0.6f)                                                     // check if math complete
+        if (ScreenTransitions::result >= 0.6f)
         {
-            isTransitioningBack = false;                                                                                    // stop transition
-            isEnteringName = false;                                                                                         // return to main sub-state
-            camY = 0.0f;                                                                                                    // lock camera back
-            textNdcOffset = 0.0f;                                                                                           // lock text back
-
-            player_name = "";                                                                                               // wipe typing buffer safely
-            selected_mode = "ZEN";                                                                                          // reset mode selection safely
+            s_is_transitioning_back = false;
+            s_is_entering_name = false;
+            cam_y = 0.0f;
+            text_ndc_offset = 0.0f;
+            s_player_name = "";
+            s_selected_mode = "ZEN";
         }
     }
 
-    AEGfxSetCamPosition(0.0f, camY);                                                                                        // lock camera to frame pos
+    AEGfxSetCamPosition(0.0f, cam_y);
 
-    float vCamY = 0.0f;
-    if (isTransitioningToName) {
-        vCamY = winH * ScreenTransitions::EaseOutExpo(ScreenTransitions::result);
-    }
-    else if (isTransitioningBack) {
-        vCamY = winH * (1.0f - ScreenTransitions::EaseOutExpo(ScreenTransitions::result));
-    }
-    else if (isEnteringName) {
-        vCamY = winH; // Keep the background scrolled down while in the sub-menu!
-    }
+    float v_cam_y = 0.0f;
+    if (s_is_transitioning_to_name) v_cam_y = s_win_h * ScreenTransitions::EaseOutExpo(ScreenTransitions::result);
+    else if (s_is_transitioning_back)    v_cam_y = s_win_h * (1.0f - ScreenTransitions::EaseOutExpo(ScreenTransitions::result));
+    else if (s_is_entering_name)         v_cam_y = s_win_h;
 
-    // Zoom transition runs exclusively - skip all normal drawing while active
-    if (isZoomingToGame)
+    if (s_is_zooming_to_game)
     {
         ParallaxZoom::Update(dt);
-        ParallaxZoom::Draw(0.0f);   // <-- always draw from neutral position
-        if (!ParallaxZoom::IsActive()) isZoomingToGame = false;
+        ParallaxZoom::Draw(0.0f);
+        if (!ParallaxZoom::IsActive()) s_is_zooming_to_game = false;
         return;
     }
 
-    BackgroundParallax::MenuParallax_Draw(vCamY);
+    BackgroundParallax::MenuParallax_Draw(v_cam_y);
 
-    // --- RENDER AND INPUT LOGIC ---
-    if (inLeaderboard)
+    if (s_in_leaderboard)
     {
-        Draw_Main_Menu(0.0f); // Keep the menu rendered in the background
+        Draw_Main_Menu(0.0f);
 
-        if (leaderboard_mode == "ZEN") {
-            Leaderboard_System::Display_ZenLeaderboard(inLeaderboard);
-        }
-        else if (leaderboard_mode == "TIME") {
-            Leaderboard_System::Display_TimeLeaderboard(inLeaderboard);
-        }
+        if (s_leaderboard_mode == "ZEN")  Leaderboard_System::Display_ZenLeaderboard(s_in_leaderboard);
+        else if (s_leaderboard_mode == "TIME") Leaderboard_System::Display_TimeLeaderboard(s_in_leaderboard);
 
-        // ==========================================================
-        // NEW: DRAW THE SWITCH MODE ARROW BUTTON (Top Right Corner)
-        // ==========================================================
-        s32 mouseX, mouseY;
-        AEInputGetCursorPosition(&mouseX, &mouseY);
-        winW = (float)AEGfxGetWindowWidth();
-        winH = (float)AEGfxGetWindowHeight();
+        s32 mouse_x, mouse_y;
+        AEInputGetCursorPosition(&mouse_x, &mouse_y);
+        s_win_w = (float)AEGfxGetWindowWidth();
+        s_win_h = (float)AEGfxGetWindowHeight();
 
-        // Calculate mouse in World Coordinates to match the sprite meshes
-        float wx = (float)mouseX - (winW * 0.5f);
-        float wy = (winH * 0.5f) - (float)mouseY;
+        float wx = (float)mouse_x - (s_win_w * 0.5f);
+        float wy = (s_win_h * 0.5f) - (float)mouse_y;
 
-        // Pin the arrow to the top right corner of the screen
-        float arrowW = 80.0f;
-        float arrowH = 80.0f;
-        float arrowX = 0.0f;
-        float arrowY = 0.0f;
+        float arrow_w = 80.0f;
+        float arrow_h = 80.0f;
+        float arrow_x = 0.0f;
+        float arrow_y = 0.0f;
 
-        // Move the arrow to the Left or Right edge depending on the mode
-        if (leaderboard_mode == "ZEN") {
-            arrowX = (winW * 0.5f) - 380.0f; // Push to the right edge
-        }
-        else {
-            arrowX = -(winW * 0.5f) + 380.0f; // Push to the left edge
-        }
+        if (s_leaderboard_mode == "ZEN")  arrow_x = (s_win_w * 0.5f) - 380.0f;
+        else                               arrow_x = -(s_win_w * 0.5f) + 380.0f;
 
-        // Hitbox logic using world coordinates
-        bool isHovering = (wx >= arrowX - arrowW * 1.5f && wx <= arrowX + arrowW * 1.5f &&
-            wy >= arrowY - arrowH * 1.2f && wy <= arrowY + arrowH * 1.2f);
+        bool is_hovering = (wx >= arrow_x - arrow_w * 1.5f && wx <= arrow_x + arrow_w * 1.5f &&
+            wy >= arrow_y - arrow_h * 1.2f && wy <= arrow_y + arrow_h * 1.2f);
+        float draw_scale = is_hovering ? 1.2f : 1.0f;
 
-        float drawScale = isHovering ? 1.2f : 1.0f; // Slight pop effect on hover
-
-        // 1. Draw the Arrow Sprite
-        if (pTexArrows) {
+        if (s_tex_arrows)
+        {
             AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
             AEGfxSetBlendMode(AE_GFX_BM_BLEND);
+            if (is_hovering) AEGfxSetColorToMultiply(1.0f, 1.0f, 0.0f, 1.0f);
+            else             AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);
+            AEGfxTextureSet(s_tex_arrows, 0.0f, 0.0f);
 
-            // Tint yellow on hover, white otherwise
-            if (isHovering) AEGfxSetColorToMultiply(1.0f, 1.0f, 0.0f, 1.0f);
-            else AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);
+            if (s_leaderboard_mode == "ZEN")
+                Mesh_Renderer(s_mesh_right_arrow, arrow_x, arrow_y, arrow_w * draw_scale, arrow_h * draw_scale, 0.0f);
+            else
+                Mesh_Renderer(s_mesh_left_arrow, arrow_x, arrow_y, arrow_w * draw_scale, arrow_h * draw_scale, 0.0f);
 
-            AEGfxTextureSet(pTexArrows, 0.0f, 0.0f);
-
-            if (leaderboard_mode == "ZEN") {
-                // Show RIGHT arrow to switch to TIME mode
-                Mesh_Renderer(pMeshRightArrow, arrowX, arrowY, arrowW * drawScale, arrowH * drawScale, 0.0f);
-            }
-            else {
-                // Show LEFT arrow to switch to ZEN mode
-                Mesh_Renderer(pMeshLeftArrow, arrowX, arrowY, arrowW * drawScale, arrowH * drawScale, 0.0f);
-            }
-
-            AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f); // Reset color
+            AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);
         }
 
-        // 2. Draw helper text next to the arrow
-        if (Graphics::font_id >= 0) {
-            const char* lbl = (leaderboard_mode == "ZEN") ? "TIME MODE" : "ZEN MODE";
+        if (Graphics::g_font_id >= 0)
+        {
+            const char* lbl = (s_leaderboard_mode == "ZEN") ? "TIME MODE" : "ZEN MODE";
             float tw, th;
-            AEGfxGetPrintSize(Graphics::font_id, lbl, 0.45f, &tw, &th);
+            AEGfxGetPrintSize(Graphics::g_font_id, lbl, 0.45f, &tw, &th);
 
-            float ndcX = 0.0f;
-            if (leaderboard_mode == "ZEN") {
-                // Text sits to the LEFT of the right arrow
-                ndcX = (arrowX - arrowW * 0.5f) / (winW * 0.5f) - tw - 0.05f;
-            }
-            else {
-                // Text sits to the RIGHT of the left arrow
-                ndcX = (arrowX + arrowW * 0.5f) / (winW * 0.5f) + 0.05f;
-            }
+            float ndc_x = 0.0f;
+            if (s_leaderboard_mode == "ZEN")
+                ndc_x = (arrow_x - arrow_w * 0.5f) / (s_win_w * 0.5f) - tw - 0.05f;
+            else
+                ndc_x = (arrow_x + arrow_w * 0.5f) / (s_win_w * 0.5f) + 0.05f;
 
-            float ndcY = (arrowY - 10.0f) / (winH * 0.5f);
+            float ndc_y = (arrow_y - 10.0f) / (s_win_h * 0.5f);
 
-            if (isHovering) {
-                AEGfxPrint(Graphics::font_id, lbl, ndcX, ndcY, 0.45f, 1.0f, 1.0f, 0.0f, 1.0f);
-            }
-            else {
-                AEGfxPrint(Graphics::font_id, lbl, ndcX, ndcY, 0.45f, 1.0f, 1.0f, 1.0f, 1.0f);
-            }
+            if (is_hovering) AEGfxPrint(Graphics::g_font_id, lbl, ndc_x, ndc_y, 0.45f, 1.0f, 1.0f, 0.0f, 1.0f);
+            else             AEGfxPrint(Graphics::g_font_id, lbl, ndc_x, ndc_y, 0.45f, 1.0f, 1.0f, 1.0f, 1.0f);
         }
 
-        // 3. Click Logic
-        if (isHovering && AEInputCheckTriggered(AEVK_LBUTTON)) {
+        if (is_hovering && AEInputCheckTriggered(AEVK_LBUTTON))
+        {
             SoundManager::PlayClickBtnSfx();
-            leaderboard_mode = (leaderboard_mode == "ZEN") ? "TIME" : "ZEN";
+            s_leaderboard_mode = (s_leaderboard_mode == "ZEN") ? "TIME" : "ZEN";
         }
     }
-    else if (inSettings)                                                                                                         // process settings UI
+    else if (s_in_settings)
     {
-        if (SysSettings::DisplaySettings() == false)                                                                        // run settings loop
-        {
-            inSettings = false;                                                                                             // close if toggled false
-        }
+        if (SysSettings::DisplaySettings() == false)
+            s_in_settings = false;
     }
-    else if (isEnteringName)                                                                                                // process entering name state
+    else if (s_is_entering_name)
     {
-        Main_Menu_EnterName(0.0f, 0.0f, true);                                                                              // normal input and draw
+        Main_Menu_EnterName(0.0f, 0.0f, true);
     }
-    else if (isZoomingToGame) {
-        vCamY = winH;
-    }
-    else if (isTransitioningToName || isTransitioningBack)                                                                  // process transition states
+    else if (s_is_zooming_to_game)
     {
-        Draw_Main_Menu(textNdcOffset);                                                                                      // draw menu moving
-
-        float nameWorldY = winH;                                                                                            // calc relative Y
-        float nameNdcY = 2.0f + textNdcOffset;                                                                              // calc relative NDC
-        Main_Menu_EnterName(nameWorldY, nameNdcY, false);                                                                   // draw input screen moving
+        v_cam_y = s_win_h;
     }
-    else                                                                                                                    // process default menu
+    else if (s_is_transitioning_to_name || s_is_transitioning_back)
     {
-        Draw_Main_Menu(0.0f);                                                                                               // render standard visual
-        Main_Menu_Input();                                                                                                  // scan for normal button clicks
-        UiPauseMenu::Ui_DrawConfirmationPopup(pMeshBtn, nullptr);
+        Draw_Main_Menu(text_ndc_offset);
+        float name_world_y = s_win_h;
+        float name_ndc_y = 2.0f + text_ndc_offset;
+        Main_Menu_EnterName(name_world_y, name_ndc_y, false);
+    }
+    else
+    {
+        Draw_Main_Menu(0.0f);
+        Main_Menu_Input();
+        UiPauseMenu::Ui_DrawConfirmationPopup(s_mesh_btn, nullptr);
     }
 
     // ---------------------------------------------------------------------------
-    // SPLASH OVERLAY ? drawn on top of everything else, fades out then disables
+    // SPLASH OVERLAY
     // ---------------------------------------------------------------------------
-    if (splashActive)
+    if (s_splash_active)
     {
-        splashTimer += dt;
+        s_splash_timer += dt;
 
-        // Hold fully opaque, then linearly fade to 0
         float alpha = 1.0f;
-        if (splashTimer > SPLASH_HOLD)
+        if (s_splash_timer > SPLASH_HOLD)
         {
-            alpha = 1.0f - (splashTimer - SPLASH_HOLD) / SPLASH_FADE;
+            alpha = 1.0f - (s_splash_timer - SPLASH_HOLD) / SPLASH_FADE;
             if (alpha < 0.0f) alpha = 0.0f;
         }
 
         if (alpha <= 0.0f)
         {
-            // Fade complete ? free resources
-            splashActive = false;
-            if (pMeshSplashQuad) { AEGfxMeshFree(pMeshSplashQuad); pMeshSplashQuad = nullptr; }
-            if (pMeshSplashLogo) { AEGfxMeshFree(pMeshSplashLogo); pMeshSplashLogo = nullptr; }
-            if (pTexSplashLogo) { AEGfxTextureUnload(pTexSplashLogo); pTexSplashLogo = nullptr; }
+            s_splash_active = false;
+            if (s_mesh_splash_quad) { AEGfxMeshFree(s_mesh_splash_quad);       s_mesh_splash_quad = nullptr; }
+            if (s_mesh_splash_logo) { AEGfxMeshFree(s_mesh_splash_logo);       s_mesh_splash_logo = nullptr; }
+            if (s_tex_splash_logo) { AEGfxTextureUnload(s_tex_splash_logo);   s_tex_splash_logo = nullptr; }
         }
         else
         {
-            // Camera must be at origin so the overlay isn't offset
             AEGfxSetCamPosition(0.0f, 0.0f);
 
-            // --- Full-screen black quad ---
-            AEMtx33 scaleMat, transform;
-            AEMtx33Scale(&scaleMat, winW * 0.5f, winH * 0.5f);
+            AEMtx33 scale_mat, transform;
+            AEMtx33Scale(&scale_mat, s_win_w * 0.5f, s_win_h * 0.5f);
             AEMtx33Trans(&transform, 0.0f, 0.0f);
-            AEMtx33Concat(&transform, &transform, &scaleMat);
+            AEMtx33Concat(&transform, &transform, &scale_mat);
 
             AEGfxSetRenderMode(AE_GFX_RM_COLOR);
             AEGfxSetBlendMode(AE_GFX_BM_BLEND);
@@ -1141,172 +996,77 @@ void Main_Menu_Update()
             AEGfxSetColorToMultiply(0.0f, 0.0f, 0.0f, alpha);
             AEGfxSetColorToAdd(0.0f, 0.0f, 0.0f, 0.0f);
             AEGfxSetTransform(transform.m);
-            AEGfxMeshDraw(pMeshSplashQuad, AE_GFX_MDM_TRIANGLES);
+            AEGfxMeshDraw(s_mesh_splash_quad, AE_GFX_MDM_TRIANGLES);
 
-            // --- DigiPen logo centred, 50% screen width, aspect 3.5:1 ---
-            if (pTexSplashLogo && pMeshSplashLogo)
+            if (s_tex_splash_logo && s_mesh_splash_logo)
             {
-                const float logoW = winW * 0.5f;
-                const float logoH = logoW / 3.5f;
+                const float logo_w = s_win_w * 0.5f;
+                const float logo_h = logo_w / 3.5f;
 
-                AEMtx33 logoScale, logoTrans, logoTransform;
-                AEMtx33Scale(&logoScale, logoW * 0.5f, logoH * 0.5f);
-                AEMtx33Trans(&logoTrans, 0.0f, 0.0f);
-                AEMtx33Concat(&logoTransform, &logoTrans, &logoScale);
+                AEMtx33 logo_scale, logo_trans, logo_transform;
+                AEMtx33Scale(&logo_scale, logo_w * 0.5f, logo_h * 0.5f);
+                AEMtx33Trans(&logo_trans, 0.0f, 0.0f);
+                AEMtx33Concat(&logo_transform, &logo_trans, &logo_scale);
 
                 AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
                 AEGfxSetBlendMode(AE_GFX_BM_BLEND);
                 AEGfxSetTransparency(alpha);
                 AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, alpha);
                 AEGfxSetColorToAdd(0.0f, 0.0f, 0.0f, 0.0f);
-                AEGfxTextureSet(pTexSplashLogo, 0.0f, 0.0f);
-                AEGfxSetTransform(logoTransform.m);
-                AEGfxMeshDraw(pMeshSplashLogo, AE_GFX_MDM_TRIANGLES);
+                AEGfxTextureSet(s_tex_splash_logo, 0.0f, 0.0f);
+                AEGfxSetTransform(logo_transform.m);
+                AEGfxMeshDraw(s_mesh_splash_logo, AE_GFX_MDM_TRIANGLES);
             }
         }
 
-        // Restore render state for next frame
         AEGfxSetTransparency(1.0f);
         AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);
         AEGfxSetColorToAdd(0.0f, 0.0f, 0.0f, 0.0f);
     }
 }
 
-/*
-@function       Main_Menu_Exit
-@brief          Cleans up all textures and meshes allocated during Main_Menu_Init.
-@usage          GameStateManager
-*//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
 void Main_Menu_Exit()
 {
     AEGfxSetBackgroundColor(0.53f, 0.81f, 0.92f);
     SysSettings::Exit();
-    if (gGameStateNext != GS_SHOP && gGameStateNext != GS_CREDITS) {
+    if (g_game_state_next != GS_SHOP && g_game_state_next != GS_CREDITS)
+    {
         BackgroundParallax::MenuParallax_Exit();
         SoundManager::Exit();
     }
-    ScreenTransitions::isTransitioning = false;                                                                             // safety clean transition
-    AEGfxSetCamPosition(0.0f, 0.0f);                                                                                        // safety reset camera
+    ScreenTransitions::s_is_transitioning = false;
+    AEGfxSetCamPosition(0.0f, 0.0f);
 
-    // Free Meshes
-    if (pMeshLogo)
-    {
-        AEGfxMeshFree(pMeshLogo);                                                                                           // dealloc memory
-        pMeshLogo = nullptr;                                                                                                // strip pointer
-    }
-    if (pMeshBtn)
-    {
-        AEGfxMeshFree(pMeshBtn);                                                                                            // dealloc memory
-        pMeshBtn = nullptr;                                                                                                 // strip pointer
-    }
-    if (pMeshExitBtn)
-    {
-        AEGfxMeshFree(pMeshExitBtn);                                                                                        // dealloc memory
-        pMeshExitBtn = nullptr;                                                                                             // strip pointer
-    }
-    if (pMeshSettingsBtn)
-    {
-        AEGfxMeshFree(pMeshSettingsBtn);                                                                                    // dealloc memory
-        pMeshSettingsBtn = nullptr;                                                                                         // strip pointer
-    }
-    if (pMeshLeftArrow)
-    {
-        AEGfxMeshFree(pMeshLeftArrow);                                                                                      // dealloc memory
-        pMeshLeftArrow = nullptr;                                                                                           // strip pointer
-    }
-    if (pMeshRightArrow)
-    {
-        AEGfxMeshFree(pMeshRightArrow);                                                                                     // dealloc memory
-        pMeshRightArrow = nullptr;                                                                                          // strip pointer
-    }
-    if (pMeshLeaderboardBtn)
-    {
-        AEGfxMeshFree(pMeshLeaderboardBtn);                                                                                     // dealloc memory
-        pMeshLeaderboardBtn = nullptr;
-    }
+    if (s_mesh_logo) { AEGfxMeshFree(s_mesh_logo);            s_mesh_logo = nullptr; }
+    if (s_mesh_btn) { AEGfxMeshFree(s_mesh_btn);             s_mesh_btn = nullptr; }
+    if (s_mesh_exit_btn) { AEGfxMeshFree(s_mesh_exit_btn);        s_mesh_exit_btn = nullptr; }
+    if (s_mesh_settings_btn) { AEGfxMeshFree(s_mesh_settings_btn);    s_mesh_settings_btn = nullptr; }
+    if (s_mesh_left_arrow) { AEGfxMeshFree(s_mesh_left_arrow);      s_mesh_left_arrow = nullptr; }
+    if (s_mesh_right_arrow) { AEGfxMeshFree(s_mesh_right_arrow);     s_mesh_right_arrow = nullptr; }
+    if (s_mesh_leaderboard_btn) { AEGfxMeshFree(s_mesh_leaderboard_btn); s_mesh_leaderboard_btn = nullptr; }
+    if (s_mesh_enter_name) { AEGfxMeshFree(s_mesh_enter_name);      s_mesh_enter_name = nullptr; }
+    if (s_mesh_back_name) { AEGfxMeshFree(s_mesh_back_name);       s_mesh_back_name = nullptr; }
+    if (s_mesh_credits_btn) { AEGfxMeshFree(s_mesh_credits_btn);     s_mesh_credits_btn = nullptr; }
+    if (s_mesh_tutorial_btn) { AEGfxMeshFree(s_mesh_tutorial_btn);    s_mesh_tutorial_btn = nullptr; }
 
-    if (pMeshEnterName)
-    {
-        AEGfxMeshFree(pMeshEnterName);
-        pMeshEnterName = nullptr;
-    }
-    if (pMeshBackName)
-    {
-        AEGfxMeshFree(pMeshBackName);
-        pMeshBackName = nullptr;
-    }
-    if (pMeshCreditsBtn)
-    {
-        AEGfxMeshFree(pMeshCreditsBtn);
-        pMeshCreditsBtn = nullptr;
-    }
-    if (pMeshTutorialBtn) {
-        AEGfxMeshFree(pMeshTutorialBtn);
-        pMeshTutorialBtn = nullptr;
-    }
+    if (s_tex_play) { AEGfxTextureUnload(s_tex_play);         s_tex_play = nullptr; }
+    if (s_tex_shop) { AEGfxTextureUnload(s_tex_shop);         s_tex_shop = nullptr; }
+    if (s_tex_arrows) { AEGfxTextureUnload(s_tex_arrows);       s_tex_arrows = nullptr; }
+    if (s_tex_logo) { AEGfxTextureUnload(s_tex_logo);         s_tex_logo = nullptr; }
+    if (s_tex_enter_name) { AEGfxTextureUnload(s_tex_enter_name);   s_tex_enter_name = nullptr; }
+    if (s_tex_back_name) { AEGfxTextureUnload(s_tex_back_name);    s_tex_back_name = nullptr; }
+    if (s_tex_leaderboard) { AEGfxTextureUnload(s_tex_leaderboard);  s_tex_leaderboard = nullptr; }
+    if (s_tex_settings) { AEGfxTextureUnload(s_tex_settings);     s_tex_settings = nullptr; }
+    if (s_tex_tutorial) { AEGfxTextureUnload(s_tex_tutorial);     s_tex_tutorial = nullptr; }
+    if (s_tex_credits) { AEGfxTextureUnload(s_tex_credits);      s_tex_credits = nullptr; }
+    if (s_tex_exit) { AEGfxTextureUnload(s_tex_exit);         s_tex_exit = nullptr; }
 
-    // Free Textures
-    if (pTexPlay)
-    {
-        AEGfxTextureUnload(pTexPlay);                                                                                       // unload from graphics
-        pTexPlay = nullptr;                                                                                                 // strip pointer
-    }
-    if (pTexShop)
-    {
-        AEGfxTextureUnload(pTexShop);                                                                                       // unload from graphics
-        pTexShop = nullptr;                                                                                                 // strip pointer
-    }
-    if (pTexArrows)
-    {
-        AEGfxTextureUnload(pTexArrows);                                                                                     // unload from graphics
-        pTexArrows = nullptr;                                                                                               // strip pointer
-    }
-    if (pTexLogo) {
-        AEGfxTextureUnload(pTexLogo);                                                                                     // unload from graphics
-        pTexLogo = nullptr;                                                                                               // strip pointer
-    }
-    if (pTexEnterName) {
-        AEGfxTextureUnload(pTexEnterName);                                                                                     // unload from graphics
-        pTexEnterName = nullptr;
-    }
-    if (pTexBackName) {
-        AEGfxTextureUnload(pTexBackName);                                                                                     // unload from graphics
-        pTexBackName = nullptr;
-    }
-    if (pTexLeaderboard) {
-        AEGfxTextureUnload(pTexLeaderboard);
-        pTexLeaderboard = nullptr;
-    }
-    if (pTexSettings) {
-        AEGfxTextureUnload(pTexSettings);
-        pTexSettings = nullptr;
-    }
-    if (pTexTutorial) {
-        AEGfxTextureUnload(pTexTutorial);
-        pTexTutorial = nullptr;
-    }
-
-    if (pTexCredits)
-    {
-        AEGfxTextureUnload(pTexCredits);
-        pTexCredits = nullptr;
-    }
-
-    if (pTexExit)
-    {
-        AEGfxTextureUnload(pTexExit);                                                                                        // unload quit texture
-        pTexExit = nullptr;
-    }
-
-    // Splash overlay safety cleanup (normally freed after fade, guard anyway)
-    if (pMeshSplashQuad) { AEGfxMeshFree(pMeshSplashQuad); pMeshSplashQuad = nullptr; }
-    if (pMeshSplashLogo) { AEGfxMeshFree(pMeshSplashLogo); pMeshSplashLogo = nullptr; }
-    if (pTexSplashLogo) { AEGfxTextureUnload(pTexSplashLogo); pTexSplashLogo = nullptr; }
-    splashActive = false;
+    if (s_mesh_splash_quad) { AEGfxMeshFree(s_mesh_splash_quad);       s_mesh_splash_quad = nullptr; }
+    if (s_mesh_splash_logo) { AEGfxMeshFree(s_mesh_splash_logo);       s_mesh_splash_logo = nullptr; }
+    if (s_tex_splash_logo) { AEGfxTextureUnload(s_tex_splash_logo);   s_tex_splash_logo = nullptr; }
+    s_splash_active = false;
 
     ParallaxZoom::Reset();
-    isZoomingToGame = false;
+    s_is_zooming_to_game = false;
     Leaderboard_System::Free();
-
-
 }

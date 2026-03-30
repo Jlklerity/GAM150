@@ -4,15 +4,15 @@
 
 namespace
 {
-    float scrollY = 0.0f;
-    float scrollSpeed = 0.35f;
-    AEGfxVertexList* pMeshCreditsLogo = nullptr;
-    AEGfxTexture* pTexCreditsLogo = nullptr;
+    static float              s_scroll_y = 0.0f;
+    static float              s_scroll_speed = 0.35f;
+    static AEGfxVertexList* s_mesh_credits_logo = nullptr;
+    static AEGfxTexture* s_tex_credits_logo = nullptr;
 
-    const float LOGO_WIDTH = 1000.0f;                                                                                        // width of title logo
-    const float LOGO_HEIGHT = 600.0f;
+    constexpr float LOGO_WIDTH = 1000.0f;
+    constexpr float LOGO_HEIGHT = 600.0f;
 
-    const char* creditLines[] = {
+    const char* s_credit_lines[] = {
         "BY",
         "FAREWELL YK",
         "",
@@ -64,132 +64,107 @@ namespace
         "",
         "THANK YOU FOR PLAYING!"
     };
-    const int numCreditLines = sizeof(creditLines) / sizeof(creditLines[0]);
+    const int NUM_CREDIT_LINES = sizeof(s_credit_lines) / sizeof(s_credit_lines[0]);
 }
 
-    void CreditScreen_Init()
-    {
-        // Check if the font is loaded, if not, load it safely
-        if (Graphics::font_id < 0) {
-            Graphics::font_id = AEGfxCreateFont("Assets/Pixel-Game.otf", 48);
-        }
+void CreditScreen_Init()
+{
+    if (Graphics::g_font_id < 0)
+        Graphics::g_font_id = AEGfxCreateFont("Assets/Pixel-Game.otf", 48);
 
-        // ---> NEW: Load the logo texture and mesh <---
-        pTexCreditsLogo = AEGfxTextureLoad("Assets/title.png");
-        pMeshCreditsLogo = Sprite_Mesh(1.0f, 1.0f); // Assuming Sprite_Mesh is used globally
-        // Start the text slightly below the bottom of the screen (-1.0 is the bottom edge in NDC)
-        scrollY = -1.2f;
+    s_tex_credits_logo = AEGfxTextureLoad("Assets/title.png");
+    s_mesh_credits_logo = Sprite_Mesh(1.0f, 1.0f);
+    s_scroll_y = -1.2f;
+}
+
+void CreditScreen_Update()
+{
+    float dt = (float)AEFrameRateControllerGetFrameTime();
+    if (dt > 0.1f) dt = 0.01667f;
+
+    // ---------------------------------------------------------
+    //  INPUT
+    // ---------------------------------------------------------
+    if (AEInputCheckTriggered(AEVK_ESCAPE) || AEInputCheckTriggered(AEVK_LBUTTON))
+    {
+        SoundManager::PlayClickBtnSfx();
+        g_game_state_next = GS_MAIN_MENU;
     }
 
-    void CreditScreen_Update()
+    // ---------------------------------------------------------
+    //  SCROLLING LOGIC
+    // ---------------------------------------------------------
+    s_scroll_y += s_scroll_speed * dt;
+
+    constexpr float LINE_SPACING = 0.15f;
+
+    float last_line_y = s_scroll_y - ((NUM_CREDIT_LINES - 1) * LINE_SPACING);
+    if (last_line_y > 1.2f)
+        g_game_state_next = GS_MAIN_MENU;
+
+    // ---------------------------------------------------------
+    //  RENDER
+    // ---------------------------------------------------------
+    AEGfxSetCamPosition(0.0f, 0.0f);
+    AEGfxSetBackgroundColor(0.0f, 0.0f, 0.0f);
+
+    if (s_tex_credits_logo && s_mesh_credits_logo)
     {
-        float dt = (float)AEFrameRateControllerGetFrameTime();
-        if (dt > 0.1f) dt = 0.01667f; // Safety clamp
+        float win_h = (float)AEGfxGetWindowHeight();
+        float logo_world_y = (s_scroll_y + 0.3f) * (win_h * 0.5f);
+        float logo_world_x = 10.0f;
 
-        // ---------------------------------------------------------
-        //  INPUT (Allow the player to skip the credits early)
-        // ---------------------------------------------------------
-        if (AEInputCheckTriggered(AEVK_ESCAPE) || AEInputCheckTriggered(AEVK_LBUTTON))
+        AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
+        AEGfxSetBlendMode(AE_GFX_BM_BLEND);
+        AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);
+        AEGfxTextureSet(s_tex_credits_logo, 0.0f, 0.0f);
+        Mesh_Renderer(s_mesh_credits_logo, logo_world_x, logo_world_y, LOGO_WIDTH, LOGO_HEIGHT, 0.0f);
+
+        AEGfxSetRenderMode(AE_GFX_RM_COLOR);
+    }
+
+    if (Graphics::g_font_id >= 0)
+    {
+        AEGfxSetBlendMode(AE_GFX_BM_BLEND);
+
+        for (int i = 0; i < NUM_CREDIT_LINES; ++i)
         {
-            SoundManager::PlayClickBtnSfx();
-            gGameStateNext = GS_MAIN_MENU; // Go back to main menu
-        }
+            std::string line = s_credit_lines[i];
+            if (line.empty()) continue;
 
-        // ---------------------------------------------------------
-        //  UPDATE SCROLLING LOGIC
-        // ---------------------------------------------------------
-        scrollY += scrollSpeed * dt; // Move the text UP every frame
+            float text_w = 0.0f, text_h = 0.0f;
+            constexpr float SCALE = 1.0f;
 
-        float lineSpacing = 0.15f;   // The gap between each line of text
+            AEGfxGetPrintSize(Graphics::g_font_id, s_credit_lines[i], SCALE, &text_w, &text_h);
+            float ndc_x = 0.0f - (text_w * 0.5f);
+            float ndc_y = s_scroll_y - (i * LINE_SPACING);
 
-        // Calculate if the credits are completely finished.
-        // If the VERY LAST line of text goes off the top of the screen (1.0 is the top edge)
-        float lastLineY = scrollY - ((numCreditLines - 1) * lineSpacing);
-        if (lastLineY > 1.2f)
-        {
-            gGameStateNext = GS_MAIN_MENU; // Auto-return when finished
-        }
-
-        // ---------------------------------------------------------
-        //  DRAW / RENDER
-        // ---------------------------------------------------------
-        AEGfxSetCamPosition(0.0f, 0.0f);
-        AEGfxSetBackgroundColor(0.0f, 0.0f, 0.0f); // Cinematic black background
-
-        if (pTexCreditsLogo && pMeshCreditsLogo)
-        {
-            float winH = (float)AEGfxGetWindowHeight();
-
-            // Map the NDC scrollY (-1.2 to 1.2) into World Y coordinates
-            // We add a slight offset (+0.3f) so it sits perfectly in the empty space we made
-            float logoWorldY = (scrollY + 0.3f) * (winH * 0.5f);
-            float logoWorldX = 10.0f;
-
-            AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
-            AEGfxSetBlendMode(AE_GFX_BM_BLEND);
-            AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);
-
-            AEGfxTextureSet(pTexCreditsLogo, 0.0f, 0.0f);
-
-            // Render the logo (X: 0, Y: logoWorldY, Width: 600, Height: 360)
-            Mesh_Renderer(pMeshCreditsLogo, logoWorldX, logoWorldY, LOGO_WIDTH, LOGO_HEIGHT, 0.0f);
-
-            // Reset back to color mode for the text
-            AEGfxSetRenderMode(AE_GFX_RM_COLOR);
-        }
-
-        if (Graphics::font_id >= 0)
-        {
-            AEGfxSetBlendMode(AE_GFX_BM_BLEND);
-
-            // Changed to numCreditLines
-            for (int i = 0; i < numCreditLines; ++i)
+            if (ndc_y > -1.2f && ndc_y < 1.2f)
             {
-                std::string line = creditLines[i]; // Temporary string for easy checking
-                if (line.empty()) continue;
-
-                float textW = 0.0f, textH = 0.0f;
-                float scale = 1.0f;
-
-                AEGfxGetPrintSize(Graphics::font_id, creditLines[i], scale, &textW, &textH);
-                float ndcX = 0.0f - (textW * 0.5f);
-                float ndcY = scrollY - (i * lineSpacing);
-
-                if (ndcY > -1.2f && ndcY < 1.2f)
+                if (line == "TEAM MEMBERS" || line == "FACULTY AND ADVISORS" ||
+                    line == "PROGRAMMERS" || line == "ART DESIGNERS" ||
+                    line == "SOUND DESIGNERS" || line == "SPECIAL THANKS" ||
+                    line == "TOOLS AND LIBRARIES" || line == "PRESIDENT" ||
+                    line == "EXECUTIVES")
                 {
-                    
-                     if (line == "TEAM MEMBERS" || line == "FACULTY AND ADVISORS" || 
-                        line == "PROGRAMMERS" || line == "ART DESIGNERS" || line == "SOUND DESIGNERS" ||
-                        line == "SPECIAL THANKS" || line == "TOOLS AND LIBRARIES" ||
-          
-                        line == "PRESIDENT" || line == "EXECUTIVES")
-                        {
-                        AEGfxPrint(Graphics::font_id, creditLines[i], ndcX, ndcY, scale, 1.0f, 1.0f, 0.0f, 1.0f); // Yellow
-                    }
-                    else {
-                        AEGfxPrint(Graphics::font_id, creditLines[i], ndcX, ndcY, scale, 1.0f, 1.0f, 1.0f, 1.0f); // White
-                    }
+                    AEGfxPrint(Graphics::g_font_id, s_credit_lines[i], ndc_x, ndc_y, SCALE, 1.0f, 1.0f, 0.0f, 1.0f); // Yellow
+                }
+                else
+                {
+                    AEGfxPrint(Graphics::g_font_id, s_credit_lines[i], ndc_x, ndc_y, SCALE, 1.0f, 1.0f, 1.0f, 1.0f); // White
                 }
             }
         }
-
     }
+}
 
-    void CreditScreen_Exit()
+void CreditScreen_Exit()
+{
+    if (Graphics::g_font_id >= 0)
     {
-        if (Graphics::font_id >= 0)
-        {
-            AEGfxDestroyFont(Graphics::font_id);
-            Graphics::font_id = -1;
-        }
-        if (pMeshCreditsLogo) {
-            AEGfxMeshFree(pMeshCreditsLogo);
-            pMeshCreditsLogo = nullptr;
-        }
-        if (pTexCreditsLogo) {
-            AEGfxTextureUnload(pTexCreditsLogo);
-            pTexCreditsLogo = nullptr;
-        }
+        AEGfxDestroyFont(Graphics::g_font_id);
+        Graphics::g_font_id = -1;
     }
-
- 
+    if (s_mesh_credits_logo) { AEGfxMeshFree(s_mesh_credits_logo);          s_mesh_credits_logo = nullptr; }
+    if (s_tex_credits_logo) { AEGfxTextureUnload(s_tex_credits_logo);       s_tex_credits_logo = nullptr; }
+}

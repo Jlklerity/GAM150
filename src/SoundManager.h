@@ -36,5 +36,5 @@ namespace SoundManager
     void SetMasterVolume(float volume);
     void SetBGMVolume(float volume);
     void SetSFXVolume(float volume);
-    void SetAmbientVolume(float volume); 
-};
+    void SetAmbientVolume(float volume);
+}

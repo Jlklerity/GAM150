@@ -5,18 +5,14 @@
 #include "MainMenu.h"
 #include <cmath>
 
-namespace ScreenTransitions {
-
-    extern bool isTransitioning;
-    extern float currTimer;
+namespace ScreenTransitions
+{
+    extern bool  s_is_transitioning;
+    extern float s_curr_timer;
     extern float result;
 
-    void ScreenTransition_SetTime(float targetTime);
-
-	float EaseOutExpo(float x);
-
-	void ScreenTransition_Init();
-
-	void ScreenTransition_Update(float dt);
-
+    void ScreenTransition_SetTime(float target_time);
+    float EaseOutExpo(float x);
+    void ScreenTransition_Init();
+    void ScreenTransition_Update(float dt);
 }
