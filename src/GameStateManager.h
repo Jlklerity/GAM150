@@ -24,5 +24,5 @@ extern void (*g_game_state_init)(void);
 extern void (*g_game_state_update)(void);
 extern void (*g_game_state_exit)(void);
 
-void GSM_Init(int starting_state);
-void GSM_Update();
+void gsm_init(int starting_state);
+void gsm_update();

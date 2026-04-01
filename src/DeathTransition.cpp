@@ -36,7 +36,7 @@ namespace
 
     // smooths a value in [0,1] so it accelerates at the start and decelerates at the end,
     // used for the circle shrink and the fade to black so don't feel instant 
-    float EaseInOutQuad(float x)
+    float ease_in_out_quad(float x)
     {
         if (x <= 0.0f) return 0.0f;
         if (x >= 1.0f) return 1.0f;
@@ -47,7 +47,7 @@ namespace
 
     // stronger ease in than quadratic, used specifically for the circle shrink so it
     // starts slow and end fast 
-    float EaseInCubic(float x)
+    float ease_in_cubic(float x)
     {
         if (x <= 0.0f) return 0.0f;
         if (x >= 1.0f) return 1.0f;
@@ -56,7 +56,7 @@ namespace
 
     // remaps x from the range [lo, hi] to [0, 1], clamped at both ends,
     // used to isolate each phase of the transition (shrink, hold, fade) from the global timer
-    float Remap01(float x, float lo, float hi)
+    float remap01(float x, float lo, float hi)
     {
         if (x <= lo) return 0.0f;
         if (x >= hi) return 1.0f;
@@ -67,7 +67,7 @@ namespace
     // built from triangles arranged in a ring between the inner circle and a huge outer radius,
     // each slice is its own mesh built and freed on the spot 
     // params are the centre position, the inner circle radius, and the window dimensions for the outer size
-    void DrawCircularMask(float cx, float cy, float radius, float win_w, float win_h)
+    void draw_circular_mask(float cx, float cy, float radius, float win_w, float win_h)
     {
         if (!s_black_mesh) return;
 
@@ -115,7 +115,7 @@ namespace DeathTransition
 {
     // satrts the death cinematic, loads the death sprite sheet and builds meshes if not already loaded,
     // resets all timers and animation state so it plays cleanly from the beginning every time
-    void Start()
+    void start()
     {
         s_active = true;
         s_complete = false;
@@ -139,7 +139,7 @@ namespace DeathTransition
     // advances the global timer and the death sprite animation each frame, param is dt in seconds,
     // animation only plays during the shrink and hold phases, then holds on the last frame,
     // sets s_complete when the full duration is reached so the caller knows to show game over
-    void Update(float dt)
+    void update(float dt)
     {
         if (!s_active || s_complete) return;
         s_timer += dt;
@@ -174,7 +174,7 @@ namespace DeathTransition
     // finally a full black fade covers the screen before game over appears,
     // player mesh params are unused but kept for interface compatibility
 
-    void Draw(AEGfxVertexList* /*playerMesh*/, AEGfxTexture* /*playerTex*/,
+    void draw(AEGfxVertexList* /*playerMesh*/, AEGfxTexture* /*playerTex*/,
         float /*uvOffsetX*/, float /*uvOffsetY*/)
     {
         if (!s_black_mesh) return;
@@ -189,15 +189,15 @@ namespace DeathTransition
         AEGfxSetCamPosition(0.0f, 0.0f);
 
         // --- Circular mask ---
-        float shrink_prog = EaseInOutQuad(Remap01(t, 0.0f, PHASE_SHRINK_END));
+        float shrink_prog = ease_in_out_quad(remap01(t, 0.0f, PHASE_SHRINK_END));
         float max_radius = sqrtf(win_w * win_w + win_h * win_h) * 0.6f;
         float min_radius = PLAYER_SIZE * 1.3f;
         float radius = min_radius;
 
         if (t <= PHASE_SHRINK_END)
-            radius = max_radius + (min_radius - max_radius) * EaseInCubic(shrink_prog);
+            radius = max_radius + (min_radius - max_radius) * ease_in_cubic(shrink_prog);
 
-        DrawCircularMask(PLAYER_X, PLAYER_Y, radius, win_w, win_h);
+        draw_circular_mask(PLAYER_X, PLAYER_Y, radius, win_w, win_h);
 
         // --- Death sprite animation ---
         if (s_death_texture && s_death_mesh && t <= PHASE_HOLD_END)
@@ -210,30 +210,30 @@ namespace DeathTransition
             AEGfxSetTransparency(1.0f);
             AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);
             AEGfxTextureSet(s_death_texture, uv_x, uv_y);
-            Mesh_Renderer(s_death_mesh, PLAYER_X, PLAYER_Y, PLAYER_SIZE, PLAYER_SIZE, 0.0f);
+            mesh_renderer(s_death_mesh, PLAYER_X, PLAYER_Y, PLAYER_SIZE, PLAYER_SIZE, 0.0f);
         }
 
         // --- Fade to black during fade phase ---
-        float fade_t = EaseInOutQuad(Remap01(t, PHASE_HOLD_END, 1.0f));
+        float fade_t = ease_in_out_quad(remap01(t, PHASE_HOLD_END, 1.0f));
         if (fade_t > 0.0f)
         {
             AEGfxSetRenderMode(AE_GFX_RM_COLOR);
             AEGfxSetBlendMode(AE_GFX_BM_BLEND);
             AEGfxSetTransparency(fade_t);
             AEGfxSetColorToMultiply(0.0f, 0.0f, 0.0f, 1.0f);
-            Mesh_Renderer(s_black_mesh, 0.0f, 0.0f, win_w, win_h, 0.0f);
+            mesh_renderer(s_black_mesh, 0.0f, 0.0f, win_w, win_h, 0.0f);
         }
     }
 
-    // returns true while the cinematic is currently playing, false before Start() or after it finishes
-    bool IsActive() { return s_active; }
+    // returns true while the cinematic is currently playing, false before start() or after it finishes
+    bool is_active() { return s_active; }
 
     // returns true once the full duration has elapsed, use this to trigger the game over screen
-    bool IsComplete() { return s_complete; }
+    bool is_complete() { return s_complete; }
 
     // clears all state and frees the meshes and texture, call this on game state exit or restart,
-    // also resets the camera position since Draw() moves it to origin during the cinematic
-    void Reset()
+    // also resets the camera position since draw() moves it to origin during the cinematic
+    void reset()
     {
         s_active = false;
         s_complete = false;

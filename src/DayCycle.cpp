@@ -35,7 +35,7 @@ namespace
     // smooths out the transition between day and night so it doesn't look jarring,
     // takes t in range [0,1] and returns a smoothed value in the same range,
     // uses quadratic ease-in-out so the transition accelerates then decelerates
-    float EaseInOut(float t)
+    float ease_in_out(float t)
     {
         if (t <= 0.0f) return 0.0f;
         if (t >= 1.0f) return 1.0f;
@@ -47,7 +47,7 @@ namespace DayCycle
 {
     // sets up all state, loads the sun/moon/stars textures and builds the meshes needed for rendering,
     // safe to call on restart since it unloads any previously loaded assets before reloading
-    void Init()
+    void init()
     {
         s_active = false;
         s_is_night = false;
@@ -80,7 +80,7 @@ namespace DayCycle
 
     // starts the day fo night transition, call this when the boss spawns
     // does nothing if a transition is already running or if it's already night
-    void TriggerTransition()
+    void trigger_transition()
     {
         if (s_active || s_is_night) return;
         s_active = true;
@@ -89,7 +89,7 @@ namespace DayCycle
 
     // starts the night to day transition, call this when the boss is defeated,
     // does nothing if a reverse transition is already running
-    void TriggerDayTransition()
+    void trigger_day_transition()
     {
         if (s_reverse_active) return;
         s_reverse_active = true;
@@ -100,7 +100,7 @@ namespace DayCycle
     // advances the transition timers and scrolls the star field every frame
     // param is dt, handles both day to night and night to day independently,
     // s_night_alpha is what controls how dark/bright everything looks 
-    void Update(float dt)
+    void update(float dt)
     {
         // Scroll stars regardless
         s_stars_offset += STARS_SPEED * dt;
@@ -117,7 +117,7 @@ namespace DayCycle
                 s_active = false;
                 s_is_night = true;
             }
-            s_night_alpha = EaseInOut(t);
+            s_night_alpha = ease_in_out(t);
         }
 
         // Day transition (night -> day)
@@ -133,34 +133,34 @@ namespace DayCycle
                 s_night_alpha = 0.0f;
             }
             else
-                s_night_alpha = EaseInOut(1.0f - t); // reverse: 1 -> 0
+                s_night_alpha = ease_in_out(1.0f - t); // reverse: 1 -> 0
         }
     }
 
     // returns true only once the night transition is fully complete, not during the transition itself,
     // use this to know when the boss fight is in full night mode
-    bool IsNight()
+    bool is_night()
     {
         return s_is_night;
     }
 
     // returns true only when fully back to day - no transitions running and not night,
     // use this to know when the post-boss day restoration is fully complete
-    bool IsDay()
+    bool is_day()
     {
         return !s_is_night && !s_active && !s_reverse_active;
     }
 
     // returns how far into the night we are, 0.0 is full day and 1.0 is full night,
     // this is smooth so other systems can use it to blend their own visuals 
-    float GetNightAlpha()
+    float get_night_alpha()
     {
         return s_night_alpha;
     }
 
     // frees all textures and meshes and resets all state back to defaults,
     // call this in the game state exit function to avoid memory leaks
-    void Exit()
+    void cleanup()
     {
         if (s_sun_tex) { AEGfxTextureUnload(s_sun_tex);    s_sun_tex = nullptr; }
         if (s_moon_tex) { AEGfxTextureUnload(s_moon_tex);   s_moon_tex = nullptr; }
@@ -179,7 +179,7 @@ namespace DayCycle
     // draws the night overlay and scrolling star field on top of the background,
     // the overlay gets darker as s_night_alpha increases, stars only draw when s_night_alpha > 0,
     // call this after drawing the background but before drawing enemies or the player
-    void DrawSky()
+    void draw_sky()
     {
         if (!s_bg_mesh) return;
 
@@ -193,7 +193,7 @@ namespace DayCycle
         AEGfxSetBlendMode(AE_GFX_BM_BLEND);
         AEGfxSetTransparency(s_night_alpha * 0.85f);
         AEGfxSetColorToMultiply(NIGHT_R, NIGHT_G, NIGHT_B, 1.0f);
-        Mesh_Renderer(s_bg_mesh, cam_x, cam_y, win_w, win_h, 0.0f);
+        mesh_renderer(s_bg_mesh, cam_x, cam_y, win_w, win_h, 0.0f);
 
         // Stars
         if (s_stars_tex && s_stars_mesh && s_night_alpha > 0.0f)
@@ -203,14 +203,14 @@ namespace DayCycle
             AEGfxSetTransparency(s_night_alpha);
             AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);
             AEGfxTextureSet(s_stars_tex, s_stars_offset, 0.0f);
-            Mesh_Renderer(s_stars_mesh, cam_x, cam_y + 180.0f, 1.0f, 1.0f, 0.0f);
+            mesh_renderer(s_stars_mesh, cam_x, cam_y + 180.0f, 1.0f, 1.0f, 0.0f);
         }
     }
 
     // draws the sun and moon sprites, sun fades out as night comes in and moon fades in,
     // both drift slightly in Y as the transition plays to give a rising/setting feel,
     // aspect ratio is applied so they don't get stretched on non-square screens
-    void DrawBodies()
+    void draw_bodies()
     {
         float win_w = (float)AEGfxGetWindowWidth();
         float win_h = (float)AEGfxGetWindowHeight();
@@ -226,7 +226,7 @@ namespace DayCycle
             AEGfxSetTransparency(sun_alpha);
             AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);
             AEGfxTextureSet(s_sun_tex, 0.0f, 0.0f);
-            Mesh_Renderer(s_body_mesh, BODY_X, sun_y, BODY_SIZE * aspect, BODY_SIZE, 0.0f);
+            mesh_renderer(s_body_mesh, BODY_X, sun_y, BODY_SIZE * aspect, BODY_SIZE, 0.0f);
         }
 
         // Moon
@@ -238,15 +238,15 @@ namespace DayCycle
             AEGfxSetTransparency(s_night_alpha);
             AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);
             AEGfxTextureSet(s_moon_tex, 0.0f, 0.0f);
-            Mesh_Renderer(s_body_mesh, BODY_X, moon_y, BODY_SIZE * aspect, BODY_SIZE, 0.0f);
+            mesh_renderer(s_body_mesh, BODY_X, moon_y, BODY_SIZE * aspect, BODY_SIZE, 0.0f);
         }
     }
 
     // convenience function that calls DrawSky then DrawBodies in the correct order,
     // call this once per frame after the background clear and before drawing game objects
-    void Draw()
+    void draw()
     {
-        DrawSky();
-        DrawBodies();
+        draw_sky();
+        draw_bodies();
     }
 }

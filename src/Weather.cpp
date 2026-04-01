@@ -1,4 +1,4 @@
-﻿/*
+/*
 @file       Weather.cpp
 @brief      Weather system implementation.
 
@@ -265,51 +265,51 @@ namespace
 // ============================================================
 namespace
 {
-    static void  ResetTriggerTimer();
-    static void  SpawnAmbientFlake(Snowflake& f);
-    static void  SpawnBlizzardFlake(Snowflake& f);
-    static void  UpdateFlake(Snowflake& f, float dt, float speed_mul);
-    static float GetBlizzardIntensity();
-    static void  DrawFullscreenOverlay(float r, float g, float b, float alpha);
-    static void  Snow_DrawParticles(float blizzard_intensity);
-    static void  DrawFreezeHUD();
-    static void  DrawProgressBar();
+    static void  reset_trigger_timer();
+    static void  spawn_ambient_flake(Snowflake& f);
+    static void  spawn_blizzard_flake(Snowflake& f);
+    static void  update_flake(Snowflake& f, float dt, float speed_mul);
+    static float get_blizzard_intensity();
+    static void  draw_fullscreen_overlay(float r, float g, float b, float alpha);
+    static void  snow_draw_particles(float blizzard_intensity);
+    static void  draw_freeze_hud();
+    static void  draw_progress_bar();
 
     // Rain
-    static void  SpawnRaindrop(Raindrop& r);
-    static void  UpdateRaindrop(Raindrop& r, float dt);
-    static void  Thunder_DrawRain();
+    static void  spawn_raindrop(Raindrop& r);
+    static void  update_raindrop(Raindrop& r, float dt);
+    static void  thunder_draw_rain();
 
     // Thunder helpers
-    static void  Thunder_StartStorm();
-    static void  Thunder_Update(float dt, std::vector<Data::Enemy>& enemy_pool);
-    static void  Thunder_FireBolt(std::vector<Data::Enemy>& enemy_pool);
-    static void  Thunder_RestoreLunge(std::vector<Data::Enemy>& enemy_pool);
-    static void  Thunder_DrawHUD();
-    static void  Thunder_DrawStrikeFlash();
-    static void  Thunder_DrawStrikeAnim();
+    static void  thunder_start_storm();
+    static void  thunder_update(float dt, std::vector<Data::Enemy>& enemy_pool);
+    static void  thunder_fire_bolt(std::vector<Data::Enemy>& enemy_pool);
+    static void  thunder_restore_lunge(std::vector<Data::Enemy>& enemy_pool);
+    static void  thunder_draw_hud();
+    static void  thunder_draw_strike_flash();
+    static void  thunder_draw_strike_anim();
 
     // Rainbow helpers
-    static void  Rainbow_BuildMesh();
-    static void  Rainbow_Start();
-    static void  Rainbow_Update(float dt);
-    static void  Rainbow_DrawSprite();
-    static void  Rainbow_DrawHUD();
+    static void  rainbow_build_mesh();
+    static void  rainbow_start();
+    static void  rainbow_update(float dt);
+    static void  rainbow_draw_sprite();
+    static void  rainbow_draw_hud();
 
     // Ghost weather helpers
-    static void  Ghost_BuildMesh();
-    static void  Ghost_Start();
-    static void  Ghost_SpawnAll();
-    static void  Ghost_Update(float dt);
-    static void  Ghost_Draw();
-    static void  Ghost_DrawHUD();
-    static void  Ghost_SpawnOne(Ghost& g, int digit);
+    static void  ghost_build_mesh();
+    static void  ghost_start();
+    static void  ghost_spawn_all();
+    static void  ghost_update(float dt);
+    static void  ghost_draw();
+    static void  ghost_draw_hud();
+    static void  ghost_spawn_one(Ghost& g, int digit);
 
-    static void  DrawCentredText(const char* text, float ndc_y, float scale,
+    static void  draw_centred_text(const char* text, float ndc_y, float scale,
         float r, float g, float b, float alpha);
 }
 
-void Weather_Init()
+void weather_init()
 {
     if (s_quad) { AEGfxMeshFree(s_quad); s_quad = nullptr; }
     s_quad = Rect_Mesh(1.0f, 1.0f, 0xFFFFFFFF);
@@ -342,7 +342,7 @@ void Weather_Init()
     s_rainbow_frame = 0;
     s_rainbow_frame_timer = 0.0f;
     s_rainbow_tex = AEGfxTextureLoad("Assets/rainbowvfx.png");
-    Rainbow_BuildMesh();
+    rainbow_build_mesh();
 
     // Thunderstorm strike animation
     if (s_t_strike_tex) { AEGfxTextureUnload(s_t_strike_tex);  s_t_strike_tex = nullptr; }
@@ -357,32 +357,32 @@ void Weather_Init()
 
     // Ghost weather init
     s_ghost_tex = AEGfxTextureLoad("Assets/ghost.png");
-    Ghost_BuildMesh();
+    ghost_build_mesh();
     s_ghost_event_active = false;
     s_ghost_life_timer = 0.0f;
     s_ghost_lock_timer = 0.0f;
     for (int i = 0; i < GHOST_COUNT; ++i) s_ghosts[i].alive = false;
 
-    ResetTriggerTimer();
+    reset_trigger_timer();
 
     for (int i = 0; i < AMBIENT_COUNT; ++i)
     {
-        SpawnAmbientFlake(s_ambient[i]);
+        spawn_ambient_flake(s_ambient[i]);
         s_ambient[i].y = RandF(-HALF_H, HALF_H);  // scatter on startup
     }
 
     for (int i = 0; i < BLIZZARD_COUNT; ++i)
-        SpawnBlizzardFlake(s_blizzard[i]);
+        spawn_blizzard_flake(s_blizzard[i]);
 
     // Scatter rain
     for (int i = 0; i < RAIN_COUNT; ++i)
     {
-        SpawnRaindrop(s_rain[i]);
+        spawn_raindrop(s_rain[i]);
         s_rain[i].y = RandF(-HALF_H, HALF_H);  // scatter vertically
     }
 }
 
-void Weather_Update(float dt, std::vector<Data::Enemy>& enemy_pool)
+void weather_update(float dt, std::vector<Data::Enemy>& enemy_pool)
 {
     // Always tick the pulse timer (used for sine-wave text effects)
     s_weather_pulse_timer += dt;
@@ -420,19 +420,19 @@ void Weather_Update(float dt, std::vector<Data::Enemy>& enemy_pool)
                 s_state = WeatherState::FREEZING;
                 s_phase_timer = 0.0f;
                 s_space_presses = 0;
-                SoundManager::PlaySnowAmbient();
+                SoundManager::play_snow_ambient();
             }
             else if (s_active_type == WeatherType::THUNDER)
             {
-                Thunder_StartStorm();
+                thunder_start_storm();
             }
             else if (s_active_type == WeatherType::RAINBOW)
             {
-                Rainbow_Start();
+                rainbow_start();
             }
             else
             {
-                Ghost_Start();
+                ghost_start();
             }
         }
     }
@@ -460,7 +460,7 @@ void Weather_Update(float dt, std::vector<Data::Enemy>& enemy_pool)
             {
                 ++s_space_presses;
                 s_flash_timer = FLASH_DUR;
-                if (s_space_presses >= SPACES_NEEDED) { s_state = WeatherState::THAWING; s_phase_timer = 0.0f; SoundManager::StopSnowAmbient(); }
+                if (s_space_presses >= SPACES_NEEDED) { s_state = WeatherState::THAWING; s_phase_timer = 0.0f; SoundManager::stop_snow_ambient(); }
             }
             if (s_flash_timer > 0.0f) s_flash_timer -= dt;
         }
@@ -469,13 +469,13 @@ void Weather_Update(float dt, std::vector<Data::Enemy>& enemy_pool)
         if (s_state == WeatherState::THAWING)
         {
             s_phase_timer += dt;
-            if (s_phase_timer >= THAW_DUR) { s_state = WeatherState::IDLE; ResetTriggerTimer(); }
+            if (s_phase_timer >= THAW_DUR) { s_state = WeatherState::IDLE; reset_trigger_timer(); }
         }
 
         // Update snow particles
-        for (int i = 0; i < AMBIENT_COUNT; ++i)  UpdateFlake(s_ambient[i], dt, 1.0f);
-        float blz_mul = 0.3f + GetBlizzardIntensity() * 1.4f;
-        for (int i = 0; i < BLIZZARD_COUNT; ++i) UpdateFlake(s_blizzard[i], dt, blz_mul);
+        for (int i = 0; i < AMBIENT_COUNT; ++i)  update_flake(s_ambient[i], dt, 1.0f);
+        float blz_mul = 0.3f + get_blizzard_intensity() * 1.4f;
+        for (int i = 0; i < BLIZZARD_COUNT; ++i) update_flake(s_blizzard[i], dt, blz_mul);
     }
 
     // ================================================================
@@ -483,8 +483,8 @@ void Weather_Update(float dt, std::vector<Data::Enemy>& enemy_pool)
     // ================================================================
     if (s_active_type == WeatherType::THUNDER && s_state != WeatherState::IDLE)
     {
-        Thunder_Update(dt, enemy_pool);
-        for (int i = 0; i < RAIN_COUNT; ++i) UpdateRaindrop(s_rain[i], dt);
+        thunder_update(dt, enemy_pool);
+        for (int i = 0; i < RAIN_COUNT; ++i) update_raindrop(s_rain[i], dt);
     }
 
     // ================================================================
@@ -492,7 +492,7 @@ void Weather_Update(float dt, std::vector<Data::Enemy>& enemy_pool)
     // ================================================================
     if (s_active_type == WeatherType::RAINBOW && s_state != WeatherState::IDLE)
     {
-        Rainbow_Update(dt);
+        rainbow_update(dt);
     }
 
     // ================================================================
@@ -500,20 +500,20 @@ void Weather_Update(float dt, std::vector<Data::Enemy>& enemy_pool)
     // ================================================================
     if (s_active_type == WeatherType::GHOST && s_ghost_event_active)
     {
-        Ghost_Update(dt);
+        ghost_update(dt);
     }
 }
 
 // ----------------------------------------------------------------
-void Weather_DrawBackground()
+void weather_draw_background()
 {
     // Rainbow is drawn BEFORE enemies so it sits behind them in the scene
     if (s_active_type == WeatherType::RAINBOW && s_state != WeatherState::IDLE)
-        Rainbow_DrawSprite();
+        rainbow_draw_sprite();
 }
 
 // ----------------------------------------------------------------
-void Weather_Draw()
+void weather_draw()
 {
     // Ghost weather has its own active flag, not bound to the shared state machine
     bool ghost_visible = (s_active_type == WeatherType::GHOST && s_ghost_event_active);
@@ -521,39 +521,39 @@ void Weather_Draw()
 
     if (s_active_type == WeatherType::SNOW)
     {
-        float intensity = GetBlizzardIntensity();
-        Snow_DrawParticles(intensity);
-        DrawFullscreenOverlay(OVL_R, OVL_G, OVL_B, OVL_ALPHA_MAX * intensity);
-        if (s_state == WeatherState::FROZEN) { DrawFreezeHUD(); DrawProgressBar(); }
+        float intensity = get_blizzard_intensity();
+        snow_draw_particles(intensity);
+        draw_fullscreen_overlay(OVL_R, OVL_G, OVL_B, OVL_ALPHA_MAX * intensity);
+        if (s_state == WeatherState::FROZEN) { draw_freeze_hud(); draw_progress_bar(); }
     }
     else if (s_active_type == WeatherType::THUNDER)
     {
-        Thunder_DrawRain();
+        thunder_draw_rain();
         // Dark stormy overlay fades in over first 2 seconds of storm
         float elapsed = STORM_DURATION - s_storm_timer;
-        DrawFullscreenOverlay(STORM_OVL_R, STORM_OVL_G, STORM_OVL_B,
+        draw_fullscreen_overlay(STORM_OVL_R, STORM_OVL_G, STORM_OVL_B,
             STORM_OVL_ALPHA_MAX * Clamp01(elapsed / 2.0f));
-        Thunder_DrawStrikeAnim();
-        Thunder_DrawHUD();
-        Thunder_DrawStrikeFlash();
+        thunder_draw_strike_anim();
+        thunder_draw_hud();
+        thunder_draw_strike_flash();
     }
-    // RAINBOW: sprite drawn in Weather_DrawBackground() - HUD drawn here
+    // RAINBOW: sprite drawn in weather_draw_background() - HUD drawn here
     if (s_active_type == WeatherType::RAINBOW && s_state != WeatherState::IDLE)
     {
-        Rainbow_DrawHUD();
+        rainbow_draw_hud();
     }
     // GHOST: ghosts + HUD drawn here
     if (s_active_type == WeatherType::GHOST && s_ghost_event_active)
     {
-        Ghost_Draw();
-        Ghost_DrawHUD();
+        ghost_draw();
+        ghost_draw_hud();
     }
 }
 
-void Weather_Exit()
+void weather_exit()
 {
-    SoundManager::StopSnowAmbient();
-    SoundManager::StopRainAmbient();
+    SoundManager::stop_snow_ambient();
+    SoundManager::stop_rain_ambient();
     if (s_quad) { AEGfxMeshFree(s_quad);              s_quad = nullptr; }
     if (s_rainbow_tex) { AEGfxTextureUnload(s_rainbow_tex);  s_rainbow_tex = nullptr; }
     if (s_rainbow_mesh) { AEGfxMeshFree(s_rainbow_mesh);      s_rainbow_mesh = nullptr; }
@@ -563,16 +563,16 @@ void Weather_Exit()
     if (s_ghost_mesh) { AEGfxMeshFree(s_ghost_mesh);        s_ghost_mesh = nullptr; }
 }
 
-bool Weather_IsPlayerFrozen() { return s_state == WeatherState::FROZEN; }
-bool Weather_IsPlayerStunned() { return (s_active_type == WeatherType::THUNDER && s_stun_timer > 0.0f); }
-bool Weather_IsTypingLocked() { return (s_active_type == WeatherType::GHOST && s_ghost_lock_timer > 0.0f); }
+bool weather_is_player_frozen() { return s_state == WeatherState::FROZEN; }
+bool weather_is_player_stunned() { return (s_active_type == WeatherType::THUNDER && s_stun_timer > 0.0f); }
+bool weather_is_typing_locked() { return (s_active_type == WeatherType::GHOST && s_ghost_lock_timer > 0.0f); }
 
-void Weather_ForceEvent(int type, std::vector<Data::Enemy>& enemy_pool)
+void weather_force_event(int type, std::vector<Data::Enemy>& enemy_pool)
 {
     // Restore any active lunge before cancelling (prevents permanent speed boost)
-    Thunder_RestoreLunge(enemy_pool);
-    SoundManager::StopSnowAmbient();
-    SoundManager::StopRainAmbient();
+    thunder_restore_lunge(enemy_pool);
+    SoundManager::stop_snow_ambient();
+    SoundManager::stop_rain_ambient();
 
     // Cancel any active event first, reset to a clean IDLE state
     s_state = WeatherState::IDLE;
@@ -597,25 +597,25 @@ void Weather_ForceEvent(int type, std::vector<Data::Enemy>& enemy_pool)
         s_active_type = WeatherType::SNOW;
         s_state = WeatherState::FREEZING;
         s_phase_timer = 0.0f;
-        SoundManager::PlaySnowAmbient();
+        SoundManager::play_snow_ambient();
     }
     else if (type == 1)
     {
         s_active_type = WeatherType::THUNDER;
-        Thunder_StartStorm();
+        thunder_start_storm();
     }
     else if (type == 2)
     {
         s_active_type = WeatherType::RAINBOW;
-        Rainbow_Start();
+        rainbow_start();
     }
     else
     {
         s_active_type = WeatherType::GHOST;
-        Ghost_Start();
+        ghost_start();
     }
 
-    ResetTriggerTimer();
+    reset_trigger_timer();
 }
 
 
@@ -624,13 +624,13 @@ void Weather_ForceEvent(int type, std::vector<Data::Enemy>& enemy_pool)
 // ============================================================
 namespace
 {
-    static void ResetTriggerTimer()
+    static void reset_trigger_timer()
     {
         s_trigger_timer = 0.0f;
         s_trigger_target = RandF(TRIGGER_MIN_SEC, TRIGGER_MAX_SEC);
     }
 
-    static void SpawnAmbientFlake(Snowflake& f)
+    static void spawn_ambient_flake(Snowflake& f)
     {
         f.x = RandF(-HALF_W, HALF_W);
         f.y = HALF_H + RandF(0.0f, 60.0f);
@@ -641,7 +641,7 @@ namespace
         f.is_blizzard = false;
     }
 
-    static void SpawnBlizzardFlake(Snowflake& f)
+    static void spawn_blizzard_flake(Snowflake& f)
     {
         f.x = RandF(-HALF_W, HALF_W);
         f.y = HALF_H + RandF(0.0f, 80.0f);
@@ -652,7 +652,7 @@ namespace
         f.is_blizzard = true;
     }
 
-    static void UpdateFlake(Snowflake& f, float dt, float speed_mul)
+    static void update_flake(Snowflake& f, float dt, float speed_mul)
     {
         f.y -= f.speed_y * speed_mul * dt;
         f.x += f.drift_x * speed_mul * dt;
@@ -663,10 +663,10 @@ namespace
 
         // Respawn when below the screen
         if (f.y < -HALF_H - 20.0f)
-            f.is_blizzard ? SpawnBlizzardFlake(f) : SpawnAmbientFlake(f);
+            f.is_blizzard ? spawn_blizzard_flake(f) : spawn_ambient_flake(f);
     }
 
-    static float GetBlizzardIntensity()
+    static float get_blizzard_intensity()
     {
         if (s_active_type == WeatherType::THUNDER) return 0.0f;
 
@@ -680,7 +680,7 @@ namespace
         return 0.0f;
     }
 
-    static void DrawFullscreenOverlay(float r, float g, float b, float alpha)
+    static void draw_fullscreen_overlay(float r, float g, float b, float alpha)
     {
         if (alpha <= 0.001f) return;
 
@@ -688,12 +688,12 @@ namespace
         AEGfxSetBlendMode(AE_GFX_BM_BLEND);
         AEGfxSetTransparency(alpha);
         AEGfxSetColorToMultiply(r, g, b, 1.0f);
-        Mesh_Renderer(s_quad, 0.0f, 0.0f, SCREEN_W, SCREEN_H, 0.0f);
+        mesh_renderer(s_quad, 0.0f, 0.0f, SCREEN_W, SCREEN_H, 0.0f);
         AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);
         AEGfxSetTransparency(1.0f);
     }
 
-    static void Snow_DrawParticles(float blizzard_intensity)
+    static void snow_draw_particles(float blizzard_intensity)
     {
         AEGfxSetRenderMode(AE_GFX_RM_COLOR);
         AEGfxSetBlendMode(AE_GFX_BM_ADD);   // bright, glowy snow
@@ -704,7 +704,7 @@ namespace
             const Snowflake& f = s_ambient[i];
             AEGfxSetTransparency(f.alpha);
             AEGfxSetColorToMultiply(0.85f, 0.93f, 1.0f, 1.0f);   // slight blue-white tint
-            Mesh_Renderer(s_quad, f.x, f.y, f.size, f.size, 0.0f);
+            mesh_renderer(s_quad, f.x, f.y, f.size, f.size, 0.0f);
         }
 
         // Blizzard particles fade in with intensity
@@ -715,7 +715,7 @@ namespace
                 const Snowflake& f = s_blizzard[i];
                 AEGfxSetTransparency(f.alpha * blizzard_intensity);
                 AEGfxSetColorToMultiply(0.8f, 0.92f, 1.0f, 1.0f);
-                Mesh_Renderer(s_quad, f.x, f.y, f.size, f.size, 0.0f);
+                mesh_renderer(s_quad, f.x, f.y, f.size, f.size, 0.0f);
             }
         }
 
@@ -725,7 +725,7 @@ namespace
         AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);
     }
 
-    static void DrawCentredText(const char* text, float ndc_y, float scale,
+    static void draw_centred_text(const char* text, float ndc_y, float scale,
         float r, float g, float b, float alpha)
     {
         if (Graphics::g_font_id < 0) return;
@@ -734,16 +734,16 @@ namespace
         AEGfxPrint(Graphics::g_font_id, text, -w * 0.5f, ndc_y, scale, r, g, b, alpha);
     }
 
-    static void DrawFreezeHUD()
+    static void draw_freeze_hud()
     {
         if (Graphics::g_font_id < 0) return;
 
         AEGfxSetBlendMode(AE_GFX_BM_BLEND);
-        DrawCentredText("YOU ARE FROZEN!", 0.10f, 0.75f, 0.6f, 0.88f, 1.0f, 1.0f);
-        DrawCentredText("SPAM SPACE TO BREAK FREE!", -0.10f, 0.55f, 1.0f, 1.0f, 1.0f, 1.0f);
+        draw_centred_text("YOU ARE FROZEN!", 0.10f, 0.75f, 0.6f, 0.88f, 1.0f, 1.0f);
+        draw_centred_text("SPAM SPACE TO BREAK FREE!", -0.10f, 0.55f, 1.0f, 1.0f, 1.0f, 1.0f);
     }
 
-    static void DrawProgressBar()
+    static void draw_progress_bar()
     {
         float progress = Clamp01((float)s_space_presses / (float)SPACES_NEEDED);
         constexpr float BAR_BORDER = 4.0f;
@@ -754,7 +754,7 @@ namespace
         // Background (dark, slightly blue)
         AEGfxSetTransparency(0.85f);
         AEGfxSetColorToMultiply(0.1f, 0.15f, 0.25f, 1.0f);
-        Mesh_Renderer(s_quad, 0.0f, BAR_Y, BAR_W + BAR_BORDER * 2.0f, BAR_H + BAR_BORDER * 2.0f, 0.0f);
+        mesh_renderer(s_quad, 0.0f, BAR_Y, BAR_W + BAR_BORDER * 2.0f, BAR_H + BAR_BORDER * 2.0f, 0.0f);
 
         // Bar fill
         if (progress > 0.001f)
@@ -767,14 +767,14 @@ namespace
             AEGfxSetColorToMultiply(0.3f + 0.7f * progress,
                 0.5f + 0.1f * progress,
                 1.0f - 0.8f * progress, 1.0f);
-            Mesh_Renderer(s_quad, fill_start_x, BAR_Y, fill_w, BAR_H - BAR_BORDER * 2.0f, 0.0f);
+            mesh_renderer(s_quad, fill_start_x, BAR_Y, fill_w, BAR_H - BAR_BORDER * 2.0f, 0.0f);
         }
 
         // Label above bar
         AEGfxSetTransparency(1.0f);
         AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);
         float bar_y_ndc = (BAR_Y + (BAR_H * 0.5f) + 20.0f) / HALF_H;
-        DrawCentredText("WARMTH", bar_y_ndc, 0.4f, 0.9f, 0.95f, 1.0f, 1.0f);
+        draw_centred_text("WARMTH", bar_y_ndc, 0.4f, 0.9f, 0.95f, 1.0f, 1.0f);
 
         AEGfxSetTransparency(1.0f);
         AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);
@@ -784,7 +784,7 @@ namespace
     //  Rain helpers
     // ================================================================
 
-    static void SpawnRaindrop(Raindrop& r)
+    static void spawn_raindrop(Raindrop& r)
     {
         r.x = RandF(-HALF_W, HALF_W);
         r.y = HALF_H + RandF(0.0f, 80.0f);
@@ -794,7 +794,7 @@ namespace
         r.alpha = RandF(0.35f, 0.75f);
     }
 
-    static void UpdateRaindrop(Raindrop& r, float dt)
+    static void update_raindrop(Raindrop& r, float dt)
     {
         r.y -= r.speed_y * dt;
         r.x += RAIN_DRIFT * dt;   // wind-driven diagonal
@@ -803,10 +803,10 @@ namespace
         if (r.x > HALF_W) r.x -= SCREEN_W;
 
         // Respawn when below screen
-        if (r.y < -HALF_H - 30.0f) SpawnRaindrop(r);
+        if (r.y < -HALF_H - 30.0f) spawn_raindrop(r);
     }
 
-    static void Thunder_DrawRain()
+    static void thunder_draw_rain()
     {
         AEGfxSetRenderMode(AE_GFX_RM_COLOR);
         AEGfxSetBlendMode(AE_GFX_BM_BLEND);
@@ -816,7 +816,7 @@ namespace
             const Raindrop& r = s_rain[i];
             AEGfxSetTransparency(r.alpha);
             AEGfxSetColorToMultiply(0.6f, 0.75f, 0.95f, 1.0f);   // cool blue-grey
-            Mesh_Renderer(s_quad, r.x, r.y, r.w, r.h, 0.0f);
+            mesh_renderer(s_quad, r.x, r.y, r.w, r.h, 0.0f);
         }
 
         AEGfxSetTransparency(1.0f);
@@ -827,7 +827,7 @@ namespace
     //  Thunder helpers
     // ================================================================
 
-    static void Thunder_StartStorm()
+    static void thunder_start_storm()
     {
         s_state = WeatherState::FREEZING;  // reuse FREEZING as "storm active" sentinel
         s_storm_timer = STORM_DURATION;
@@ -838,10 +838,10 @@ namespace
         s_strike_flash = 0.0f;
         s_lunge_enemy_idx = -1;
         s_lunge_timer = 0.0f;
-        SoundManager::PlayRainAmbient();
+        SoundManager::play_rain_ambient();
     }
 
-    static void Thunder_FireBolt(std::vector<Data::Enemy>& enemy_pool)
+    static void thunder_fire_bolt(std::vector<Data::Enemy>& enemy_pool)
     {
         static int candidates[64];
         int count = 0;
@@ -864,10 +864,10 @@ namespace
 
         s_stun_timer = STUN_DUR;
         s_strike_flash = 1.0f;
-        SoundManager::PlayLightningSfx();
+        SoundManager::play_lightning_sfx();
     }
 
-    static void Thunder_RestoreLunge(std::vector<Data::Enemy>& enemy_pool)
+    static void thunder_restore_lunge(std::vector<Data::Enemy>& enemy_pool)
     {
         if (s_lunge_enemy_idx < 0 || s_lunge_enemy_idx >= (int)enemy_pool.size()) { s_lunge_enemy_idx = -1; s_lunge_timer = 0.0f; return; }
         Data::Enemy& e = enemy_pool[(size_t)s_lunge_enemy_idx];
@@ -876,17 +876,17 @@ namespace
         s_lunge_timer = 0.0f;
     }
 
-    static void Thunder_Update(float dt, std::vector<Data::Enemy>& enemy_pool)
+    static void thunder_update(float dt, std::vector<Data::Enemy>& enemy_pool)
     {
         s_storm_timer -= dt;
         if (s_storm_timer <= 0.0f)
         {
-            Thunder_RestoreLunge(enemy_pool);
+            thunder_restore_lunge(enemy_pool);
             s_stun_timer = 0.0f;
             s_strike_flash = 0.0f;
             s_state = WeatherState::IDLE;
-            ResetTriggerTimer();
-            SoundManager::StopRainAmbient();
+            reset_trigger_timer();
+            SoundManager::stop_rain_ambient();
             return;
         }
 
@@ -898,14 +898,14 @@ namespace
         if (s_lunge_timer > 0.0f)
         {
             s_lunge_timer -= dt;
-            if (s_lunge_timer <= 0.0f) Thunder_RestoreLunge(enemy_pool);
+            if (s_lunge_timer <= 0.0f) thunder_restore_lunge(enemy_pool);
         }
 
         // Also restore lunge if struck enemy was killed mid-lunge
         if (s_lunge_enemy_idx >= 0 && s_lunge_enemy_idx < (int)enemy_pool.size())
         {
             const Data::Enemy& e = enemy_pool[(size_t)s_lunge_enemy_idx];
-            if (!e.enemy_is_active || e.enemy_is_dying) Thunder_RestoreLunge(enemy_pool);
+            if (!e.enemy_is_active || e.enemy_is_dying) thunder_restore_lunge(enemy_pool);
         }
 
         // ---- Bolt phase state machine ----
@@ -925,7 +925,7 @@ namespace
         case BoltPhase::WARNING:
             if (s_bolt_phase_timer >= BRACE_WARNING_DUR)
             {
-                Thunder_FireBolt(enemy_pool);
+                thunder_fire_bolt(enemy_pool);
                 s_bolt_phase = BoltPhase::STRIKING;
                 s_bolt_phase_timer = 0.0f;
             }
@@ -942,7 +942,7 @@ namespace
         }
     }
 
-    static void Thunder_DrawHUD()
+    static void thunder_draw_hud()
     {
         if (Graphics::g_font_id < 0) return;
         AEGfxSetBlendMode(AE_GFX_BM_BLEND);
@@ -952,22 +952,22 @@ namespace
             float progress = Clamp01(s_bolt_phase_timer / BRACE_WARNING_DUR);
             float blink_hz = 2.0f + progress * 6.0f;
             float pulse = ((int)(s_bolt_phase_timer * blink_hz * 2.0f) % 2 == 0) ? 1.0f : 0.4f;
-            DrawCentredText("BRACE!", 0.0f, 1.0f, 1.0f, 0.85f, 0.1f, pulse);
+            draw_centred_text("BRACE!", 0.0f, 1.0f, 1.0f, 0.85f, 0.1f, pulse);
         }
         else if (s_bolt_phase == BoltPhase::STRIKING && s_stun_timer > 0.0f)
         {
             float alpha = Clamp01(s_stun_timer / STUN_DUR);
-            DrawCentredText("STUNNED!", 0.0f, 1.2f, 1.0f, 0.3f, 0.1f, alpha);
+            draw_centred_text("STUNNED!", 0.0f, 1.2f, 1.0f, 0.3f, 0.1f, alpha);
         }
     }
 
-    static void Thunder_DrawStrikeFlash()
+    static void thunder_draw_strike_flash()
     {
         if (s_strike_flash <= 0.001f) return;
-        DrawFullscreenOverlay(1.0f, 1.0f, 0.85f, s_strike_flash * 0.75f);
+        draw_fullscreen_overlay(1.0f, 1.0f, 0.85f, s_strike_flash * 0.75f);
     }
 
-    static void Thunder_DrawStrikeAnim()
+    static void thunder_draw_strike_anim()
     {
         if (!s_t_strike.active || !s_t_strike_tex || !s_t_strike_mesh) return;
 
@@ -978,7 +978,7 @@ namespace
         AEGfxSetTransparency(1.0f);
         AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);
         AEGfxTextureSet(s_t_strike_tex, u_offset, 0.0f);
-        Mesh_Renderer(s_t_strike_mesh, s_t_strike.x, s_t_strike.y,
+        mesh_renderer(s_t_strike_mesh, s_t_strike.x, s_t_strike.y,
             TSTRIKE_DISPLAY_W, TSTRIKE_DISPLAY_H, 0.0f);
 
         AEGfxSetBlendMode(AE_GFX_BM_BLEND);
@@ -990,13 +990,13 @@ namespace
     //  Rainbow helpers
     // ================================================================
 
-    static void Rainbow_BuildMesh()
+    static void rainbow_build_mesh()
     {
         if (s_rainbow_mesh) { AEGfxMeshFree(s_rainbow_mesh); s_rainbow_mesh = nullptr; }
         // intentionally empty - per-frame meshes created in Rainbow_DrawSprite
     }
 
-    static void Rainbow_Start()
+    static void rainbow_start()
     {
         s_state = WeatherState::FREEZING;
         s_rainbow_timer = RAINBOW_DURATION;
@@ -1006,14 +1006,14 @@ namespace
         s_rainbow_popup_timer = WEATHER_POPUP_DUR;
     }
 
-    static void Rainbow_Update(float dt)
+    static void rainbow_update(float dt)
     {
         s_rainbow_timer -= dt;
         if (s_rainbow_timer <= 0.0f)
         {
-            PowerUpSystem::SetDropSpawnInterval(15.0f, 30.0f);
+            PowerUpSystem::set_drop_spawn_interval(15.0f, 30.0f);
             s_state = WeatherState::IDLE;
-            ResetTriggerTimer();
+            reset_trigger_timer();
             return;
         }
 
@@ -1028,11 +1028,11 @@ namespace
         if (s_rainbow_powerup_timer <= 0.0f)
         {
             s_rainbow_powerup_timer = RAINBOW_POWERUP_INTERVAL;
-            PowerUpSystem::SetDropSpawnInterval(0.01f, 0.05f);
+            PowerUpSystem::set_drop_spawn_interval(0.01f, 0.05f);
         }
     }
 
-    static void Rainbow_DrawSprite()
+    static void rainbow_draw_sprite()
     {
         if (!s_rainbow_tex) return;
 
@@ -1053,7 +1053,7 @@ namespace
         AEGfxSetTransparency(alpha);
         AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);
         AEGfxTextureSet(s_rainbow_tex, 0.0f, 0.0f);
-        Mesh_Renderer(frame_mesh, 0.0f, RAINBOW_Y, RAINBOW_DISPLAY_W, RAINBOW_DISPLAY_H, 0.0f);
+        mesh_renderer(frame_mesh, 0.0f, RAINBOW_Y, RAINBOW_DISPLAY_W, RAINBOW_DISPLAY_H, 0.0f);
 
         AEGfxMeshFree(frame_mesh);
 
@@ -1061,7 +1061,7 @@ namespace
         AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);
     }
 
-    static void Rainbow_DrawHUD()
+    static void rainbow_draw_hud()
     {
         if (s_rainbow_popup_timer <= 0.0f || Graphics::g_font_id < 0) return;
 
@@ -1089,19 +1089,19 @@ namespace
         constexpr float PULSE_AMP = 0.08f;
         float scale = BASE_SCALE + PULSE_AMP * sinf(s_weather_pulse_timer * 4.0f);
 
-        DrawCentredText("POWER UPS GALORE!", 0.0f, scale, r, g, b, alpha);
+        draw_centred_text("POWER UPS GALORE!", 0.0f, scale, r, g, b, alpha);
     }
 
     // ================================================================
     //  Ghost weather helpers
     // ================================================================
 
-    static void Ghost_BuildMesh()
+    static void ghost_build_mesh()
     {
         if (s_ghost_mesh) { AEGfxMeshFree(s_ghost_mesh); s_ghost_mesh = nullptr; }
     }
 
-    static void Ghost_SpawnOne(Ghost& g, int digit)
+    static void ghost_spawn_one(Ghost& g, int digit)
     {
         int edge = rand() % 4;
         switch (edge)
@@ -1134,10 +1134,10 @@ namespace
         g.frame_timer = 0.0f;
     }
 
-    static void Ghost_Start()
+    static void ghost_start()
     {
         s_state = WeatherState::FREEZING;
-        ResetTriggerTimer();
+        reset_trigger_timer();
 
         s_ghost_event_active = true;
         s_ghost_life_timer = 0.0f;
@@ -1151,7 +1151,7 @@ namespace
             s_ghosts[i].alive = false;
     }
 
-    static void Ghost_SpawnAll()
+    static void ghost_spawn_all()
     {
         int digits[GHOST_COUNT] = { 5, 6, 7, 8, 9 };
         // Fisher-Yates shuffle
@@ -1161,10 +1161,10 @@ namespace
             int tmp = digits[i]; digits[i] = digits[j]; digits[j] = tmp;
         }
         for (int i = 0; i < GHOST_COUNT; ++i)
-            Ghost_SpawnOne(s_ghosts[i], digits[i]);
+            ghost_spawn_one(s_ghosts[i], digits[i]);
     }
 
-    static void Ghost_Update(float dt)
+    static void ghost_update(float dt)
     {
         // ---- Announcement phase: wait 3s before spawning ghosts ----
         if (s_ghost_announce_pending)
@@ -1174,7 +1174,7 @@ namespace
             {
                 s_ghost_announce_pending = false;
                 s_ghost_announce_timer = 0.0f;
-                Ghost_SpawnAll();
+                ghost_spawn_all();
             }
             return;
         }
@@ -1196,7 +1196,7 @@ namespace
         {
             s_ghost_event_active = false;
             s_state = WeatherState::IDLE;
-            ResetTriggerTimer();
+            reset_trigger_timer();
             return;
         }
 
@@ -1255,7 +1255,7 @@ namespace
         }
     }
 
-    static void Ghost_Draw()
+    static void ghost_draw()
     {
         if (!s_ghost_tex) return;
 
@@ -1277,7 +1277,7 @@ namespace
             AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);
             AEGfxSetColorToAdd(0.0f, 0.0f, 0.0f, 0.0f);
             AEGfxTextureSet(s_ghost_tex, 0.0f, 0.0f);
-            Mesh_Renderer(frame_mesh, g.x, g.y, GHOST_SIZE, GHOST_SIZE, 0.0f);
+            mesh_renderer(frame_mesh, g.x, g.y, GHOST_SIZE, GHOST_SIZE, 0.0f);
 
             AEGfxMeshFree(frame_mesh);
 
@@ -1307,7 +1307,7 @@ namespace
         AEGfxSetColorToAdd(0.0f, 0.0f, 0.0f, 0.0f);
     }
 
-    static void Ghost_DrawHUD()
+    static void ghost_draw_hud()
     {
         if (Graphics::g_font_id < 0) return;
 
@@ -1320,7 +1320,7 @@ namespace
                 ? (s_ghost_announce_timer / WEATHER_POPUP_FADE) : 1.0f;
             float brightness = fabsf(sinf(s_weather_pulse_timer * 2.5f));
             float scale = 0.65f + 0.08f * sinf(s_weather_pulse_timer * 3.5f);
-            DrawCentredText("DEFEAT GHOSTS (PRESS NUMBERS)", 0.0f, scale,
+            draw_centred_text("DEFEAT GHOSTS (PRESS NUMBERS)", 0.0f, scale,
                 brightness, brightness, brightness, alpha);
         }
 
@@ -1328,11 +1328,11 @@ namespace
         if (s_ghost_lock_timer > 0.0f)
         {
             float pulse = ((int)(s_ghost_lock_timer * 6.0f) % 2 == 0) ? 1.0f : 0.55f;
-            DrawCentredText("GHOSTIFIED!", 0.10f, 0.85f, 1.0f, 0.15f, 0.15f, pulse);
+            draw_centred_text("GHOSTIFIED!", 0.10f, 0.85f, 1.0f, 0.15f, 0.15f, pulse);
 
             char buf[16];
             snprintf(buf, sizeof(buf), "%d", (int)ceilf(s_ghost_lock_timer));
-            DrawCentredText(buf, -0.05f, 0.65f, 1.0f, 1.0f, 1.0f, 1.0f);
+            draw_centred_text(buf, -0.05f, 0.65f, 1.0f, 1.0f, 1.0f, 1.0f);
         }
     }
 }

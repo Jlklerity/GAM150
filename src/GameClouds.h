@@ -2,8 +2,8 @@
 
 namespace GameClouds
 {
-    void Init();
-    void Update(float dt);
-    void Draw();
-    void Exit();
+    void init();
+    void update(float dt);
+    void draw();
+    void cleanup();
 }

@@ -1,4 +1,4 @@
-﻿/**
+/**
  * @file PowerUp.cpp
  * @author Azfar
  * @brief Power-up system - sky drops activated by number keys 1/2/3.
@@ -144,7 +144,7 @@ namespace
     static float s_slow_popup_timer = 0.0f;
 
     // Spawn strikes at left, centre, and right of the screen
-    static void SpawnThreeStrikes()
+    static void spawn_three_strikes()
     {
         constexpr float LEFT_X = -500.0f;
         constexpr float CENTRE_X = 0.0f;
@@ -159,17 +159,17 @@ namespace
     // ----------------------------------------------------------------
     // Helpers
     // ----------------------------------------------------------------
-    static float Rand01()
+    static float rand01()
     {
         return (float)std::rand() / (float)RAND_MAX;
     }
 
-    static float RandRange(float a, float b)
+    static float rand_range(float a, float b)
     {
-        return a + (b - a) * Rand01();
+        return a + (b - a) * rand01();
     }
 
-    static void WorldToNDC(float wx, float wy, float& nx, float& ny)
+    static void world_to_ndc(float wx, float wy, float& nx, float& ny)
     {
         nx = wx / SCREEN_HALF_W;
         ny = wy / SCREEN_HALF_H;
@@ -178,7 +178,7 @@ namespace
     /**
      * @brief Returns the sprite texture for a power type, or nullptr if not loaded.
      */
-    static AEGfxTexture* TextureForType(PowerUpSystem::PowerType t)
+    static AEGfxTexture* texture_for_type(PowerUpSystem::PowerType t)
     {
         switch (t)
         {
@@ -192,7 +192,7 @@ namespace
     /**
      * @brief Returns the fallback colour (r,g,b) for a power type.
      */
-    static void ColorForType(PowerUpSystem::PowerType t, float& r, float& g, float& b)
+    static void color_for_type(PowerUpSystem::PowerType t, float& r, float& g, float& b)
     {
         switch (t)
         {
@@ -206,9 +206,9 @@ namespace
     /**
      * @brief Picks a random power type.
      */
-    static PowerUpSystem::PowerType RandomType()
+    static PowerUpSystem::PowerType random_type()
     {
-        int v = (int)(RandRange(0.0f, 3.0f));
+        int v = (int)(rand_range(0.0f, 3.0f));
         if (v < 0) v = 0;
         if (v > 2) v = 2;
         return (PowerUpSystem::PowerType)v;
@@ -218,7 +218,7 @@ namespace
      * @brief Tries to spawn into any free slot. Picks a random free slot so
      *        the slot order isn't always predictable.
      */
-    static void TrySpawnDrop(const Data::EnemyArea& area)
+    static void try_spawn_drop(const Data::EnemyArea& area)
     {
         // Collect free slot indices
         int free_slots[MAX_SLOTS] = {};
@@ -229,7 +229,7 @@ namespace
         if (free_count == 0) return; // all slots occupied
 
         // Pick a random free slot
-        int chosen = free_slots[(int)(RandRange(0.0f, (float)free_count))];
+        int chosen = free_slots[(int)(rand_range(0.0f, (float)free_count))];
         if (chosen < 0) chosen = 0;
         if (chosen >= free_count) chosen = free_count - 1;
         int slot = free_slots[chosen];
@@ -239,47 +239,47 @@ namespace
         if (min_x > max_x) { min_x = -400.0f; max_x = 400.0f; }
 
         s_slots[slot].active = true;
-        s_slots[slot].type = RandomType();
-        s_slots[slot].x = RandRange(min_x, max_x);
+        s_slots[slot].type = random_type();
+        s_slots[slot].x = rand_range(min_x, max_x);
         s_slots[slot].y = area.area_spawn_y + DROP_SIZE;  // just above spawn line
-        s_slots[slot].fall_speed = RandRange(80.0f, 160.0f);
+        s_slots[slot].fall_speed = rand_range(80.0f, 160.0f);
     }
 
     // ----------------------------------------------------------------
     // Effect activation
     // ----------------------------------------------------------------
-    static void ActivateLightning(std::vector<Data::Enemy>& pool, Data::Health& health)
+    static void activate_lightning(std::vector<Data::Enemy>& pool, Data::Health& health)
     {
         for (Data::Enemy& e : pool)
             if (e.enemy_is_active && !e.enemy_is_dying)
-                EnemySystem::Enemy_Killed(e, health);
+                EnemySystem::enemy_killed(e, health);
 
         // Play three strike animations (left, centre, right)
-        SpawnThreeStrikes();
+        spawn_three_strikes();
 
         // Strong screen shake for impact
-        Particles_TriggerShake(0.5f, 20.0f);
+        particles_trigger_shake(0.5f, 20.0f);
     }
 
-    static void Activate(PowerUpSystem::PowerType type, std::vector<Data::Enemy>& pool, Data::Health& health)
+    static void activate(PowerUpSystem::PowerType type, std::vector<Data::Enemy>& pool, Data::Health& health)
     {
         switch (type)
         {
         case PowerUpSystem::PowerType::LIGHTNING:
-            ActivateLightning(pool, health);
-            SoundManager::PlayLightningSfx();
+            activate_lightning(pool, health);
+            SoundManager::play_lightning_sfx();
             break;
         case PowerUpSystem::PowerType::SHIELD:
-            s_shield_remaining = SHIELD_DURATION * UpgradeSystem::Upgrade_GetPowerUpDurationMultiplier();
+            s_shield_remaining = SHIELD_DURATION * UpgradeSystem::upgrade_get_power_up_duration_multiplier();
             s_shield_effect = { true, 0, 0.0f };
             s_shield_popup_timer = POPUP_DURATION;
-            SoundManager::PlayShieldSfx();
+            SoundManager::play_shield_sfx();
             break;
         case PowerUpSystem::PowerType::TIME_SLOW:
-            s_slow_remaining = SLOW_DURATION * UpgradeSystem::Upgrade_GetPowerUpDurationMultiplier();
+            s_slow_remaining = SLOW_DURATION * UpgradeSystem::upgrade_get_power_up_duration_multiplier();
             s_slow_effect = { true, 0, 0.0f };
             s_slow_popup_timer = POPUP_DURATION;
-            SoundManager::PlaySlowSfx();
+            SoundManager::play_slow_sfx();
             break;
         }
     }
@@ -289,7 +289,7 @@ namespace
 namespace PowerUpSystem
 {
     // ----------------------------------------------------------------
-    void Init()
+    void init()
     {
         std::srand((unsigned)std::time(nullptr));
 
@@ -329,7 +329,7 @@ namespace PowerUpSystem
         s_spawn_min = DROP_SPAWN_MIN_DEFAULT;
         s_spawn_max = DROP_SPAWN_MAX_DEFAULT;
         s_spawn_timer = 0.0f;
-        s_next_spawn_in = RandRange(s_spawn_min, s_spawn_max);
+        s_next_spawn_in = rand_range(s_spawn_min, s_spawn_max);
         s_shield_remaining = 0.0f;
         s_slow_remaining = 0.0f;
         s_shield_effect = {};
@@ -340,7 +340,7 @@ namespace PowerUpSystem
     }
 
     // ----------------------------------------------------------------
-    void Free()
+    void free()
     {
         if (s_mesh) { AEGfxMeshFree(s_mesh);                  s_mesh = nullptr; }
         if (s_strike_mesh) { AEGfxMeshFree(s_strike_mesh);           s_strike_mesh = nullptr; }
@@ -355,30 +355,30 @@ namespace PowerUpSystem
     }
 
     // ----------------------------------------------------------------
-    void SetDropSpawnInterval(float min_seconds, float max_seconds)
+    void set_drop_spawn_interval(float min_seconds, float max_seconds)
     {
         if (min_seconds < 0.2f)          min_seconds = 0.2f;
         if (max_seconds < min_seconds)   max_seconds = min_seconds;
         s_spawn_min = min_seconds;
         s_spawn_max = max_seconds;
         s_spawn_timer = 0.0f;
-        s_next_spawn_in = RandRange(s_spawn_min, s_spawn_max);
+        s_next_spawn_in = rand_range(s_spawn_min, s_spawn_max);
     }
 
     // ----------------------------------------------------------------
-    bool IsShieldActive()
+    bool is_shield_active()
     {
         return s_shield_remaining > 0.0f;
     }
 
     // ----------------------------------------------------------------
-    float GetTimeScale()
+    float get_time_scale()
     {
         return (s_slow_remaining > 0.0f) ? SLOW_SCALE : 1.0f;
     }
 
     // ----------------------------------------------------------------
-    void Update(float dt, std::vector<Data::Enemy>& enemy_pool,
+    void update(float dt, std::vector<Data::Enemy>& enemy_pool,
         const Data::EnemyArea& enemy_area, Data::Health& health)
     {
         s_last_enemy_area = enemy_area;  // cache for DebugSpawn
@@ -390,7 +390,7 @@ namespace PowerUpSystem
         if (s_slow_popup_timer > 0.0f) { s_slow_popup_timer -= dt; if (s_slow_popup_timer < 0.0f) s_slow_popup_timer = 0.0f; }
 
         // ---- Advance shield / slow activation spritesheet animations ----
-        auto AdvanceEffect = [&](ScreenEffect& fx)
+        auto advance_effect = [&](ScreenEffect& fx)
             {
                 if (!fx.active) return;
                 fx.frame_timer += dt;
@@ -405,8 +405,8 @@ namespace PowerUpSystem
                     }
                 }
             };
-        AdvanceEffect(s_shield_effect);
-        AdvanceEffect(s_slow_effect);
+        advance_effect(s_shield_effect);
+        advance_effect(s_slow_effect);
 
         // Deactivate held-frame when effect expires
         if (s_shield_remaining <= 0.0f) s_shield_effect.active = false;
@@ -421,13 +421,13 @@ namespace PowerUpSystem
         {
             s_spawn_timer = 0.0f;
             // Apply upgrade spawn-rate reduction: subtract the accumulated bonus seconds and clamp to 0.5s minimum
-            float reduction = UpgradeSystem::Upgrade_GetPowerUpSpawnIntervalReduction();
+            float reduction = UpgradeSystem::upgrade_get_power_up_spawn_interval_reduction();
             float reduced_min = s_spawn_min - reduction;
             float reduced_max = s_spawn_max - reduction;
             if (reduced_min < 0.5f)          reduced_min = 0.5f;          // never let the interval go below 0.5 seconds
             if (reduced_max < reduced_min)   reduced_max = reduced_min;   // keep max >= min after reduction
-            s_next_spawn_in = RandRange(reduced_min, reduced_max);
-            TrySpawnDrop(enemy_area);
+            s_next_spawn_in = rand_range(reduced_min, reduced_max);
+            try_spawn_drop(enemy_area);
         }
 
         // ---- Advance lightning strike animations ----
@@ -469,19 +469,19 @@ namespace PowerUpSystem
             if (AEInputCheckTriggered(static_cast<u8>(keys[i])))
             {
                 d.active = false;
-                Activate(d.type, enemy_pool, health);
+                activate(d.type, enemy_pool, health);
             }
         }
     }
 
     // ----------------------------------------------------------------
-    void OnMouseClick(float /*mouse_x*/, float /*mouse_y*/, std::vector<Data::Enemy>& /*enemy_pool*/)
+    void on_mouse_click(float /*mouse_x*/, float /*mouse_y*/, std::vector<Data::Enemy>& /*enemy_pool*/)
     {
         // No-op: power-ups are now activated by number keys, not mouse clicks.
     }
 
     // ----------------------------------------------------------------
-    void DebugSpawn(PowerType type)
+    void debug_spawn(PowerType type)
     {
         // Find a free slot
         int slot = -1;
@@ -497,20 +497,20 @@ namespace PowerUpSystem
 
         s_slots[slot].active = true;
         s_slots[slot].type = type;
-        s_slots[slot].x = RandRange(min_x, max_x);
+        s_slots[slot].x = rand_range(min_x, max_x);
         s_slots[slot].y = s_last_enemy_area.area_spawn_y + DROP_SIZE;
-        s_slots[slot].fall_speed = RandRange(80.0f, 160.0f);
+        s_slots[slot].fall_speed = rand_range(80.0f, 160.0f);
     }
 
     // ----------------------------------------------------------------
-    void Draw()
+    void draw()
     {
         if (!s_mesh) return;
 
         // ---- Shield / Slow activation spritesheet + pulsing text ----
         {
             // Helper: draw one frame of a 2-frame spritesheet centred on screen
-            auto DrawScreenAnim = [&](const ScreenEffect& fx, AEGfxTexture* tex,
+            auto draw_screen_anim = [&](const ScreenEffect& fx, AEGfxTexture* tex,
                 AEGfxVertexList* mesh, float disp_w, float disp_h, float alpha)
                 {
                     if (!fx.active || !tex || !mesh) return;
@@ -520,12 +520,12 @@ namespace PowerUpSystem
                     AEGfxSetTransparency(alpha);
                     AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);
                     AEGfxTextureSet(tex, u_offset, 0.0f);
-                    Mesh_Renderer(mesh, 0.0f, 0.0f, disp_w, disp_h, 0.0f);
+                    mesh_renderer(mesh, 0.0f, 0.0f, disp_w, disp_h, 0.0f);
                     AEGfxSetTransparency(1.0f);
                 };
 
             // Helper: draw pulsing centred text while popup timer is active
-            auto DrawPulsingText = [&](const char* label, float popup_timer, float ndc_y,
+            auto draw_pulsing_text = [&](const char* label, float popup_timer, float ndc_y,
                 float r, float g, float b)
                 {
                     if (popup_timer <= 0.0f || Graphics::g_font_id < 0) return;
@@ -557,20 +557,20 @@ namespace PowerUpSystem
 
             // Shield: shieldon.png spritesheet on activation, then pulsing text
             if (s_shield_effect.active)
-                DrawScreenAnim(s_shield_effect, s_tex_shield_anim, s_shield_anim_mesh,
+                draw_screen_anim(s_shield_effect, s_tex_shield_anim, s_shield_anim_mesh,
                     SHIELD_ANIM_DISPLAY_W, SHIELD_ANIM_DISPLAY_H, 0.85f);
             if (s_shield_popup_timer > 0.0f)
             {
-                DrawPulsingText("SHIELDED!", s_shield_popup_timer, cur_y, 0.4f, 1.0f, 0.6f);
+                draw_pulsing_text("SHIELDED!", s_shield_popup_timer, cur_y, 0.4f, 1.0f, 0.6f);
                 cur_y -= row_spacing;
             }
 
             // Slow: slowon.png spritesheet on activation, then pulsing text
             if (s_slow_effect.active)
-                DrawScreenAnim(s_slow_effect, s_tex_slow_anim, s_slow_anim_mesh,
+                draw_screen_anim(s_slow_effect, s_tex_slow_anim, s_slow_anim_mesh,
                     SHIELD_ANIM_DISPLAY_W, SHIELD_ANIM_DISPLAY_H, 0.75f);
             if (s_slow_popup_timer > 0.0f)
-                DrawPulsingText("SLOWED!", s_slow_popup_timer, cur_y, 0.7f, 0.4f, 1.0f);
+                draw_pulsing_text("SLOWED!", s_slow_popup_timer, cur_y, 0.7f, 0.4f, 1.0f);
         }
 
         // ---- Lightning strike animations ----
@@ -588,7 +588,7 @@ namespace PowerUpSystem
                 AEGfxSetTransparency(1.0f);
                 AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);
                 AEGfxTextureSet(s_tex_strike, u_offset, 0.0f);
-                Mesh_Renderer(s_strike_mesh, s.x, s.y, STRIKE_DISPLAY_W, STRIKE_DISPLAY_H, 0.0f);
+                mesh_renderer(s_strike_mesh, s.x, s.y, STRIKE_DISPLAY_W, STRIKE_DISPLAY_H, 0.0f);
             }
         }
 
@@ -598,7 +598,7 @@ namespace PowerUpSystem
             const Drop& d = s_slots[i];
             if (!d.active) continue;
 
-            AEGfxTexture* tex = TextureForType(d.type);
+            AEGfxTexture* tex = texture_for_type(d.type);
 
             if (tex)
             {
@@ -608,19 +608,19 @@ namespace PowerUpSystem
                 AEGfxSetTransparency(1.0f);
                 AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);
                 AEGfxTextureSet(tex, 0.0f, 0.0f);
-                Mesh_Renderer(s_mesh, d.x, d.y, DROP_SIZE, DROP_SIZE, 0.0f);
+                mesh_renderer(s_mesh, d.x, d.y, DROP_SIZE, DROP_SIZE, 0.0f);
             }
             else
             {
                 // ---- Fallback: coloured quad ----
                 float r, g, b;
-                ColorForType(d.type, r, g, b);
+                color_for_type(d.type, r, g, b);
 
                 AEGfxSetRenderMode(AE_GFX_RM_COLOR);
                 AEGfxSetBlendMode(AE_GFX_BM_BLEND);
                 AEGfxSetTransparency(1.0f);
                 AEGfxSetColorToMultiply(r, g, b, 1.0f);
-                Mesh_Renderer(s_mesh, d.x, d.y, DROP_SIZE, DROP_SIZE, 0.0f);
+                mesh_renderer(s_mesh, d.x, d.y, DROP_SIZE, DROP_SIZE, 0.0f);
                 AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);
             }
 
@@ -632,7 +632,7 @@ namespace PowerUpSystem
 
                 float nx, ny;
                 // Offset world Y to the top edge of the sprite, then a small gap above it
-                WorldToNDC(d.x, d.y + DROP_HALF + 10.0f, nx, ny);
+                world_to_ndc(d.x, d.y + DROP_HALF + 10.0f, nx, ny);
 
                 float tw = 0.0f, th = 0.0f;
                 AEGfxGetPrintSize(Graphics::g_font_id, num_buf, 0.6f, &tw, &th);
@@ -657,7 +657,7 @@ namespace PowerUpSystem
             float gap = 56.0f;
 
             // Helper lambda to draw one active-effect icon with sprite + timer text
-            auto DrawIcon = [&](AEGfxTexture* tex, float r, float gb, float b, float remaining)
+            auto draw_icon = [&](AEGfxTexture* tex, float r, float gb, float b, float remaining)
                 {
                     // Fade out as effect nears expiry
                     float alpha = (remaining < 1.5f) ? (0.4f + 0.6f * (remaining / 1.5f)) : 1.0f;
@@ -669,7 +669,7 @@ namespace PowerUpSystem
                         AEGfxSetTransparency(alpha);
                         AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);
                         AEGfxTextureSet(tex, 0.0f, 0.0f);
-                        Mesh_Renderer(s_mesh, icon_x, icon_y, icon_size, icon_size, 0.0f);
+                        mesh_renderer(s_mesh, icon_x, icon_y, icon_size, icon_size, 0.0f);
                     }
                     else
                     {
@@ -678,7 +678,7 @@ namespace PowerUpSystem
                         AEGfxSetBlendMode(AE_GFX_BM_BLEND);
                         AEGfxSetTransparency(alpha);
                         AEGfxSetColorToMultiply(r, gb, b, 1.0f);
-                        Mesh_Renderer(s_mesh, icon_x, icon_y, icon_size, icon_size, 0.0f);
+                        mesh_renderer(s_mesh, icon_x, icon_y, icon_size, icon_size, 0.0f);
                     }
 
                     // Draw remaining time below the icon
@@ -688,7 +688,7 @@ namespace PowerUpSystem
                         std::snprintf(time_buf, sizeof(time_buf), "%.1fs", remaining);
 
                         float nx, ny;
-                        WorldToNDC(icon_x, icon_y - icon_size * 0.5f - 8.0f, nx, ny);
+                        world_to_ndc(icon_x, icon_y - icon_size * 0.5f - 8.0f, nx, ny);
 
                         float tw = 0.0f, th = 0.0f;
                         AEGfxGetPrintSize(Graphics::g_font_id, time_buf, 0.4f, &tw, &th);
@@ -708,10 +708,10 @@ namespace PowerUpSystem
                 };
 
             if (s_shield_remaining > 0.0f)
-                DrawIcon(s_tex_shield, 0.2f, 1.0f, 0.4f, s_shield_remaining);
+                draw_icon(s_tex_shield, 0.2f, 1.0f, 0.4f, s_shield_remaining);
 
             if (s_slow_remaining > 0.0f)
-                DrawIcon(s_tex_slow, 0.6f, 0.2f, 1.0f, s_slow_remaining);
+                draw_icon(s_tex_slow, 0.6f, 0.2f, 1.0f, s_slow_remaining);
 
             AEGfxSetTransparency(1.0f);
             AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);

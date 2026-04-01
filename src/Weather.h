@@ -29,28 +29,28 @@
                            shown while the lock is active.
 
 @integration (game.cpp):
-            Weather_Init()              -- call once inside Game_Init()
-            Weather_Update(dt, pool)    -- call inside the !isPaused && !isDead block
-            Weather_DrawBackground()    -- call BEFORE enemies are drawn (rainbow behind enemies)
-            Weather_Draw()              -- call inside the render block, after world / powerup draws
-            Weather_Exit()              -- call once inside Game_Exit()
-            Weather_IsPlayerFrozen()    -- } gate BOTH on
-            Weather_IsPlayerStunned()   -- } gate BOTH on
-            Weather_IsTypingLocked()    -- } Typing_UpdateAndApplyToEnemies()
+            weather_init()              -- call once inside game_init()
+            weather_update(dt, pool)    -- call inside the !isPaused && !isDead block
+            weather_draw_background()    -- call BEFORE enemies are drawn (rainbow behind enemies)
+            weather_draw()              -- call inside the render block, after world / powerup draws
+            weather_exit()              -- call once inside game_exit()
+            weather_is_player_frozen()    -- } gate BOTH on
+            weather_is_player_stunned()   -- } gate BOTH on
+            weather_is_typing_locked()    -- } typing_update_and_apply_to_enemies()
 
 @author     (your name)
 */
 
 namespace Data { struct Enemy; }
 
-void Weather_Init();
-void Weather_Update(float dt, std::vector<Data::Enemy>& enemy_pool);
-void Weather_DrawBackground(); // Call BEFORE enemies: draws rainbow behind them
-void Weather_Draw();           // Call AFTER enemies: draws snow/thunder overlays + HUD
-void Weather_Exit();
-bool Weather_IsPlayerFrozen();   // true during full snow freeze
-bool Weather_IsPlayerStunned();  // true during brief thunder strike stun
-bool Weather_IsTypingLocked();   // true during ghost-weather typing lock
+void weather_init();
+void weather_update(float dt, std::vector<Data::Enemy>& enemy_pool);
+void weather_draw_background(); // Call BEFORE enemies: draws rainbow behind them
+void weather_draw();           // Call AFTER enemies: draws snow/thunder overlays + HUD
+void weather_exit();
+bool weather_is_player_frozen();   // true during full snow freeze
+bool weather_is_player_stunned();  // true during brief thunder strike stun
+bool weather_is_typing_locked();   // true during ghost-weather typing lock
 
 /**
  * @brief Debug helper: immediately triggers a weather event of the given type.
@@ -58,4 +58,4 @@ bool Weather_IsTypingLocked();   // true during ghost-weather typing lock
  * @param type       0 = Snow/Blizzard, 1 = Thunderstorm, 2 = Rainbow, 3 = Ghost
  * @param enemy_pool reference to enemy vector (needed to restore lunge speed)
  */
-void Weather_ForceEvent(int type, std::vector<Data::Enemy>& enemy_pool);
+void weather_force_event(int type, std::vector<Data::Enemy>& enemy_pool);

@@ -255,7 +255,7 @@ namespace Utility
     This function returns 'minimum' if 'value' is below the range, 'maximum' if it is above the range,
     or the original 'value' if it is already within [minimum, maximum].
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
-    float Utility_Clamp(float value, float minimum, float maximum);
+    float utility_clamp(float value, float minimum, float maximum);
 
     /*
     @function       Utility_Lerp
@@ -265,7 +265,7 @@ namespace Utility
     This function blends from 'a' to 'b' using 't' as the interpolation factor.
     't' is clamped to [0, 1], where 0 returns 'a', 1 returns 'b', and values in-between return a mix.
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
-    float Utility_Lerp(float a, float b, float t);
+    float utility_lerp(float a, float b, float t);
 
     /*
     @function       Utility_RandInt
@@ -275,7 +275,7 @@ namespace Utility
     This function generates a uniformly distributed integer in [minimum, maximum_inclusive].
     If the range is invalid (maximum_inclusive < minimum), it safely returns 'minimum'.
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
-    int Utility_RandInt(int minimum, int maximum_inclusive);
+    int utility_rand_int(int minimum, int maximum_inclusive);
 
     /*
     @function       Convert_WorldToNdc
@@ -285,7 +285,7 @@ namespace Utility
     This function maps a position given in world pixels to NDC space, where the window center is (0, 0)
     and the visible range is typically -1..1 on each axis. The result is written to 'ndc_x' and 'ndc_y'.
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
-    void Convert_WorldToNdc(float world_x, float world_y, float& ndc_x, float& ndc_y);
+    void convert_world_to_ndc(float world_x, float world_y, float& ndc_x, float& ndc_y);
 
     /*
     @function       Collision_Overlap
@@ -296,7 +296,7 @@ namespace Utility
     This function performs an AABB overlap test using the centers and half-extents of two rectangles.
     It returns true if the rectangles intersect (including touching edges), otherwise false.
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
-    bool Collision_Overlap(float a_center_x, float a_center_y, float a_half_width, float a_half_height, float b_center_x, float b_center_y, float b_half_width, float b_half_height);
+    bool collision_overlap(float a_center_x, float a_center_y, float a_half_width, float a_half_height, float b_center_x, float b_center_y, float b_half_width, float b_half_height);
 
     /*
     @function       String_ToUpperInPlace
@@ -305,7 +305,7 @@ namespace Utility
 
     This function modifies the input string directly by uppercasing each character using 'std::toupper'.
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
-    void String_ToUpperInPlace(std::string& s);
+    void string_to_upper_in_place(std::string& s);
 
 } // Utility namespace end
 /*___________________________________________________________________________________________________________________________________________________________________________________________________*/
@@ -328,7 +328,7 @@ namespace Word
     length matches 'expected_length', converts them to uppercase, and returns them as a vector.
     If the file cannot be opened, it returns an empty list.
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
-    std::vector<std::string> Word_LoadFromFile(const char* file_path, int expected_length);
+    std::vector<std::string> word_load_from_file(const char* file_path, int expected_length);
 
     /*
     @function       Word_LoadAll
@@ -339,7 +339,7 @@ namespace Word
     supported length (3 to 8). If any file fails to load or results in an empty list, a small fallback
     set is assigned so the game can still run.
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
-    void Word_LoadAll(Data::WordBank& word_bank);
+    void word_load_all(Data::WordBank& word_bank);
 
     /*
     @function       Word_GetListByLength
@@ -349,7 +349,7 @@ namespace Word
     This function selects and returns a const reference to the appropriate word vector inside 'word_bank'
     based on 'word_length' (3 to 8). If the length is not 3 to 7, it defaults to returning the 8-letter list.
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
-    const std::vector<std::string>& Word_GetListByLength(const Data::WordBank& word_bank, int word_length);
+    const std::vector<std::string>& word_get_list_by_length(const Data::WordBank& word_bank, int word_length);
 
     /*
     @function       Word_PickRandom
@@ -359,7 +359,7 @@ namespace Word
     This function returns a randomly selected string from 'words'.
     If the list is empty, it returns a placeholder string ("????") to avoid crashes.
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
-    std::string Word_PickRandom(const std::vector<std::string>& words);
+    std::string word_pick_random(const std::vector<std::string>& words);
 
 } // Word namespace end
 /*___________________________________________________________________________________________________________________________________________________________________________________________________*/
@@ -395,7 +395,7 @@ namespace Graphics
     transparency value. It also resets the multiply/add color modifiers to neutral so debug shapes draw
     with predictable colors.
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
-    void Graphics_SetColorState(float alpha_value);
+    void graphics_set_color_state(float alpha_value);
 
     /*
     @function       Graphics_SetSpriteState
@@ -404,7 +404,7 @@ namespace Graphics
     This function switches the renderer to texture mode, enables alpha blending, resets transparency
     to fully opaque, and clears any color multiply/add modifiers so sprites render normally.
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
-    void Graphics_SetSpriteState();
+    void graphics_set_sprite_state();
 
     /*
     @function       Mesh_BuildSpriteQuad
@@ -436,7 +436,7 @@ namespace Graphics
     This function builds a 2D transform (scale then rotate then translate), applies it to the renderer,
     and draws the provided mesh using triangle mode.
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
-    void Draw_DrawMeshAt(AEGfxVertexList* mesh, float position_x, float position_y, float scale_x, float scale_y, float rotation_radians);
+    void draw_mesh_at(AEGfxVertexList* mesh, float position_x, float position_y, float scale_x, float scale_y, float rotation_radians);
 
 } // Graphics namespace end
 /*___________________________________________________________________________________________________________________________________________________________________________________________________*/
@@ -458,7 +458,7 @@ namespace DifficultySystem
     This function provides read-only access to the internal difficulty variable so other systems
     (such as debug UI) can display or use the current difficulty level.
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
-    float Difficulty_Get();
+    float difficulty_get();
 
     /*
     @function       Difficulty_Reset
@@ -467,7 +467,7 @@ namespace DifficultySystem
     This function sets the internal difficulty value to 0.0, returning the game to its starting
     difficulty level. It is called when restarting a level or entering the game from the main menu.
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
-    void Difficulty_Reset();
+    void difficulty_reset();
 
     /*
     @function       Difficulty_Add
@@ -477,7 +477,7 @@ namespace DifficultySystem
     This function adds a signed amount to the internal difficulty value, then clamps it between 0 and
     DIFFICULTY_MAX to prevent the difficulty from going negative or exceeding the configured cap.
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
-    void Difficulty_Add(float amount);
+    void difficulty_add(float amount);
 
     /*
     @function       Difficulty_UpdateOverTime
@@ -487,7 +487,7 @@ namespace DifficultySystem
     This function ramps the difficulty based on elapsed time by adding a fixed rate
     (DIFFICULTY_RAMP_PER_SECOND) scaled by delta time.
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
-    void Difficulty_UpdateOverTime(float dt);
+    void difficulty_update_over_time(float dt);
 
     /*
     @function       Difficulty_GetSpawnIntervalSeconds
@@ -496,7 +496,7 @@ namespace DifficultySystem
     This function reduces the spawn interval as difficulty increases, making enemies spawn more often.
     The interval is clamped so it never goes below RANDOM_SPAWN_INTERVAL_MIN_SECONDS.
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
-    float Difficulty_GetSpawnIntervalSeconds();
+    float difficulty_get_spawn_interval_seconds();
 
     /*
     @function       Difficulty_GetUnlockedMaxWordLength
@@ -505,7 +505,7 @@ namespace DifficultySystem
     This function maps the current difficulty into tiers that gradually unlock longer words.
     As difficulty increases, the allowed maximum word length increases from 3 up to 8.
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
-    int Difficulty_GetUnlockedMaxWordLength();
+    int difficulty_get_unlocked_max_word_length();
 
     /*
     @function       Difficulty_GetRandomWordLength
@@ -515,7 +515,7 @@ namespace DifficultySystem
     (determined by difficulty). It is used to vary enemy word lengths while still respecting the
     difficulty progression.
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
-    int Difficulty_GetRandomWordLength();
+    int difficulty_get_random_word_length();
 
     /*
     @function       Difficulty_GetEnemyFallSpeed
@@ -526,7 +526,7 @@ namespace DifficultySystem
     multiplier (shorter words fall faster, longer words fall slower). The multiplier effect ramps in as
     difficulty increases, so early gameplay stays gentler while later gameplay becomes more punishing.
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
-    float Difficulty_GetEnemyFallSpeed(int word_length);
+    float difficulty_get_enemy_fall_speed(int word_length);
 
 } // DifficultySystem namespace end
 /*___________________________________________________________________________________________________________________________________________________________________________________________________*/
@@ -548,7 +548,7 @@ namespace HealthSystem
     This function resets health_current to health_max, restoring the player to full health.
     It is called when entering the game or restarting a level.
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
-    void Health_Init(Data::Health& health);
+    void health_init(Data::Health& health);
 
     /*
     @function       Health_Add
@@ -558,7 +558,7 @@ namespace HealthSystem
     This function applies a signed health change to 'h.health_current' and then clamps it between
     0 and 'h.health_max' to prevent underflow or overflow.
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
-    void Health_Add(Data::Health& h, float amount);
+    void health_add(Data::Health& h, float amount);
 
 } // HealthSystem namespace end
 /*___________________________________________________________________________________________________________________________________________________________________________________________________*/
@@ -581,7 +581,7 @@ namespace Animation
     and updates the UV coordinates on the animation struct. It is called whenever the frame changes
     to keep the UV offsets in sync with the sprite sheet layout.
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
-    void Animation_ApplyUv(Data::SpriteAnim& anim);
+    void animation_apply_uv(Data::SpriteAnim& anim);
 
     /*
     @function       Animation_SetFrame
@@ -592,7 +592,7 @@ namespace Animation
     a death frame), then recalculates the sprite sheet UV offsets based on the current column and the
     selected animation row.
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
-    void Animation_SetFrame(Data::SpriteAnim& anim, int frame_index);
+    void animation_set_frame(Data::SpriteAnim& anim, int frame_index);
 
     /*
     @function       Animation_Update
@@ -603,7 +603,7 @@ namespace Animation
     wraps the frame index back to 0 when it exceeds the number of frames, and then updates the sprite sheet
     UV offsets using the current frame column and the selected animation row.
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
-    void Animation_Update(Data::SpriteAnim& anim, float dt);
+    void animation_update(Data::SpriteAnim& anim, float dt);
 
 } // Animation namespace end
 /*___________________________________________________________________________________________________________________________________________________________________________________________________*/
@@ -626,7 +626,7 @@ namespace EnemySystem
     This function scans all active enemies and returns true if any of them already use the given word.
     If include_hidden_words is true, it also checks the hidden second word on shielded enemies.
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
-    bool Enemy_IsWordInUse(const std::vector<Data::Enemy>& pool, const std::string& word_text, bool include_hidden_words);
+    bool enemy_is_word_in_use(const std::vector<Data::Enemy>& pool, const std::string& word_text, bool include_hidden_words);
 
     /*
     @function       Enemy_PickUniqueWord
@@ -636,7 +636,7 @@ namespace EnemySystem
     This function randomly picks words from the word bank and keeps trying until it finds one that
     is not already in use. Returns an empty string if no unique word is found within the attempt limit.
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
-    std::string Enemy_PickUniqueWord(int word_length, const Data::WordBank& bank, const std::vector<Data::Enemy>& pool, bool include_hidden_words);
+    std::string enemy_pick_unique_word(int word_length, const Data::WordBank& bank, const std::vector<Data::Enemy>& pool, bool include_hidden_words);
 
     /*
     @function       Enemy_PickUniqueWordRandomLength
@@ -646,7 +646,7 @@ namespace EnemySystem
     This function picks a random word length each attempt and tries to find a unique word of that
     length. It keeps trying up to max_tries_total times. Returns an empty string if nothing is found.
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
-    std::string Enemy_PickUniqueWordRandomLength(int min_len, int max_len, const Data::WordBank& bank, const std::vector<Data::Enemy>& pool, bool include_hidden_words, int max_tries_total);
+    std::string enemy_pick_unique_word_random_length(int min_len, int max_len, const Data::WordBank& bank, const std::vector<Data::Enemy>& pool, bool include_hidden_words, int max_tries_total);
 
     /*
     @function       Enemy_GetWordHalfWidthWorld
@@ -657,7 +657,7 @@ namespace EnemySystem
     that screen-space size into world pixels. It is used to keep spawned enemies (and their text) within
     usable horizontal bounds and to help avoid overlaps.
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
-    float Enemy_GetWordHalfWidthWorld(const std::string& word);
+    float enemy_get_word_half_width_world(const std::string& word);
 
     /*
     @function       Enemy_GetLaneX
@@ -667,7 +667,7 @@ namespace EnemySystem
     This function maps a lane id into the usable horizontal range and returns the
     corresponding X coordinate. If there is only one lane, it returns the midpoint of the usable range.
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
-    float Enemy_GetLaneX(int lane_id, float usable_min_x, float usable_max_x);
+    float enemy_get_lane_x(int lane_id, float usable_min_x, float usable_max_x);
 
     /*
     @function       Enemy_IsLaneSpawnYFree
@@ -678,7 +678,7 @@ namespace EnemySystem
     spawn line (smallest positive gap). It returns true only if the nearest gap is at least
     ENEMY_LANE_MIN_GAP_PX, ensuring newly spawned enemies won't overlap or stack too tightly.
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
-    bool Enemy_IsLaneSpawnYFree(int lane_id, float spawn_y, const std::vector<Data::Enemy>& pool);
+    bool enemy_is_lane_spawn_y_free(int lane_id, float spawn_y, const std::vector<Data::Enemy>& pool);
 
     /*
     @function       Enemy_Create
@@ -699,7 +699,7 @@ namespace EnemySystem
     This function removes the shield from a shielded enemy. It swaps in the hidden second word,
     updates the word length, and resets the animation to the unshielded row of the sprite sheet.
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
-    void Enemy_BreakShield(Data::Enemy& e);
+    void enemy_break_shield(Data::Enemy& e);
 
     /*
     @function       Enemy_Killed
@@ -710,7 +710,7 @@ namespace EnemySystem
     flag so the enemy can drop off-screen, and marks damage as already handled so a killed enemy will not
     apply landing damage.
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
-    void Enemy_Killed(Data::Enemy& e, Data::Health& health);
+    void enemy_killed(Data::Enemy& e, Data::Health& health);
 
     /*
     @function       Enemy_Update
@@ -721,7 +721,7 @@ namespace EnemySystem
     animation frames, moves the enemy downward, clamps it within the enemy area, applies landing damage once,
     and deactivates the enemy when its lifecycle is complete (landed or finished dying + linger).
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
-    void Enemy_Update(Data::Enemy& e, const Data::EnemyArea& area, float dt, Data::Health& health);
+    void enemy_update(Data::Enemy& e, const Data::EnemyArea& area, float dt, Data::Health& health);
 
     /*
     @function       Enemy_ResolveLaneStacking
@@ -732,7 +732,7 @@ namespace EnemySystem
     and then adjusts positions so each enemy is at least ENEMY_LANE_MIN_GAP_PX above the one below it.
     Adjusted positions are clamped to the top of the enemy area to keep enemies within bounds.
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
-    void Enemy_ResolveLaneStacking(std::vector<Data::Enemy>& pool, const Data::EnemyArea& area);
+    void enemy_resolve_lane_stacking(std::vector<Data::Enemy>& pool, const Data::EnemyArea& area);
 
     /*
     @function       Enemy_Draw
@@ -743,7 +743,7 @@ namespace EnemySystem
     texture based on the enemy's word length, applies the current animation UV offset, and draws the
     enemy quad scaled to ENEMY_SIZE_PX.
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
-    void Enemy_Draw(const Data::Meshes& meshes, const Data::Enemy& e);
+    void enemy_draw(const Data::Meshes& meshes, const Data::Enemy& e);
 
     /*
     @function       Enemy_DrawWord
@@ -754,7 +754,7 @@ namespace EnemySystem
     then offsets the draw position so the word is centered over the enemy sprite. It skips drawing if the
     enemy is inactive, the font is missing, or the enemy has no assigned word.
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
-    void Enemy_DrawWord(const Data::Enemy& e);
+    void enemy_draw_word(const Data::Enemy& e);
 
     /*
     @function       Enemy_IsSpawnSpotFree
@@ -765,7 +765,7 @@ namespace EnemySystem
     Utility::Collision_Overlap. It returns true if no overlaps are found, and false if the new enemy
     would collide with an existing one (including padding).
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
-    bool Enemy_IsSpawnSpotFree(float spawn_x, float spawn_y, const std::vector<Data::Enemy>& pool, float half_size_with_padding);
+    bool enemy_is_spawn_spot_free(float spawn_x, float spawn_y, const std::vector<Data::Enemy>& pool, float half_size_with_padding);
 
     /*
     @function       Enemy_FindSpawnLane
@@ -776,7 +776,7 @@ namespace EnemySystem
     in order. Returns true if a valid lane was found, false otherwise. The chosen x and lane index are
     written to out_chosen_x and out_chosen_lane.
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
-    bool Enemy_FindSpawnLane(const std::vector<Data::Enemy>& pool, const Data::EnemyArea& area, float overlap_half, float usable_min_x, float usable_max_x, float& out_chosen_x, int& out_chosen_lane);
+    bool enemy_find_spawn_lane(const std::vector<Data::Enemy>& pool, const Data::EnemyArea& area, float overlap_half, float usable_min_x, float usable_max_x, float& out_chosen_x, int& out_chosen_lane);
 
     /*
     @function       Enemy_SpawnFromPool
@@ -790,7 +790,7 @@ namespace EnemySystem
     won't overlap any active enemy. When a valid spot is found, the enemy is created with a difficulty-
     scaled fall speed and inserted into the pool.
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
-    void Enemy_SpawnFromPool(std::vector<Data::Enemy>& pool, std::deque<int>& free_slots, const Data::EnemyArea& area, const Data::WordBank& bank, int word_length);
+    void enemy_spawn_from_pool(std::vector<Data::Enemy>& pool, std::deque<int>& free_slots, const Data::EnemyArea& area, const Data::WordBank& bank, int word_length);
 
     /*
     @function       Enemy_SpawnFriendlyFromPool
@@ -800,7 +800,7 @@ namespace EnemySystem
     This function works the same as Enemy_SpawnFromPool but creates a friendly enemy. Friendly
     enemies do not damage the player when they land. The speed_multiplier scales the fall speed.
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
-    void Enemy_SpawnFriendlyFromPool(std::vector<Data::Enemy>& pool, std::deque<int>& free_slots, const Data::EnemyArea& area, const Data::WordBank& bank, int min_word_len, int max_word_len, float speed_multiplier);
+    void enemy_spawn_friendly_from_pool(std::vector<Data::Enemy>& pool, std::deque<int>& free_slots, const Data::EnemyArea& area, const Data::WordBank& bank, int min_word_len, int max_word_len, float speed_multiplier);
 
     /*
     @function       Enemy_SpawnShieldedFromPool
@@ -810,7 +810,7 @@ namespace EnemySystem
     This function spawns a shielded enemy that needs two words to defeat. It picks two unique
     words: the first is shown while the shield is up, the second is revealed after the shield breaks.
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
-    void Enemy_SpawnShieldedFromPool(std::vector<Data::Enemy>& pool, std::deque<int>& free_slots, const Data::EnemyArea& area, const Data::WordBank& bank, int min_word_len, int max_word_len, float speed_multiplier);
+    void enemy_spawn_shielded_from_pool(std::vector<Data::Enemy>& pool, std::deque<int>& free_slots, const Data::EnemyArea& area, const Data::WordBank& bank, int min_word_len, int max_word_len, float speed_multiplier);
 
 } // EnemySystem namespace end
 /*___________________________________________________________________________________________________________________________________________________________________________________________________*/
@@ -833,7 +833,7 @@ namespace UiSystem
     semi-transparent rectangle using the debug mesh. It helps visualize where enemies are allowed
     to spawn, fall, and land.
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
-    void Debug_DrawEnemyAreaBox(const Data::Meshes& meshes, const Data::EnemyArea& area);
+    void debug_draw_enemy_area_box(const Data::Meshes& meshes, const Data::EnemyArea& area);
 
     /*
     @function       Debug_DrawEnemyLaneLines
@@ -843,7 +843,7 @@ namespace UiSystem
     This function renders one vertical line per lane across the enemy area height, using distinct colors
     to make lanes easy to tell apart. It helps debug lane placement, spawn positions, and spacing rules.
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
-    void Debug_DrawEnemyLaneLines(const Data::Meshes& meshes, const Data::EnemyArea& area);
+    void debug_draw_enemy_lane_lines(const Data::Meshes& meshes, const Data::EnemyArea& area);
 
     /*
     @function       Debug_DrawDifficultyTopRight
@@ -854,7 +854,7 @@ namespace UiSystem
     current and max HP, the current difficulty value, the current spawn interval, whether auto spawn is enabled,
     and the unlocked word length range.
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
-    void Debug_DrawDifficultyTopRight(bool show, bool auto_spawn_on, const Data::Health& health);
+    void debug_draw_difficulty_top_right(bool show, bool auto_spawn_on, const Data::Health& health);
 
     /*
     @function       Ui_DrawHealthBar
@@ -866,7 +866,7 @@ namespace UiSystem
     and a depleting animation frame matching the partial HP remaining in that block. All heart
     animations share a single global timer so every sprite advances in lockstep.
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
-    void Ui_DrawHealthBar(Data::Health& health, Data::Meshes& meshes, Data::SpriteAnim& heart_anim, float dt);
+    void ui_draw_health_bar(Data::Health& health, Data::Meshes& meshes, Data::SpriteAnim& heart_anim, float dt);
 
 } // UiSystem namespace end
 /*___________________________________________________________________________________________________________________________________________________________________________________________________*/
@@ -889,7 +889,7 @@ namespace EnemyManage
     number generator, loads all word lists into the provided WordBank, and loads the font used for rendering
     enemy words and debug text.
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
-    void EnemyManage_InitEngine(Data::WordBank& bank);
+    void enemy_manage_init_engine(Data::WordBank& bank);
 
     /*
     @function       EnemyManage_LoadMeshes
@@ -901,7 +901,7 @@ namespace EnemyManage
     and builds a unit rectangle mesh used for debug drawing. It returns a Data::Meshes struct containing
     the created mesh handles.
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
-    Data::Meshes EnemyManage_LoadMeshes(const Data::SpriteAnim& enemy_anim);
+    Data::Meshes enemy_manage_load_meshes(const Data::SpriteAnim& enemy_anim);
 
     /*
     @function       EnemyManage_Free
@@ -914,7 +914,7 @@ namespace EnemyManage
     without needing a full resize. Mesh pointers are reset back to safe defaults to prevent
     dangling references.
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
-    void EnemyManage_Free(Data::Meshes& meshes, std::vector<Data::Enemy>& pool, std::deque<int>& free_slots);
+    void enemy_manage_free(Data::Meshes& meshes, std::vector<Data::Enemy>& pool, std::deque<int>& free_slots);
 
 } // EnemyManage namespace end
 /*___________________________________________________________________________________________________________________________________________________________________________________________________*/

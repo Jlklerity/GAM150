@@ -7,12 +7,12 @@ Provides a self-contained console that can be toggled with '/' during gameplay.
 While open, the game is fully frozen. Commands map to all existing debug functions.
 
 Integration in game.cpp:
-    Game_Init()   -> DebugConsole::Init(...)
-    Game_Update() -> DebugConsole::Update() and DebugConsole::Render()
-    Game_Exit()   -> DebugConsole::Exit()
+    game_init()   -> DebugConsole::init(...)
+    game_update() -> DebugConsole::update() and DebugConsole::render()
+    game_exit()   -> DebugConsole::cleanup()
 
 Freeze check:
-    if (DebugConsole::IsOpen()) return; // skip gameplay logic
+    if (DebugConsole::is_open()) return; // skip gameplay logic
 */
 
 #include <vector>
@@ -22,8 +22,8 @@ Freeze check:
 
 namespace DebugConsole
 {
-    // stores references to all game state the commands need, must be called once in Game_Init()
-    void Init(
+    // stores references to all game state the commands need, must be called once in game_init()
+    void init(
         bool& is_enemy_area_box_visible,
         bool& is_random_spawning_enabled,
         bool& is_difficulty_debug_visible,
@@ -35,15 +35,15 @@ namespace DebugConsole
     );
 
     // handles the '/' toggle and all keyboard input, call every frame BEFORE the gameplay freeze check
-    void Update();
+    void update();
 
     // draws the input bar and scrollable history panel, call every frame AFTER all other rendering
-    void Render();
+    void render();
 
-    // frees mesh resources, call in Game_Exit()
-    void Exit();
+    // frees mesh resources, call in game_exit()
+    void cleanup();
 
     // returns true while the console is open, use this to freeze gameplay logic
-    bool IsOpen();
+    bool is_open();
 
 } // namespace DebugConsole

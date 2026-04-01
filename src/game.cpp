@@ -70,7 +70,7 @@ namespace {
     std::string s_temp_name;
 }
 
-void Game_Init()
+void game_init()
 {
     s_anim_timer = 0.0f;
     s_anim_duration = 0.1f;
@@ -84,7 +84,7 @@ void Game_Init()
     s_is_paused = false;
     s_is_dead = false;
     s_frame_dt = 0.0f;
-    DifficultySystem::Difficulty_Reset();
+    DifficultySystem::difficulty_reset();
 
     // Initialise shared heart animation state (6 frames, single row sprite sheet)
     heart_anim = {};
@@ -96,12 +96,12 @@ void Game_Init()
     if (s_bg_texture_2) { AEGfxTextureUnload(s_bg_texture_2); s_bg_texture_2 = nullptr; }
     if (s_bg_mesh) { AEGfxMeshFree(s_bg_mesh);           s_bg_mesh = nullptr; }
 
-    GameClouds::Exit();
-    DayCycle::Exit();
-    LaserBeam_Free();
-    StreakSystem::Exit();
-    SoundManager::Exit();
-    DeathTransition::Reset();
+    GameClouds::cleanup();
+    DayCycle::cleanup();
+    laser_beam_free();
+    StreakSystem::cleanup();
+    SoundManager::cleanup();
+    DeathTransition::reset();
 
     s_day_transition_fired = false;
 
@@ -109,7 +109,7 @@ void Game_Init()
 
 
     //player texture
-    const char* skinPath = Shop_GetActiveSkinPath();
+    const char* skinPath = shop_get_active_skin_path();
     s_player_texture = AEGfxTextureLoad(skinPath);
     AE_ASSERT_MESG(s_player_texture, "Failed to load player skin!");
 
@@ -126,20 +126,20 @@ void Game_Init()
     @overview   Enemy and Boss
     @author     Wong Zi Yuan (w.ziyuan@digipen.edu)
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
-    UpgradeSystem::Upgrade_Reset();                                                                                          // clear all upgrade bonuses
-    GameEnemyBoss::Init(meshes, word_bank, health, enemy_animation, enemy_area, enemy_pool, free_slot_queue, s_boss_spawning_blocked);
+    UpgradeSystem::upgrade_reset();                                                                                          // clear all upgrade bonuses
+    GameEnemyBoss::init(meshes, word_bank, health, enemy_animation, enemy_area, enemy_pool, free_slot_queue, s_boss_spawning_blocked);
     /*_______________________________________________________________________________________________________________________________________________________________________________________________*/
 
     s_bg_mesh = Rect_Mesh(1.0f, 1.0f, 0xFFFFFFFF);
-    GameClouds::Init();
-    DayCycle::Init();
-    Typing_Init();
-    LeaderboardSystem::Init();
-    //Shop_Init();
-    PowerUpSystem::Init(); // azfar code ver 1
-    UpgradeSystem::Upgrade_Init();                                                                                          // load upgrade card assets and reset all bonuses for a fresh session
+    GameClouds::init();
+    DayCycle::init();
+    typing_init();
+    LeaderboardSystem::init();
+    //shop_init();
+    PowerUpSystem::init(); // azfar code ver 1
+    UpgradeSystem::upgrade_init();                                                                                          // load upgrade card assets and reset all bonuses for a fresh session
 
-    DebugConsole::Init(
+    DebugConsole::init(
         s_is_enemy_area_box_visible,
         s_is_random_spawning_enabled,
         s_is_difficulty_debug_visible,
@@ -149,22 +149,22 @@ void Game_Init()
         enemy_area,
         word_bank
     );
-    Particles_Init();
-    Weather_Init();
+    particles_init();
+    weather_init();
 
 
-    LaserBeam_Init();
-    LaserBeam_SetOrigin(SPRITE_X + 75.0f, SPRITE_Y);
-    SoundManager::Init();
-    StreakSystem::Init();
-    DeathTransition::Reset();
+    laser_beam_init();
+    laser_beam_set_origin(SPRITE_X + 75.0f, SPRITE_Y);
+    SoundManager::init();
+    StreakSystem::init();
+    DeathTransition::reset();
 }
 
-void Game_Update()
+void game_update()
 {
 
-    DebugConsole::Update();
-    if (DebugConsole::IsOpen()) goto render_only; // freeze everything while console open
+    DebugConsole::update();
+    if (DebugConsole::is_open()) goto render_only; // freeze everything while console open
     // ------------------------------------------------------------------------
     // 1. INPUTS
     // ------------------------------------------------------------------------
@@ -174,7 +174,7 @@ void Game_Update()
         if (s_is_paused)
         {
             // If a sub-menu is open, let the UI handle the ESC key! Do NOT unpause!
-            if (UiPauseMenu::IsSettingsOpen() || UiPauseMenu::IsPopupOpen())
+            if (UiPauseMenu::is_settings_open() || UiPauseMenu::is_popup_open())
             {
                 // Do nothing here. (Pause.cpp and Settings.cpp will close themselves)
             }
@@ -203,43 +203,43 @@ void Game_Update()
     if (health.health_current <= 0.0f && !s_is_dead)
     {
         s_is_dead = true;
-        DeathTransition::Start();
-        SoundManager::PlayGameOverSfx();
+        DeathTransition::start();
+        SoundManager::play_game_over_sfx();
     }
 
-    if (!s_is_paused && !s_is_dead && !UpgradeSystem::Upgrade_IsScreenOpen())
+    if (!s_is_paused && !s_is_dead && !UpgradeSystem::upgrade_is_screen_open())
     {
-        float healthBefore = health.health_current; // for streak check
+        float health_before = health.health_current; // for streak check
         s_frame_dt = (float)AEFrameRateControllerGetFrameTime();                                                                      // read delta time for this frame
         if (s_frame_dt > 0.1f)
         {
             // Force it to a safe standard frame time (~60 FPS)
             s_frame_dt = 0.01667f;
         }
-        s_frame_dt *= PowerUpSystem::GetTimeScale(); // azfar code
+        s_frame_dt *= PowerUpSystem::get_time_scale(); // azfar code
         float dt = s_frame_dt;                                                                                                        // local alias used by the rest of the update block
 
-        GameClouds::Update(dt);
-        DayCycle::Update(dt);
+        GameClouds::update(dt);
+        DayCycle::update(dt);
         /*
         @overview   Boss update and enemy spawning
         @author     Wong Zi Yuan (w.ziyuan@digipen.edu)
         *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
-        DifficultySystem::Difficulty_UpdateOverTime(dt);                                                                              // increase difficulty over time
-        BossSystem::Boss_Update(enemy_pool, free_slot_queue, enemy_area, word_bank, dt, s_boss_spawning_blocked, s_is_random_spawning_enabled);                   // run boss logic for this frame
-        GameEnemyBoss::Update(dt, enemy_pool, free_slot_queue, enemy_area, word_bank, health, s_boss_spawning_blocked, s_is_random_spawning_enabled, s_random_spawn_timer_seconds);
+        DifficultySystem::difficulty_update_over_time(dt);                                                                              // increase difficulty over time
+        BossSystem::boss_update(enemy_pool, free_slot_queue, enemy_area, word_bank, dt, s_boss_spawning_blocked, s_is_random_spawning_enabled);                   // run boss logic for this frame
+        GameEnemyBoss::update(dt, enemy_pool, free_slot_queue, enemy_area, word_bank, health, s_boss_spawning_blocked, s_is_random_spawning_enabled, s_random_spawn_timer_seconds);
         if (s_boss_spawning_blocked && !s_day_transition_fired)
         {
-            DayCycle::TriggerTransition();
+            DayCycle::trigger_transition();
             s_day_transition_fired = true;
         }
         /*_______________________________________________________________________________________________________________________________________________________________________________________________*/
 
-        PowerUpSystem::Update(dt, enemy_pool, enemy_area, health);
-        Particles_Update(dt);
-        Weather_Update(dt, enemy_pool);
-        LaserBeam_Update(dt);
-        StreakSystem::Update(dt);
+        PowerUpSystem::update(dt, enemy_pool, enemy_area, health);
+        particles_update(dt);
+        weather_update(dt, enemy_pool);
+        laser_beam_update(dt);
+        StreakSystem::update(dt);
         // mouse click -> convert to world coords
         if (AEInputCheckTriggered(AEVK_LBUTTON))
         {
@@ -247,12 +247,12 @@ void Game_Update()
             AEInputGetCursorPosition(&mx, &my);
             float wx = (float)mx - 800.0f;
             float wy = 450.0f - (float)my;
-            PowerUpSystem::OnMouseClick(wx, wy, enemy_pool);
+            PowerUpSystem::on_mouse_click(wx, wy, enemy_pool);
         } // azfar code
 
         // Gate typing while player is frozen (snow), stunned (thunder), or locked (ghost)
-        if (!Weather_IsPlayerFrozen() && !Weather_IsPlayerStunned() && !Weather_IsTypingLocked())
-            Typing_UpdateAndApplyToEnemies(enemy_pool, score, health);
+        if (!weather_is_player_frozen() && !weather_is_player_stunned() && !weather_is_typing_locked())
+            typing_update_and_apply_to_enemies(enemy_pool, score, health);
 
         // MOVED ANIMATION LOGIC HERE (so it pauses)
         // Update timer
@@ -274,25 +274,25 @@ void Game_Update()
             s_uv_offset_x = col * SPRITE_UV_WIDTH;
             s_uv_offset_y = row * SPRITE_UV_HEIGHT;
         }
-        if (health.health_current < healthBefore)
-            StreakSystem::OnStreakReset();
+        if (health.health_current < health_before)
+            StreakSystem::on_streak_reset();
     }
 
     // Trigger upgrade screen the frame the boss death animation finishes.
     // Runs outside the gameplay gate so it fires even on the frame the gate closes.
-    if (BossSystem::Boss_WasJustDefeated()) {
+    if (BossSystem::boss_was_just_defeated()) {
         s_day_transition_fired = false; // allow transition to fire again next boss wave
-        UpgradeSystem::Upgrade_TriggerScreen();
-        DayCycle::TriggerDayTransition();
+        UpgradeSystem::upgrade_trigger_screen();
+        DayCycle::trigger_day_transition();
 
     }
     // Run upgrade input and card animation while the screen is open.
     // Runs outside the normal gameplay gate so the cards stay interactive.
-    if (UpgradeSystem::Upgrade_IsScreenOpen())
+    if (UpgradeSystem::upgrade_is_screen_open())
     {
         float dt = (float)AEFrameRateControllerGetFrameTime();
         if (dt > 0.1f) dt = 0.01667f;
-        UpgradeSystem::Upgrade_Update(health);
+        UpgradeSystem::upgrade_update(health);
     }
 
 
@@ -302,9 +302,9 @@ void Game_Update()
 
     /*_________________________________________________________________________________________________________________________________________*/
 render_only:
-    //DebugConsole::Render(); // draw console on top of everything
+    //DebugConsole::render(); // draw console on top of everything
     //background
-    //if (!DeathTransition::IsActive())
+    //if (!DeathTransition::is_active())
    // {
     AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
     AEGfxSetBlendMode(AE_GFX_BM_NONE);
@@ -315,8 +315,8 @@ render_only:
 
     AEGfxTexture* activeBg = (g_shop_bg_id == 0) ? s_bg_texture_1 : s_bg_texture_2;
     AEGfxTextureSet(activeBg, 0.0f, 0.0f);
-    DayCycle::Draw();
-    GameClouds::Draw();
+    DayCycle::draw();
+    GameClouds::draw();
 
 
 
@@ -325,9 +325,9 @@ render_only:
     AEGfxSetTransparency(1.0f);
     AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);
     AEGfxTextureSet(activeBg, 0.0f, 0.0f);
-    Mesh_Renderer(s_bg_mesh, 0.0f, 0.0f, 1600.0f, 900.0f, 0.0f);
+    mesh_renderer(s_bg_mesh, 0.0f, 0.0f, 1600.0f, 900.0f, 0.0f);
 
-    Weather_DrawBackground(); // Rainbow draws here, behind enemies
+    weather_draw_background(); // Rainbow draws here, behind enemies
 
     //player (skip once dead - DeathTransition draws the death animation instead)
     if (!s_is_dead)
@@ -337,92 +337,92 @@ render_only:
         AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);
 
         AEGfxTextureSet(s_player_texture, s_uv_offset_x, s_uv_offset_y);
-        Mesh_Renderer(s_player_mesh, SPRITE_X, SPRITE_Y, 150.0f, 150.0f, 0.0f);
-        StreakSystem::Draw();
+        mesh_renderer(s_player_mesh, SPRITE_X, SPRITE_Y, 150.0f, 150.0f, 0.0f);
+        StreakSystem::draw();
     }
 
     // Render typing letters 
 
-    Typing_Render();
+    typing_render();
 
     /*
     @overview   Draw enemies and debug overlays
     @author     Wong Zi Yuan (w.ziyuan@digipen.edu)
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
-    GameEnemyBoss::Draw(meshes, enemy_pool, s_is_enemy_area_box_visible, enemy_area);
-    Particles_Draw();
-    LaserBeam_Draw();
+    GameEnemyBoss::draw(meshes, enemy_pool, s_is_enemy_area_box_visible, enemy_area);
+    particles_draw();
+    laser_beam_draw();
 
-    UiSystem::Debug_DrawDifficultyTopRight(s_is_difficulty_debug_visible, s_is_random_spawning_enabled, health);              // draw debug difficulty ui with health
+    UiSystem::debug_draw_difficulty_top_right(s_is_difficulty_debug_visible, s_is_random_spawning_enabled, health);              // draw debug difficulty ui with health
     /*_______________________________________________________________________________________________________________________________________________________________________________________________*/
 
-    UiSystem::Ui_DrawScoreAndTyped(score); // draw score and typed buffer
+    UiSystem::ui_draw_score_and_typed(score); // draw score and typed buffer
 
-    PowerUpSystem::Draw(); // azfar code
+    PowerUpSystem::draw(); // azfar code
 
-    Weather_Draw();
+    weather_draw();
 
     /*
     @overview   Boss flash overlay and Health bar
     @author     Wong Zi Yuan (w.ziyuan@digipen.edu)
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
-    UiSystem::Ui_DrawHealthBar(health, meshes, heart_anim, s_is_paused || DebugConsole::IsOpen() ? 0.0f : s_frame_dt);        // draw animated heart health bar
-    BossSystem::Boss_DrawFlashOverlay(meshes);                                                                                 // draw the white flash overlay on top of everything else
+    UiSystem::ui_draw_health_bar(health, meshes, heart_anim, s_is_paused || DebugConsole::is_open() ? 0.0f : s_frame_dt);        // draw animated heart health bar
+    BossSystem::boss_draw_flash_overlay(meshes);                                                                                 // draw the white flash overlay on top of everything else
     /*_______________________________________________________________________________________________________________________________________________________________________________________________*/
 
     // Draw upgrade card screen on top of the flash overlay when active
-    if (UpgradeSystem::Upgrade_IsScreenOpen())
-        UpgradeSystem::Upgrade_Draw();
+    if (UpgradeSystem::upgrade_is_screen_open())
+        UpgradeSystem::upgrade_draw();
 
     // PAUSE OVERLAY
-    UiPauseMenu::Check_Paused(s_is_paused, s_is_dead, s_bg_mesh);
+    UiPauseMenu::check_paused(s_is_paused, s_is_dead, s_bg_mesh);
 
     // --- Audio Pause Tracking ---
     if (s_is_paused && !s_was_paused) {
-        SoundManager::PauseGameplaySounds();
+        SoundManager::pause_gameplay_sounds();
     }
     else if (!s_is_paused && s_was_paused) {
-        SoundManager::ResumeGameplaySounds();
+        SoundManager::resume_gameplay_sounds();
     }
     s_was_paused = s_is_paused;
 
     // Game Over & Leaderboard OVERLAY
     if (s_is_dead)
     {
-        float _dt = (float)AEFrameRateControllerGetFrameTime();
-        DeathTransition::Update(_dt);
-        DeathTransition::Draw(s_player_mesh, s_player_texture, s_uv_offset_x, s_uv_offset_y); // deathPlayer not activePlayer
-        if (DeathTransition::IsComplete())
-            UiGameOver::Check_IfDead(s_is_dead, s_is_game_over, s_open_leaderboard, s_bg_mesh, s_temp_name, score);
+        float dt = (float)AEFrameRateControllerGetFrameTime();
+        DeathTransition::update(dt);
+        DeathTransition::draw(s_player_mesh, s_player_texture, s_uv_offset_x, s_uv_offset_y); // deathPlayer not activePlayer
+        if (DeathTransition::is_complete())
+            UiGameOver::check_if_dead(s_is_dead, s_is_game_over, s_open_leaderboard, s_bg_mesh, s_temp_name, score);
     }
-    DebugConsole::Render();
+    DebugConsole::render();
 
 }
 
-void Game_Exit()
+void game_exit()
 {
-    UiGameOver::Exit();
+    UiGameOver::cleanup();
 
     /*
     @overview   Boss and enemy cleanup
     @author     Wong Zi Yuan (w.ziyuan@digipen.edu)
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
-    GameEnemyBoss::Free(meshes, enemy_pool, free_slot_queue, s_boss_spawning_blocked);                                        // unload boss assets, free enemy pool and meshes, return the reserved pool slot
+    GameEnemyBoss::free(meshes, enemy_pool, free_slot_queue, s_boss_spawning_blocked);                                        // unload boss assets, free enemy pool and meshes, return the reserved pool slot
     /*_______________________________________________________________________________________________________________________________________________________________________________________________*/
 
-    Typing_Exit();
-    LeaderboardSystem::Free();
-    PowerUpSystem::Free();
-    UpgradeSystem::Upgrade_Free();                                                                                           // unload upgrade card texture and meshes
-    Particles_Free();
-    Weather_Exit();
-    LaserBeam_Free();
-    DebugConsole::Exit();
-    SoundManager::Exit();
-    DeathTransition::Reset();
-    GameClouds::Exit();
-    DayCycle::Exit();
-    StreakSystem::Exit();
+    typing_exit();
+    LeaderboardSystem::free();
+    PowerUpSystem::free();
+    UpgradeSystem::upgrade_free();                                                                                           // unload upgrade card texture and meshes
+    particles_free();
+    weather_exit();
+    laser_beam_free();
+    DebugConsole::cleanup();
+    SoundManager::cleanup();
+    DeathTransition::reset();
+    GameClouds::cleanup();
+    DayCycle::cleanup();
+    StreakSystem::cleanup();
 
     if (s_player_mesh) {
         AEGfxMeshFree(s_player_mesh);

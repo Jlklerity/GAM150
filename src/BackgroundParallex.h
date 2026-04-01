@@ -3,15 +3,15 @@
 
 namespace BackgroundParallax {
 
-    void MenuParallax_SetPanOffset(float offset);
-    void MenuParallax_Init();
-    void MenuParallax_Draw(float virtual_cam_y);
-    void MenuParallax_Update(float dt);
-    void MenuParallax_Exit();
+    void menu_parallax_set_pan_offset(float offset);
+    void menu_parallax_init();
+    void menu_parallax_draw(float virtual_cam_y);
+    void menu_parallax_update(float dt);
+    void menu_parallax_exit();
 
-    int           MenuParallax_GetLayerCount();
-    AEGfxTexture* MenuParallax_GetLayerTexture(int index);
-    float         MenuParallax_GetLayerDepth(int index);
-    float         MenuParallax_GetLayerUOffset(int index);
-    float         MenuParallax_GetManualPanOffset();
+    int           menu_parallax_get_layer_count();
+    AEGfxTexture* menu_parallax_get_layer_texture(int index);
+    float         menu_parallax_get_layer_depth(int index);
+    float         menu_parallax_get_layer_u_offset(int index);
+    float         menu_parallax_get_manual_pan_offset();
 }

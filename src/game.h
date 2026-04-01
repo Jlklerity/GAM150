@@ -1,7 +1,7 @@
 #pragma once
 
-void Game_Init();
+void game_init();
 
-void Game_Update();
+void game_update();
 
-void Game_Exit();
+void game_exit();

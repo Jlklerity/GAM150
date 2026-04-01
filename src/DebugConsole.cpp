@@ -59,7 +59,7 @@ namespace
 
     // checks if a key was just pressed this frame (not held), param is the AE key code,
     // tracks previous frame state independently from typing.cpp so the console doesn't interfere with gameplay input
-    bool KeyTriggered(int key)
+    bool key_triggered(int key)
     {
         if (key < 0 || key >= 256) return false;
         bool curr = (AEInputCheckCurr(static_cast<u8>(key)) != 0);
@@ -71,7 +71,7 @@ namespace
     // History helpers
     // adds a line to the command history, param is the text and whether it's an error (red) or normal (white),
     // drops the oldest entry if we exceed MAX_HISTORY, and snaps the scroll back to the bottom so the new entry is visible
-    void PushHistory(const std::string& text, bool is_error = false)
+    void push_history(const std::string& text, bool is_error = false)
     {
         s_history.push_back({ text, is_error });
         if ((int)s_history.size() > MAX_HISTORY)
@@ -82,7 +82,7 @@ namespace
     // Command parsing helpers
     // splits a command string into tokens by whitespace, e.g. "spawn 5" -> ["spawn", "5"],
     // used by ExecuteCommand to separate the command name from its arguments
-    std::vector<std::string> Tokenise(const std::string& line)
+    std::vector<std::string> tokenise(const std::string& line)
     {
         std::vector<std::string> tokens;
         std::istringstream ss(line);
@@ -94,7 +94,7 @@ namespace
     // Case-insensitive compare
     // case-insensitive string compare, so "/Spawn" and "/spawn" both work,
     // returns true if both strings are the same length and all chars match when lowercased
-    bool IEquals(const std::string& a, const std::string& b)
+    bool i_equals(const std::string& a, const std::string& b)
     {
         if (a.size() != b.size()) return false;
         for (size_t i = 0; i < a.size(); ++i)
@@ -106,66 +106,66 @@ namespace
     // parses and runs a command string entered by the player, param is the raw input including the leading '/',
     // echoes the command into history, strips the slash, tokenises, then dispatches to the matching handler,
     // pushes an error message to history if the command is unknown or used incorrectly
-    void ExecuteCommand(const std::string& raw)
+    void execute_command(const std::string& raw)
     {
         // Echo the typed command into history (white)
-        PushHistory("> " + raw, false);
+        push_history("> " + raw, false);
 
         // Strip leading '/' 
         std::string line = raw;
         if (!line.empty() && line[0] == '/') line = line.substr(1);
 
-        auto tokens = Tokenise(line);
+        auto tokens = tokenise(line);
         if (tokens.empty()) return;
 
         const std::string& cmd = tokens[0];
 
         // /spawn [3-8]   -- spawn an enemy of the given word length
-        if (IEquals(cmd, "spawn"))
+        if (i_equals(cmd, "spawn"))
         {
             if (tokens.size() < 2)
             {
-                PushHistory("Usage: /spawn [3-8] | friendly | shield | boss | minion", true);
+                push_history("Usage: /spawn [3-8] | friendly | shield | boss | minion", true);
                 return;
             }
 
             // /spawn friendly
-            if (IEquals(tokens[1], "friendly"))
+            if (i_equals(tokens[1], "friendly"))
             {
-                int max_len = DifficultySystem::Difficulty_GetUnlockedMaxWordLength();
-                EnemySystem::Enemy_SpawnFriendlyFromPool(*s_p_enemy_pool, *s_p_free_slots, *s_p_enemy_area, *s_p_word_bank, 3, max_len, 1.15f);
-                PushHistory("Spawned friendly enemy.", false);
+                int max_len = DifficultySystem::difficulty_get_unlocked_max_word_length();
+                EnemySystem::enemy_spawn_friendly_from_pool(*s_p_enemy_pool, *s_p_free_slots, *s_p_enemy_area, *s_p_word_bank, 3, max_len, 1.15f);
+                push_history("Spawned friendly enemy.", false);
                 return;
             }
 
             // /spawn shield
-            if (IEquals(tokens[1], "shield"))
+            if (i_equals(tokens[1], "shield"))
             {
-                int max_len = DifficultySystem::Difficulty_GetUnlockedMaxWordLength();
-                EnemySystem::Enemy_SpawnShieldedFromPool(*s_p_enemy_pool, *s_p_free_slots, *s_p_enemy_area, *s_p_word_bank, 3, max_len, 1.05f);
-                PushHistory("Spawned shielded enemy.", false);
+                int max_len = DifficultySystem::difficulty_get_unlocked_max_word_length();
+                EnemySystem::enemy_spawn_shielded_from_pool(*s_p_enemy_pool, *s_p_free_slots, *s_p_enemy_area, *s_p_word_bank, 3, max_len, 1.05f);
+                push_history("Spawned shielded enemy.", false);
                 return;
             }
 
             // /spawn boss
-            if (IEquals(tokens[1], "boss"))
+            if (i_equals(tokens[1], "boss"))
             {
-                BossSystem::Boss_ForceSpawn();
-                PushHistory("Spawned boss.", false);
+                BossSystem::boss_force_spawn();
+                push_history("Spawned boss.", false);
                 return;
             }
 
             // /spawn minion - spawn one boss minion (boss must be active)
-            if (IEquals(tokens[1], "minion"))
+            if (i_equals(tokens[1], "minion"))
             {
-                if (!BossSystem::Boss_IsActive())
+                if (!BossSystem::boss_is_active())
                 {
-                    PushHistory("Error: boss must be active to spawn a minion.", true);
+                    push_history("Error: boss must be active to spawn a minion.", true);
                     return;
                 }
-                int len = Utility::Utility_RandInt(BossConfig::BOSS_WORD_MIN_LEN, BossConfig::BOSS_WORD_MAX_LEN);
-                EnemySystem::Enemy_SpawnFromPool(*s_p_enemy_pool, *s_p_free_slots, *s_p_enemy_area, *s_p_word_bank, len);
-                PushHistory("Spawned boss minion (word length " + std::to_string(len) + ").", false);
+                int len = Utility::utility_rand_int(BossConfig::BOSS_WORD_MIN_LEN, BossConfig::BOSS_WORD_MAX_LEN);
+                EnemySystem::enemy_spawn_from_pool(*s_p_enemy_pool, *s_p_free_slots, *s_p_enemy_area, *s_p_word_bank, len);
+                push_history("Spawned boss minion (word length " + std::to_string(len) + ").", false);
                 return;
             }
 
@@ -177,226 +177,226 @@ namespace
             }
             catch (...)
             {
-                PushHistory("Error: unknown spawn type. Use [3-8], friendly, shield, boss, minion.", true);
+                push_history("Error: unknown spawn type. Use [3-8], friendly, shield, boss, minion.", true);
                 return;
             }
             if (len < 3 || len > 8)
             {
-                PushHistory("Error: word length must be between 3 and 8.", true);
+                push_history("Error: word length must be between 3 and 8.", true);
                 return;
             }
-            EnemySystem::Enemy_SpawnFromPool(*s_p_enemy_pool, *s_p_free_slots, *s_p_enemy_area, *s_p_word_bank, len);
-            PushHistory("Spawned enemy with word length " + std::to_string(len) + ".", false);
+            EnemySystem::enemy_spawn_from_pool(*s_p_enemy_pool, *s_p_free_slots, *s_p_enemy_area, *s_p_word_bank, len);
+            push_history("Spawned enemy with word length " + std::to_string(len) + ".", false);
             return;                                                         // must return or falls through to unknown command
         }
 
         // /kill boss - instantly kill the active boss
-        if (IEquals(cmd, "kill"))
+        if (i_equals(cmd, "kill"))
         {
             if (tokens.size() < 2)
             {
-                PushHistory("Usage: /kill boss", true);
+                push_history("Usage: /kill boss", true);
                 return;
             }
-            if (!BossSystem::Boss_IsActive())
+            if (!BossSystem::boss_is_active())
             {
-                PushHistory("Error: boss must be active to kill it.", true);
+                push_history("Error: boss must be active to kill it.", true);
                 return;
             }
-            if (IEquals(tokens[1], "boss"))
+            if (i_equals(tokens[1], "boss"))
             {
-                BossSystem::Boss_ForceKill(*s_p_enemy_pool, *s_p_free_slots);
-                PushHistory("Boss force-killed.", false);
+                BossSystem::boss_force_kill(*s_p_enemy_pool, *s_p_free_slots);
+                push_history("Boss force-killed.", false);
             }
             else
             {
-                PushHistory("Unknown kill target. Try: /kill boss", true);
+                push_history("Unknown kill target. Try: /kill boss", true);
             }
             return;
         }
 
         // /health add    -- add 10 hp
-        if (IEquals(cmd, "health"))
+        if (i_equals(cmd, "health"))
         {
             if (tokens.size() < 2)
             {
-                PushHistory("Usage: /health add", true);
+                push_history("Usage: /health add", true);
                 return;
             }
-            if (IEquals(tokens[1], "add"))
+            if (i_equals(tokens[1], "add"))
             {
-                HealthSystem::Health_Add(*s_p_health, 10.0f);
-                PushHistory("Added 10 HP. Current: " + std::to_string((int)s_p_health->health_current), false);
+                HealthSystem::health_add(*s_p_health, 10.0f);
+                push_history("Added 10 HP. Current: " + std::to_string((int)s_p_health->health_current), false);
             }
-            else if (IEquals(tokens[1], "die")) {
+            else if (i_equals(tokens[1], "die")) {
                 s_p_health->health_current = 0;
-                PushHistory("Player killed.", false);
+                push_history("Player killed.", false);
             }
             else
             {
-                PushHistory("Unknown health subcommand. Try: /health add", true);
+                push_history("Unknown health subcommand. Try: /health add", true);
             }
             return;
         }
 
 
         // /difficulty up | down | show
-        if (IEquals(cmd, "difficulty"))
+        if (i_equals(cmd, "difficulty"))
         {
             if (tokens.size() < 2)
             {
-                PushHistory("Usage: /difficulty [up|down|show]", true);
+                push_history("Usage: /difficulty [up|down|show]", true);
                 return;
             }
-            if (IEquals(tokens[1], "up"))
+            if (i_equals(tokens[1], "up"))
             {
-                DifficultySystem::Difficulty_Add(1.0f);
-                PushHistory("Difficulty increased to " +
-                    std::to_string((int)DifficultySystem::Difficulty_Get()) + ".", false);
+                DifficultySystem::difficulty_add(1.0f);
+                push_history("Difficulty increased to " +
+                    std::to_string((int)DifficultySystem::difficulty_get()) + ".", false);
             }
-            else if (IEquals(tokens[1], "down"))
+            else if (i_equals(tokens[1], "down"))
             {
-                DifficultySystem::Difficulty_Add(-1.0f);
-                PushHistory("Difficulty decreased to " +
-                    std::to_string((int)DifficultySystem::Difficulty_Get()) + ".", false);
+                DifficultySystem::difficulty_add(-1.0f);
+                push_history("Difficulty decreased to " +
+                    std::to_string((int)DifficultySystem::difficulty_get()) + ".", false);
             }
-            else if (IEquals(tokens[1], "show"))
+            else if (i_equals(tokens[1], "show"))
             {
                 *s_p_difficulty_visible = !*s_p_difficulty_visible;
-                PushHistory(std::string("Difficulty HUD: ") + (*s_p_difficulty_visible ? "ON" : "OFF"), false);
+                push_history(std::string("Difficulty HUD: ") + (*s_p_difficulty_visible ? "ON" : "OFF"), false);
             }
             else
             {
-                PushHistory("Unknown difficulty subcommand. Try: up | down | show", true);
+                push_history("Unknown difficulty subcommand. Try: up | down | show", true);
             }
             return;
         }
 
         // /debugbox - toggle enemy area debug box
-        if (IEquals(cmd, "debugbox"))
+        if (i_equals(cmd, "debugbox"))
         {
             *s_p_enemy_area_visible = !*s_p_enemy_area_visible;
-            PushHistory(std::string("Debug box: ") + (*s_p_enemy_area_visible ? "ON" : "OFF"), false);
+            push_history(std::string("Debug box: ") + (*s_p_enemy_area_visible ? "ON" : "OFF"), false);
             return;
         }
 
         // /autospawn - toggle automatic enemy spawning
-        if (IEquals(cmd, "autospawn"))
+        if (i_equals(cmd, "autospawn"))
         {
             *s_p_auto_spawn = !*s_p_auto_spawn;
-            PushHistory(std::string("Auto-spawn: ") + (*s_p_auto_spawn ? "ON" : "OFF"), false);
+            push_history(std::string("Auto-spawn: ") + (*s_p_auto_spawn ? "ON" : "OFF"), false);
             return;
         }
 
         // /help - list all commands
-        if (IEquals(cmd, "help"))
+        if (i_equals(cmd, "help"))
         {
-            PushHistory("/spawn [3-8]         - spawn enemy by word length", false);
-            PushHistory("/spawn friendly      - spawn a friendly enemy", false);
-            PushHistory("/spawn shield        - spawn a shielded enemy", false);
-            PushHistory("/spawn boss          - force-spawn the boss", false);
-            PushHistory("/spawn minion        - spawn a boss minion (boss required)", false);
-            PushHistory("/kill boss           - instantly kill the active boss (boss required)", false);
-            PushHistory("/trickroom           - force-trigger Trick Room (boss required)", false);
-            PushHistory("/health add          - add 10 HP", false);
-            PushHistory("/health die          - kills player", false);
-            PushHistory("/difficulty up       - increase difficulty by 1", false);
-            PushHistory("/difficulty down     - decrease difficulty by 1", false);
-            PushHistory("/difficulty show     - toggle difficulty HUD", false);
-            PushHistory("/debugbox            - toggle enemy area box", false);
-            PushHistory("/autospawn           - toggle auto enemy spawning", false);
-            PushHistory("/powerup lightning   - force-spawn Lightning drop", false); // azfar code start
-            PushHistory("/powerup shield      - force-spawn Shield drop", false);
-            PushHistory("/powerup slow        - force-spawn TimeSlow drop", false);
-            PushHistory("/weather snow        - trigger blizzard event", false);
-            PushHistory("/weather thunder     - trigger thunderstorm event", false);
-            PushHistory("/weather rainbow     - trigger rainbow event", false);
-            PushHistory("/weather ghost       - trigger ghost weather event", false);
+            push_history("/spawn [3-8]         - spawn enemy by word length", false);
+            push_history("/spawn friendly      - spawn a friendly enemy", false);
+            push_history("/spawn shield        - spawn a shielded enemy", false);
+            push_history("/spawn boss          - force-spawn the boss", false);
+            push_history("/spawn minion        - spawn a boss minion (boss required)", false);
+            push_history("/kill boss           - instantly kill the active boss (boss required)", false);
+            push_history("/trickroom           - force-trigger Trick Room (boss required)", false);
+            push_history("/health add          - add 10 HP", false);
+            push_history("/health die          - kills player", false);
+            push_history("/difficulty up       - increase difficulty by 1", false);
+            push_history("/difficulty down     - decrease difficulty by 1", false);
+            push_history("/difficulty show     - toggle difficulty HUD", false);
+            push_history("/debugbox            - toggle enemy area box", false);
+            push_history("/autospawn           - toggle auto enemy spawning", false);
+            push_history("/powerup lightning   - force-spawn Lightning drop", false); // azfar code start
+            push_history("/powerup shield      - force-spawn Shield drop", false);
+            push_history("/powerup slow        - force-spawn TimeSlow drop", false);
+            push_history("/weather snow        - trigger blizzard event", false);
+            push_history("/weather thunder     - trigger thunderstorm event", false);
+            push_history("/weather rainbow     - trigger rainbow event", false);
+            push_history("/weather ghost       - trigger ghost weather event", false);
 
             return;
         }
 
         // /powerup lightning | shield | slow | force spawn a power up drop
-        if (IEquals(cmd, "powerup"))
+        if (i_equals(cmd, "powerup"))
         {
             if (tokens.size() < 2)
             {
-                PushHistory("Usage: /powerup [lightning|shield|slow]", true);
+                push_history("Usage: /powerup [lightning|shield|slow]", true);
                 return;
             }
-            if (IEquals(tokens[1], "lightning"))
+            if (i_equals(tokens[1], "lightning"))
             {
-                PowerUpSystem::DebugSpawn(PowerUpSystem::PowerType::LIGHTNING);
-                PushHistory("Spawned Lightning power-up.", false);
+                PowerUpSystem::debug_spawn(PowerUpSystem::PowerType::LIGHTNING);
+                push_history("Spawned Lightning power-up.", false);
             }
-            else if (IEquals(tokens[1], "shield"))
+            else if (i_equals(tokens[1], "shield"))
             {
-                PowerUpSystem::DebugSpawn(PowerUpSystem::PowerType::SHIELD);
-                PushHistory("Spawned Shield power-up.", false);
+                PowerUpSystem::debug_spawn(PowerUpSystem::PowerType::SHIELD);
+                push_history("Spawned Shield power-up.", false);
             }
-            else if (IEquals(tokens[1], "slow"))
+            else if (i_equals(tokens[1], "slow"))
             {
-                PowerUpSystem::DebugSpawn(PowerUpSystem::PowerType::TIME_SLOW);
-                PushHistory("Spawned TimeSlow power-up.", false);
+                PowerUpSystem::debug_spawn(PowerUpSystem::PowerType::TIME_SLOW);
+                push_history("Spawned TimeSlow power-up.", false);
             }
             else
             {
-                PushHistory("Unknown power-up type. Use: lightning | shield | slow", true);
+                push_history("Unknown power-up type. Use: lightning | shield | slow", true);
             }
             return;
         }
 
         // /weather snow | thunder | rainbow | ghost  -- force-trigger a weather event
-        if (IEquals(cmd, "weather"))
+        if (i_equals(cmd, "weather"))
         {
             if (tokens.size() < 2)
             {
-                PushHistory("Usage: /weather [snow|thunder|rainbow|ghost]", true);
+                push_history("Usage: /weather [snow|thunder|rainbow|ghost]", true);
                 return;
             }
-            if (IEquals(tokens[1], "snow"))
+            if (i_equals(tokens[1], "snow"))
             {
-                Weather_ForceEvent(0, *s_p_enemy_pool);
-                PushHistory("Triggered snow blizzard.", false);
+                weather_force_event(0, *s_p_enemy_pool);
+                push_history("Triggered snow blizzard.", false);
             }
-            else if (IEquals(tokens[1], "thunder"))
+            else if (i_equals(tokens[1], "thunder"))
             {
-                Weather_ForceEvent(1, *s_p_enemy_pool);
-                PushHistory("Triggered thunderstorm.", false);
+                weather_force_event(1, *s_p_enemy_pool);
+                push_history("Triggered thunderstorm.", false);
             }
-            else if (IEquals(tokens[1], "rainbow"))
+            else if (i_equals(tokens[1], "rainbow"))
             {
-                Weather_ForceEvent(2, *s_p_enemy_pool);
-                PushHistory("Triggered rainbow.", false);
+                weather_force_event(2, *s_p_enemy_pool);
+                push_history("Triggered rainbow.", false);
             }
-            else if (IEquals(tokens[1], "ghost"))
+            else if (i_equals(tokens[1], "ghost"))
             {
-                Weather_ForceEvent(3, *s_p_enemy_pool);
-                PushHistory("Triggered ghost weather.", false);
+                weather_force_event(3, *s_p_enemy_pool);
+                push_history("Triggered ghost weather.", false);
             }
             else
             {
-                PushHistory("Unknown weather type. Use: snow | thunder | rainbow | ghost", true);
+                push_history("Unknown weather type. Use: snow | thunder | rainbow | ghost", true);
             }
             return;
         }
 
 
         // /trickroom - immediately trigger Trick Room (boss must be active)
-        if (IEquals(cmd, "trickroom"))
+        if (i_equals(cmd, "trickroom"))
         {
-            if (!BossSystem::Boss_IsActive())
+            if (!BossSystem::boss_is_active())
             {
-                PushHistory("Error: boss must be active to trigger Trick Room.", true);
+                push_history("Error: boss must be active to trigger Trick Room.", true);
                 return;
             }
-            BossSystem::Boss_ForceTrickRoom();
-            PushHistory("Trick Room triggered! Type all words in reverse for 20s.", false);
+            BossSystem::boss_force_trick_room();
+            push_history("Trick Room triggered! Type all words in reverse for 20s.", false);
             return;
         }
 
         // Unknown command
-        PushHistory("Unknown command: /" + cmd + "  (try /help)", true);
+        push_history("Unknown command: /" + cmd + "  (try /help)", true);
     }
 
 
@@ -407,7 +407,7 @@ namespace
     // Draw a solid color quad in world space
     // draws a solid colour rectangle in world space, params are centre x/y, width, height, and rgba colour,
     // used for the input bar background, history panel background, and the green divider line
-    void DrawPanel(float x, float y, float w, float h, float r, float g, float b, float a)
+    void draw_panel(float x, float y, float w, float h, float r, float g, float b, float a)
     {
         if (!s_p_panel_mesh) return;
 
@@ -416,13 +416,13 @@ namespace
         AEGfxSetTransparency(1.0f);
         AEGfxSetColorToMultiply(r, g, b, a);
         AEGfxSetColorToAdd(0.0f, 0.0f, 0.0f, 0.0f);
-        Mesh_Renderer(s_p_panel_mesh, x, y, w, h, 0.0f);
+        mesh_renderer(s_p_panel_mesh, x, y, w, h, 0.0f);
     }
 
     // Print text; nx/ny are already in NDC [-1,1]
     // prints text at the given NDC position with the given scale and rgb colour,
     // nx/ny must already be in NDC [-1, 1] range - use WorldXtoNDC/WorldYtoNDC to convert first
-    void DrawText(const char* text, float nx, float ny, float scale,
+    void draw_text(const char* text, float nx, float ny, float scale,
         float r, float g, float b)
     {
         if (Graphics::g_font_id < 0) return;
@@ -432,10 +432,10 @@ namespace
 
     // Convert world Y to NDC
     // converts a world space Y coordinate to NDC [-1, 1] for use with AEGfxPrint
-    float WorldYtoNDC(float wy) { return wy / HALF_H; }
+    float world_y_to_ndc(float wy) { return wy / HALF_H; }
 
     // converts a world space X coordinate to NDC [-1, 1] for use with AEGfxPrint
-    float WorldXtoNDC(float wx) { return wx / HALF_W; }
+    float world_x_to_ndc(float wx) { return wx / HALF_W; }
 
 } // anonymous namespace
 
@@ -443,9 +443,9 @@ namespace
 namespace DebugConsole
 {
     // sets up the console and stores references to all the game state the commands need to modify,
-    // must be called once in Game_Init() before any Update/Render calls,
+    // must be called once in game_init() before any Update/Render calls,
     // params are references to the spawning flags, health, enemy pool, free slots, enemy area, and word bank
-    void Init(
+    void init(
         bool& is_enemy_area_box_visible,
         bool& is_random_spawning_enabled,
         bool& is_difficulty_debug_visible,
@@ -482,13 +482,13 @@ namespace DebugConsole
     // handles the '/' key to open the console, and all keyboard input while it's open,
     // call this every frame BEFORE the gameplay freeze check so the console can still respond when gameplay is paused,
     // handles backspace, enter (submit or close), escape (close), letter/digit/space keys, and mouse wheel scrolling
-    void Update()
+    void update()
     {
         float dt = (float)AEFrameRateControllerGetFrameTime();
 
         //  Toggle console open / 
         // AEVK_SLASH = 0xBF 
-        if (KeyTriggered(AEVK_SLASH) && !s_is_open) //if console not open + / presed
+        if (key_triggered(AEVK_SLASH) && !s_is_open) //if console not open + / presed
         {
             s_is_open = true;
             s_input_len = 0;
@@ -521,7 +521,7 @@ namespace DebugConsole
         }
 
         //  Escape closes without submitting 
-        if (KeyTriggered(AEVK_ESCAPE))
+        if (key_triggered(AEVK_ESCAPE))
         {
             s_is_open = false;
             s_input_len = 0;
@@ -531,7 +531,7 @@ namespace DebugConsole
         }
 
         //  Enter submits 
-        if (KeyTriggered(AEVK_RETURN))
+        if (key_triggered(AEVK_RETURN))
         {
             std::string cmd(s_input_buf);
             while (!cmd.empty() && cmd.back() == ' ') cmd.pop_back();      // trim trailing spaces
@@ -546,7 +546,7 @@ namespace DebugConsole
                 return;
             }
 
-            ExecuteCommand(cmd);                                            // non-empty = run command and stay open
+            execute_command(cmd);                                            // non-empty = run command and stay open
             s_input_len = 1;                                                 // reset buffer back to just '/'
             s_input_buf[0] = '/';
             s_input_buf[1] = '\0';
@@ -555,7 +555,7 @@ namespace DebugConsole
         }
 
         //  Backspace 
-        if (KeyTriggered(AEVK_BACK))
+        if (key_triggered(AEVK_BACK))
         {
             // Don't let player delete the leading '/'
             if (s_input_len > 1)
@@ -570,7 +570,7 @@ namespace DebugConsole
         {
             for (int k = AEVK_A; k <= AEVK_Z; ++k)
             {
-                if (KeyTriggered(k))
+                if (key_triggered(k))
                 {
                     char c = (char)('a' + (k - AEVK_A)); // lowercase
                     s_input_buf[s_input_len++] = c;
@@ -582,7 +582,7 @@ namespace DebugConsole
             // Alpha Engine AEVK_0 - AEVK_9 = 0x30 - 0x39
             for (int k = AEVK_0; k <= AEVK_9; ++k)
             {
-                if (KeyTriggered(k))
+                if (key_triggered(k))
                 {
                     char c = (char)('0' + (k - AEVK_0));
                     s_input_buf[s_input_len++] = c;
@@ -591,7 +591,7 @@ namespace DebugConsole
             }
 
             //  Space 
-            if (KeyTriggered(AEVK_SPACE))
+            if (key_triggered(AEVK_SPACE))
             {
                 s_input_buf[s_input_len++] = ' ';
                 s_input_buf[s_input_len] = '\0';
@@ -602,7 +602,7 @@ namespace DebugConsole
     // draws the console UI on top of everything else, call this at the end of the render block,
     // draws the scrollable history panel when the console is open, and the input bar with blinking cursor,
     // also shows up/down scroll indicators when there are more history entries than visible lines
-    void Render()
+    void render()
     {
         // History panel is always visible if there are entries (even when console is closed)
         // Input bar only visible when open
@@ -613,7 +613,7 @@ namespace DebugConsole
         {
             float panel_y = s_is_open ? HISTORY_PANEL_Y : -HALF_H + INPUT_BAR_H + HISTORY_PANEL_H * 0.5f + 4.0f;
 
-            DrawPanel(0.0f, panel_y, SCREEN_W, HISTORY_PANEL_H, 0.0f, 0.0f, 0.0f, 0.65f); // history panel background
+            draw_panel(0.0f, panel_y, SCREEN_W, HISTORY_PANEL_H, 0.0f, 0.0f, 0.0f, 0.65f); // history panel background
 
             //  Draw history lines 
             // s_scroll_offset=0 means show the newest VISIBLE_LINES entries
@@ -641,10 +641,10 @@ namespace DebugConsole
                 float world_y = line_start_y - (line * HISTORY_LINE_H) - HISTORY_LINE_H * 0.5f;
 
                 // convert to NDC for print
-                float ny = WorldYtoNDC(world_y);
+                float ny = world_y_to_ndc(world_y);
 
 
-                float nx = WorldXtoNDC(-HALF_W + 12.0f);
+                float nx = world_x_to_ndc(-HALF_W + 12.0f);
 
                 // pick red for errors, white for normal output
                 float r = entry.is_error ? 1.0f : 1.0f;
@@ -652,20 +652,20 @@ namespace DebugConsole
                 float b = entry.is_error ? 0.2f : 1.0f;
 
                 // draw the text at the calculated position and color
-                DrawText(entry.text.c_str(), nx, ny, text_scale, r, g, b);
+                draw_text(entry.text.c_str(), nx, ny, text_scale, r, g, b);
             }
 
             //  Scroll indicators 
             int max_scroll = (total_entries - VISIBLE_LINES > 0) ? total_entries - VISIBLE_LINES : 0;
             if (s_scroll_offset < max_scroll) // can scroll up (older entries above)
             {
-                float ny = WorldYtoNDC(panel_y + HISTORY_PANEL_H * 0.5f - 2.0f);
-                DrawText("^", WorldXtoNDC(HALF_W - 30.0f), ny, 0.35f, 0.8f, 0.8f, 0.8f);
+                float ny = world_y_to_ndc(panel_y + HISTORY_PANEL_H * 0.5f - 2.0f);
+                draw_text("^", world_x_to_ndc(HALF_W - 30.0f), ny, 0.35f, 0.8f, 0.8f, 0.8f);
             }
             if (s_scroll_offset > 0) // can scroll down (newer entries below)
             {
-                float ny = WorldYtoNDC(panel_y - HISTORY_PANEL_H * 0.5f + 2.0f);
-                DrawText("v", WorldXtoNDC(HALF_W - 30.0f), ny, 0.35f, 0.8f, 0.8f, 0.8f);
+                float ny = world_y_to_ndc(panel_y - HISTORY_PANEL_H * 0.5f + 2.0f);
+                draw_text("v", world_x_to_ndc(HALF_W - 30.0f), ny, 0.35f, 0.8f, 0.8f, 0.8f);
             }
         }
 
@@ -673,10 +673,10 @@ namespace DebugConsole
         if (!s_is_open) return;
 
         // Background bar
-        DrawPanel(0.0f, INPUT_BAR_Y, SCREEN_W, INPUT_BAR_H, 0.08f, 0.08f, 0.08f, 0.92f);
+        draw_panel(0.0f, INPUT_BAR_Y, SCREEN_W, INPUT_BAR_H, 0.08f, 0.08f, 0.08f, 0.92f);
 
         // Thin line above the bar
-        DrawPanel(0.0f, INPUT_BAR_Y + INPUT_BAR_H * 0.5f + 1.0f, SCREEN_W, 2.0f, 0.4f, 0.8f, 0.4f, 1.0f);
+        draw_panel(0.0f, INPUT_BAR_Y + INPUT_BAR_H * 0.5f + 1.0f, SCREEN_W, 2.0f, 0.4f, 0.8f, 0.4f, 1.0f);
 
         // Input text + cursor
         if (Graphics::g_font_id >= 0)
@@ -685,16 +685,16 @@ namespace DebugConsole
             if (s_cursor_visible) display += "_";
 
             float text_scale = 0.42f;
-            float nx = WorldXtoNDC(-HALF_W + 12.0f);
-            float ny = WorldYtoNDC(INPUT_BAR_Y - 6.0f);
+            float nx = world_x_to_ndc(-HALF_W + 12.0f);
+            float ny = world_y_to_ndc(INPUT_BAR_Y - 6.0f);
 
             AEGfxSetBlendMode(AE_GFX_BM_BLEND);
             AEGfxPrint(Graphics::g_font_id, display.c_str(), nx, ny, text_scale, 0.6f, 1.0f, 0.6f, 1.0f);
         }
     }
 
-    // frees the panel mesh and clears history, call this in Game_Exit() to avoid memory leaks
-    void Exit()
+    // frees the panel mesh and clears history, call this in game_exit() to avoid memory leaks
+    void cleanup()
     {
         if (s_p_panel_mesh)
         {
@@ -707,7 +707,7 @@ namespace DebugConsole
     }
 
     // returns true while the console is open, use this in game.cpp to freeze all gameplay logic
-    bool IsOpen()
+    bool is_open()
     {
         return s_is_open;
     }

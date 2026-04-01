@@ -56,7 +56,7 @@ namespace UpgradeSystem
     mesh and a unit rectangle mesh for the dim overlay. Calls Upgrade_Free first so repeated calls
     on restart never leak resources.
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
-    void Upgrade_Init();
+    void upgrade_init();
 
     /*
     @function       Upgrade_Free
@@ -65,7 +65,7 @@ namespace UpgradeSystem
     Null-checked before every free so safe to call even if Init never ran. Pointers are set to
     nullptr after freeing to prevent double-free on repeated calls.
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
-    void Upgrade_Free();
+    void upgrade_free();
 
     /*
     @function       Upgrade_TriggerScreen
@@ -74,13 +74,13 @@ namespace UpgradeSystem
     Marks the screen as open, resets the animation timer and frame, and shuffles which upgrade
     type occupies which display slot. Does nothing if the screen is already open.
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
-    void Upgrade_TriggerScreen();
+    void upgrade_trigger_screen();
 
     /*
     @function       Upgrade_IsScreenOpen
     @brief          Returns true while the upgrade card screen is visible and blocking gameplay.
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
-    bool Upgrade_IsScreenOpen();
+    bool upgrade_is_screen_open();
 
     /*
     @function       Upgrade_Update
@@ -91,7 +91,7 @@ namespace UpgradeSystem
     upgrade and closes the screen. The health reference is only written for the max HP card.
     Does nothing when the screen is closed.
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
-    void Upgrade_Update(Data::Health& health);
+    void upgrade_update(Data::Health& health);
 
     /*
     @function       Upgrade_Draw
@@ -101,27 +101,27 @@ namespace UpgradeSystem
     UPGRADE_CARD_HOVER_SCALE times its normal size and on top of the other cards.
     Does nothing when the screen is not open.
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
-    void Upgrade_Draw();
+    void upgrade_draw();
 
     /*
     @function       Upgrade_GetPowerUpDurationMultiplier
     @brief          Returns the cumulative power-up duration multiplier from picked duration cards.
     Returns 1.0 if the player has never picked the duration card.
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
-    float Upgrade_GetPowerUpDurationMultiplier();
+    float upgrade_get_power_up_duration_multiplier();
 
     /*
     @function       Upgrade_GetPowerUpSpawnIntervalReduction
     @brief          Returns the total seconds to subtract from the power-up spawn interval.
     Returns 0.0 if the player has never picked the spawn-rate card.
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
-    float Upgrade_GetPowerUpSpawnIntervalReduction();
+    float upgrade_get_power_up_spawn_interval_reduction();
 
     /*
     @function       Upgrade_Reset
     @brief          Resets all accumulated upgrade bonuses to defaults. Called by Upgrade_Init.
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
-    void Upgrade_Reset();
+    void upgrade_reset();
 
 } // UpgradeSystem namespace end
 /*___________________________________________________________________________________________________________________________________________________________________________________________________*/

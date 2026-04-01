@@ -21,12 +21,12 @@ namespace
 
 namespace BackgroundParallax
 {
-    void MenuParallax_SetPanOffset(float offset)
+    void menu_parallax_set_pan_offset(float offset)
     {
         s_manual_pan_offset = offset;
     }
 
-    void MenuParallax_Init()
+    void menu_parallax_init()
     {
         if (s_full_screen_mesh) return;
 
@@ -71,7 +71,7 @@ namespace BackgroundParallax
         s_bg_layers[4].u_offset = 0.0f;
     }
 
-    void MenuParallax_Update(float dt)
+    void menu_parallax_update(float dt)
     {
         for (int i = 0; i < NUM_LAYERS; ++i)
         {
@@ -85,7 +85,7 @@ namespace BackgroundParallax
         }
     }
 
-    void MenuParallax_Draw(float virtual_cam_y)
+    void menu_parallax_draw(float virtual_cam_y)
     {
         float cam_x, cam_y;
         AEGfxGetCamPosition(&cam_x, &cam_y);
@@ -100,11 +100,11 @@ namespace BackgroundParallax
             float render_y = cam_y - (virtual_cam_y * s_bg_layers[i].depth_factor);
             float render_offset = s_bg_layers[i].u_offset - (s_manual_pan_offset * s_bg_layers[i].depth_factor);
             AEGfxTextureSet(s_bg_layers[i].texture, render_offset, 0.0f);
-            Mesh_Renderer(s_full_screen_mesh, cam_x, render_y, 1.0f, 1.0f, 0.0f);
+            mesh_renderer(s_full_screen_mesh, cam_x, render_y, 1.0f, 1.0f, 0.0f);
         }
     }
 
-    void MenuParallax_Exit()
+    void menu_parallax_exit()
     {
         if (s_full_screen_mesh)
         {
@@ -122,30 +122,30 @@ namespace BackgroundParallax
         }
     }
 
-    int MenuParallax_GetLayerCount()
+    int menu_parallax_get_layer_count()
     {
         return NUM_LAYERS;
     }
 
-    AEGfxTexture* MenuParallax_GetLayerTexture(int index)
+    AEGfxTexture* menu_parallax_get_layer_texture(int index)
     {
         if (index < 0 || index >= NUM_LAYERS) return nullptr;
         return s_bg_layers[index].texture;
     }
 
-    float MenuParallax_GetLayerDepth(int index)
+    float menu_parallax_get_layer_depth(int index)
     {
         if (index < 0 || index >= NUM_LAYERS) return 0.0f;
         return s_bg_layers[index].depth_factor;
     }
 
-    float MenuParallax_GetLayerUOffset(int index)
+    float menu_parallax_get_layer_u_offset(int index)
     {
         if (index < 0 || index >= NUM_LAYERS) return 0.0f;
         return s_bg_layers[index].u_offset;
     }
 
-    float MenuParallax_GetManualPanOffset()
+    float menu_parallax_get_manual_pan_offset()
     {
         return s_manual_pan_offset;
     }

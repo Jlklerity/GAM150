@@ -13,7 +13,7 @@ void (*g_game_state_update)(void) = nullptr;
 void (*g_game_state_exit)(void) = nullptr;
 
 
-void GSM_Init(int starting_state)
+void gsm_init(int starting_state)
 {
     g_game_state_curr = GS_NONE;
     g_game_state_prev = GS_NONE;
@@ -24,7 +24,7 @@ void GSM_Init(int starting_state)
     g_game_state_exit = nullptr;
 }
 
-void GSM_Update()
+void gsm_update()
 {
     if (g_game_state_curr != g_game_state_next)
     {
@@ -40,33 +40,33 @@ void GSM_Update()
         switch (g_game_state_curr)
         {
         case GS_MAIN_MENU:
-            g_game_state_init = Main_Menu_Init;
-            g_game_state_update = Main_Menu_Update;
-            g_game_state_exit = Main_Menu_Exit;
+            g_game_state_init = main_menu_init;
+            g_game_state_update = main_menu_update;
+            g_game_state_exit = main_menu_exit;
             break;
 
         case GS_GAME:
-            g_game_state_init = Game_Init;
-            g_game_state_update = Game_Update;
-            g_game_state_exit = Game_Exit;
+            g_game_state_init = game_init;
+            g_game_state_update = game_update;
+            g_game_state_exit = game_exit;
             break;
 
         case GS_GAME_TIMEMODE:
-            g_game_state_init = GameTimeMode_Init;
-            g_game_state_update = GameTimeMode_Update;
-            g_game_state_exit = GameTimeMode_Exit;
+            g_game_state_init = game_time_mode_init;
+            g_game_state_update = game_time_mode_update;
+            g_game_state_exit = game_time_mode_exit;
             break;
 
         case GS_SHOP:
-            g_game_state_init = Shop_Init;
-            g_game_state_update = Shop_Update;
-            g_game_state_exit = Shop_Exit;
+            g_game_state_init = shop_init;
+            g_game_state_update = shop_update;
+            g_game_state_exit = shop_exit;
             break;
 
         case GS_CREDITS:
-            g_game_state_init = CreditScreen_Init;
-            g_game_state_update = CreditScreen_Update;
-            g_game_state_exit = CreditScreen_Exit;
+            g_game_state_init = credit_screen_init;
+            g_game_state_update = credit_screen_update;
+            g_game_state_exit = credit_screen_exit;
             break;
 
         case GS_QUIT:
@@ -77,9 +77,9 @@ void GSM_Update()
             break;
 
         case GS_TUTORIAL:
-            g_game_state_init = Tutorial_Init;
-            g_game_state_update = Tutorial_Update;
-            g_game_state_exit = Tutorial_Exit;
+            g_game_state_init = tutorial_init;
+            g_game_state_update = tutorial_update;
+            g_game_state_exit = tutorial_exit;
             break;
 
         case GS_RESTART:

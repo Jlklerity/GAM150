@@ -149,7 +149,7 @@ namespace
     because a dying enemy cannot block the player from reaching the kill word. The remaining count
     is what the spawning logic and the targeting lock use to decide what to show.
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
-    int Boss_CountActiveMinions(const std::vector<Data::Enemy>& pool)
+    int boss_count_active_minions(const std::vector<Data::Enemy>& pool)
     {
         int count = 0;                                                                                                      // start the counter at zero
         for (int i = 0; i < (int)pool.size(); ++i)                                                                          // check every slot in the pool
@@ -171,7 +171,7 @@ namespace
     dying then a live enemy is still on screen and the function returns false. When no such slot
     exists the screen is considered clear and the boss entrance cutscene can safely begin.
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
-    bool Boss_PoolIsClear(const std::vector<Data::Enemy>& pool)
+    bool boss_pool_is_clear(const std::vector<Data::Enemy>& pool)
     {
         for (int i = 0; i < (int)pool.size(); ++i)                                                                          // check every slot in the pool
         {
@@ -191,11 +191,11 @@ namespace
     by 100 to convert back to seconds. This gives a smooth spread of wait times across
     the full allowed range each time the function is called.
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
-    float Boss_PickFlashCooldown()
+    float boss_pick_flash_cooldown()
     {
         int min_ms = (int)(BossConfig::BOSS_FLASH_INTERVAL_MIN_SECONDS * 100.0f);                                           // convert min seconds to integer centiseconds for the rand range
         int max_ms = (int)(BossConfig::BOSS_FLASH_INTERVAL_MAX_SECONDS * 100.0f);                                           // convert max seconds to integer centiseconds for the rand range
-        int picked = Utility::Utility_RandInt(min_ms, max_ms);                                                              // pick a random value between the two
+        int picked = Utility::utility_rand_int(min_ms, max_ms);                                                              // pick a random value between the two
         return (float)picked * 0.01f;                                                                                       // convert back to seconds and return
     }
 
@@ -209,7 +209,7 @@ namespace
     because setting it to false would allow game.cpp to recycle the slot on that same frame.
     Nothing happens if the slot index is invalid or the kill word is already visible.
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
-    void Boss_InjectKillWord(std::vector<Data::Enemy>& pool)
+    void boss_inject_kill_word(std::vector<Data::Enemy>& pool)
     {
         if (s_boss_pool_slot < 0 || s_boss_pool_slot >= (int)pool.size()) return;                                               // slot is not valid so there is nothing to inject
         if (s_boss_kill_word_in_pool) return;                                                                                 // kill word is already visible so do nothing
@@ -232,7 +232,7 @@ namespace
     enemy_is_active flag stays true throughout. Nothing happens if the slot is invalid or the
     kill word is already hidden.
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
-    void Boss_RemoveKillWord(std::vector<Data::Enemy>& pool)
+    void boss_remove_kill_word(std::vector<Data::Enemy>& pool)
     {
         if (s_boss_pool_slot < 0 || s_boss_pool_slot >= (int)pool.size()) return;                                               // slot is not valid so there is nothing to remove
         if (!s_boss_kill_word_in_pool) return;                                                                                // kill word is already hidden so do nothing
@@ -256,13 +256,13 @@ namespace
     as a fallback. The chosen word is recorded in s_boss_used_words so it cannot be picked again
     this fight. If the kill word slot is currently visible the pool slot is updated immediately.
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
-    void Boss_SwapKillWord(std::vector<Data::Enemy>& pool, const Data::WordBank& bank)
+    void boss_swap_kill_word(std::vector<Data::Enemy>& pool, const Data::WordBank& bank)
     {
         std::string new_word;
         int tries = 0;                                                                                                      // track how many attempts have been made
         do
         {
-            new_word = EnemySystem::Enemy_PickUniqueWordRandomLength(                                                       // ask the enemy system for a fresh word not already on screen
+            new_word = EnemySystem::enemy_pick_unique_word_random_length(                                                       // ask the enemy system for a fresh word not already on screen
                 BossConfig::BOSS_WORD_MIN_LEN,
                 BossConfig::BOSS_WORD_MAX_LEN,
                 bank, pool, true,
@@ -293,7 +293,7 @@ namespace
     which was precomputed once in Boss_Init, so this site and GameEnemyBoss::Update always agree
     on the exact Y value with no possibility of drift.
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
-    void Boss_PinKillWordPosition(std::vector<Data::Enemy>& pool)
+    void boss_pin_kill_word_position(std::vector<Data::Enemy>& pool)
     {
         if (s_boss_pool_slot < 0 || s_boss_pool_slot >= (int)pool.size()) return;                                               // slot is not valid so there is nothing to pin
         pool[(size_t)s_boss_pool_slot].enemy_position_x = s_boss_position_x;                                                    // keep kill word locked to the current boss X
@@ -305,7 +305,7 @@ namespace
     @function       TrickRoom_BuildOverlayMesh
     @brief          Allocates (or reallocates) the plain white unit rect used for the purple tint overlay.
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
-    void TrickRoom_BuildOverlayMesh()
+    void trick_room_build_overlay_mesh()
     {
         if (s_tr_overlay_mesh) { AEGfxMeshFree(s_tr_overlay_mesh); s_tr_overlay_mesh = nullptr; }                                 // free old mesh before rebuilding
         s_tr_overlay_mesh = Graphics::Mesh_BuildUnitRect(0xFFFFFFFF);                                                         // white unit rect, tinted purple at draw time
@@ -315,7 +315,7 @@ namespace
     @function       TrickRoom_FreeOverlayMesh
     @brief          Releases the Trick Room overlay mesh and clears the pointer.
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
-    void TrickRoom_FreeOverlayMesh()
+    void trick_room_free_overlay_mesh()
     {
         if (s_tr_overlay_mesh) { AEGfxMeshFree(s_tr_overlay_mesh); s_tr_overlay_mesh = nullptr; }                                 // release overlay mesh so nothing leaks on exit
     }
@@ -324,7 +324,7 @@ namespace
     @function       TrickRoom_ResetState
     @brief          Resets all Trick Room runtime state to defaults.  Safe to call at any time.
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
-    void TrickRoom_ResetState()
+    void trick_room_reset_state()
     {
         s_tr_state = TrickRoomState::INACTIVE;                                                                                // phase is not running
         s_tr_timer = 0.0f;                                                                                                    // no active countdown
@@ -338,7 +338,7 @@ namespace
     @function       TrickRoom_TriggerInternal
     @brief          Activates Trick Room.  Only fires when the boss is ACTIVE and the phase is INACTIVE.
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
-    void TrickRoom_TriggerInternal()
+    void trick_room_trigger_internal()
     {
         if (s_boss_state != BossState::ACTIVE)    return;                                                                     // Trick Room only makes sense during a live boss fight
         if (s_tr_state != TrickRoomState::INACTIVE) return;                                                                   // already running or on cooldown, ignore
@@ -354,7 +354,7 @@ namespace
     @brief          Advances the Trick Room timer and transitions states when they expire.
                     Call once per frame inside Boss_Update while the boss is ACTIVE.
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
-    void TrickRoom_UpdateInternal(float dt)
+    void trick_room_update_internal(float dt)
     {
         if (s_tr_warning_timer > 0.0f)                                                                                        // tick the banner display timer regardless of phase state
             s_tr_warning_timer -= dt;
@@ -394,7 +394,7 @@ namespace
     @brief          Draws the purple tint, "TRICK ROOM" banner, "type in reverse" sub-label,
                     and the countdown timer. Call at the end of Boss_Draw.
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
-    void TrickRoom_DrawOverlayInternal()
+    void trick_room_draw_overlay_internal()
     {
         if (s_tr_state == TrickRoomState::INACTIVE) return;                                                                   // nothing to draw when the phase is not running
         if (!s_tr_overlay_mesh) return;                                                                                       // no mesh available so skip drawing
@@ -417,7 +417,7 @@ namespace
             AEGfxSetTransparency(overlay_alpha);
             AEGfxSetColorToMultiply(0.55f, 0.0f, 0.85f, 1.0f);                                                              // purple tint
             AEGfxSetColorToAdd(0.0f, 0.0f, 0.0f, 0.0f);
-            Graphics::Draw_DrawMeshAt(s_tr_overlay_mesh, 0.0f, 0.0f, win_w, win_h, 0.0f);
+            Graphics::draw_mesh_at(s_tr_overlay_mesh, 0.0f, 0.0f, win_w, win_h, 0.0f);
 
             AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);                                                                // reset colour multiply
             AEGfxSetColorToAdd(0.0f, 0.0f, 0.0f, 0.0f);
@@ -456,7 +456,7 @@ namespace
     exact same cleanup path. Each pointer is checked before freeing so the helper is safe to
     call even if Boss_Init never completed.
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
-    void Boss_ReleaseAssets()
+    void boss_release_assets()
     {
         if (s_boss_sprite_mesh)                                                                                               // only free the mesh if it was actually created
         {
@@ -502,10 +502,10 @@ namespace BossSystem
     default inactive value. This function must be called once after EnemyManage_LoadMeshes so the
     base meshes are ready.
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
-    void Boss_Init(Data::Meshes&, const Data::WordBank&)
+    void boss_init(Data::Meshes&, const Data::WordBank&)
     {
         // Release old boss assets first so repeated Boss_Init calls cannot leak them.
-        Boss_ReleaseAssets();
+        boss_release_assets();
 
         // If a pool slot is still reserved here then the caller skipped Boss_Free.
         AE_ASSERT_MESG(s_boss_pool_slot == -1, "Boss_Init called while boss still owns a pool slot. Call Boss_Free first.");
@@ -549,7 +549,7 @@ namespace BossSystem
         s_boss_current_word.clear();                                                                                          // no kill word assigned yet
         s_boss_kill_word_in_pool = false;                                                                                     // kill word is not visible yet
         s_boss_hit_tint_timer = 0.0f;                                                                                         // no hit flash active
-        s_boss_flash_cooldown_timer = Boss_PickFlashCooldown();                                                               // set a random wait time for the first flash attack
+        s_boss_flash_cooldown_timer = boss_pick_flash_cooldown();                                                               // set a random wait time for the first flash attack
         s_boss_flash_active_timer = 0.0f;                                                                                     // no flash overlay visible
         s_boss_anim_row = 0;                                                                                                  // start on the alive animation row
         s_boss_anim_col = 0;                                                                                                  // start on the first frame column
@@ -558,8 +558,8 @@ namespace BossSystem
         s_boss_was_defeated = false;                                                                                          // clear defeat flag on init
 
         // Trick Room - reset all state and build the overlay mesh
-        TrickRoom_ResetState();                                                                                             // clear timers, phase, and trigger counter
-        TrickRoom_BuildOverlayMesh();                                                                                       // allocate the purple tint overlay mesh
+        trick_room_reset_state();                                                                                             // clear timers, phase, and trigger counter
+        trick_room_build_overlay_mesh();                                                                                       // allocate the purple tint overlay mesh
     }
 
     /*
@@ -572,9 +572,9 @@ namespace BossSystem
     no orphaned active slot remains after a restart or level exit. Null checks are performed before
     every free so the function is safe to call even if Boss_Init never completed.
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
-    void Boss_Free(Data::Meshes&, std::deque<int>& free_slots, std::vector<Data::Enemy>& pool)
+    void boss_free(Data::Meshes&, std::deque<int>& free_slots, std::vector<Data::Enemy>& pool)
     {
-        Boss_ReleaseAssets();
+        boss_release_assets();
 
         // Return the reserved kill word slot so it is not lost when the game restarts or exits.
         // The slot is marked inactive first so no other system thinks it is still in use.
@@ -583,7 +583,7 @@ namespace BossSystem
             pool[(size_t)s_boss_pool_slot].enemy_is_active = false;                                                           // deactivate the slot before giving it back
             free_slots.push_back(s_boss_pool_slot);                                                                           // return the slot index to the free list
             s_boss_pool_slot = -1;                                                                                            // clear the reservation so nothing references the slot anymore
-            SoundManager::StopBossSfx();
+            SoundManager::stop_boss_sfx();
         }
 
         s_boss_state = BossState::INACTIVE;                                                                                   // mark the boss as fully inactive
@@ -596,8 +596,8 @@ namespace BossSystem
         std::unordered_set<std::string>().swap(s_boss_used_words);                                                            // release s_boss_used_words internal buffer
 
         // Trick Room - reset state and release the overlay mesh
-        TrickRoom_ResetState();                                                                                             // clear all Trick Room timers and phase flags
-        TrickRoom_FreeOverlayMesh();                                                                                        // release the purple tint overlay mesh
+        trick_room_reset_state();                                                                                             // clear all Trick Room timers and phase flags
+        trick_room_free_overlay_mesh();                                                                                        // release the purple tint overlay mesh
     }
 
     /*
@@ -612,7 +612,7 @@ namespace BossSystem
     the boss is fully defeated so the caller can stop regular enemy spawning during the entire
     boss event.
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
-    void Boss_Update(std::vector<Data::Enemy>& pool, std::deque<int>& free_slots, const Data::EnemyArea& area, const Data::WordBank& bank, float dt, bool& boss_spawning_blocked, bool is_random_spawning_enabled)
+    void boss_update(std::vector<Data::Enemy>& pool, std::deque<int>& free_slots, const Data::EnemyArea& area, const Data::WordBank& bank, float dt, bool& boss_spawning_blocked, bool is_random_spawning_enabled)
     {
         // Flash attack timer runs every frame while the boss is active.
         if (s_boss_state == BossState::ACTIVE)                                                                                // only tick the flash timer when the boss is actually fighting
@@ -621,7 +621,7 @@ namespace BossSystem
             if (s_boss_flash_cooldown_timer <= 0.0f)                                                                          // check if it is time to fire the flash
             {
                 s_boss_flash_active_timer = BossConfig::BOSS_FLASH_FADE_DURATION_SECONDS;                                     // start the flash overlay fading in
-                s_boss_flash_cooldown_timer = Boss_PickFlashCooldown();                                                       // pick a new random wait time for the next flash
+                s_boss_flash_cooldown_timer = boss_pick_flash_cooldown();                                                       // pick a new random wait time for the next flash
             }
         }
 
@@ -655,7 +655,7 @@ namespace BossSystem
         {
             boss_spawning_blocked = true;                                                                                   // keep normal spawning blocked during the wait
 
-            if (Boss_PoolIsClear(pool))                                                                                     // check if all regular enemies are gone
+            if (boss_pool_is_clear(pool))                                                                                     // check if all regular enemies are gone
             {
                 // Reserve a pool slot for the boss kill word enemy
                 if (free_slots.empty()) break;                                                                              // no free slot available yet so keep waiting
@@ -667,7 +667,7 @@ namespace BossSystem
                 s_boss_used_words.clear();                                                                                    // reset history so words from a previous fight can appear again
 
                 // Pick the first kill word for this fight
-                s_boss_current_word = EnemySystem::Enemy_PickUniqueWordRandomLength(                                          // ask the enemy system for a fresh unique word
+                s_boss_current_word = EnemySystem::enemy_pick_unique_word_random_length(                                          // ask the enemy system for a fresh unique word
                     BossConfig::BOSS_WORD_MIN_LEN,
                     BossConfig::BOSS_WORD_MAX_LEN,
                     bank, pool, true,
@@ -712,10 +712,10 @@ namespace BossSystem
                 s_boss_words_typed = 0;                                                                                       // reset the word counter for this new fight
                 s_boss_minion_spawn_timer = 0.0f;                                                                             // reset the minion wave timer
                 s_boss_hit_tint_timer = 0.0f;                                                                                 // clear any leftover hit tint
-                s_boss_flash_cooldown_timer = Boss_PickFlashCooldown();                                                       // pick a random wait before the first flash attack
+                s_boss_flash_cooldown_timer = boss_pick_flash_cooldown();                                                       // pick a random wait before the first flash attack
                 s_boss_flash_active_timer = 0.0f;                                                                             // no flash overlay at the start
-                TrickRoom_ResetState();                                                                                     // reset trickroom counter
-                SoundManager::PlayBossSfx();
+                trick_room_reset_state();                                                                                     // reset trickroom counter
+                SoundManager::play_boss_sfx();
                 s_boss_state = BossState::CUTSCENE;                                                                           // move to the cutscene state
             }
             break;
@@ -731,8 +731,8 @@ namespace BossSystem
 
             // Slide the boss from off screen at the top down to its normal fight position
             float progress = 1.0f - (s_boss_cutscene_timer_seconds / BossConfig::BOSS_CUTSCENE_DURATION_SECONDS);             // 0 at the start and 1 at the end of the cutscene
-            progress = Utility::Utility_Clamp(progress, 0.0f, 1.0f);                                                        // clamp so it never goes outside the 0 to 1 range
-            s_boss_cutscene_y = Utility::Utility_Lerp(600.0f, BossConfig::BOSS_POSITION_Y, progress);                         // smoothly move from the top entry position to the fight position
+            progress = Utility::utility_clamp(progress, 0.0f, 1.0f);                                                        // clamp so it never goes outside the 0 to 1 range
+            s_boss_cutscene_y = Utility::utility_lerp(600.0f, BossConfig::BOSS_POSITION_Y, progress);                         // smoothly move from the top entry position to the fight position
 
             s_boss_anim_timer += dt;                                                                                          // count up toward the next animation frame
             if (s_boss_anim_timer >= BOSS_ANIM_FRAME_DURATION)                                                                // check if enough time has passed to advance the frame
@@ -743,15 +743,15 @@ namespace BossSystem
 
             // Pin the kill word slot every cutscene frame so it can never be at a stale position
             // when the word first becomes visible at the end of the cutscene.
-            Boss_PinKillWordPosition(pool);
+            boss_pin_kill_word_position(pool);
 
             if (s_boss_cutscene_timer_seconds <= 0.0f)                                                                        // check if the cutscene has finished
             {
                 // Cutscene is over, snap to final position and begin the fight
                 s_boss_cutscene_y = BossConfig::BOSS_POSITION_Y;                                                              // lock the boss to its exact fight position
-                Boss_PinKillWordPosition(pool);                                                                             // final pin before the word becomes visible
-                Boss_InjectKillWord(pool);                                                                                  // reveal the kill word so the player can start typing
-                SoundManager::StopBossSfx();
+                boss_pin_kill_word_position(pool);                                                                             // final pin before the word becomes visible
+                boss_inject_kill_word(pool);                                                                                  // reveal the kill word so the player can start typing
+                SoundManager::stop_boss_sfx();
                 s_boss_state = BossState::ACTIVE;                                                                             // switch to the active fighting state
             }
             break;
@@ -763,7 +763,7 @@ namespace BossSystem
             boss_spawning_blocked = true;                                                                                   // keep normal enemy spawning blocked while the boss is alive
 
             // Trick Room - advance the phase timer every frame while the boss is alive
-            TrickRoom_UpdateInternal(dt);                                                                                   // ticks ACTIVE countdown and COOLDOWN gap, transitions states when they expire
+            trick_room_update_internal(dt);                                                                                   // ticks ACTIVE countdown and COOLDOWN gap, transitions states when they expire
 
             // Check if Typing.cpp just matched the kill word this frame.
             if (s_boss_pool_slot >= 0 && s_boss_pool_slot < (int)pool.size())                                                   // make sure the slot index is still valid
@@ -802,34 +802,34 @@ namespace BossSystem
                         kw.enemy_word_length = 0;                                                                           // clear the length to match the empty text
                         s_boss_kill_word_in_pool = false;                                                                     // mark the kill word as hidden
 
-                        Boss_SwapKillWord(pool, bank);                                                                      // pick a fresh non-repeated word and update the slot
+                        boss_swap_kill_word(pool, bank);                                                                      // pick a fresh non-repeated word and update the slot
 
                         // Trick Room - fire the special attack when the kill-word threshold is reached
                         if (s_boss_words_typed >= s_tr_next_trigger_count)                                                      // check if this hit crosses the Trick Room trigger threshold
                         {
-                            TrickRoom_TriggerInternal();                                                                    // activate the Trick Room phase (guarded inside)
+                            trick_room_trigger_internal();                                                                    // activate the Trick Room phase (guarded inside)
                             s_tr_next_trigger_count = s_boss_words_typed +
                                 BossConfig::BOSS_TRICK_ROOM_INTERVAL;                                                       // schedule the next Trick Room trigger N kill words from now
                         }
 
                         // Show the new word right away if no minions are alive
-                        if (Boss_CountActiveMinions(pool) == 0)                                                             // check if there are any minions on screen
-                            Boss_InjectKillWord(pool);                                                                      // no minions so reveal the new kill word immediately
+                        if (boss_count_active_minions(pool) == 0)                                                             // check if there are any minions on screen
+                            boss_inject_kill_word(pool);                                                                      // no minions so reveal the new kill word immediately
                     }
                 }
             }
 
             // Targeting lock: show the kill word only when no minions are alive
-            int minion_count = Boss_CountActiveMinions(pool);                                                               // count how many minions are currently on screen
+            int minion_count = boss_count_active_minions(pool);                                                               // count how many minions are currently on screen
 
             if (minion_count == 0 && !s_boss_kill_word_in_pool)                                                               // no minions and kill word is hidden
-                Boss_InjectKillWord(pool);                                                                                  // reveal the kill word since the screen is clear
+                boss_inject_kill_word(pool);                                                                                  // reveal the kill word since the screen is clear
             else if (minion_count > 0 && s_boss_kill_word_in_pool)                                                            // minions are alive and kill word is visible
-                Boss_RemoveKillWord(pool);                                                                                  // hide the kill word until all minions are gone
+                boss_remove_kill_word(pool);                                                                                  // hide the kill word until all minions are gone
 
             // Pin the kill word slot to follow the boss position using the authoritative anchor Y.
             // Called before boss movement so the slot is at the last-known-correct X this frame.
-            Boss_PinKillWordPosition(pool);
+            boss_pin_kill_word_position(pool);
 
             // Boss movement, bounce left and right within the play area
             s_boss_position_x += s_boss_dir * BossConfig::BOSS_MOVE_SPEED * dt;                                                 // move the boss horizontally based on its speed and direction
@@ -849,7 +849,7 @@ namespace BossSystem
             }
 
             // Re-pin X after movement so the kill word tracks the updated boss position this frame
-            Boss_PinKillWordPosition(pool);
+            boss_pin_kill_word_position(pool);
 
             // Minion spawning
             if (minion_count < BossConfig::BOSS_MINION_CAP)                                                                 // only spawn if not in Trick Room and below the cap
@@ -860,13 +860,13 @@ namespace BossSystem
                     s_boss_minion_spawn_timer = 0.0f;                                                                         // reset the wave timer
 
                     int wave = BossConfig::BOSS_MINION_WAVE_SIZE;                                                           // how many minions to try spawning this wave
-                    int current = Boss_CountActiveMinions(pool);                                                            // check the current live minion count before spawning
+                    int current = boss_count_active_minions(pool);                                                            // check the current live minion count before spawning
                     for (int w = 0; w < wave && current < BossConfig::BOSS_MINION_CAP; ++w)                                 // loop through each spawn slot in the wave
                     {
-                        int len = Utility::Utility_RandInt(BossConfig::BOSS_WORD_MIN_LEN, BossConfig::BOSS_WORD_MAX_LEN);
-                        int before_spawn = Boss_CountActiveMinions(pool);                                                   // snapshot the count before attempting the spawn
-                        EnemySystem::Enemy_SpawnFromPool(pool, free_slots, area, bank, len);                                // try to spawn one minion into a free pool slot
-                        if (Boss_CountActiveMinions(pool) > before_spawn)                                                   // check if the spawn actually succeeded
+                        int len = Utility::utility_rand_int(BossConfig::BOSS_WORD_MIN_LEN, BossConfig::BOSS_WORD_MAX_LEN);
+                        int before_spawn = boss_count_active_minions(pool);                                                   // snapshot the count before attempting the spawn
+                        EnemySystem::enemy_spawn_from_pool(pool, free_slots, area, bank, len);                                // try to spawn one minion into a free pool slot
+                        if (boss_count_active_minions(pool) > before_spawn)                                                   // check if the spawn actually succeeded
                             ++current;                                                                                      // only advance the counter when a real spawn happened
                     }
                 }
@@ -920,7 +920,7 @@ namespace BossSystem
     so it gets the same green typed prefix and black suffix as regular enemy words.
     Nothing is drawn when the boss is inactive or waiting.
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
-    void Boss_Draw(const Data::Meshes& meshes)
+    void boss_draw(const Data::Meshes& meshes)
     {
         if (s_boss_state != BossState::CUTSCENE &&
             s_boss_state != BossState::ACTIVE &&
@@ -937,14 +937,14 @@ namespace BossSystem
         float sprite_w = sprite_base * BossConfig::BOSS_SPRITE_W_RATIO;                                                     // final draw width of the boss sprite
         float sprite_h = sprite_base;                                                                                       // final draw height of the boss sprite
 
-        Graphics::Graphics_SetSpriteState();                                                                                // set the render mode to textured sprite drawing
+        Graphics::graphics_set_sprite_state();                                                                                // set the render mode to textured sprite drawing
 
         // Apply red hit tint when the boss was just struck, fade back to white over time
         if (s_boss_hit_tint_timer > 0.0f)                                                                                     // check if the hit tint is still active
         {
-            float t = Utility::Utility_Clamp(s_boss_hit_tint_timer / BossConfig::BOSS_HIT_TINT_DURATION_SECONDS, 0.0f, 1.0f); // normalize the timer to a 0 to 1 range for the lerp
-            float g = Utility::Utility_Lerp(1.0f, 0.0f, t);                                                                 // green channel goes to 0 when fully tinted red
-            float b = Utility::Utility_Lerp(1.0f, 0.0f, t);                                                                 // blue channel goes to 0 when fully tinted red
+            float t = Utility::utility_clamp(s_boss_hit_tint_timer / BossConfig::BOSS_HIT_TINT_DURATION_SECONDS, 0.0f, 1.0f); // normalize the timer to a 0 to 1 range for the lerp
+            float g = Utility::utility_lerp(1.0f, 0.0f, t);                                                                 // green channel goes to 0 when fully tinted red
+            float b = Utility::utility_lerp(1.0f, 0.0f, t);                                                                 // blue channel goes to 0 when fully tinted red
             AEGfxSetColorToMultiply(1.0f, g, b, 1.0f);                                                                      // apply the red tint to the sprite
         }
         else                                                                                                                // no hit tint active
@@ -960,7 +960,7 @@ namespace BossSystem
         float uv_x = (float)s_boss_anim_col * uv_col_width;                                                                   // calculate the U offset for the current animation frame column
         AEGfxTextureSet(s_boss_texture, uv_x, uv_y);                                                                          // bind the texture scrolled to the correct frame position
 
-        Graphics::Draw_DrawMeshAt(s_boss_sprite_mesh, s_boss_position_x, draw_y, -(sprite_w * s_boss_dir), sprite_h, 0.0f);       // draw the boss sprite at its current position
+        Graphics::draw_mesh_at(s_boss_sprite_mesh, s_boss_position_x, draw_y, -(sprite_w * s_boss_dir), sprite_h, 0.0f);       // draw the boss sprite at its current position
 
         AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);                                                                    // reset colour multiply to white so nothing else is tinted
 
@@ -976,7 +976,7 @@ namespace BossSystem
                 AEGfxSetBlendMode(AE_GFX_BM_BLEND);                                                                         // use alpha blending so the overlay is see through
                 AEGfxSetTransparency(0.30f);                                                                                // set the overlay to 30 percent opacity
                 AEGfxSetColorToMultiply(0.0f, 0.0f, 0.0f, 1.0f);                                                            // use black so the screen darkens
-                Graphics::Draw_DrawMeshAt(meshes.debug_box_mesh, 0.0f, 0.0f, win_w, win_h, 0.0f);                           // draw the dark rectangle over the whole screen
+                Graphics::draw_mesh_at(meshes.debug_box_mesh, 0.0f, 0.0f, win_w, win_h, 0.0f);                           // draw the dark rectangle over the whole screen
                 AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);                                                            // reset the colour multiply back to white
                 AEGfxSetTransparency(1.0f);                                                                                 // reset transparency back to fully opaque
             }
@@ -1005,14 +1005,14 @@ namespace BossSystem
                 "BOSS %d / %d", s_boss_words_typed, BossConfig::BOSS_WORDS_TO_DEFEAT);
 
             AEGfxSetBlendMode(AE_GFX_BM_BLEND);                                                                             // use blending so the text renders correctly
-            if (DayCycle::IsNight())
+            if (DayCycle::is_night())
                 AEGfxPrint(Graphics::g_font_id, progress_buf, -0.1f, 0.8f, 0.55f, 1.0f, 1.0f, 1.0f, 1.0f); // white at night
             else
                 AEGfxPrint(Graphics::g_font_id, progress_buf, -0.1f, 0.8f, 0.55f, 0.0f, 0.0f, 0.0f, 1.0f); // black during day
         }
 
         // Trick Room overlay: purple tint, banner, reverse-typing label, and countdown timer
-        TrickRoom_DrawOverlayInternal();
+        trick_room_draw_overlay_internal();
     }
 
     /*
@@ -1025,13 +1025,13 @@ namespace BossSystem
     and the debug box mesh is used as a fallback. Nothing is drawn when the flash timer is at
     zero or below.
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
-    void Boss_DrawFlashOverlay(const Data::Meshes& meshes)
+    void boss_draw_flash_overlay(const Data::Meshes& meshes)
     {
         if (s_boss_flash_active_timer <= 0.0f) return;                                                                        // no flash is active so there is nothing to draw
         if (!s_boss_flash_mesh && !meshes.debug_box_mesh) return;                                                             // no mesh available to draw the overlay with
 
         float alpha = s_boss_flash_active_timer / BossConfig::BOSS_FLASH_FADE_DURATION_SECONDS;                               // calculate how opaque the flash should be right now
-        alpha = Utility::Utility_Clamp(alpha, 0.0f, 1.0f);                                                                  // clamp to a valid opacity range
+        alpha = Utility::utility_clamp(alpha, 0.0f, 1.0f);                                                                  // clamp to a valid opacity range
 
         AEGfxVertexList* overlay_mesh = s_boss_flash_mesh ? s_boss_flash_mesh : meshes.debug_box_mesh;                          // use the dedicated flash mesh or fall back to the debug box mesh
 
@@ -1044,7 +1044,7 @@ namespace BossSystem
         float win_w = (float)AEGfxGetWindowWidth();                                                                         // get the window width to size the overlay
         float win_h = (float)AEGfxGetWindowHeight();                                                                        // get the window height to size the overlay
 
-        Graphics::Draw_DrawMeshAt(overlay_mesh, 0.0f, 0.0f, win_w, win_h, 0.0f);                                            // draw the white rectangle over the full screen
+        Graphics::draw_mesh_at(overlay_mesh, 0.0f, 0.0f, win_w, win_h, 0.0f);                                            // draw the white rectangle over the full screen
 
         // Reset render state after drawing the overlay
         AEGfxSetColorToAdd(0.0f, 0.0f, 0.0f, 0.0f);                                                                         // clear the colour add so nothing else gets brightened
@@ -1060,7 +1060,7 @@ namespace BossSystem
     A return value of -1 means the boss does not currently own a slot, which is the case when
     the boss is inactive or has not yet been triggered for the current wave.
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
-    int Boss_GetKillWordSlot()
+    int boss_get_kill_word_slot()
     {
         return s_boss_pool_slot;                                                                                              // return the reserved slot index or -1 if there is none
     }
@@ -1069,7 +1069,7 @@ namespace BossSystem
     @function       Boss_GetKillWordAnchorY
     @brief          Returns the precomputed world-space Y the kill word slot must always be pinned to.
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
-    float Boss_GetKillWordAnchorY()
+    float boss_get_kill_word_anchor_y()
     {
         return s_boss_kill_word_anchor_y;                                                                                     // return the precomputed anchor Y for the kill word slot
     }
@@ -1082,7 +1082,7 @@ namespace BossSystem
     this to pause normal enemy spawning and freeze regular gameplay logic while the boss event
     is running. False is returned in all other states including INACTIVE, WAITING, and DEAD.
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
-    bool Boss_IsActive()
+    bool boss_is_active()
     {
         return s_boss_state == BossState::CUTSCENE || s_boss_state == BossState::ACTIVE;                                        // return true during the cutscene and while the boss is fighting
     }
@@ -1095,7 +1095,7 @@ namespace BossSystem
     the state from INACTIVE to WAITING and then proceeds normally through pool clear, cutscene,
     and ACTIVE. Nothing happens if the boss is already active or in any state other than INACTIVE.
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
-    void Boss_ForceSpawn()
+    void boss_force_spawn()
     {
         if (s_boss_state != BossState::INACTIVE) return;                                                                      // boss is already active or spawning so ignore this call
         s_boss_cycle_timer_seconds = BossConfig::BOSS_SPAWN_INTERVAL_SECONDS;                                                 // set the timer to the trigger threshold so it fires next update
@@ -1111,7 +1111,7 @@ namespace BossSystem
     screen triggers normally. boss_spawning_blocked is cleared by the DEAD state on the next
     update tick. Does nothing if the boss is not currently in the ACTIVE state.
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
-    bool Boss_ForceKill(std::vector<Data::Enemy>& pool, std::deque<int>& free_slots)
+    bool boss_force_kill(std::vector<Data::Enemy>& pool, std::deque<int>& free_slots)
     {
         if (s_boss_state != BossState::ACTIVE) return false;                                                                  // only valid while the boss is actively fighting
 
@@ -1138,7 +1138,7 @@ namespace BossSystem
     If Trick Room is on cooldown or already active, the cooldown is cleared and the phase
     restarts immediately. The boss must still be in the ACTIVE fight state.
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
-    bool Boss_ForceTrickRoom()
+    bool boss_force_trick_room()
     {
         if (s_boss_state != BossState::ACTIVE) return false;                                                                  // boss must be in the active fight state
 
@@ -1151,7 +1151,7 @@ namespace BossSystem
             s_tr_fade_timer = 0.0f;                                                                                           // reset any in-progress tint fade
         }
 
-        TrickRoom_TriggerInternal();                                                                                        // now guaranteed to fire since state is INACTIVE
+        trick_room_trigger_internal();                                                                                        // now guaranteed to fire since state is INACTIVE
         return true;
     }
 
@@ -1159,7 +1159,7 @@ namespace BossSystem
     @function       Boss_IsTrickRoomActive
     @brief          Returns true while the Trick Room reverse-typing phase is running.
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
-    bool Boss_IsTrickRoomActive()
+    bool boss_is_trick_room_active()
     {
         return s_tr_state == TrickRoomState::ACTIVE;                                                                          // expose the internal Trick Room phase flag read-only
     }
@@ -1172,7 +1172,7 @@ namespace BossSystem
     Reading this function immediately clears the flag so the upgrade trigger fires exactly once
     per boss defeat regardless of how many times the caller checks in the same frame.
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
-    bool Boss_WasJustDefeated()
+    bool boss_was_just_defeated()
     {
         if (s_boss_was_defeated)
         {

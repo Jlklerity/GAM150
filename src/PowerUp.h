@@ -15,11 +15,11 @@
  * - Gameplay effects: Lightning, Shield, TimeSlow.
  *
  * Integration (game.cpp):
- * - Call PowerUpSystem::Init() once in Game_Init().
- * - Call PowerUpSystem::Update(dt, enemy_pool, enemy_area) every frame.
- * - Call PowerUpSystem::Draw() in the render block.
- * - Call PowerUpSystem::Free() once in Game_Exit().
- * - OnMouseClick() is a no-op stub kept for link compatibility.
+ * - Call PowerUpSystem::init() once in game_init().
+ * - Call PowerUpSystem::update(dt, enemy_pool, enemy_area) every frame.
+ * - Call PowerUpSystem::draw() in the render block.
+ * - Call PowerUpSystem::free() once in game_exit().
+ * - on_mouse_click() is a no-op stub kept for link compatibility.
  *
  * Assets expected (place in Assets/):
  *   Assets/powerup_lightning.png
@@ -43,11 +43,11 @@ namespace PowerUpSystem
         TIME_SLOW      /**< Slows the game for a duration by returning a time scale < 1.0f. */
     };
 
-    /** @brief Initialises power-up resources. Call once in Game_Init(). */
-    void Init();
+    /** @brief Initialises power-up resources. Call once in game_init(). */
+    void init();
 
-    /** @brief Releases resources. Call once in Game_Exit(). */
-    void Free();
+    /** @brief Releases resources. Call once in game_exit(). */
+    void free();
 
     /**
      * @brief Updates power-up logic (timers, spawning, falling, key input).
@@ -56,42 +56,42 @@ namespace PowerUpSystem
      * @param enemy_area   Enemy play area - landing y used as the drop floor.
      * @param health       Player health
      */
-    void Update(float dt, std::vector<Data::Enemy>& enemy_pool,
+    void update(float dt, std::vector<Data::Enemy>& enemy_pool,
         const Data::EnemyArea& enemy_area, Data::Health& health);
 
     /**
      * @brief No-op stub retained for link compatibility with game.cpp.
      *        Mouse clicks no longer activate power-ups.
      */
-    void OnMouseClick(float mouse_x, float mouse_y, std::vector<Data::Enemy>& enemy_pool);
+    void on_mouse_click(float mouse_x, float mouse_y, std::vector<Data::Enemy>& enemy_pool);
 
     /** @brief Draws all active drops (sprite + slot number + effect timers). */
-    void Draw();
+    void draw();
 
     /** @brief Returns true while the Shield effect is active. */
-    bool IsShieldActive();
+    bool is_shield_active();
 
     /**
      * @brief Returns a time scale multiplier for TimeSlow.
      * @return 1.0f normally; SLOW_SCALE while slow is active.
      */
-    float GetTimeScale();
+    float get_time_scale();
 
     /**
      * @brief Sets the random drop spawn interval.
      * @param min_seconds  Minimum seconds between spawns (clamped >= 0.2).
      * @param max_seconds  Maximum seconds between spawns (clamped >= min_seconds).
      */
-    void SetDropSpawnInterval(float min_seconds, float max_seconds);
+    void set_drop_spawn_interval(float min_seconds, float max_seconds);
 
     /**
      * @brief Debug helper: force-spawns a drop of the given type into a free slot.
      *
      * Spawns at a fixed Y above the screen centre so it is immediately visible.
-     * Uses the last known enemy area bounds; safe to call any time after Init().
+     * Uses the last known enemy area bounds; safe to call any time after init().
      * No-ops silently if all 3 slots are already occupied.
      *
      * @param type  The power-up type to force-spawn.
      */
-    void DebugSpawn(PowerType type);
+    void debug_spawn(PowerType type);
 }

@@ -81,7 +81,7 @@ namespace Utility
     This function returns 'minimum' if 'value' is below the range, 'maximum' if it is above the range,
     or the original 'value' if it is already within [minimum, maximum].
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
-    float Utility_Clamp(float value, float minimum, float maximum)
+    float utility_clamp(float value, float minimum, float maximum)
     {
         if (value < minimum) return minimum;                                                                                // clamp low end
         if (value > maximum) return maximum;                                                                                // clamp high end
@@ -96,9 +96,9 @@ namespace Utility
     This function blends from 'a' to 'b' using 't' as the interpolation factor.
     't' is clamped to [0, 1], where 0 returns 'a', 1 returns 'b', and values in-between return a mix.
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
-    float Utility_Lerp(float a, float b, float t)
+    float utility_lerp(float a, float b, float t)
     {
-        t = Utility_Clamp(t, 0.0f, 1.0f);                                                                                   // keep blend factor within 0 to 1
+        t = utility_clamp(t, 0.0f, 1.0f);                                                                                   // keep blend factor within 0 to 1
         return a + (b - a) * t;                                                                                             // return blended value
     }
 
@@ -110,7 +110,7 @@ namespace Utility
     This function generates a uniformly distributed integer in [minimum, maximum_inclusive].
     If the range is invalid (maximum_inclusive < minimum), it safely returns 'minimum'.
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
-    int Utility_RandInt(int minimum, int maximum_inclusive)
+    int utility_rand_int(int minimum, int maximum_inclusive)
     {
         if (maximum_inclusive < minimum) return minimum;                                                                    // handle invalid range safely
         int range = maximum_inclusive - minimum + 1;                                                                        // compute inclusive range size
@@ -125,7 +125,7 @@ namespace Utility
     This function maps a position given in world pixels to NDC space, where the window center is (0, 0)
     and the visible range is typically -1..1 on each axis. The result is written to 'ndc_x' and 'ndc_y'.
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
-    void Convert_WorldToNdc(float world_x, float world_y, float& ndc_x, float& ndc_y)
+    void convert_world_to_ndc(float world_x, float world_y, float& ndc_x, float& ndc_y)
     {
         float half_window_width = (float)AEGfxGetWindowWidth() * 0.5f;                                                      // half window width in pixels
         float half_window_height = (float)AEGfxGetWindowHeight() * 0.5f;                                                    // half window height in pixels
@@ -143,7 +143,7 @@ namespace Utility
     This function performs an AABB overlap test using the centers and half-extents of two rectangles.
     It returns true if the rectangles intersect (including touching edges), otherwise false.
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
-    bool Collision_Overlap(float a_center_x, float a_center_y, float a_half_width, float a_half_height, float b_center_x, float b_center_y, float b_half_width, float b_half_height)
+    bool collision_overlap(float a_center_x, float a_center_y, float a_half_width, float a_half_height, float b_center_x, float b_center_y, float b_half_width, float b_half_height)
     {
         float a_left = a_center_x - a_half_width;                                                                           // compute 'a' left edge
         float a_right = a_center_x + a_half_width;                                                                          // compute 'a' right edge
@@ -169,7 +169,7 @@ namespace Utility
 
     This function modifies the input string directly by uppercasing each character using 'std::toupper'.
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
-    void String_ToUpperInPlace(std::string& s)
+    void string_to_upper_in_place(std::string& s)
     {
         for (char& c : s)                                                                                                   // loop over each character
             c = (char)std::toupper((unsigned char)c);                                                                       // convert character to uppercase
@@ -196,7 +196,7 @@ namespace Word
     length matches 'expected_length', converts them to uppercase, and returns them as a vector.
     If the file cannot be opened, it returns an empty list.
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
-    std::vector<std::string> Word_LoadFromFile(const char* file_path, int expected_length)
+    std::vector<std::string> word_load_from_file(const char* file_path, int expected_length)
     {
         std::vector<std::string> loaded_words;                                                                              // storage for loaded words
         std::ifstream file_stream(file_path);                                                                               // open the file for reading
@@ -208,7 +208,7 @@ namespace Word
         {
             if ((int)candidate_word.size() == expected_length)                                                              // keep only words of the expected length
             {
-                Utility::String_ToUpperInPlace(candidate_word);                                                             // convert word to uppercase
+                Utility::string_to_upper_in_place(candidate_word);                                                             // convert word to uppercase
                 loaded_words.push_back(candidate_word);                                                                     // store word in list
             }
         }
@@ -224,14 +224,14 @@ namespace Word
     supported length (3 to 8). If any file fails to load or results in an empty list, a small fallback
     set is assigned so the game can still run.
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
-    void Word_LoadAll(Data::WordBank& word_bank)
+    void word_load_all(Data::WordBank& word_bank)
     {
-        word_bank.words_3 = Word_LoadFromFile("Assets/3letterWords.txt", 3);                                                // load 3-letter words
-        word_bank.words_4 = Word_LoadFromFile("Assets/4letterWords.txt", 4);                                                // load 4-letter words
-        word_bank.words_5 = Word_LoadFromFile("Assets/5letterWords.txt", 5);                                                // load 5-letter words
-        word_bank.words_6 = Word_LoadFromFile("Assets/6letterWords.txt", 6);                                                // load 6-letter words
-        word_bank.words_7 = Word_LoadFromFile("Assets/7letterWords.txt", 7);                                                // load 7-letter words
-        word_bank.words_8 = Word_LoadFromFile("Assets/8letterWords.txt", 8);                                                // load 8-letter words
+        word_bank.words_3 = word_load_from_file("Assets/3letterWords.txt", 3);                                                // load 3-letter words
+        word_bank.words_4 = word_load_from_file("Assets/4letterWords.txt", 4);                                                // load 4-letter words
+        word_bank.words_5 = word_load_from_file("Assets/5letterWords.txt", 5);                                                // load 5-letter words
+        word_bank.words_6 = word_load_from_file("Assets/6letterWords.txt", 6);                                                // load 6-letter words
+        word_bank.words_7 = word_load_from_file("Assets/7letterWords.txt", 7);                                                // load 7-letter words
+        word_bank.words_8 = word_load_from_file("Assets/8letterWords.txt", 8);                                                // load 8-letter words
 
         if (word_bank.words_3.empty()) word_bank.words_3 = { "ABC", "XYZ" };                                                // fallback 3-letter words
         if (word_bank.words_4.empty()) word_bank.words_4 = { "ABCD", "WXYZ" };                                              // fallback 4-letter words
@@ -249,7 +249,7 @@ namespace Word
     This function selects and returns a const reference to the appropriate word vector inside 'word_bank'
     based on 'word_length' (3 to 8). If the length is not 3 to 7, it defaults to returning the 8-letter list.
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
-    const std::vector<std::string>& Word_GetListByLength(const Data::WordBank& word_bank, int word_length)
+    const std::vector<std::string>& word_get_list_by_length(const Data::WordBank& word_bank, int word_length)
     {
         if (word_length == 3) return word_bank.words_3;                                                                     // return 3-letter list
         if (word_length == 4) return word_bank.words_4;                                                                     // return 4-letter list
@@ -267,10 +267,10 @@ namespace Word
     This function returns a randomly selected string from 'words'.
     If the list is empty, it returns a placeholder string ("????") to avoid crashes.
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
-    std::string Word_PickRandom(const std::vector<std::string>& words)
+    std::string word_pick_random(const std::vector<std::string>& words)
     {
         if (words.empty()) return "????";                                                                                   // return placeholder if list is empty
-        int random_index = Utility::Utility_RandInt(0, (int)words.size() - 1);                                              // pick random index
+        int random_index = Utility::utility_rand_int(0, (int)words.size() - 1);                                              // pick random index
         return words[(size_t)random_index];                                                                                 // return chosen word
     }
 } // Word namespace end
@@ -317,7 +317,7 @@ namespace Graphics
     transparency value. It also resets the multiply/add color modifiers to neutral so debug shapes draw
     with predictable colors.
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
-    void Graphics_SetColorState(float alpha_value)
+    void graphics_set_color_state(float alpha_value)
     {
         AEGfxSetRenderMode(AE_GFX_RM_COLOR);                                                                                // switch to solid color mode
         AEGfxSetBlendMode(AE_GFX_BM_BLEND);                                                                                 // enable blending
@@ -333,7 +333,7 @@ namespace Graphics
     This function switches the renderer to texture mode, enables alpha blending, resets transparency
     to fully opaque, and clears any color multiply/add modifiers so sprites render normally.
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
-    void Graphics_SetSpriteState()
+    void graphics_set_sprite_state()
     {
         AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);                                                                              // switch to textured mode
         AEGfxSetBlendMode(AE_GFX_BM_BLEND);                                                                                 // enable blending
@@ -402,7 +402,7 @@ namespace Graphics
     This function builds a 2D transform (scale then rotate then translate), applies it to the renderer,
     and draws the provided mesh using triangle mode.
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
-    void Draw_DrawMeshAt(AEGfxVertexList* mesh, float position_x, float position_y, float scale_x, float scale_y, float rotation_radians)
+    void draw_mesh_at(AEGfxVertexList* mesh, float position_x, float position_y, float scale_x, float scale_y, float rotation_radians)
     {
         AEMtx33 scale_matrix, rotation_matrix, translation_matrix, transform_matrix;                                        // matrices for draw transform
         AEMtx33Scale(&scale_matrix, scale_x, scale_y);                                                                      // build scale matrix
@@ -437,7 +437,7 @@ namespace DifficultySystem
     This function provides read-only access to the internal difficulty variable so other systems
     (such as debug UI) can display or use the current difficulty level.
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
-    float Difficulty_Get() {
+    float difficulty_get() {
         return s_difficulty_value;                                                                                            // read difficulty value
     }
 
@@ -448,7 +448,7 @@ namespace DifficultySystem
     This function sets the internal difficulty value to 0.0, returning the game to its starting
     difficulty level. It is called when restarting a level or entering the game from the main menu.
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
-    void Difficulty_Reset() {
+    void difficulty_reset() {
         s_difficulty_value = 0.0f;
     }
 
@@ -460,10 +460,10 @@ namespace DifficultySystem
     This function adds a signed amount to the internal difficulty value, then clamps it between 0 and
     DIFFICULTY_MAX to prevent the difficulty from going negative or exceeding the configured cap.
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
-    void Difficulty_Add(float amount)
+    void difficulty_add(float amount)
     {
         s_difficulty_value += amount;                                                                                         // add amount to difficulty
-        s_difficulty_value = Utility::Utility_Clamp(s_difficulty_value, 0.0f, EnemyConfig::DIFFICULTY_MAX);                     // clamp to valid range
+        s_difficulty_value = Utility::utility_clamp(s_difficulty_value, 0.0f, EnemyConfig::DIFFICULTY_MAX);                     // clamp to valid range
     }
 
     /*
@@ -474,9 +474,9 @@ namespace DifficultySystem
     This function ramps the difficulty based on elapsed time by adding a fixed rate
     (DIFFICULTY_RAMP_PER_SECOND) scaled by delta time.
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
-    void Difficulty_UpdateOverTime(float dt)
+    void difficulty_update_over_time(float dt)
     {
-        Difficulty_Add(EnemyConfig::DIFFICULTY_RAMP_PER_SECOND * dt);                                                       // add difficulty based on elapsed time
+        difficulty_add(EnemyConfig::DIFFICULTY_RAMP_PER_SECOND * dt);                                                       // add difficulty based on elapsed time
     }
 
     /*
@@ -486,7 +486,7 @@ namespace DifficultySystem
     This function reduces the spawn interval as difficulty increases, making enemies spawn more often.
     The interval is clamped so it never goes below RANDOM_SPAWN_INTERVAL_MIN_SECONDS.
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
-    float Difficulty_GetSpawnIntervalSeconds()
+    float difficulty_get_spawn_interval_seconds()
     {
         float interval_decrease = s_difficulty_value * EnemyConfig::RANDOM_SPAWN_INTERVAL_DECREASE_PER_LEVEL;                 // how much the interval shrinks from difficulty
         float interval = EnemyConfig::RANDOM_SPAWN_INTERVAL_START_SECONDS - interval_decrease;                              // compute interval
@@ -502,7 +502,7 @@ namespace DifficultySystem
     This function maps the current difficulty into tiers that gradually unlock longer words.
     As difficulty increases, the allowed maximum word length increases from 3 up to 8.
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
-    int Difficulty_GetUnlockedMaxWordLength()
+    int difficulty_get_unlocked_max_word_length()
     {
         float d = s_difficulty_value;                                                                                         // copy difficulty value
         if (d < 5.0f)  return 3;                                                                                            // allow only 3-letter words
@@ -521,11 +521,11 @@ namespace DifficultySystem
     (determined by difficulty). It is used to vary enemy word lengths while still respecting the
     difficulty progression.
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
-    int Difficulty_GetRandomWordLength()
+    int difficulty_get_random_word_length()
     {
         int min_word_length = 3;                                                                                            // minimum word length
-        int max_word_length = Difficulty_GetUnlockedMaxWordLength();                                                        // maximum word length based on difficulty
-        return Utility::Utility_RandInt(min_word_length, max_word_length);                                                  // pick random length in range
+        int max_word_length = difficulty_get_unlocked_max_word_length();                                                        // maximum word length based on difficulty
+        return Utility::utility_rand_int(min_word_length, max_word_length);                                                  // pick random length in range
     }
 
     /*
@@ -537,12 +537,12 @@ namespace DifficultySystem
     multiplier (shorter words fall faster, longer words fall slower). The multiplier effect ramps in as
     difficulty increases, so early gameplay stays gentler while later gameplay becomes more punishing.
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
-    float Difficulty_GetEnemyFallSpeed(int word_length)
+    float difficulty_get_enemy_fall_speed(int word_length)
     {
         float fall_speed_bonus = s_difficulty_value * EnemyConfig::ENEMY_FALL_SPEED_INCREASE_PER_LEVEL;                       // bonus speed from difficulty scaling
         float base_speed = EnemyConfig::ENEMY_FALL_SPEED_START + fall_speed_bonus;                                          // base speed from difficulty
 
-        float t = Utility::Utility_Clamp(s_difficulty_value / 14.0f, 0.0f, 1.0f);                                             // normalize difficulty into 0..1
+        float t = Utility::utility_clamp(s_difficulty_value / 14.0f, 0.0f, 1.0f);                                             // normalize difficulty into 0..1
 
         float target_multiplier = 1.0f;                                                                                     // default multiplier
         if (word_length == 3) target_multiplier = 1.20f;                                                                    // 3-letter enemies fall faster
@@ -552,7 +552,7 @@ namespace DifficultySystem
         else if (word_length == 7) target_multiplier = 0.96f;                                                               // 7-letter enemies fall slightly slower
         else target_multiplier = 0.90f;                                                                                     // 8-letter enemies fall slower
 
-        float multiplier = Utility::Utility_Lerp(1.0f, target_multiplier, t);                                               // blend multiplier based on difficulty
+        float multiplier = Utility::utility_lerp(1.0f, target_multiplier, t);                                               // blend multiplier based on difficulty
         return base_speed * multiplier;                                                                                     // return final fall speed
     }
 } // DifficultySystem namespace end
@@ -575,7 +575,7 @@ namespace HealthSystem
     This function resets health_current to health_max, restoring the player to full health.
     It is called when entering the game or restarting a level.
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
-    void Health_Init(Data::Health& health) {
+    void health_init(Data::Health& health) {
         health.health_max = 50.0f;                                                                                          // reset max health to default
         health.health_current = health.health_max;
     }
@@ -588,10 +588,10 @@ namespace HealthSystem
     This function applies a signed health change to 'h.health_current' and then clamps it between
     0 and 'h.health_max' to prevent underflow or overflow.
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
-    void Health_Add(Data::Health& h, float amount)
+    void health_add(Data::Health& h, float amount)
     {
         h.health_current += amount;                                                                                         // add change to current health
-        h.health_current = Utility::Utility_Clamp(h.health_current, 0.0f, h.health_max);                                    // clamp to valid range
+        h.health_current = Utility::utility_clamp(h.health_current, 0.0f, h.health_max);                                    // clamp to valid range
     }
 
 } // HealthSystem namespace end
@@ -615,7 +615,7 @@ namespace Animation
     and updates the UV coordinates on the animation struct. It is called whenever the frame changes
     to keep the UV offsets in sync with the sprite sheet layout.
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
-    void Animation_ApplyUv(Data::SpriteAnim& anim)
+    void animation_apply_uv(Data::SpriteAnim& anim)
     {
         int current_column = anim.animation_frame_index % anim.animation_columns;                                           // compute column from frame index
         int current_row = anim.animation_row_index;                                                                         // use the currently selected row
@@ -632,10 +632,10 @@ namespace Animation
     a death frame), then recalculates the sprite sheet UV offsets based on the current column and the
     selected animation row.
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
-    void Animation_SetFrame(Data::SpriteAnim& anim, int frame_index)
+    void animation_set_frame(Data::SpriteAnim& anim, int frame_index)
     {
         anim.animation_frame_index = frame_index;                                                                           // set the current frame index directly
-        Animation_ApplyUv(anim);                                                                                            // update UV coords for the new frame
+        animation_apply_uv(anim);                                                                                            // update UV coords for the new frame
     }
 
     /*
@@ -647,7 +647,7 @@ namespace Animation
     wraps the frame index back to 0 when it exceeds the number of frames, and then updates the sprite sheet
     UV offsets using the current frame column and the selected animation row.
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
-    void Animation_Update(Data::SpriteAnim& anim, float dt)
+    void animation_update(Data::SpriteAnim& anim, float dt)
     {
         anim.animation_timer_seconds += dt;                                                                                 // add delta time to timer
         if (anim.animation_timer_seconds < anim.animation_frame_duration_seconds)                                           // check if frame time not reached
@@ -659,7 +659,7 @@ namespace Animation
         if (anim.animation_frame_index >= anim.Anim_FrameCount())                                                           // wrap if beyond last frame
             anim.animation_frame_index = 0;                                                                                 // reset to first frame
 
-        Animation_ApplyUv(anim);                                                                                            // update UV coords for the new frame
+        animation_apply_uv(anim);                                                                                            // update UV coords for the new frame
     }
 } // Animation namespace end
 /*___________________________________________________________________________________________________________________________________________________________________________________________________*/
@@ -682,7 +682,7 @@ namespace EnemySystem
     This function scans all active enemies and returns true if any of them already use the given word.
     If include_hidden_words is true, it also checks the hidden second word on shielded enemies.
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
-    bool Enemy_IsWordInUse(const std::vector<Data::Enemy>& pool, const std::string& word_text, bool include_hidden_words)
+    bool enemy_is_word_in_use(const std::vector<Data::Enemy>& pool, const std::string& word_text, bool include_hidden_words)
     {
         if (word_text.empty()) return true;
 
@@ -708,16 +708,16 @@ namespace EnemySystem
     This function randomly picks words from the word bank and keeps trying until it finds one that
     is not already in use. Returns an empty string if no unique word is found within the attempt limit.
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
-    std::string Enemy_PickUniqueWord(int word_length, const Data::WordBank& bank, const std::vector<Data::Enemy>& pool, bool include_hidden_words)
+    std::string enemy_pick_unique_word(int word_length, const Data::WordBank& bank, const std::vector<Data::Enemy>& pool, bool include_hidden_words)
     {
-        const auto& list = Word::Word_GetListByLength(bank, word_length);                                                   // fetch list for desired length
+        const auto& list = Word::word_get_list_by_length(bank, word_length);                                                   // fetch list for desired length
         if (list.empty()) return std::string{};
 
         for (int tries = 0; tries < EnemyConfig::MAX_WORD_TRIES; ++tries)                                                   // try several times to find a unique word
         {
-            std::string candidate = Word::Word_PickRandom(list);                                                            // pick a random word
+            std::string candidate = Word::word_pick_random(list);                                                            // pick a random word
 
-            if (!Enemy_IsWordInUse(pool, candidate, include_hidden_words))                                                  // check if word is unused
+            if (!enemy_is_word_in_use(pool, candidate, include_hidden_words))                                                  // check if word is unused
                 return candidate;                                                                                           // return unique word
         }
         return std::string{};                                                                                               // return empty string on failure
@@ -731,7 +731,7 @@ namespace EnemySystem
     This function picks a random word length each attempt and tries to find a unique word of that
     length. It keeps trying up to max_tries_total times. Returns an empty string if nothing is found.
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
-    std::string Enemy_PickUniqueWordRandomLength(int min_len, int max_len, const Data::WordBank& bank, const std::vector<Data::Enemy>& pool, bool include_hidden_words, int max_tries_total)
+    std::string enemy_pick_unique_word_random_length(int min_len, int max_len, const Data::WordBank& bank, const std::vector<Data::Enemy>& pool, bool include_hidden_words, int max_tries_total)
     {
         if (min_len > max_len) std::swap(min_len, max_len);
 
@@ -740,8 +740,8 @@ namespace EnemySystem
 
         for (int tries = 0; tries < max_tries_total; ++tries)                                                               // keep trying until the attempt limit is reached
         {
-            int len = Utility::Utility_RandInt(min_len, max_len);                                                           // pick a random length in the allowed range
-            std::string w = Enemy_PickUniqueWord(len, bank, pool, include_hidden_words);                                    // try to find a unique word of that length
+            int len = Utility::utility_rand_int(min_len, max_len);                                                           // pick a random length in the allowed range
+            std::string w = enemy_pick_unique_word(len, bank, pool, include_hidden_words);                                    // try to find a unique word of that length
             if (!w.empty()) return w;                                                                                       // return the word if one was found
         }
         return std::string{};                                                                                               // return empty if nothing found within the limit
@@ -756,7 +756,7 @@ namespace EnemySystem
     that screen-space size into world pixels. It is used to keep spawned enemies (and their text) within
     usable horizontal bounds and to help avoid overlaps.
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
-    float Enemy_GetWordHalfWidthWorld(const std::string& word)
+    float enemy_get_word_half_width_world(const std::string& word)
     {
         if (Graphics::g_font_id < 0) return 0.0f;                                                                             // return 0 if font is missing
 
@@ -775,10 +775,10 @@ namespace EnemySystem
     This function maps a lane id into the usable horizontal range and returns the
     corresponding X coordinate.
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
-    float Enemy_GetLaneX(int lane_id, float usable_min_x, float usable_max_x)
+    float enemy_get_lane_x(int lane_id, float usable_min_x, float usable_max_x)
     {
         float t = (float)lane_id / (float)(EnemyConfig::ENEMY_LANE_COUNT - 1);                                              // lane position as 0..1
-        return Utility::Utility_Lerp(usable_min_x, usable_max_x, t);                                                        // return lane x position
+        return Utility::utility_lerp(usable_min_x, usable_max_x, t);                                                        // return lane x position
     }
 
     /*
@@ -790,7 +790,7 @@ namespace EnemySystem
     spawn line (smallest positive gap). It returns true only if the nearest gap is at least
     ENEMY_LANE_MIN_GAP_PX, ensuring newly spawned enemies won't overlap or stack too tightly.
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
-    bool Enemy_IsLaneSpawnYFree(int lane_id, float spawn_y, const std::vector<Data::Enemy>& pool)
+    bool enemy_is_lane_spawn_y_free(int lane_id, float spawn_y, const std::vector<Data::Enemy>& pool)
     {
         float closest_gap = 999.0f;                                                                                         // start with very large gap
 
@@ -852,7 +852,7 @@ namespace EnemySystem
     This function removes the shield from a shielded enemy. It swaps in the hidden second word,
     updates the word length, and resets the animation to the unshielded row of the sprite sheet.
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
-    void Enemy_BreakShield(Data::Enemy& e)
+    void enemy_break_shield(Data::Enemy& e)
     {
         if (!e.enemy_is_active) return;                                                                                     // skip if enemy is not active
         if (e.enemy_is_dying) return;                                                                                       // skip if enemy is already dying
@@ -870,7 +870,7 @@ namespace EnemySystem
         e.enemy_animation.animation_row_index = 1;                                                                          // switch to the unshielded animation row
         e.enemy_animation.animation_frame_index = 0;                                                                        // restart animation from frame 0
         e.enemy_animation.animation_timer_seconds = 0.0f;                                                                   // reset the frame timer
-        Animation::Animation_SetFrame(e.enemy_animation, 0);                                                                // update UV coords to match the new row and frame
+        Animation::animation_set_frame(e.enemy_animation, 0);                                                                // update UV coords to match the new row and frame
     }
 
     /*
@@ -882,7 +882,7 @@ namespace EnemySystem
     flag so the enemy can drop off-screen, and marks damage as already handled so a killed enemy will not
     apply landing damage.
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
-    void Enemy_Killed(Data::Enemy& e, Data::Health& health)
+    void enemy_killed(Data::Enemy& e, Data::Health& health)
     {
         if (!e.enemy_is_active) return;                                                                                     // ignore if already inactive
         if (e.enemy_is_dying)   return;                                                                                     // ignore if already dying
@@ -899,7 +899,7 @@ namespace EnemySystem
 
         if (e.enemy_type == Data::EnemyType::FRIENDLY)                                                                      // friendly npc
         {
-            HealthSystem::Health_Add(health, 10.0f);                                                                        // heal player
+            HealthSystem::health_add(health, 10.0f);                                                                        // heal player
             e.enemy_word_text.clear();                                                                                      // hide word label immediately
             e.enemy_word_length = 0;                                                                                        // clear word length to match
             e.enemy_animation.animation_rows = 3;                                                                           // friendly sheet has 3 rows
@@ -916,7 +916,7 @@ namespace EnemySystem
             e.enemy_animation.animation_row_index = e.enemy_death_row_index;                                                // death row
         }
 
-        Animation::Animation_SetFrame(e.enemy_animation, 0);                                                                // update UV coords to match the new row and frame
+        Animation::animation_set_frame(e.enemy_animation, 0);                                                                // update UV coords to match the new row and frame
     }
 
     /*
@@ -928,7 +928,7 @@ namespace EnemySystem
     animation frames, moves the enemy downward, clamps it within the enemy area, applies landing damage once,
     and deactivates the enemy when its lifecycle is complete (landed or finished dying + linger).
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
-    void Enemy_Update(Data::Enemy& e, const Data::EnemyArea& area, float dt, Data::Health& health)
+    void enemy_update(Data::Enemy& e, const Data::EnemyArea& area, float dt, Data::Health& health)
     {
         if (!e.enemy_is_active) return;                                                                                     // skip inactive enemies
 
@@ -937,15 +937,15 @@ namespace EnemySystem
         {
             if (e.enemy_animation.animation_row_index == 0)                                                                 // row 0: cage falling, behaves like a normal enemy
             {
-                Animation::Animation_Update(e.enemy_animation, dt);                                                         // advance cage animation
+                Animation::animation_update(e.enemy_animation, dt);                                                         // advance cage animation
 
                 if (!e.enemy_has_landed)                                                                                    // cage is still falling
                 {
                     e.enemy_position_y -= e.enemy_fall_speed_units_per_second * dt;                                         // fall downward
 
-                    e.enemy_position_x = Utility::Utility_Clamp(e.enemy_position_x,
+                    e.enemy_position_x = Utility::utility_clamp(e.enemy_position_x,
                         area.area_min_x, area.area_max_x);                                                                  // clamp x within enemy area
-                    e.enemy_position_y = Utility::Utility_Clamp(e.enemy_position_y,
+                    e.enemy_position_y = Utility::utility_clamp(e.enemy_position_y,
                         area.Area_BoxMinY(), area.Area_BoxMaxY());                                                          // clamp y within enemy area
 
                     if (e.enemy_position_y <= area.area_landing_y)                                                          // reached landing line
@@ -958,9 +958,9 @@ namespace EnemySystem
                             e.enemy_did_damage = true;                                                                      // mark damage handled
                             e.enemy_is_active = false;                                                                      // remove after landing
 
-                            if (!PowerUpSystem::IsShieldActive())                                                           // only damage if shield is not active
+                            if (!PowerUpSystem::is_shield_active())                                                           // only damage if shield is not active
                             {
-                                HealthSystem::Health_Add(health, -10.0f);                                                   // damage player
+                                HealthSystem::health_add(health, -10.0f);                                                   // damage player
 
                             }
                         }
@@ -982,7 +982,7 @@ namespace EnemySystem
                     if (e.enemy_animation.animation_timer_seconds >= e.enemy_animation.animation_frame_duration_seconds)    // advance when frame duration is reached
                     {
                         e.enemy_animation.animation_timer_seconds = 0.0f;                                                   // reset timer after frame advance
-                        Animation::Animation_SetFrame(e.enemy_animation, e.enemy_animation.animation_frame_index + 1);      // move to the next frame
+                        Animation::animation_set_frame(e.enemy_animation, e.enemy_animation.animation_frame_index + 1);      // move to the next frame
                     }
                 }
                 else                                                                                                        // final frame reached, transition to bird fly
@@ -990,13 +990,13 @@ namespace EnemySystem
                     e.enemy_animation.animation_row_index = 2;                                                              // switch to bird fly row
                     e.enemy_animation.animation_frame_index = 0;                                                            // reset to first frame
                     e.enemy_animation.animation_timer_seconds = 0.0f;                                                       // reset frame timer
-                    Animation::Animation_SetFrame(e.enemy_animation, 0);                                                    // update UV coords to match the new row and frame
+                    Animation::animation_set_frame(e.enemy_animation, 0);                                                    // update UV coords to match the new row and frame
                     e.enemy_is_dying = false;                                                                               // no longer in break free phase, now flying
                 }
             }
             else if (e.enemy_animation.animation_row_index == 2)                                                            // row 2: bird fly away, moves upward until off screen
             {
-                Animation::Animation_Update(e.enemy_animation, dt);                                                         // advance bird animation
+                Animation::animation_update(e.enemy_animation, dt);                                                         // advance bird animation
 
                 e.enemy_position_y += EnemyConfig::ENEMY_FRIENDLY_FLY_SPEED * dt;                                           // fly upward
 
@@ -1019,7 +1019,7 @@ namespace EnemySystem
                     e.enemy_animation.animation_frame_duration_seconds)                                                     // advance when frame duration is reached
                 {
                     e.enemy_animation.animation_timer_seconds = 0.0f;                                                       // reset timer after frame advance
-                    Animation::Animation_SetFrame(e.enemy_animation,
+                    Animation::animation_set_frame(e.enemy_animation,
                         e.enemy_animation.animation_frame_index + 1);                                                       // move to the next frame
                 }
             }
@@ -1047,15 +1047,15 @@ namespace EnemySystem
         }
 
         // Normal fall
-        Animation::Animation_Update(e.enemy_animation, dt);                                                                 // advance normal animation
+        Animation::animation_update(e.enemy_animation, dt);                                                                 // advance normal animation
 
         if (!e.enemy_has_landed)                                                                                            // enemy is still falling
         {
             e.enemy_position_y -= e.enemy_fall_speed_units_per_second * dt;                                                 // move down based on fall speed
 
-            e.enemy_position_x = Utility::Utility_Clamp(e.enemy_position_x,
+            e.enemy_position_x = Utility::utility_clamp(e.enemy_position_x,
                 area.area_min_x, area.area_max_x);                                                                          // clamp x within enemy area
-            e.enemy_position_y = Utility::Utility_Clamp(e.enemy_position_y,
+            e.enemy_position_y = Utility::utility_clamp(e.enemy_position_y,
                 area.Area_BoxMinY(), area.Area_BoxMaxY());                                                                  // clamp y within enemy area
 
             if (e.enemy_position_y <= area.area_landing_y)                                                                  // reached landing line
@@ -1068,10 +1068,10 @@ namespace EnemySystem
                     e.enemy_did_damage = true;                                                                              // mark damage handled
                     e.enemy_is_active = false;                                                                              // remove enemy after landing
 
-                    if (!PowerUpSystem::IsShieldActive())
+                    if (!PowerUpSystem::is_shield_active())
                     {
-                        HealthSystem::Health_Add(health, -10.0f);                                                           // apply landing damage once
-                        SoundManager::PlayPlayerHitSfx();
+                        HealthSystem::health_add(health, -10.0f);                                                           // apply landing damage once
+                        SoundManager::play_player_hit_sfx();
                     }
                 }
                 else                                                                                                        // damage already handled
@@ -1084,11 +1084,11 @@ namespace EnemySystem
         // letter orbit effect update, runs while enemy is falling and has a word
         if (!e.enemy_word_text.empty() && !e.enemy_has_landed)                                                              // only run orbit while enemy is actively falling
         {
-            float raw_dt = dt / PowerUpSystem::GetTimeScale();                                                              // unscaled dt so orbit is unaffected by the slow power-up
+            float raw_dt = dt / PowerUpSystem::get_time_scale();                                                              // unscaled dt so orbit is unaffected by the slow power-up
 
             if (!e.enemy_orbit_initialised)                                                                                 // first frame this enemy is active, do the random roll
             {
-                e.enemy_has_orbit_effect = (Utility::Utility_RandInt(0, 99) < EnemyConfig::ORBIT_SPAWN_CHANCE);             // randomly decide if this enemy gets the orbit effect
+                e.enemy_has_orbit_effect = (Utility::utility_rand_int(0, 99) < EnemyConfig::ORBIT_SPAWN_CHANCE);             // randomly decide if this enemy gets the orbit effect
                 e.enemy_orbit_initialised = true;                                                                           // mark as initialised so the roll never happens again
                 e.enemy_orbit_phase = 0;                                                                                    // start in idle phase
                 e.enemy_orbit_idle_timer = EnemyConfig::ORBIT_IDLE_DURATION_SECONDS;                                        // start with a full idle wait before first orbit
@@ -1099,7 +1099,7 @@ namespace EnemySystem
                 if (e.enemy_orbit_phase == 0)                                                                               // IDLE phase: sitting at baseline, waiting for next orbit
                 {
                     e.enemy_orbit_idle_timer -= raw_dt;                                                                     // count down the idle wait
-                    e.enemy_orbit_radius = Utility::Utility_Lerp(                                                           // smoothly return radius to zero while idle
+                    e.enemy_orbit_radius = Utility::utility_lerp(                                                           // smoothly return radius to zero while idle
                         e.enemy_orbit_radius, 0.0f, EnemyConfig::ORBIT_FADE_SPEED * raw_dt);
 
                     if (e.enemy_orbit_idle_timer <= 0.0f)                                                                   // idle wait finished, start orbiting
@@ -1112,7 +1112,7 @@ namespace EnemySystem
                 {
                     e.enemy_orbit_timer += raw_dt;                                                                          // advance the orbit angle timer
 
-                    e.enemy_orbit_radius = Utility::Utility_Lerp(                                                           // smoothly lerp radius up toward max
+                    e.enemy_orbit_radius = Utility::utility_lerp(                                                           // smoothly lerp radius up toward max
                         e.enemy_orbit_radius, EnemyConfig::ORBIT_RADIUS_MAX_NDC, EnemyConfig::ORBIT_FADE_SPEED * raw_dt);
 
                     float full_rotation_seconds = (6.2831853f / EnemyConfig::ORBIT_SPEED);                                  // time for one full 360 degree orbit
@@ -1125,7 +1125,7 @@ namespace EnemySystem
                 {
                     e.enemy_orbit_timer += raw_dt;                                                                          // keep advancing timer so letters continue rotating while returning
 
-                    e.enemy_orbit_radius = Utility::Utility_Lerp(                                                           // smoothly lerp radius back toward zero
+                    e.enemy_orbit_radius = Utility::utility_lerp(                                                           // smoothly lerp radius back toward zero
                         e.enemy_orbit_radius, 0.0f, EnemyConfig::ORBIT_FADE_SPEED * raw_dt);
 
                     if (e.enemy_orbit_radius < 0.001f)                                                                      // radius close enough to zero, letters are back at baseline
@@ -1138,7 +1138,7 @@ namespace EnemySystem
             }
             else if (e.enemy_is_targeted)                                                                                   // player locked on, fade radius to zero immediately
             {
-                e.enemy_orbit_radius = Utility::Utility_Lerp(                                                               // smoothly pull letters back to baseline
+                e.enemy_orbit_radius = Utility::utility_lerp(                                                               // smoothly pull letters back to baseline
                     e.enemy_orbit_radius, 0.0f, EnemyConfig::ORBIT_FADE_SPEED * raw_dt);
             }
         }
@@ -1154,7 +1154,7 @@ namespace EnemySystem
     and then adjusts positions so each enemy is at least ENEMY_LANE_MIN_GAP_PX above the one below it.
     Adjusted positions are clamped to the top of the enemy area to keep enemies within bounds.
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
-    void Enemy_ResolveLaneStacking(std::vector<Data::Enemy>& pool, const Data::EnemyArea& area)
+    void enemy_resolve_lane_stacking(std::vector<Data::Enemy>& pool, const Data::EnemyArea& area)
     {
         for (int lane = 0; lane < EnemyConfig::ENEMY_LANE_COUNT; ++lane)                                                    // loop over each lane
         {
@@ -1205,11 +1205,11 @@ namespace EnemySystem
     texture based on enemy type (friendly/shield/normal), applies the current animation UV offset, and draws the
     enemy quad scaled to ENEMY_SIZE_PX. Shield enemies use a separate mesh built for 3-row UV cutting.
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
-    void Enemy_Draw(const Data::Meshes& meshes, const Data::Enemy& e)
+    void enemy_draw(const Data::Meshes& meshes, const Data::Enemy& e)
     {
         if (!e.enemy_is_active) return;                                                                                     // skip inactive enemies
 
-        Graphics::Graphics_SetSpriteState();                                                                                // set textured draw state
+        Graphics::graphics_set_sprite_state();                                                                                // set textured draw state
 
         AEGfxTexture* tex = nullptr;                                                                                        // start with no texture selected
 
@@ -1233,7 +1233,7 @@ namespace EnemySystem
 
         AEGfxTextureSet(tex, e.enemy_animation.animation_uv_x, e.enemy_animation.animation_uv_y);                           // set texture and uv offset
 
-        Graphics::Draw_DrawMeshAt(mesh,                                                                                     // draw the enemy sprite at its current position
+        Graphics::draw_mesh_at(mesh,                                                                                     // draw the enemy sprite at its current position
             e.enemy_position_x,
             e.enemy_position_y,
             EnemyConfig::ENEMY_SIZE_PX, EnemyConfig::ENEMY_SIZE_PX,
@@ -1249,7 +1249,7 @@ namespace EnemySystem
     then offsets the draw position so the word is centered over the enemy sprite. It skips drawing if the
     enemy is inactive, the font is missing, or the enemy has no assigned word.
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
-    void Enemy_DrawWord(const Data::Enemy& e)
+    void enemy_draw_word(const Data::Enemy& e)
     {
         if (!e.enemy_is_active) return;                                                                                     // skip inactive enemies
         if (Graphics::g_font_id < 0) return;                                                                                  // skip if font missing
@@ -1257,7 +1257,7 @@ namespace EnemySystem
         if (e.enemy_is_dying) return;                                                                                       // skip during death animation so word disappears when enemy is killed
 
         float ndc_x = 0.0f, ndc_y = 0.0f;
-        Utility::Convert_WorldToNdc(e.enemy_position_x, e.enemy_position_y, ndc_x, ndc_y);                                  // convert enemy position to NDC
+        Utility::convert_world_to_ndc(e.enemy_position_x, e.enemy_position_y, ndc_x, ndc_y);                                  // convert enemy position to NDC
 
         float text_w = 0.0f, text_h = 0.0f;
         AEGfxGetPrintSize(Graphics::g_font_id, e.enemy_word_text.c_str(), EnemyConfig::TEXT_SCALE, &text_w, &text_h);         // measure full word size for centering
@@ -1311,13 +1311,13 @@ namespace EnemySystem
     Utility::Collision_Overlap. It returns true if no overlaps are found, and false if the new enemy
     would collide with an existing one (including padding).
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
-    bool Enemy_IsSpawnSpotFree(float spawn_x, float spawn_y, const std::vector<Data::Enemy>& pool, float half_size_with_padding)
+    bool enemy_is_spawn_spot_free(float spawn_x, float spawn_y, const std::vector<Data::Enemy>& pool, float half_size_with_padding)
     {
         for (const auto& other : pool)                                                                                      // loop through enemies
         {
             if (!other.enemy_is_active) continue;                                                                           // skip inactive enemies
 
-            bool overlaps = Utility::Collision_Overlap(                                                                     // compute overlap result
+            bool overlaps = Utility::collision_overlap(                                                                     // compute overlap result
                 spawn_x, spawn_y,                                                                                           // new spawn center
                 half_size_with_padding, half_size_with_padding,                                                             // new spawn half size
                 other.enemy_position_x, other.enemy_position_y,                                                             // existing enemy center
@@ -1338,20 +1338,20 @@ namespace EnemySystem
     in order. Returns true if a valid lane was found, false otherwise. The chosen x and lane index are
     written to out_chosen_x and out_chosen_lane.
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
-    bool Enemy_FindSpawnLane(const std::vector<Data::Enemy>& pool, const Data::EnemyArea& area, float overlap_half, float usable_min_x, float usable_max_x, float& out_chosen_x, int& out_chosen_lane)
+    bool enemy_find_spawn_lane(const std::vector<Data::Enemy>& pool, const Data::EnemyArea& area, float overlap_half, float usable_min_x, float usable_max_x, float& out_chosen_x, int& out_chosen_lane)
     {
         float spawn_y = area.area_spawn_y;                                                                                  // spawn y position
 
         for (int i = 0; i < EnemyConfig::MAX_SPAWN_TRIES; ++i)                                                              // try random lanes for spawn
         {
-            int lane_id = Utility::Utility_RandInt(0, EnemyConfig::ENEMY_LANE_COUNT - 1);                                   // pick random lane
+            int lane_id = Utility::utility_rand_int(0, EnemyConfig::ENEMY_LANE_COUNT - 1);                                   // pick random lane
 
-            if (!Enemy_IsLaneSpawnYFree(lane_id, spawn_y, pool))                                                            // reject if lane is too crowded near spawn
+            if (!enemy_is_lane_spawn_y_free(lane_id, spawn_y, pool))                                                            // reject if lane is too crowded near spawn
                 continue;                                                                                                   // try next
 
-            float lane_x = Enemy_GetLaneX(lane_id, usable_min_x, usable_max_x);                                             // compute lane x
+            float lane_x = enemy_get_lane_x(lane_id, usable_min_x, usable_max_x);                                             // compute lane x
 
-            if (Enemy_IsSpawnSpotFree(lane_x, spawn_y, pool, overlap_half))                                                 // check overlap at lane position
+            if (enemy_is_spawn_spot_free(lane_x, spawn_y, pool, overlap_half))                                                 // check overlap at lane position
             {
                 out_chosen_x = lane_x;                                                                                      // store chosen x
                 out_chosen_lane = lane_id;                                                                                  // store chosen lane
@@ -1361,11 +1361,11 @@ namespace EnemySystem
 
         for (int lane_id = 0; lane_id < EnemyConfig::ENEMY_LANE_COUNT; ++lane_id)                                           // fallback: scan lanes in order
         {
-            if (!Enemy_IsLaneSpawnYFree(lane_id, spawn_y, pool))                                                            // reject if lane is too crowded
+            if (!enemy_is_lane_spawn_y_free(lane_id, spawn_y, pool))                                                            // reject if lane is too crowded
                 continue;                                                                                                   // keep scanning
 
-            float lane_x = Enemy_GetLaneX(lane_id, usable_min_x, usable_max_x);                                             // compute lane x
-            if (Enemy_IsSpawnSpotFree(lane_x, spawn_y, pool, overlap_half))                                                 // check overlap at lane position
+            float lane_x = enemy_get_lane_x(lane_id, usable_min_x, usable_max_x);                                             // compute lane x
+            if (enemy_is_spawn_spot_free(lane_x, spawn_y, pool, overlap_half))                                                 // check overlap at lane position
             {
                 out_chosen_x = lane_x;                                                                                      // store chosen x
                 out_chosen_lane = lane_id;                                                                                  // store chosen lane
@@ -1387,16 +1387,16 @@ namespace EnemySystem
     the new enemy won't overlap any active enemy. When a valid spot is found, the enemy is created with a
     difficulty-scaled fall speed and inserted into the pool.
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
-    void Enemy_SpawnFromPool(std::vector<Data::Enemy>& pool, std::deque<int>& free_slots, const Data::EnemyArea& area, const Data::WordBank& bank, int word_length)
+    void enemy_spawn_from_pool(std::vector<Data::Enemy>& pool, std::deque<int>& free_slots, const Data::EnemyArea& area, const Data::WordBank& bank, int word_length)
     {
         if (free_slots.empty()) return;                                                                                     // skip if no free slots
 
-        std::string unique_word = Enemy_PickUniqueWord(word_length, bank, pool, true);                                      // choose unique word
+        std::string unique_word = enemy_pick_unique_word(word_length, bank, pool, true);                                      // choose unique word
         if (unique_word.empty()) return;                                                                                    // skip if no unique word found
 
         float enemy_half = EnemyConfig::ENEMY_SIZE_PX * 0.5f;                                                               // enemy half size for spacing
 
-        float word_half_w = Enemy_GetWordHalfWidthWorld(unique_word);                                                       // word half width in world pixels
+        float word_half_w = enemy_get_word_half_width_world(unique_word);                                                       // word half width in world pixels
         float safe_half_w = (word_half_w > enemy_half) ? word_half_w : enemy_half;                                          // use bigger of word or sprite
 
         float usable_min_x = area.area_min_x + safe_half_w;                                                                 // left usable x bound
@@ -1409,10 +1409,10 @@ namespace EnemySystem
         float chosen_x = 0.0f;                                                                                              // chosen spawn x
         int   chosen_lane = -1;                                                                                             // chosen lane id
 
-        if (!Enemy_FindSpawnLane(pool, area, overlap_half, usable_min_x, usable_max_x, chosen_x, chosen_lane))              // search for a free lane
+        if (!enemy_find_spawn_lane(pool, area, overlap_half, usable_min_x, usable_max_x, chosen_x, chosen_lane))              // search for a free lane
             return;                                                                                                         // skip if no valid lane found
 
-        float fall_speed = DifficultySystem::Difficulty_GetEnemyFallSpeed(word_length);                                     // compute fall speed
+        float fall_speed = DifficultySystem::difficulty_get_enemy_fall_speed(word_length);                                     // compute fall speed
 
         int slot = free_slots.front();                                                                                      // take the oldest free slot
         free_slots.pop_front();                                                                                             // remove that slot from queue
@@ -1420,8 +1420,8 @@ namespace EnemySystem
         pool[(size_t)slot] = Enemy_Create(area, word_length, unique_word, fall_speed, chosen_lane);                         // place new enemy in slot
 
         Data::Enemy& e = pool[(size_t)slot];                                                                                // reference created enemy
-        e.enemy_position_x = Utility::Utility_Clamp(chosen_x, usable_min_x, usable_max_x);                                  // clamp spawn x
-        e.enemy_position_y = Utility::Utility_Clamp(area.area_spawn_y, area.Area_BoxMinY(), area.Area_BoxMaxY());           // clamp spawn y
+        e.enemy_position_x = Utility::utility_clamp(chosen_x, usable_min_x, usable_max_x);                                  // clamp spawn x
+        e.enemy_position_y = Utility::utility_clamp(area.area_spawn_y, area.Area_BoxMinY(), area.Area_BoxMaxY());           // clamp spawn y
 
         e.enemy_type = Data::EnemyType::NORMAL;                                                                             // normal enemy
         e.enemy_death_row_index = 1;                                                                                        // normal death row is row 1
@@ -1437,18 +1437,18 @@ namespace EnemySystem
     This function works the same as Enemy_SpawnFromPool but creates a friendly enemy. Friendly
     enemies do not damage the player when they land. The speed_multiplier scales the fall speed.
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
-    void Enemy_SpawnFriendlyFromPool(std::vector<Data::Enemy>& pool, std::deque<int>& free_slots, const Data::EnemyArea& area, const Data::WordBank& bank, int min_word_len, int max_word_len, float speed_multiplier)
+    void enemy_spawn_friendly_from_pool(std::vector<Data::Enemy>& pool, std::deque<int>& free_slots, const Data::EnemyArea& area, const Data::WordBank& bank, int min_word_len, int max_word_len, float speed_multiplier)
     {
         if (free_slots.empty()) return;                                                                                     // skip if no free slots
 
-        std::string unique_word = Enemy_PickUniqueWordRandomLength(min_word_len, max_word_len, bank, pool, true, EnemyConfig::MAX_WORD_TRIES);
+        std::string unique_word = enemy_pick_unique_word_random_length(min_word_len, max_word_len, bank, pool, true, EnemyConfig::MAX_WORD_TRIES);
         if (unique_word.empty()) return;                                                                                    // skip if no unique word found
 
         int word_length = (int)unique_word.size();                                                                          // word length from chosen word
 
         float enemy_half = EnemyConfig::ENEMY_SIZE_PX * 0.5f;                                                               // enemy half size for spacing
 
-        float word_half_w = Enemy_GetWordHalfWidthWorld(unique_word);                                                       // word half width in world pixels
+        float word_half_w = enemy_get_word_half_width_world(unique_word);                                                       // word half width in world pixels
         float safe_half_w = (word_half_w > enemy_half) ? word_half_w : enemy_half;                                          // use bigger of word or sprite
 
         float usable_min_x = area.area_min_x + safe_half_w;                                                                 // left usable x bound
@@ -1461,10 +1461,10 @@ namespace EnemySystem
         float chosen_x = 0.0f;                                                                                              // chosen spawn x
         int   chosen_lane = -1;                                                                                             // chosen lane id
 
-        if (!Enemy_FindSpawnLane(pool, area, overlap_half, usable_min_x, usable_max_x, chosen_x, chosen_lane))              // search for a free lane
+        if (!enemy_find_spawn_lane(pool, area, overlap_half, usable_min_x, usable_max_x, chosen_x, chosen_lane))              // search for a free lane
             return;                                                                                                         // skip if no valid lane found
 
-        float base_speed = DifficultySystem::Difficulty_GetEnemyFallSpeed(word_length);                                     // compute base fall speed
+        float base_speed = DifficultySystem::difficulty_get_enemy_fall_speed(word_length);                                     // compute base fall speed
         float fall_speed = base_speed * speed_multiplier;                                                                   // friendly slightly faster
 
         int slot = free_slots.front();                                                                                      // take free slot
@@ -1475,8 +1475,8 @@ namespace EnemySystem
         Data::Enemy& e = pool[(size_t)slot];                                                                                // get reference to the newly created enemy
         e.enemy_animation.animation_columns = 6;                                                                            // friendly sheet has 6 columns
         e.enemy_animation.animation_rows = 3;                                                                               // friendly sheet has 3 rows
-        e.enemy_position_x = Utility::Utility_Clamp(chosen_x, usable_min_x, usable_max_x);                                  // clamp spawn x within usable bounds
-        e.enemy_position_y = Utility::Utility_Clamp(area.area_spawn_y, area.Area_BoxMinY(), area.Area_BoxMaxY());           // clamp spawn y within the enemy area
+        e.enemy_position_x = Utility::utility_clamp(chosen_x, usable_min_x, usable_max_x);                                  // clamp spawn x within usable bounds
+        e.enemy_position_y = Utility::utility_clamp(area.area_spawn_y, area.Area_BoxMinY(), area.Area_BoxMaxY());           // clamp spawn y within the enemy area
 
         e.enemy_type = Data::EnemyType::FRIENDLY;                                                                           // mark as a friendly enemy
         e.enemy_death_row_index = 1;                                                                                        // break free animation
@@ -1486,7 +1486,7 @@ namespace EnemySystem
         e.enemy_animation.animation_row_index = 0;                                                                          // start on cage falling animation
         e.enemy_animation.animation_frame_index = 0;                                                                        // start from frame 0
         e.enemy_animation.animation_timer_seconds = 0.0f;                                                                   // reset the frame timer
-        Animation::Animation_SetFrame(e.enemy_animation, 0);                                                                // update UV coords to match the new row and frame
+        Animation::animation_set_frame(e.enemy_animation, 0);                                                                // update UV coords to match the new row and frame
     }
 
     /*
@@ -1497,17 +1497,17 @@ namespace EnemySystem
     This function spawns a shielded enemy that needs two words to defeat. It picks two unique
     words: the first is shown while the shield is up, the second is revealed after the shield breaks.
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
-    void Enemy_SpawnShieldedFromPool(std::vector<Data::Enemy>& pool, std::deque<int>& free_slots, const Data::EnemyArea& area, const Data::WordBank& bank, int min_word_len, int max_word_len, float speed_multiplier)
+    void enemy_spawn_shielded_from_pool(std::vector<Data::Enemy>& pool, std::deque<int>& free_slots, const Data::EnemyArea& area, const Data::WordBank& bank, int min_word_len, int max_word_len, float speed_multiplier)
     {
         if (free_slots.empty()) return;                                                                                     // skip if no free slots
 
-        std::string word1 = Enemy_PickUniqueWordRandomLength(min_word_len, max_word_len, bank, pool, true, EnemyConfig::MAX_WORD_TRIES);
+        std::string word1 = enemy_pick_unique_word_random_length(min_word_len, max_word_len, bank, pool, true, EnemyConfig::MAX_WORD_TRIES);
         if (word1.empty()) return;                                                                                          // skip if no first word was found
 
         std::string word2{};                                                                                                // storage for the hidden second word
         for (int tries = 0; tries < EnemyConfig::MAX_WORD_TRIES; ++tries)                                                   // keep trying to find a valid second word
         {
-            std::string candidate = Enemy_PickUniqueWordRandomLength(min_word_len, max_word_len, bank, pool, true, 32);     // pick a random candidate word
+            std::string candidate = enemy_pick_unique_word_random_length(min_word_len, max_word_len, bank, pool, true, 32);     // pick a random candidate word
             if (candidate.empty()) continue;                                                                                // skip if nothing was found this try
             if (candidate == word1) continue;                                                                               // skip if it matches the first word
 
@@ -1520,7 +1520,7 @@ namespace EnemySystem
 
         float enemy_half = EnemyConfig::ENEMY_SIZE_PX * 0.5f;                                                               // enemy half size for spacing
 
-        float word_half_w = Enemy_GetWordHalfWidthWorld(word1);                                                             // measure word1 width (visible)
+        float word_half_w = enemy_get_word_half_width_world(word1);                                                             // measure word1 width (visible)
         float safe_half_w = (word_half_w > enemy_half) ? word_half_w : enemy_half;                                          // use the bigger of word width or sprite size
 
         float usable_min_x = area.area_min_x + safe_half_w;                                                                 // left usable x bound
@@ -1533,10 +1533,10 @@ namespace EnemySystem
         float chosen_x = 0.0f;                                                                                              // x position of the chosen spawn
         int   chosen_lane = -1;                                                                                             // lane index of the chosen spawn
 
-        if (!Enemy_FindSpawnLane(pool, area, overlap_half, usable_min_x, usable_max_x, chosen_x, chosen_lane))              // search for a free lane
+        if (!enemy_find_spawn_lane(pool, area, overlap_half, usable_min_x, usable_max_x, chosen_x, chosen_lane))              // search for a free lane
             return;                                                                                                         // skip if no valid lane was found
 
-        float base_speed = DifficultySystem::Difficulty_GetEnemyFallSpeed(word_length);                                     // compute base fall speed from difficulty
+        float base_speed = DifficultySystem::difficulty_get_enemy_fall_speed(word_length);                                     // compute base fall speed from difficulty
         float fall_speed = base_speed * speed_multiplier;                                                                   // apply the speed multiplier
 
         int slot = free_slots.front();                                                                                      // take the next free pool slot
@@ -1547,8 +1547,8 @@ namespace EnemySystem
         Data::Enemy& e = pool[(size_t)slot];                                                                                // get reference to the newly created enemy
         e.enemy_animation.animation_columns = 6;                                                                            // shielded sheet has 6 columns
         e.enemy_animation.animation_rows = 3;                                                                               // shielded sheet has 3 rows
-        e.enemy_position_x = Utility::Utility_Clamp(chosen_x, usable_min_x, usable_max_x);                                  // clamp spawn x within usable bounds
-        e.enemy_position_y = Utility::Utility_Clamp(area.area_spawn_y, area.Area_BoxMinY(), area.Area_BoxMaxY());           // clamp spawn y within the enemy area
+        e.enemy_position_x = Utility::utility_clamp(chosen_x, usable_min_x, usable_max_x);                                  // clamp spawn x within usable bounds
+        e.enemy_position_y = Utility::utility_clamp(area.area_spawn_y, area.Area_BoxMinY(), area.Area_BoxMaxY());           // clamp spawn y within the enemy area
 
         e.enemy_type = Data::EnemyType::SHIELDED;                                                                           // mark as shielded enemy
         e.enemy_shield_intact = true;                                                                                       // starts with shield
@@ -1558,7 +1558,7 @@ namespace EnemySystem
         e.enemy_animation.animation_row_index = 0;                                                                          // start on the shielded animation row
         e.enemy_animation.animation_frame_index = 0;                                                                        // start from frame 0
         e.enemy_animation.animation_timer_seconds = 0.0f;                                                                   // reset the frame timer
-        Animation::Animation_SetFrame(e.enemy_animation, 0);                                                                // update UV coords to match the new row and frame
+        Animation::animation_set_frame(e.enemy_animation, 0);                                                                // update UV coords to match the new row and frame
     }
 
 } // EnemySystem namespace end
@@ -1582,7 +1582,7 @@ namespace UiSystem
     semi-transparent rectangle using the debug mesh. It helps visualize where enemies are allowed
     to spawn, fall, and land.
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
-    void Debug_DrawEnemyAreaBox(const Data::Meshes& meshes, const Data::EnemyArea& area)
+    void debug_draw_enemy_area_box(const Data::Meshes& meshes, const Data::EnemyArea& area)
     {
         float box_min_y = area.Area_BoxMinY();                                                                              // read bottom y
         float box_max_y = area.Area_BoxMaxY();                                                                              // read top y
@@ -1595,10 +1595,10 @@ namespace UiSystem
 
         if (w <= 0.0f || h <= 0.0f) return;                                                                                 // skip invalid box
 
-        Graphics::Graphics_SetColorState(0.50f);                                                                            // set semi-transparent draw state
+        Graphics::graphics_set_color_state(0.50f);                                                                            // set semi-transparent draw state
         AEGfxSetColorToMultiply(0.2f, 0.9f, 1.0f, 1.0f);                                                                    // tint debug box color
 
-        Graphics::Draw_DrawMeshAt(meshes.debug_box_mesh, center_x, center_y, w, h, 0.0f);                                   // draw debug box
+        Graphics::draw_mesh_at(meshes.debug_box_mesh, center_x, center_y, w, h, 0.0f);                                   // draw debug box
 
         AEGfxSetColorToMultiply(1, 1, 1, 1);                                                                                // reset tint color
         AEGfxSetTransparency(1.0f);                                                                                         // reset alpha
@@ -1612,7 +1612,7 @@ namespace UiSystem
     This function renders one vertical line per lane across the enemy area height, using distinct colors
     to make lanes easy to tell apart. It helps debug lane placement, spawn positions, and spacing rules.
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
-    void Debug_DrawEnemyLaneLines(const Data::Meshes& meshes, const Data::EnemyArea& area)
+    void debug_draw_enemy_lane_lines(const Data::Meshes& meshes, const Data::EnemyArea& area)
     {
         float box_min_y = area.Area_BoxMinY();                                                                              // read bottom y
         float box_max_y = area.Area_BoxMaxY();                                                                              // read top y
@@ -1639,17 +1639,17 @@ namespace UiSystem
             { 1.0f, 0.2f, 0.8f }                                                                                            // lane 7 color
         };
 
-        Graphics::Graphics_SetColorState(0.60f);                                                                            // set semi-transparent draw state
+        Graphics::graphics_set_color_state(0.60f);                                                                            // set semi-transparent draw state
 
         for (int lane = 0; lane < EnemyConfig::ENEMY_LANE_COUNT; ++lane)                                                    // loop over lanes
         {
             float t = (EnemyConfig::ENEMY_LANE_COUNT <= 1) ? 0.5f :
                 (float)lane / (float)(EnemyConfig::ENEMY_LANE_COUNT - 1);                                                   // lane position as 0..1
-            float lane_x = Utility::Utility_Lerp(min_x, max_x, t);                                                          // compute lane x
+            float lane_x = Utility::utility_lerp(min_x, max_x, t);                                                          // compute lane x
 
             AEGfxSetColorToMultiply(lane_colors[lane][0], lane_colors[lane][1], lane_colors[lane][2], 1.0f);                // set line tint
 
-            Graphics::Draw_DrawMeshAt(meshes.debug_box_mesh, lane_x, center_y, thickness, h, 0.0f);                         // draw lane line
+            Graphics::draw_mesh_at(meshes.debug_box_mesh, lane_x, center_y, thickness, h, 0.0f);                         // draw lane line
         }
 
         AEGfxSetColorToMultiply(1, 1, 1, 1);                                                                                // reset tint color
@@ -1665,7 +1665,7 @@ namespace UiSystem
     current/max HP, the current difficulty value, the current spawn interval, whether auto spawn is enabled,
     and the unlocked word length range.
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
-    void Debug_DrawDifficultyTopRight(bool show, bool auto_spawn_on, const Data::Health& health)
+    void debug_draw_difficulty_top_right(bool show, bool auto_spawn_on, const Data::Health& health)
     {
         if (!show) return;                                                                                                  // skip if hidden
         if (Graphics::g_font_id < 0) return;                                                                                  // skip if font missing
@@ -1673,10 +1673,10 @@ namespace UiSystem
         char buffer[220];                                                                                                   // text buffer
         float hp_now = health.health_current;                                                                               // read current health
         float hp_max = health.health_max;                                                                                   // read max health
-        float diff = DifficultySystem::Difficulty_Get();                                                                    // read difficulty value
-        float interval = DifficultySystem::Difficulty_GetSpawnIntervalSeconds();                                            // read spawn interval
+        float diff = DifficultySystem::difficulty_get();                                                                    // read difficulty value
+        float interval = DifficultySystem::difficulty_get_spawn_interval_seconds();                                            // read spawn interval
         const char* auto_text = auto_spawn_on ? "ON" : "OFF";                                                               // text for auto spawn state
-        int max_len = DifficultySystem::Difficulty_GetUnlockedMaxWordLength();                                              // read unlocked max word length
+        int max_len = DifficultySystem::difficulty_get_unlocked_max_word_length();                                              // read unlocked max word length
 
         std::snprintf(buffer, sizeof(buffer),                                                                               // format debug line
             "HP: %.0f/%.0f  DIFF: %.1f  SPAWN: %.2fs  AUTO: %s  WORDS: 3-%d",                                               // format string
@@ -1698,13 +1698,13 @@ namespace UiSystem
     when the block is only partially filled. All heart animations share a single global timer so
     every sprite advances in lockstep.
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
-    void Ui_DrawHealthBar(Data::Health& health, Data::Meshes& meshes, Data::SpriteAnim& heart_anim, float dt)
+    void ui_draw_health_bar(Data::Health& health, Data::Meshes& meshes, Data::SpriteAnim& heart_anim, float dt)
     {
         if (!Graphics::s_heart_texture) return;                                                                               // skip if heart texture not loaded
         if (!meshes.heart_sprite_mesh) return;                                                                              // skip if heart mesh not built
 
         // advance the shared animation timer so all hearts animate in lockstep
-        Animation::Animation_Update(heart_anim, dt);                                                                        // advance the shared animation timer each frame
+        Animation::animation_update(heart_anim, dt);                                                                        // advance the shared animation timer each frame
 
         const int   HEART_COLUMNS = 6;                                                                                      // frames across the sprite sheet
         const float HEART_SIZE_PX = 50.0f;                                                                                  // rendered size of one heart in pixels
@@ -1715,7 +1715,7 @@ namespace UiSystem
         const float START_Y = 360.0f;                                                                                       // world y of the first row, just below the score text
 
         float hp_max = health.health_max;                                                                                   // read max health
-        float hp_current = Utility::Utility_Clamp(health.health_current, 0.0f, hp_max);                                     // read current health, clamped
+        float hp_current = Utility::utility_clamp(health.health_current, 0.0f, hp_max);                                     // read current health, clamped
 
         // only draw hearts that exist within the current HP total:
         // a full 10-HP block gets one heart, and a leftover partial block also gets one heart
@@ -1725,7 +1725,7 @@ namespace UiSystem
 
         float uv_w = heart_anim.Anim_UvWidth();                                                                             // uv width of one frame column
 
-        Graphics::Graphics_SetSpriteState();                                                                                // switch to textured sprite draw mode
+        Graphics::graphics_set_sprite_state();                                                                                // switch to textured sprite draw mode
 
         for (int i = 0; i < total_hearts; ++i)                                                                              // loop only over hearts that should be visible
         {
@@ -1744,7 +1744,7 @@ namespace UiSystem
             {
                 // block partially filled (this is the last visible heart): static frame proportional to fill
                 float fill = (hp_current - block_hp_min) / 10.0f;                                                           // 1.0 = full, 0.0 = empty
-                fill = Utility::Utility_Clamp(fill, 0.0f, 1.0f);                                                            // clamp fill ratio to valid range
+                fill = Utility::utility_clamp(fill, 0.0f, 1.0f);                                                            // clamp fill ratio to valid range
                 int partial_frame = (int)((1.0f - fill) * (float)(HEART_COLUMNS - 1) + 0.5f);                               // round to nearest depletion frame
                 if (partial_frame < 0)                 partial_frame = 0;                                                   // clamp low end
                 if (partial_frame > HEART_COLUMNS - 2) partial_frame = HEART_COLUMNS - 2;                                   // clamp to second-to-last frame (last frame = fully empty, never shown)
@@ -1758,7 +1758,7 @@ namespace UiSystem
 
             AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);                                                                // draw hearts in their natural colors
             AEGfxTextureSet(Graphics::s_heart_texture, uv_x, 0.0f);                                                           // bind texture at the chosen frame, row 0
-            Graphics::Draw_DrawMeshAt(meshes.heart_sprite_mesh, heart_x, heart_y, HEART_SIZE_PX, HEART_SIZE_PX, 0.0f);      // draw the heart sprite
+            Graphics::draw_mesh_at(meshes.heart_sprite_mesh, heart_x, heart_y, HEART_SIZE_PX, HEART_SIZE_PX, 0.0f);      // draw the heart sprite
         }
 
         AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);                                                                    // restore color multiply to neutral
@@ -1784,11 +1784,11 @@ namespace EnemyManage
     number generator, loads all word lists into the provided WordBank, and loads the font used for rendering
     enemy words and debug text.
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
-    void EnemyManage_InitEngine(Data::WordBank& bank)
+    void enemy_manage_init_engine(Data::WordBank& bank)
     {
         srand((unsigned)time(NULL));                                                                                        // seed random generator
 
-        Word::Word_LoadAll(bank);                                                                                           // load word lists
+        Word::word_load_all(bank);                                                                                           // load word lists
 
         if (Graphics::g_font_id >= 0) {
             AEGfxDestroyFont(Graphics::g_font_id);
@@ -1808,7 +1808,7 @@ namespace EnemyManage
     and builds a unit rectangle mesh used for debug drawing. It returns a Data::Meshes struct containing
     the created mesh handles.
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
-    Data::Meshes EnemyManage_LoadMeshes(const Data::SpriteAnim& enemy_anim)
+    Data::Meshes enemy_manage_load_meshes(const Data::SpriteAnim& enemy_anim)
     {
         Data::Meshes meshes{};                                                                                              // create mesh container
 
@@ -1890,7 +1890,7 @@ namespace EnemyManage
     without needing a full resize. Mesh pointers are reset back to safe defaults to prevent
     dangling references.
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
-    void EnemyManage_Free(Data::Meshes& meshes, std::vector<Data::Enemy>& pool, std::deque<int>& free_slots)
+    void enemy_manage_free(Data::Meshes& meshes, std::vector<Data::Enemy>& pool, std::deque<int>& free_slots)
     {
         free_slots.clear();                                                                                                 // discard any stale indices
 

@@ -8,24 +8,24 @@ namespace ScreenTransitions
     float s_total_timer = 0.6f;
     float result = 0.0f;
 
-    void ScreenTransition_SetTime(float target_time)
+    void screen_transition_set_time(float target_time)
     {
         s_total_timer = target_time;
     }
 
-    float EaseOutExpo(float x)  // Dropping effect algorithm
+    float ease_out_expo(float x)  // Dropping effect algorithm
     {
         if (x >= 1.0f) return 1.0f;
         return 1.0f - std::pow(1.0f - x, 5.0f);
     }
 
-    void ScreenTransition_Init()  // Trigger the transition
+    void screen_transition_init()  // Trigger the transition
     {
         s_is_transitioning = true;
         s_curr_timer = 0.0f;
     }
 
-    void ScreenTransition_Update(float dt)
+    void screen_transition_update(float dt)
     {
         if (s_is_transitioning)
         {

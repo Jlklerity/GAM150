@@ -23,15 +23,15 @@ namespace LeaderboardData
 
 namespace LeaderboardSystem
 {
-    void Init();
-    void Free();
-    int  GetHighestScore();
-    void DisplayZenLeaderboard(bool& open_leaderboard);
-    void DisplayTimeLeaderboard(bool& open_leaderboard);
+    void init();
+    void free();
+    int  get_highest_score();
+    void display_zen_leaderboard(bool& open_leaderboard);
+    void display_time_leaderboard(bool& open_leaderboard);
 
-    void ReadZenLeaderboard();
-    void ReadTimeLeaderboard();
+    void read_zen_leaderboard();
+    void read_time_leaderboard();
 
-    void WriteZenLeaderboard(const std::string& player_name, const int& player_score);
-    void WriteTimeLeaderboard(const std::string& player_name, const int& player_score);
+    void write_zen_leaderboard(const std::string& player_name, const int& player_score);
+    void write_time_leaderboard(const std::string& player_name, const int& player_score);
 }

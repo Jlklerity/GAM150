@@ -15,7 +15,7 @@ namespace
 
     static AEGfxVertexList* s_mesh = nullptr;
 
-    void EnsureMesh()
+    void ensure_mesh()
     {
         if (s_mesh)
         {
@@ -27,10 +27,10 @@ namespace
             s_mesh = Rect_Mesh(1.0f, 1.0f, 0xFFFFFFFF);
     }
 
-    bool DrawButton(const char* label, float cx, float cy, float w, float h,
+    bool draw_button(const char* label, float cx, float cy, float w, float h,
         float r, float g, float b, ButtonTween& tween)
     {
-        EnsureMesh();
+        ensure_mesh();
 
         float win_w = (float)AEGfxGetWindowWidth();
         float win_h = (float)AEGfxGetWindowHeight();
@@ -43,7 +43,7 @@ namespace
             wy >= cy - h * 0.5f && wy <= cy + h * 0.5f);
         bool clicked = AEInputCheckTriggered(AEVK_LBUTTON) && hovered;
         float dt = (float)AEFrameRateControllerGetFrameTime();
-        ButtonTween_Update(tween, hovered, clicked, dt);
+        button_tween_update(tween, hovered, clicked, dt);
 
         float sw = tween.scale;
         float scaled_w = w * sw;
@@ -53,10 +53,10 @@ namespace
         AEGfxSetBlendMode(AE_GFX_BM_BLEND);
         AEGfxSetTransparency(1.0f);
         AEGfxSetColorToMultiply(0.15f, 0.15f, 0.15f, 1.0f);
-        Mesh_Renderer(s_mesh, cx, cy, scaled_w, scaled_h, 0.0f);
+        mesh_renderer(s_mesh, cx, cy, scaled_w, scaled_h, 0.0f);
 
         AEGfxSetColorToMultiply(r, g, b, 1.0f);
-        Mesh_Renderer(s_mesh, cx, cy + scaled_h * 0.5f - 3.0f, scaled_w, 4.0f, 0.0f);
+        mesh_renderer(s_mesh, cx, cy + scaled_h * 0.5f - 3.0f, scaled_w, 4.0f, 0.0f);
 
         if (Graphics::g_font_id >= 0)
         {
@@ -75,7 +75,7 @@ namespace
 
 namespace UiGameOver
 {
-    void Exit()
+    void cleanup()
     {
         if (s_mesh)
         {
@@ -84,12 +84,12 @@ namespace UiGameOver
         }
         s_fade_in_timer = 0.0f;
         s_initialized = false;
-        ButtonTween_Reset(s_tween_restart);
-        ButtonTween_Reset(s_tween_leaderboard);
-        ButtonTween_Reset(s_tween_menu);
+        button_tween_reset(s_tween_restart);
+        button_tween_reset(s_tween_leaderboard);
+        button_tween_reset(s_tween_menu);
     }
 
-    void Check_IfDead(bool& is_dead, bool& is_game_over, bool& open_leaderboard,
+    void check_if_dead(bool& is_dead, bool& is_game_over, bool& open_leaderboard,
         AEGfxVertexList* bg_mesh, std::string temp_name, const Data::Score& score)
     {
         (void)bg_mesh;
@@ -97,24 +97,24 @@ namespace UiGameOver
 
         if (!is_game_over)
         {
-            temp_name = MainMenuGetPlayerName();
-            LeaderboardSystem::WriteZenLeaderboard(temp_name, score.score_value);
+            temp_name = main_menu_get_player_name();
+            LeaderboardSystem::write_zen_leaderboard(temp_name, score.score_value);
             is_game_over = true;
             s_fade_in_timer = 0.0f;
         }
 
         if (!open_leaderboard)
-            Ui_GameOverMenu(is_game_over, score, open_leaderboard, bg_mesh, is_dead);
+            ui_game_over_menu(is_game_over, score, open_leaderboard, bg_mesh, is_dead);
         else
-            LeaderboardSystem::DisplayZenLeaderboard(open_leaderboard);
+            LeaderboardSystem::display_zen_leaderboard(open_leaderboard);
     }
 
-    void Ui_GameOverMenu(bool& is_game_over, const Data::Score& score,
+    void ui_game_over_menu(bool& is_game_over, const Data::Score& score,
         bool& open_leaderboard, AEGfxVertexList* bg_mesh, bool& is_dead)
     {
         (void)bg_mesh;
         (void)is_game_over;
-        EnsureMesh();
+        ensure_mesh();
 
         float win_w = (float)AEGfxGetWindowWidth();
         float win_h = (float)AEGfxGetWindowHeight();
@@ -130,7 +130,7 @@ namespace UiGameOver
         AEGfxSetBlendMode(AE_GFX_BM_BLEND);
         AEGfxSetTransparency(fade_alpha);
         AEGfxSetColorToMultiply(0.0f, 0.0f, 0.0f, 1.0f);
-        Mesh_Renderer(s_mesh, 0.0f, 0.0f, win_w, win_h, 0.0f);
+        mesh_renderer(s_mesh, 0.0f, 0.0f, win_w, win_h, 0.0f);
 
         if (Graphics::g_font_id < 0) return;
 
@@ -161,32 +161,32 @@ namespace UiGameOver
         float leaderboard_y = restart_y - GAP;
         float menu_y = leaderboard_y - GAP;
 
-        if (DrawButton("RESTART", BTN_X, restart_y, BTN_W, BTN_H, 0.2f, 0.8f, 0.2f, s_tween_restart))
+        if (draw_button("RESTART", BTN_X, restart_y, BTN_W, BTN_H, 0.2f, 0.8f, 0.2f, s_tween_restart))
         {
             is_dead = false;
             s_fade_in_timer = 0.0f;
             g_game_state_next = GS_RESTART;
         }
 
-        if (DrawButton("LEADERBOARD", BTN_X, leaderboard_y, BTN_W, BTN_H, 0.2f, 0.5f, 1.0f, s_tween_leaderboard))
+        if (draw_button("LEADERBOARD", BTN_X, leaderboard_y, BTN_W, BTN_H, 0.2f, 0.5f, 1.0f, s_tween_leaderboard))
         {
             open_leaderboard = true;
         }
 
-        if (DrawButton("MAIN MENU", BTN_X, menu_y, BTN_W, BTN_H, 1.0f, 0.5f, 0.1f, s_tween_menu))
+        if (draw_button("MAIN MENU", BTN_X, menu_y, BTN_W, BTN_H, 1.0f, 0.5f, 0.1f, s_tween_menu))
         {
             is_dead = false;
             s_fade_in_timer = 0.0f;
             std::string blank = "";
-            ResetPlayerName(blank);
+            reset_player_name(blank);
             g_game_state_next = GS_MAIN_MENU;
         }
     }
 
-    void DrawTimeoutScreen(const Data::Score& score, AEGfxVertexList* bg_mesh, bool& open_leaderboard)
+    void draw_timeout_screen(const Data::Score& score, AEGfxVertexList* bg_mesh, bool& open_leaderboard)
     {
         (void)bg_mesh;
-        EnsureMesh();
+        ensure_mesh();
 
         float win_w = (float)AEGfxGetWindowWidth();
         float win_h = (float)AEGfxGetWindowHeight();
@@ -202,7 +202,7 @@ namespace UiGameOver
         AEGfxSetBlendMode(AE_GFX_BM_BLEND);
         AEGfxSetTransparency(fade_alpha);
         AEGfxSetColorToMultiply(0.0f, 0.0f, 0.0f, 1.0f);
-        Mesh_Renderer(s_mesh, 0.0f, 0.0f, win_w, win_h, 0.0f);
+        mesh_renderer(s_mesh, 0.0f, 0.0f, win_w, win_h, 0.0f);
 
         if (Graphics::g_font_id < 0) return;
 
@@ -231,19 +231,19 @@ namespace UiGameOver
         float leader_y = restart_y - GAP;
         float menu_y = leader_y - GAP;
 
-        if (DrawButton("RESTART", BTN_X, restart_y, BTN_W, BTN_H, 0.2f, 0.8f, 0.2f, s_tween_restart))
+        if (draw_button("RESTART", BTN_X, restart_y, BTN_W, BTN_H, 0.2f, 0.8f, 0.2f, s_tween_restart))
             g_game_state_next = GS_RESTART;
 
-        if (DrawButton("LEADERBOARD", BTN_X, leader_y, BTN_W, BTN_H, 0.2f, 0.5f, 1.0f, s_tween_leaderboard))
+        if (draw_button("LEADERBOARD", BTN_X, leader_y, BTN_W, BTN_H, 0.2f, 0.5f, 1.0f, s_tween_leaderboard))
         {
-            LeaderboardSystem::ReadTimeLeaderboard();
+            LeaderboardSystem::read_time_leaderboard();
             open_leaderboard = true;
         }
 
-        if (DrawButton("MAIN MENU", BTN_X, menu_y, BTN_W, BTN_H, 1.0f, 0.5f, 0.1f, s_tween_menu))
+        if (draw_button("MAIN MENU", BTN_X, menu_y, BTN_W, BTN_H, 1.0f, 0.5f, 0.1f, s_tween_menu))
         {
             std::string blank = "";
-            ResetPlayerName(blank);
+            reset_player_name(blank);
             g_game_state_next = GS_MAIN_MENU;
         }
     }

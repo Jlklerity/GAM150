@@ -1,10 +1,10 @@
 #pragma once
 
 // initialises the timed game mode, call when entering this game state
-void GameTimeMode_Init();
+void game_time_mode_init();
 
 // runs the timed game loop each frame including countdown, spawning, rendering and death handling
-void GameTimeMode_Update();
+void game_time_mode_update();
 
 // frees all assets and systems, call when leaving this game state
-void GameTimeMode_Exit();
+void game_time_mode_exit();

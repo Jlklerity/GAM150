@@ -21,14 +21,14 @@ struct ButtonTween
     bool  was_clicked = false;
 };
 
-inline void ButtonTween_Reset(ButtonTween& btn)
+inline void button_tween_reset(ButtonTween& btn)
 {
     btn.scale = ButtonTweenCfg::NORMAL_SCALE;
     btn.target_scale = ButtonTweenCfg::NORMAL_SCALE;
     btn.was_clicked = false;
 }
 
-inline void ButtonTween_Update(ButtonTween& btn, bool hovered, bool clicked, float dt)
+inline void button_tween_update(ButtonTween& btn, bool hovered, bool clicked, float dt)
 {
     using namespace ButtonTweenCfg;
 

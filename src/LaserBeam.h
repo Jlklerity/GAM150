@@ -13,35 +13,35 @@ Spritesheets expected in Assets/
 
 Integration in game.cpp
 -----------------------
-  Game_Init()   -> LaserBeam_Init();
-                   LaserBeam_SetOrigin(spriteX + 75.f, spriteY);
-  Game_Update() -> LaserBeam_Update(dt);
-  render loop   -> LaserBeam_Draw();
-  Game_Exit()   -> LaserBeam_Free();
+  game_init()   -> laser_beam_init();
+                   laser_beam_set_origin(spriteX + 75.f, spriteY);
+  game_update() -> laser_beam_update(dt);
+  render loop   -> laser_beam_draw();
+  game_exit()   -> laser_beam_free();
 
 Integration in Typing.cpp
 --------------------------
-  LaserBeam_Fire(target.enemy_position_x, target.enemy_position_y);
+  laser_beam_fire(target.enemy_position_x, target.enemy_position_y);
 */
 
 // ----------------------------------------------------------------
 // Lifecycle
 // ----------------------------------------------------------------
-void LaserBeam_Init();
-void LaserBeam_Free();
+void laser_beam_init();
+void laser_beam_free();
 
 // ----------------------------------------------------------------
 // Configuration  (safe to call at any time)
 // ----------------------------------------------------------------
-void LaserBeam_SetOrigin(float x, float y);
+void laser_beam_set_origin(float x, float y);
 
 // ----------------------------------------------------------------
 // Per-frame
 // ----------------------------------------------------------------
-void LaserBeam_Update(float dt);
-void LaserBeam_Draw();
+void laser_beam_update(float dt);
+void laser_beam_draw();
 
 // ----------------------------------------------------------------
 // Event
 // ----------------------------------------------------------------
-void LaserBeam_Fire(float to_x, float to_y);
+void laser_beam_fire(float to_x, float to_y);

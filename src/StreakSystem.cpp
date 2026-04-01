@@ -29,7 +29,7 @@ namespace
 
     // maps the current streak count to a tier (0-4), tier 0 means no flame is shown,
     // thresholds are 5, 10, 20, 30 - each tier unlocks a bigger and more intensely coloured flame
-    int GetTier()
+    int get_tier()
     {
         if (s_streak >= 30) return 4;
         if (s_streak >= 20) return 3;
@@ -41,7 +41,7 @@ namespace
     // outputs an rgb tint colour for the flame sprite based on the current tier,
     // tier 1 is natural fire (no tint), higher tiers shift toward deep orange then blazing red,
     // applied as a multiplicative colour so it blends with the sprite's own colours
-    void GetFlameColor(int tier, float& r, float& g, float& b)
+    void get_flame_color(int tier, float& r, float& g, float& b)
     {
         switch (tier)
         {
@@ -56,7 +56,7 @@ namespace
     // returns a size scale multiplier for the flame sprite based on tier,
     // tier 0 returns 0 (no flame), tier 4 returns 3.0 (three times the base size),
     // this is then further multiplied by s_pop_scale for the hit pop animation
-    float GetSizeMultiplier(int tier)
+    float get_size_multiplier(int tier)
     {
         switch (tier)
         {
@@ -73,7 +73,7 @@ namespace StreakSystem
 {
     // resets all streak state and loads the flame texture and mesh if not already loaded,
     // safe to call on game restart since it only builds assets if the pointers are null
-    void Init()
+    void init()
     {
         s_streak = 0;
         s_bob_timer = 0.0f;
@@ -93,7 +93,7 @@ namespace StreakSystem
 
     // advances the bob animation timer, decays the pop scale back to 1.0 after a kill,
     // and moves the floating streak counter upward while fading it out, param is dt in seconds
-    void Update(float dt)
+    void update(float dt)
     {
         s_bob_timer += dt * 3.0f;
         if (s_bob_timer > 6.2832f) s_bob_timer -= 6.2832f;
@@ -117,16 +117,16 @@ namespace StreakSystem
 
     // draws the flame sprite above the player (only if tier > 0) with bob animation, tint and pop scale,
     // also draws the streak count number above the flame, and the floating streak popup at the kill position
-    void Draw()
+    void draw()
     {
         if (!s_flame_mesh) return;
 
-        int tier = GetTier();
+        int tier = get_tier();
 
         // Draw fire sprite if streak is active (tier > 0)
         if (tier > 0 && s_flame_texture)
         {
-            float size_mul = GetSizeMultiplier(tier) * s_pop_scale;
+            float size_mul = get_size_multiplier(tier) * s_pop_scale;
             float w = FLAME_BASE_W * size_mul;
             float h = FLAME_BASE_H * size_mul;
             float bob = sinf(s_bob_timer) * 4.0f;
@@ -135,14 +135,14 @@ namespace StreakSystem
             float flame_centre_y = FLAME_ANCHOR_Y + h * 0.5f + bob;
 
             float r, g, b;
-            GetFlameColor(tier, r, g, b);
+            get_flame_color(tier, r, g, b);
 
             AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
             AEGfxSetBlendMode(AE_GFX_BM_BLEND);
             AEGfxSetTransparency(1.0f);
             AEGfxSetColorToMultiply(r, g, b, 1.0f);
             AEGfxTextureSet(s_flame_texture, 0.0f, 0.0f);
-            Mesh_Renderer(s_flame_mesh, FLAME_X, flame_centre_y, w, h, 0.0f);
+            mesh_renderer(s_flame_mesh, FLAME_X, flame_centre_y, w, h, 0.0f);
 
             // Reset tint after drawing
             AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);
@@ -185,8 +185,8 @@ namespace StreakSystem
         }
     }
 
-    // frees the flame mesh and texture and resets the streak counter, call in Game_Exit()
-    void Exit()
+    // frees the flame mesh and texture and resets the streak counter, call in game_exit()
+    void cleanup()
     {
         if (s_flame_mesh)
         {
@@ -203,7 +203,7 @@ namespace StreakSystem
 
     // increments the streak and triggers the pop scale animation, call when an enemy is killed
     // without a known position - use OnWordCorrectAt if you have the kill position for the float popup
-    void OnWordCorrect()
+    void on_word_correct()
     {
         s_streak++;
         s_pop_scale = 1.6f;
@@ -211,7 +211,7 @@ namespace StreakSystem
 
     // increments the streak and triggers the pop scale animation AND spawns a floating streak
     // counter at the given world position, call this version when you have the kill position
-    void OnWordCorrectAt(float x, float y)
+    void on_word_correct_at(float x, float y)
     {
         s_streak++;
         s_pop_scale = 1.6f;
@@ -223,7 +223,7 @@ namespace StreakSystem
 
     // resets the streak to zero and cancels the float popup, call when an enemy lands
     // or the player types a wrong word - anything that should break the combo
-    void OnStreakReset()
+    void on_streak_reset()
     {
         s_streak = 0;
         s_pop_scale = 1.0f;
@@ -231,16 +231,16 @@ namespace StreakSystem
     }
 
     // returns the current streak count, used by the tutorial to check if the player hit the target streak
-    int GetStreak()
+    int get_streak()
     {
         return s_streak;
     }
 
     // returns the score multiplier for the current tier (1.0x at tier 0, up to 5.0x at tier 4),
     // apply this to the base score when an enemy is killed to reward high streaks
-    float GetMultiplier()
+    float get_multiplier()
     {
-        switch (GetTier())
+        switch (get_tier())
         {
         case 1: return 1.5f;
         case 2: return 2.0f;
@@ -252,8 +252,8 @@ namespace StreakSystem
 
     // resets the streak when the player takes damage, wraps OnStreakReset so callers
     // don't need to know the internal reset function exists
-    void OnHealthLost()
+    void on_health_lost()
     {
-        OnStreakReset();
+        on_streak_reset();
     }
 }

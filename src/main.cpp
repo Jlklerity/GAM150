@@ -27,8 +27,8 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 
 	// reset the system modules
 	AESysReset();
-	GSM_Init(GS_MAIN_MENU);
-	SoundManager::Init();   // load once, globally
+	gsm_init(GS_MAIN_MENU);
+	SoundManager::init();   // load once, globally
 
 	// Game Loop
 	while (gGameRunning)
@@ -40,7 +40,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 		if (!AESysDoesWindowExist())
 			gGameRunning = 0;
 
-		GSM_Update();
+		gsm_update();
 
 		// run the current state's Update function
 		if (g_game_state_update)
@@ -61,8 +61,8 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 		AEGfxDestroyFont(Graphics::g_font_id);
 		Graphics::g_font_id = -1;
 	}
-	SoundManager::Exit();
-	Main_Menu_Exit();
+	SoundManager::cleanup();
+	main_menu_exit();
 	// free the system
 	AESysExit();
 

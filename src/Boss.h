@@ -82,7 +82,7 @@ namespace BossSystem
     sets every state variable (timers, counters, flags) back to its default inactive value.
     It must be called once after EnemyManage_LoadMeshes so the base meshes are already present.
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
-    void Boss_Init(Data::Meshes& meshes, const Data::WordBank& bank);
+    void boss_init(Data::Meshes& meshes, const Data::WordBank& bank);
 
     /*
     @function       Boss_Free
@@ -94,7 +94,7 @@ namespace BossSystem
     active slot remains on restart or level exit. Safe to call even if Boss_Init was never reached
     because null checks are performed before freeing.
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
-    void Boss_Free(Data::Meshes& meshes, std::deque<int>& free_slots, std::vector<Data::Enemy>& pool);
+    void boss_free(Data::Meshes& meshes, std::deque<int>& free_slots, std::vector<Data::Enemy>& pool);
 
     /*
     @function       Boss_Update
@@ -107,7 +107,7 @@ namespace BossSystem
     decay, and flash attack timing. It sets boss_spawning_blocked to true from the moment the 60 second
     mark is hit until the boss is fully defeated, so the caller can gate regular enemy spawning.
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
-    void Boss_Update(std::vector<Data::Enemy>& pool, std::deque<int>& free_slots, const Data::EnemyArea& area, const Data::WordBank& bank, float dt, bool& boss_spawning_blocked, bool is_random_spawning_enabled);
+    void boss_update(std::vector<Data::Enemy>& pool, std::deque<int>& free_slots, const Data::EnemyArea& area, const Data::WordBank& bank, float dt, bool& boss_spawning_blocked, bool is_random_spawning_enabled);
 
     /*
     @function       Boss_Draw
@@ -120,7 +120,7 @@ namespace BossSystem
     progress counter is drawn while the boss is alive. Nothing is drawn when the boss is inactive
     or in the dead state.
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
-    void Boss_Draw(const Data::Meshes& meshes);
+    void boss_draw(const Data::Meshes& meshes);
 
     /*
     @function       Boss_DrawFlashOverlay
@@ -130,7 +130,7 @@ namespace BossSystem
     This function draws a full window white rectangle scaled to cover the entire screen, with alpha
     derived from the current flash timer. Nothing is drawn when no flash is active.
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
-    void Boss_DrawFlashOverlay(const Data::Meshes& meshes);
+    void boss_draw_flash_overlay(const Data::Meshes& meshes);
 
     /*
     @function       Boss_GetKillWordSlot
@@ -140,7 +140,7 @@ namespace BossSystem
     A return value of -1 means the boss does not currently hold a slot, which is the case when the
     boss is inactive or has not yet been triggered.
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
-    int Boss_GetKillWordSlot();
+    int boss_get_kill_word_slot();
 
     /*
     @function       Boss_GetKillWordAnchorY
@@ -151,7 +151,7 @@ namespace BossSystem
     GameEnemyBoss::Update read this value instead of recomputing independently, eliminating any
     risk of the two sites diverging and causing the kill word to appear at the wrong height.
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
-    float Boss_GetKillWordAnchorY();
+    float boss_get_kill_word_anchor_y();
 
     /*
     @function       Boss_IsActive
@@ -161,7 +161,7 @@ namespace BossSystem
     true during both the entrance cutscene and the main fight phase. Callers use this to pause normal
     enemy spawning and gameplay logic while the boss is present.
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
-    bool Boss_IsActive();
+    bool boss_is_active();
 
     /*
     @function       Boss_ForceSpawn
@@ -171,7 +171,7 @@ namespace BossSystem
     transitions to WAITING and then proceeds normally through pool clear, cutscene, and ACTIVE states.
     Nothing happens if the boss is already active or in the process of spawning.
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
-    void Boss_ForceSpawn();
+    void boss_force_spawn();
 
     /*
     @function       Boss_ForceKill
@@ -182,7 +182,7 @@ namespace BossSystem
     to the DEAD state so the death animation plays and Boss_WasJustDefeated fires normally.
     Does nothing if the boss is not in the ACTIVE state.
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
-    bool Boss_ForceKill(std::vector<Data::Enemy>& pool, std::deque<int>& free_slots);
+    bool boss_force_kill(std::vector<Data::Enemy>& pool, std::deque<int>& free_slots);
 
     /*
     @function       Boss_WasJustDefeated
@@ -193,20 +193,20 @@ namespace BossSystem
     return false until the next boss is defeated. game.cpp uses this single-shot signal to trigger
     the upgrade card screen at exactly the right moment without polling every frame.
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
-    bool Boss_WasJustDefeated();
+    bool boss_was_just_defeated();
 
     /*
     @function       Boss_ForceTrickRoom
     @brief          Debug only. Immediately triggers Trick Room, bypassing the cooldown.
                     Returns false only if the boss is not in the ACTIVE fight state.
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
-    bool Boss_ForceTrickRoom();
+    bool boss_force_trick_room();
 
     /*
     @function       Boss_IsTrickRoomActive
     @brief          Returns true while the Trick Room reverse-typing phase is running.
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
-    bool Boss_IsTrickRoomActive();
+    bool boss_is_trick_room_active();
 
 } // BossSystem namespace end
 /*___________________________________________________________________________________________________________________________________________________________________________________________________*/

@@ -17,7 +17,7 @@ namespace GameClouds
 {
     // loads the cloud texture and builds the fullscreen mesh, safe to call on restart since it
     // unloads any previously loaded assets first, resets the scroll offset back to zero
-    void Init()
+    void init()
     {
         if (s_cloud_tex)
         {
@@ -42,22 +42,22 @@ namespace GameClouds
 
     // advances the UV scroll offset each frame to make the clouds drift horizontally,
     // param is dt in seconds, wraps back to 0 when offset exceeds 1 to keep the UV in range
-    void Update(float dt)
+    void update(float dt)
     {
         s_u_offset += CLOUD_SPEED * dt;
         if (s_u_offset > 1.0f)
             s_u_offset -= 1.0f;
     }
 
-    // draws the scrolling cloud layer at the top of the screen, fades out as night falls using DayCycle::GetNightAlpha(),
+    // draws the scrolling cloud layer at the top of the screen, fades out as night falls using DayCycle::get_night_alpha(),
     // skips drawing entirely if the alpha is near zero so we don't waste draw calls at full night,
     // follows the camera position so clouds stay locked to the screen
-    void Draw()
+    void draw()
     {
         if (!s_cloud_tex || !s_cloud_mesh) return;
 
         // Fade clouds out as night falls
-        float cloud_alpha = 1.0f - DayCycle::GetNightAlpha();
+        float cloud_alpha = 1.0f - DayCycle::get_night_alpha();
         if (cloud_alpha <= 0.01f) return;
 
         float cam_x, cam_y;
@@ -68,11 +68,11 @@ namespace GameClouds
         AEGfxSetTransparency(cloud_alpha);
         AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);
         AEGfxTextureSet(s_cloud_tex, s_u_offset, 0.0f);
-        Mesh_Renderer(s_cloud_mesh, cam_x, cam_y + 180.0f, 1.0f, 1.0f, 0.0f);
+        mesh_renderer(s_cloud_mesh, cam_x, cam_y + 180.0f, 1.0f, 1.0f, 0.0f);
     }
 
     // frees the cloud texture and mesh, call this in the game state exit function to avoid memory leaks
-    void Exit()
+    void cleanup()
     {
         if (s_cloud_tex)
         {

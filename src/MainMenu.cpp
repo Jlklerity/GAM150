@@ -168,12 +168,12 @@ namespace
     static bool  s_splash_active = false;
 }
 
-std::string MainMenuGetPlayerName()
+std::string main_menu_get_player_name()
 {
     return s_player_name;
 }
 
-void DrawMainMenu(float text_ndc_offset)
+void draw_main_menu(float text_ndc_offset)
 {
     AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
     AEGfxSetBlendMode(AE_GFX_BM_BLEND);
@@ -185,16 +185,16 @@ void DrawMainMenu(float text_ndc_offset)
     {
         AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
         AEGfxTextureSet(s_tex_logo, 0.0f, 0.0f);
-        Mesh_Renderer(s_mesh_logo, 0.0f + s_ui_offset_x, s_logo_y, LOGO_WIDTH, LOGO_HEIGHT, 0.0f);
+        mesh_renderer(s_mesh_logo, 0.0f + s_ui_offset_x, s_logo_y, LOGO_WIDTH, LOGO_HEIGHT, 0.0f);
     }
 
     if (s_tex_arrows)
     {
         AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
         AEGfxTextureSet(s_tex_arrows, 0.0f, 0.0f);
-        Mesh_Renderer(s_mesh_left_arrow, s_leftarrow_btn_x + s_ui_offset_x, s_leftarrow_btn_y,
+        mesh_renderer(s_mesh_left_arrow, s_leftarrow_btn_x + s_ui_offset_x, s_leftarrow_btn_y,
             LEFTARROW_WIDTH * s_tween_left_arrow.scale, LEFTARROW_HEIGHT * s_tween_left_arrow.scale, 0.0f);
-        Mesh_Renderer(s_mesh_right_arrow, s_rightarrow_btn_x + s_ui_offset_x, s_rightarrow_btn_y,
+        mesh_renderer(s_mesh_right_arrow, s_rightarrow_btn_x + s_ui_offset_x, s_rightarrow_btn_y,
             RIGHTARROW_WIDTH * s_tween_right_arrow.scale, RIGHTARROW_HEIGHT * s_tween_right_arrow.scale, 0.0f);
     }
 
@@ -211,14 +211,14 @@ void DrawMainMenu(float text_ndc_offset)
     {
         AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
         AEGfxTextureSet(s_tex_play, 0.0f, 0.0f);
-        Mesh_Renderer(s_mesh_btn, 0.0f + s_ui_offset_x, s_play_btn_y,
+        mesh_renderer(s_mesh_btn, 0.0f + s_ui_offset_x, s_play_btn_y,
             PLAY_WIDTH * s_tween_play.scale, PLAY_HEIGHT * s_tween_play.scale, 0.0f);
     }
 
     if (s_tex_shop)
     {
         AEGfxTextureSet(s_tex_shop, 0.0f, 0.0f);
-        Mesh_Renderer(s_mesh_btn, 0.0f + s_ui_offset_x, s_shop_btn_y,
+        mesh_renderer(s_mesh_btn, 0.0f + s_ui_offset_x, s_shop_btn_y,
             SHOP_WIDTH * s_tween_shop.scale, SHOP_HEIGHT * s_tween_shop.scale, 0.0f);
     }
 
@@ -228,7 +228,7 @@ void DrawMainMenu(float text_ndc_offset)
         AEGfxSetBlendMode(AE_GFX_BM_BLEND);
         AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);
         AEGfxTextureSet(s_tex_tutorial, 0.0f, 0.0f);
-        Mesh_Renderer(s_mesh_btn, 0.0f + s_ui_offset_x, s_tutorial_btn_y,
+        mesh_renderer(s_mesh_btn, 0.0f + s_ui_offset_x, s_tutorial_btn_y,
             TUTORIAL_WIDTH * s_tween_tutorial.scale, TUTORIAL_HEIGHT * s_tween_tutorial.scale, 0.0f);
     }
 
@@ -236,7 +236,7 @@ void DrawMainMenu(float text_ndc_offset)
     {
         AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
         AEGfxTextureSet(s_tex_leaderboard, 0.0f, 0.0f);
-        Mesh_Renderer(s_mesh_leaderboard_btn, s_leaderboard_btn_x + s_ui_offset_x, s_leaderboard_btn_y,
+        mesh_renderer(s_mesh_leaderboard_btn, s_leaderboard_btn_x + s_ui_offset_x, s_leaderboard_btn_y,
             LEADERBOARD_WIDTH * s_tween_leaderboard.scale, LEADERBOARD_HEIGHT * s_tween_leaderboard.scale, 0.0f);
     }
 
@@ -244,7 +244,7 @@ void DrawMainMenu(float text_ndc_offset)
     {
         AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
         AEGfxTextureSet(s_tex_settings, 0.0f, 0.0f);
-        Mesh_Renderer(s_mesh_settings_btn, s_settings_btn_x + s_ui_offset_x, s_settings_btn_y,
+        mesh_renderer(s_mesh_settings_btn, s_settings_btn_x + s_ui_offset_x, s_settings_btn_y,
             SETTINGS_WIDTH * s_tween_settings.scale, SETTINGS_HEIGHT * s_tween_settings.scale, 0.0f);
     }
 
@@ -252,7 +252,7 @@ void DrawMainMenu(float text_ndc_offset)
     {
         AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
         AEGfxTextureSet(s_tex_credits, 0.0f, 0.0f);
-        Mesh_Renderer(s_mesh_credits_btn, s_credits_btn_x + s_ui_offset_x, s_credits_btn_y,
+        mesh_renderer(s_mesh_credits_btn, s_credits_btn_x + s_ui_offset_x, s_credits_btn_y,
             CREDITS_WIDTH * s_tween_credits.scale, CREDITS_HEIGHT * s_tween_credits.scale, 0.0f);
     }
 
@@ -262,12 +262,12 @@ void DrawMainMenu(float text_ndc_offset)
         AEGfxSetBlendMode(AE_GFX_BM_BLEND);
         AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);
         AEGfxTextureSet(s_tex_exit, 0.0f, 0.0f);
-        Mesh_Renderer(s_mesh_exit_btn, 0.0f + s_ui_offset_x, s_exit_btn_y,
+        mesh_renderer(s_mesh_exit_btn, 0.0f + s_ui_offset_x, s_exit_btn_y,
             EXIT_WIDTH * s_tween_exit.scale, EXIT_HEIGHT * s_tween_exit.scale, 0.0f);
     }
 }
 
-void Main_Menu_Input()
+void main_menu_input()
 {
     s32 mouse_x, mouse_y;
     AEInputGetCursorPosition(&mouse_x, &mouse_y);
@@ -305,25 +305,25 @@ void Main_Menu_Input()
 
         if (!s_splash_active)
         {
-            ButtonTween_Update(s_tween_play, h_play, h_play && click, dt);
-            ButtonTween_Update(s_tween_shop, h_shop, h_shop && click, dt);
-            ButtonTween_Update(s_tween_tutorial, h_tut, h_tut && click, dt);
-            ButtonTween_Update(s_tween_exit, h_exit, h_exit && click, dt);
-            ButtonTween_Update(s_tween_settings, h_set, h_set && click, dt);
-            ButtonTween_Update(s_tween_leaderboard, h_ldr, h_ldr && click, dt);
-            ButtonTween_Update(s_tween_left_arrow, h_l_arr, h_l_arr && click, dt);
-            ButtonTween_Update(s_tween_right_arrow, h_r_arr, h_r_arr && click, dt);
-            ButtonTween_Update(s_tween_credits, h_cred, h_cred && click, dt);
+            button_tween_update(s_tween_play, h_play, h_play && click, dt);
+            button_tween_update(s_tween_shop, h_shop, h_shop && click, dt);
+            button_tween_update(s_tween_tutorial, h_tut, h_tut && click, dt);
+            button_tween_update(s_tween_exit, h_exit, h_exit && click, dt);
+            button_tween_update(s_tween_settings, h_set, h_set && click, dt);
+            button_tween_update(s_tween_leaderboard, h_ldr, h_ldr && click, dt);
+            button_tween_update(s_tween_left_arrow, h_l_arr, h_l_arr && click, dt);
+            button_tween_update(s_tween_right_arrow, h_r_arr, h_r_arr && click, dt);
+            button_tween_update(s_tween_credits, h_cred, h_cred && click, dt);
         }
     }
 
-    if (UiPauseMenu::IsPopupOpen()) return;
+    if (UiPauseMenu::is_popup_open()) return;
 
     if (!s_splash_active && !s_is_transitioning_to_name && !s_transitioning_to_shop && !s_is_returning_from_shop
         && AEInputCheckTriggered(AEVK_ESCAPE))
     {
-        SoundManager::PlayClickBtnSfx();
-        UiPauseMenu::OpenPopup(UiPauseMenu::POPUP_QUIT);
+        SoundManager::play_click_btn_sfx();
+        UiPauseMenu::open_popup(UiPauseMenu::POPUP_QUIT);
     }
 
     if (!s_splash_active && !s_is_transitioning_to_name && !s_transitioning_to_shop && !s_is_returning_from_shop
@@ -332,70 +332,70 @@ void Main_Menu_Input()
         if (s_world_x >= 0.0f - (PLAY_HITBOX_WIDTH * 0.5f) && s_world_x <= 0.0f + (PLAY_HITBOX_WIDTH * 0.5f) &&
             s_world_y >= s_play_btn_y - (PLAY_HITBOX_HEIGHT * 0.5f) && s_world_y <= s_play_btn_y + (PLAY_HITBOX_HEIGHT * 0.5f))
         {
-            SoundManager::PlayClickBtnSfx();
+            SoundManager::play_click_btn_sfx();
             s_is_transitioning_to_name = true;
-            ScreenTransitions::ScreenTransition_Init();
+            ScreenTransitions::screen_transition_init();
         }
         else if (s_world_x >= 0.0f - (SHOP_HITBOX_WIDTH * 0.5f) && s_world_x <= 0.0f + (SHOP_HITBOX_WIDTH * 0.5f) &&
             s_world_y >= s_shop_btn_y - (SHOP_HITBOX_HEIGHT * 0.5f) && s_world_y <= s_shop_btn_y + (SHOP_HITBOX_HEIGHT * 0.5f))
         {
-            SoundManager::PlayClickBtnSfx();
+            SoundManager::play_click_btn_sfx();
             s_transitioning_to_shop = true;
-            ScreenTransitions::ScreenTransition_Init();
+            ScreenTransitions::screen_transition_init();
         }
         else if (s_world_x >= 0.0f - (EXIT_WIDTH * 0.5f) && s_world_x <= 0.0f + (EXIT_WIDTH * 0.5f) &&
             s_world_y >= s_exit_btn_y - (EXIT_HEIGHT * 0.5f) && s_world_y <= s_exit_btn_y + (EXIT_HEIGHT * 0.5f))
         {
-            SoundManager::PlayClickBtnSfx();
-            UiPauseMenu::OpenPopup(UiPauseMenu::POPUP_QUIT);
+            SoundManager::play_click_btn_sfx();
+            UiPauseMenu::open_popup(UiPauseMenu::POPUP_QUIT);
         }
         else if (s_world_x >= s_settings_btn_x - (SETTINGS_WIDTH * 0.5f) && s_world_x <= s_settings_btn_x + (SETTINGS_WIDTH * 0.5f) &&
             s_world_y >= s_settings_btn_y - (SETTINGS_HEIGHT * 0.5f) && s_world_y <= s_settings_btn_y + (SETTINGS_HEIGHT * 0.5f))
         {
-            SoundManager::PlayClickBtnSfx();
+            SoundManager::play_click_btn_sfx();
             s_in_settings = true;
         }
         else if (s_world_x >= s_leftarrow_btn_x - (LEFTARROW_WIDTH * 0.5f) && s_world_x <= s_leftarrow_btn_x + (LEFTARROW_WIDTH * 0.5f) &&
             s_world_y >= s_leftarrow_btn_y - (LEFTARROW_HEIGHT * 0.5f) && s_world_y <= s_leftarrow_btn_y + (LEFTARROW_HEIGHT * 0.5f))
         {
-            SoundManager::PlayClickBtnSfx();
+            SoundManager::play_click_btn_sfx();
             s_selected_mode = (s_selected_mode == "ZEN") ? "TIME" : "ZEN";
         }
         else if (s_world_x >= s_rightarrow_btn_x - (RIGHTARROW_WIDTH * 0.5f) && s_world_x <= s_rightarrow_btn_x + (RIGHTARROW_WIDTH * 0.5f) &&
             s_world_y >= s_rightarrow_btn_y - (RIGHTARROW_HEIGHT * 0.5f) && s_world_y <= s_rightarrow_btn_y + (RIGHTARROW_HEIGHT * 0.5f))
         {
-            SoundManager::PlayClickBtnSfx();
+            SoundManager::play_click_btn_sfx();
             s_selected_mode = (s_selected_mode == "ZEN") ? "TIME" : "ZEN";
         }
         else if (s_world_x >= s_leaderboard_btn_x - (LEADERBOARD_WIDTH * 0.5f) && s_world_x <= s_leaderboard_btn_x + (LEADERBOARD_WIDTH * 0.5f) &&
             s_world_y >= s_leaderboard_btn_y - (LEADERBOARD_HEIGHT * 0.5f) && s_world_y <= s_leaderboard_btn_y + (LEADERBOARD_HEIGHT * 0.5f))
         {
-            SoundManager::PlayClickBtnSfx();
+            SoundManager::play_click_btn_sfx();
             s_leaderboard_mode = "ZEN";
             s_in_leaderboard = true;
         }
         else if (s_world_x >= 0.0f - (TUTORIAL_HITBOX_WIDTH * 0.5f) && s_world_x <= 0.0f + (TUTORIAL_HITBOX_WIDTH * 0.5f) &&
             s_world_y >= s_tutorial_btn_y - (TUTORIAL_HITBOX_HEIGHT * 0.5f) && s_world_y <= s_tutorial_btn_y + (TUTORIAL_HITBOX_HEIGHT * 0.5f))
         {
-            SoundManager::PlayClickBtnSfx();
+            SoundManager::play_click_btn_sfx();
             s_is_zooming_to_game = true;
-            ParallaxZoom::Start(GS_TUTORIAL);
+            ParallaxZoom::start(GS_TUTORIAL);
         }
         else if (s_world_x >= s_credits_btn_x - (CREDITS_WIDTH * 0.5f) && s_world_x <= s_credits_btn_x + (CREDITS_WIDTH * 0.5f) &&
             s_world_y >= s_credits_btn_y - (CREDITS_HEIGHT * 0.5f) && s_world_y <= s_credits_btn_y + (CREDITS_HEIGHT * 0.5f))
         {
-            SoundManager::PlayClickBtnSfx();
+            SoundManager::play_click_btn_sfx();
             g_game_state_next = GS_CREDITS;
         }
     }
 }
 
-void ResetPlayerName(std::string& reset_name)
+void reset_player_name(std::string& reset_name)
 {
     s_player_name = reset_name;
 }
 
-void Main_Menu_EnterName(float world_y_offset, float ndc_y_offset, bool allow_input)
+void main_menu_enter_name(float world_y_offset, float ndc_y_offset, bool allow_input)
 {
     s32 mouse_x, mouse_y;
     AEInputGetCursorPosition(&mouse_x, &mouse_y);
@@ -419,29 +419,29 @@ void Main_Menu_EnterName(float world_y_offset, float ndc_y_offset, bool allow_in
             s_world_y >= s_entergame_btn_y - (ENTERGAME_HEIGHT * 0.5f) && s_world_y <= s_entergame_btn_y + (ENTERGAME_HEIGHT * 0.5f));
         bool h_back = (s_world_x >= s_exitname_btn_x - (EXITNAME_WIDTH * 0.5f) && s_world_x <= s_exitname_btn_x + (EXITNAME_WIDTH * 0.5f) &&
             s_world_y >= s_exitname_btn_y - (EXITNAME_HEIGHT * 0.5f) && s_world_y <= s_exitname_btn_y + (EXITNAME_HEIGHT * 0.5f));
-        ButtonTween_Update(s_tween_enter_game, h_enter, enter_clicked, dt);
-        ButtonTween_Update(s_tween_back_name, h_back, exit_clicked, dt);
+        button_tween_update(s_tween_enter_game, h_enter, enter_clicked, dt);
+        button_tween_update(s_tween_back_name, h_back, exit_clicked, dt);
 
         if ((enter_pressed || enter_clicked) && !s_player_name.empty() && s_selected_mode != "")
         {
-            SoundManager::PlayClickBtnSfx();
+            SoundManager::play_click_btn_sfx();
             s_is_entering_name = false;
             s_is_zooming_to_game = true;
             int zoom_target = (s_selected_mode == "TIME") ? GS_GAME_TIMEMODE : GS_GAME;
-            ParallaxZoom::Start(zoom_target);
+            ParallaxZoom::start(zoom_target);
         }
         else if ((enter_pressed || enter_clicked) && s_player_name.empty() && s_selected_mode != "")
         {
-            SoundManager::PlayClickBtnSfx();
+            SoundManager::play_click_btn_sfx();
             s_empty_name_warning_timer = 1.5f;
             s_empty_name_warning_x = 0.0f;
             s_empty_name_warning_y = 0.05f;
         }
         else if (exit_clicked)
         {
-            SoundManager::PlayClickBtnSfx();
+            SoundManager::play_click_btn_sfx();
             s_is_transitioning_back = true;
-            ScreenTransitions::ScreenTransition_Init();
+            ScreenTransitions::screen_transition_init();
             s_is_entering_name = false;
             s_selected_mode = "ZEN";
         }
@@ -449,7 +449,7 @@ void Main_Menu_EnterName(float world_y_offset, float ndc_y_offset, bool allow_in
         if (AEInputCheckTriggered(AEVK_ESCAPE))
         {
             s_is_transitioning_back = true;
-            ScreenTransitions::ScreenTransition_Init();
+            ScreenTransitions::screen_transition_init();
             s_is_entering_name = false;
             s_selected_mode = "ZEN";
         }
@@ -484,7 +484,7 @@ void Main_Menu_EnterName(float world_y_offset, float ndc_y_offset, bool allow_in
         AEGfxSetBlendMode(AE_GFX_BM_BLEND);
         AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);
         AEGfxTextureSet(s_tex_back_name, 0.0f, 0.0f);
-        Mesh_Renderer(s_mesh_back_name, s_exitname_btn_x, s_exitname_btn_y + world_y_offset,
+        mesh_renderer(s_mesh_back_name, s_exitname_btn_x, s_exitname_btn_y + world_y_offset,
             EXITNAME_WIDTH * s_tween_back_name.scale, EXITNAME_HEIGHT * s_tween_back_name.scale, 0.0f);
     }
 
@@ -494,7 +494,7 @@ void Main_Menu_EnterName(float world_y_offset, float ndc_y_offset, bool allow_in
         AEGfxSetBlendMode(AE_GFX_BM_BLEND);
         AEGfxSetColorToMultiply(1.0f, 1.0f, 0.0f, 1.0f);
         AEGfxTextureSet(s_tex_enter_name, 0.0f, 0.0f);
-        Mesh_Renderer(s_mesh_enter_name, s_entergame_btn_x, s_entergame_btn_y + world_y_offset,
+        mesh_renderer(s_mesh_enter_name, s_entergame_btn_x, s_entergame_btn_y + world_y_offset,
             ENTERGAME_WIDTH * s_tween_enter_game.scale, ENTERGAME_HEIGHT * s_tween_enter_game.scale, 0.0f);
     }
 
@@ -580,7 +580,7 @@ void Main_Menu_EnterName(float world_y_offset, float ndc_y_offset, bool allow_in
     }
 }
 
-void Main_Menu_Init()
+void main_menu_init()
 {
     // Safety cleanup before reload
     if (s_tex_logo) { AEGfxTextureUnload(s_tex_logo);           s_tex_logo = nullptr; }
@@ -610,20 +610,20 @@ void Main_Menu_Init()
     s_ui_offset_x = 0.0f;
     s_transitioning_to_shop = false;
     s_in_leaderboard = false;
-    UiPauseMenu::ClosePopup();
-    LeaderboardSystem::Init();
-    LeaderboardSystem::ReadZenLeaderboard();
-    LeaderboardSystem::ReadTimeLeaderboard();
+    UiPauseMenu::close_popup();
+    LeaderboardSystem::init();
+    LeaderboardSystem::read_zen_leaderboard();
+    LeaderboardSystem::read_time_leaderboard();
     s_is_zooming_to_game = false;
-    ParallaxZoom::Reset();
+    ParallaxZoom::reset();
 
     s_empty_name_warning_timer = 0.0f;
     s_empty_name_warning_x = 0.0f;
     s_empty_name_warning_y = 0.0f;
 
-    SoundManager::Init();
-    SysSettings::Init();
-    BackgroundParallax::MenuParallax_Init();
+    SoundManager::init();
+    SysSettings::init();
+    BackgroundParallax::menu_parallax_init();
 
     s_selected_mode = "ZEN";
     s_in_settings = false;
@@ -682,7 +682,7 @@ void Main_Menu_Init()
     {
         s_is_returning_from_shop = true;
         s_ui_offset_x = -s_win_w;
-        ScreenTransitions::ScreenTransition_Init();
+        ScreenTransitions::screen_transition_init();
     }
     else
     {
@@ -690,17 +690,17 @@ void Main_Menu_Init()
         s_ui_offset_x = 0.0f;
     }
 
-    ButtonTween_Reset(s_tween_play);
-    ButtonTween_Reset(s_tween_shop);
-    ButtonTween_Reset(s_tween_tutorial);
-    ButtonTween_Reset(s_tween_exit);
-    ButtonTween_Reset(s_tween_settings);
-    ButtonTween_Reset(s_tween_leaderboard);
-    ButtonTween_Reset(s_tween_left_arrow);
-    ButtonTween_Reset(s_tween_right_arrow);
-    ButtonTween_Reset(s_tween_credits);
-    ButtonTween_Reset(s_tween_enter_game);
-    ButtonTween_Reset(s_tween_back_name);
+    button_tween_reset(s_tween_play);
+    button_tween_reset(s_tween_shop);
+    button_tween_reset(s_tween_tutorial);
+    button_tween_reset(s_tween_exit);
+    button_tween_reset(s_tween_settings);
+    button_tween_reset(s_tween_leaderboard);
+    button_tween_reset(s_tween_left_arrow);
+    button_tween_reset(s_tween_right_arrow);
+    button_tween_reset(s_tween_credits);
+    button_tween_reset(s_tween_enter_game);
+    button_tween_reset(s_tween_back_name);
 
     // Splash overlay ? only on very first launch
     s_splash_timer = 0.0f;
@@ -730,7 +730,7 @@ void Main_Menu_Init()
     }
 }
 
-void Main_Menu_Update()
+void main_menu_update()
 {
     s_win_w = (float)AEGfxGetWindowWidth();
     s_win_h = (float)AEGfxGetWindowHeight();
@@ -741,36 +741,36 @@ void Main_Menu_Update()
     if (s_empty_name_warning_timer > 0.0f)
         s_empty_name_warning_timer -= dt;
 
-    BackgroundParallax::MenuParallax_Update(dt);
+    BackgroundParallax::menu_parallax_update(dt);
 
     if (s_transitioning_to_shop)
     {
-        ScreenTransitions::ScreenTransition_Update(dt);
-        float smooth_pan = ScreenTransitions::EaseOutExpo(ScreenTransitions::result);
+        ScreenTransitions::screen_transition_update(dt);
+        float smooth_pan = ScreenTransitions::ease_out_expo(ScreenTransitions::result);
         s_ui_offset_x = -s_win_w * smooth_pan;
-        BackgroundParallax::MenuParallax_SetPanOffset(-0.2f * smooth_pan);
+        BackgroundParallax::menu_parallax_set_pan_offset(-0.2f * smooth_pan);
 
         if (ScreenTransitions::result >= 0.3f)
         {
             s_transitioning_to_shop = false;
             s_ui_offset_x = -s_win_w;
-            BackgroundParallax::MenuParallax_SetPanOffset(-0.2f);
+            BackgroundParallax::menu_parallax_set_pan_offset(-0.2f);
             g_game_state_next = GS_SHOP;
         }
     }
 
     if (s_is_returning_from_shop)
     {
-        ScreenTransitions::ScreenTransition_Update(dt);
-        float smooth_pan = ScreenTransitions::EaseOutExpo(ScreenTransitions::result);
+        ScreenTransitions::screen_transition_update(dt);
+        float smooth_pan = ScreenTransitions::ease_out_expo(ScreenTransitions::result);
         s_ui_offset_x = -s_win_w * (1.0f - smooth_pan);
-        BackgroundParallax::MenuParallax_SetPanOffset(-0.2f + (0.2f * smooth_pan));
+        BackgroundParallax::menu_parallax_set_pan_offset(-0.2f + (0.2f * smooth_pan));
 
         if (ScreenTransitions::result >= 0.3f)
         {
             s_is_returning_from_shop = false;
             s_ui_offset_x = 0.0f;
-            BackgroundParallax::MenuParallax_SetPanOffset(0.0f);
+            BackgroundParallax::menu_parallax_set_pan_offset(0.0f);
         }
     }
 
@@ -804,7 +804,7 @@ void Main_Menu_Update()
     s_credits_btn_y = -s_win_h * 0.4f;
 
     AEGfxSetCamPosition(0.0f, 0.0f);
-    if (s_is_zooming_to_game || ParallaxZoom::IsActive())
+    if (s_is_zooming_to_game || ParallaxZoom::is_active())
         AEGfxSetBackgroundColor(0.0f, 0.0f, 0.0f);
     else
         AEGfxSetBackgroundColor(0.53f, 0.81f, 0.92f);
@@ -814,8 +814,8 @@ void Main_Menu_Update()
 
     if (s_is_transitioning_to_name)
     {
-        ScreenTransitions::ScreenTransition_Update((float)AEFrameRateControllerGetFrameTime());
-        float bounce = ScreenTransitions::EaseOutExpo(ScreenTransitions::result);
+        ScreenTransitions::screen_transition_update((float)AEFrameRateControllerGetFrameTime());
+        float bounce = ScreenTransitions::ease_out_expo(ScreenTransitions::result);
 
         cam_y = s_win_h * bounce;
         AEGfxSetCamPosition(0.0f, cam_y);
@@ -831,8 +831,8 @@ void Main_Menu_Update()
     }
     else if (s_is_transitioning_back)
     {
-        ScreenTransitions::ScreenTransition_Update((float)AEFrameRateControllerGetFrameTime());
-        float bounce = ScreenTransitions::EaseOutExpo(ScreenTransitions::result);
+        ScreenTransitions::screen_transition_update((float)AEFrameRateControllerGetFrameTime());
+        float bounce = ScreenTransitions::ease_out_expo(ScreenTransitions::result);
         float reverse_bounce = 1.0f - bounce;
 
         cam_y = s_win_h * reverse_bounce;
@@ -852,26 +852,26 @@ void Main_Menu_Update()
     AEGfxSetCamPosition(0.0f, cam_y);
 
     float v_cam_y = 0.0f;
-    if (s_is_transitioning_to_name) v_cam_y = s_win_h * ScreenTransitions::EaseOutExpo(ScreenTransitions::result);
-    else if (s_is_transitioning_back)    v_cam_y = s_win_h * (1.0f - ScreenTransitions::EaseOutExpo(ScreenTransitions::result));
+    if (s_is_transitioning_to_name) v_cam_y = s_win_h * ScreenTransitions::ease_out_expo(ScreenTransitions::result);
+    else if (s_is_transitioning_back)    v_cam_y = s_win_h * (1.0f - ScreenTransitions::ease_out_expo(ScreenTransitions::result));
     else if (s_is_entering_name)         v_cam_y = s_win_h;
 
     if (s_is_zooming_to_game)
     {
-        ParallaxZoom::Update(dt);
-        ParallaxZoom::Draw(0.0f);
-        if (!ParallaxZoom::IsActive()) s_is_zooming_to_game = false;
+        ParallaxZoom::update(dt);
+        ParallaxZoom::draw(0.0f);
+        if (!ParallaxZoom::is_active()) s_is_zooming_to_game = false;
         return;
     }
 
-    BackgroundParallax::MenuParallax_Draw(v_cam_y);
+    BackgroundParallax::menu_parallax_draw(v_cam_y);
 
     if (s_in_leaderboard)
     {
-        DrawMainMenu(0.0f);
+        draw_main_menu(0.0f);
 
-        if (s_leaderboard_mode == "ZEN")  LeaderboardSystem::DisplayZenLeaderboard(s_in_leaderboard);
-        else if (s_leaderboard_mode == "TIME") LeaderboardSystem::DisplayTimeLeaderboard(s_in_leaderboard);
+        if (s_leaderboard_mode == "ZEN")  LeaderboardSystem::display_zen_leaderboard(s_in_leaderboard);
+        else if (s_leaderboard_mode == "TIME") LeaderboardSystem::display_time_leaderboard(s_in_leaderboard);
 
         s32 mouse_x, mouse_y;
         AEInputGetCursorPosition(&mouse_x, &mouse_y);
@@ -902,9 +902,9 @@ void Main_Menu_Update()
             AEGfxTextureSet(s_tex_arrows, 0.0f, 0.0f);
 
             if (s_leaderboard_mode == "ZEN")
-                Mesh_Renderer(s_mesh_right_arrow, arrow_x, arrow_y, arrow_w * draw_scale, arrow_h * draw_scale, 0.0f);
+                mesh_renderer(s_mesh_right_arrow, arrow_x, arrow_y, arrow_w * draw_scale, arrow_h * draw_scale, 0.0f);
             else
-                Mesh_Renderer(s_mesh_left_arrow, arrow_x, arrow_y, arrow_w * draw_scale, arrow_h * draw_scale, 0.0f);
+                mesh_renderer(s_mesh_left_arrow, arrow_x, arrow_y, arrow_w * draw_scale, arrow_h * draw_scale, 0.0f);
 
             AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);
         }
@@ -929,18 +929,18 @@ void Main_Menu_Update()
 
         if (is_hovering && AEInputCheckTriggered(AEVK_LBUTTON))
         {
-            SoundManager::PlayClickBtnSfx();
+            SoundManager::play_click_btn_sfx();
             s_leaderboard_mode = (s_leaderboard_mode == "ZEN") ? "TIME" : "ZEN";
         }
     }
     else if (s_in_settings)
     {
-        if (SysSettings::DisplaySettings() == false)
+        if (SysSettings::display_settings() == false)
             s_in_settings = false;
     }
     else if (s_is_entering_name)
     {
-        Main_Menu_EnterName(0.0f, 0.0f, true);
+        main_menu_enter_name(0.0f, 0.0f, true);
     }
     else if (s_is_zooming_to_game)
     {
@@ -948,16 +948,16 @@ void Main_Menu_Update()
     }
     else if (s_is_transitioning_to_name || s_is_transitioning_back)
     {
-        DrawMainMenu(text_ndc_offset);
+        draw_main_menu(text_ndc_offset);
         float name_world_y = s_win_h;
         float name_ndc_y = 2.0f + text_ndc_offset;
-        Main_Menu_EnterName(name_world_y, name_ndc_y, false);
+        main_menu_enter_name(name_world_y, name_ndc_y, false);
     }
     else
     {
-        DrawMainMenu(0.0f);
-        Main_Menu_Input();
-        UiPauseMenu::Ui_DrawConfirmationPopup(s_mesh_btn, nullptr);
+        draw_main_menu(0.0f);
+        main_menu_input();
+        UiPauseMenu::ui_draw_confirmation_popup(s_mesh_btn, nullptr);
     }
 
     // ---------------------------------------------------------------------------
@@ -1025,14 +1025,14 @@ void Main_Menu_Update()
     }
 }
 
-void Main_Menu_Exit()
+void main_menu_exit()
 {
     AEGfxSetBackgroundColor(0.53f, 0.81f, 0.92f);
-    SysSettings::Exit();
+    SysSettings::cleanup();
     if (g_game_state_next != GS_SHOP && g_game_state_next != GS_CREDITS)
     {
-        BackgroundParallax::MenuParallax_Exit();
-        SoundManager::Exit();
+        BackgroundParallax::menu_parallax_exit();
+        SoundManager::cleanup();
     }
     ScreenTransitions::s_is_transitioning = false;
     AEGfxSetCamPosition(0.0f, 0.0f);
@@ -1066,7 +1066,7 @@ void Main_Menu_Exit()
     if (s_tex_splash_logo) { AEGfxTextureUnload(s_tex_splash_logo);   s_tex_splash_logo = nullptr; }
     s_splash_active = false;
 
-    ParallaxZoom::Reset();
+    ParallaxZoom::reset();
     s_is_zooming_to_game = false;
-    LeaderboardSystem::Free();
+    LeaderboardSystem::free();
 }

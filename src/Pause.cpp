@@ -16,34 +16,34 @@ namespace UiPauseMenu
     static ButtonTween s_tween_yes;
     static ButtonTween s_tween_no;
 
-    bool IsSettingsOpen()
+    bool is_settings_open()
     {
         return s_in_settings;
     }
 
-    void OpenPopup(PopupAction action)
+    void open_popup(PopupAction action)
     {
         s_in_confirm_exit = true;
         s_current_popup_action = action;
         s_ignore_next_click = true;
     }
 
-    void ClosePopup()
+    void close_popup()
     {
         s_in_confirm_exit = false;
         s_ignore_next_click = true;
     }
 
-    bool IsPopupOpen()
+    bool is_popup_open()
     {
         return s_in_confirm_exit;
     }
 
-    void Ui_DrawPauseMenu(bool& is_paused, AEGfxVertexList* bg_mesh)
+    void ui_draw_pause_menu(bool& is_paused, AEGfxVertexList* bg_mesh)
     {
         if (s_in_confirm_exit)
         {
-            Ui_DrawConfirmationPopup(bg_mesh, &is_paused);
+            ui_draw_confirmation_popup(bg_mesh, &is_paused);
             return;
         }
 
@@ -57,7 +57,7 @@ namespace UiPauseMenu
         AEGfxSetBlendMode(AE_GFX_BM_BLEND);
         AEGfxSetTransparency(0.75f);
         AEGfxSetColorToMultiply(0.05f, 0.03f, 0.08f, 1.0f);
-        Mesh_Renderer(bg_mesh, 0.0f, 0.0f, win_w, win_h, 0.0f);
+        mesh_renderer(bg_mesh, 0.0f, 0.0f, win_w, win_h, 0.0f);
 
         if (Graphics::g_font_id < 0) return;
 
@@ -66,10 +66,10 @@ namespace UiPauseMenu
         AEGfxSetBlendMode(AE_GFX_BM_BLEND);
         AEGfxSetTransparency(1.0f);
         AEGfxSetColorToMultiply(0.85f, 0.70f, 0.15f, 1.0f);
-        Mesh_Renderer(bg_mesh, 0.0f, -0.05f * screen_half_h, 440.0f, 780.0f, 0.0f);
+        mesh_renderer(bg_mesh, 0.0f, -0.05f * screen_half_h, 440.0f, 780.0f, 0.0f);
 
         AEGfxSetColorToMultiply(0.07f, 0.05f, 0.10f, 1.0f);
-        Mesh_Renderer(bg_mesh, 0.0f, -0.05f * screen_half_h, 428.0f, 768.0f, 0.0f);
+        mesh_renderer(bg_mesh, 0.0f, -0.05f * screen_half_h, 428.0f, 768.0f, 0.0f);
 
         // --- Button config ---
         constexpr float BTN_W = 340.0f;
@@ -90,19 +90,19 @@ namespace UiPauseMenu
         float dt_p = (float)AEFrameRateControllerGetFrameTime();
         bool click_p = AEInputCheckTriggered(AEVK_LBUTTON);
 
-        auto HoverBtn = [&](float cy)
+        auto hover_btn = [&](float cy)
             {
                 float wy = cy * screen_half_h;
                 return (wx_hover >= (BTN_X - BTN_W * 0.5f) && wx_hover <= (BTN_X + BTN_W * 0.5f) &&
                     wy_hover >= (wy - BTN_H * 0.5f) && wy_hover <= (wy + BTN_H * 0.5f));
             };
 
-        ButtonTween_Update(s_tween_resume, HoverBtn(RESUME_Y), HoverBtn(RESUME_Y) && click_p, dt_p);
-        ButtonTween_Update(s_tween_restart, HoverBtn(RESTART_Y), HoverBtn(RESTART_Y) && click_p, dt_p);
-        ButtonTween_Update(s_tween_settings, HoverBtn(SETTINGS_Y), HoverBtn(SETTINGS_Y) && click_p, dt_p);
-        ButtonTween_Update(s_tween_menu, HoverBtn(MENU_Y), HoverBtn(MENU_Y) && click_p, dt_p);
+        button_tween_update(s_tween_resume, hover_btn(RESUME_Y), hover_btn(RESUME_Y) && click_p, dt_p);
+        button_tween_update(s_tween_restart, hover_btn(RESTART_Y), hover_btn(RESTART_Y) && click_p, dt_p);
+        button_tween_update(s_tween_settings, hover_btn(SETTINGS_Y), hover_btn(SETTINGS_Y) && click_p, dt_p);
+        button_tween_update(s_tween_menu, hover_btn(MENU_Y), hover_btn(MENU_Y) && click_p, dt_p);
 
-        auto DrawButton = [&](float cx, float world_y, const char* label, ButtonTween& tween)
+        auto draw_button = [&](float cx, float world_y, const char* label, ButtonTween& tween)
             {
                 float sw = tween.scale;
                 float scaled_w = BTN_W * sw;
@@ -112,10 +112,10 @@ namespace UiPauseMenu
                 AEGfxSetBlendMode(AE_GFX_BM_BLEND);
                 AEGfxSetTransparency(1.0f);
                 AEGfxSetColorToMultiply(0.85f, 0.70f, 0.15f, 1.0f);
-                Mesh_Renderer(bg_mesh, cx, world_y, scaled_w + BORDER_SIZE * 2, scaled_h + BORDER_SIZE * 2, 0.0f);
+                mesh_renderer(bg_mesh, cx, world_y, scaled_w + BORDER_SIZE * 2, scaled_h + BORDER_SIZE * 2, 0.0f);
 
                 AEGfxSetColorToMultiply(0.10f, 0.08f, 0.14f, 1.0f);
-                Mesh_Renderer(bg_mesh, cx, world_y, scaled_w, scaled_h, 0.0f);
+                mesh_renderer(bg_mesh, cx, world_y, scaled_w, scaled_h, 0.0f);
 
                 float tw, th;
                 AEGfxGetPrintSize(Graphics::g_font_id, label, 0.65f, &tw, &th);
@@ -146,12 +146,12 @@ namespace UiPauseMenu
         AEGfxSetBlendMode(AE_GFX_BM_BLEND);
         AEGfxSetTransparency(1.0f);
         AEGfxSetColorToMultiply(0.85f, 0.70f, 0.15f, 1.0f);
-        Mesh_Renderer(bg_mesh, 0.0f, 0.45f * screen_half_h, 360.0f, 3.0f, 0.0f);
+        mesh_renderer(bg_mesh, 0.0f, 0.45f * screen_half_h, 360.0f, 3.0f, 0.0f);
 
-        DrawButton(BTN_X, RESUME_Y * screen_half_h, "RESUME", s_tween_resume);
-        DrawButton(BTN_X, RESTART_Y * screen_half_h, "RESTART", s_tween_restart);
-        DrawButton(BTN_X, SETTINGS_Y * screen_half_h, "SETTINGS", s_tween_settings);
-        DrawButton(BTN_X, MENU_Y * screen_half_h, "MAIN MENU", s_tween_menu);
+        draw_button(BTN_X, RESUME_Y * screen_half_h, "RESUME", s_tween_resume);
+        draw_button(BTN_X, RESTART_Y * screen_half_h, "RESTART", s_tween_restart);
+        draw_button(BTN_X, SETTINGS_Y * screen_half_h, "SETTINGS", s_tween_settings);
+        draw_button(BTN_X, MENU_Y * screen_half_h, "MAIN MENU", s_tween_menu);
 
         // ========================================================================
         // EXIT CONFIRMATION POPUP OVERLAY (inside pause menu)
@@ -162,14 +162,14 @@ namespace UiPauseMenu
             AEGfxSetBlendMode(AE_GFX_BM_BLEND);
             AEGfxSetTransparency(0.85f);
             AEGfxSetColorToMultiply(0.02f, 0.01f, 0.04f, 1.0f);
-            Mesh_Renderer(bg_mesh, 0.0f, 0.0f, win_w, win_h, 0.0f);
+            mesh_renderer(bg_mesh, 0.0f, 0.0f, win_w, win_h, 0.0f);
 
             AEGfxSetTransparency(1.0f);
             AEGfxSetColorToMultiply(0.85f, 0.70f, 0.15f, 1.0f);
-            Mesh_Renderer(bg_mesh, 0.0f, 0.0f, 610.0f, 310.0f, 0.0f);
+            mesh_renderer(bg_mesh, 0.0f, 0.0f, 610.0f, 310.0f, 0.0f);
 
             AEGfxSetColorToMultiply(0.07f, 0.05f, 0.10f, 1.0f);
-            Mesh_Renderer(bg_mesh, 0.0f, 0.0f, 600.0f, 300.0f, 0.0f);
+            mesh_renderer(bg_mesh, 0.0f, 0.0f, 600.0f, 300.0f, 0.0f);
 
             constexpr float CONF_BTN_W = 160.0f;
             constexpr float CONF_BTN_H = 65.0f;
@@ -177,13 +177,13 @@ namespace UiPauseMenu
             constexpr float NO_X = 130.0f;
             constexpr float CONF_BTN_Y = -60.0f;
 
-            auto DrawConfButton = [&](float cx, float cy, ButtonTween& tween)
+            auto draw_conf_button = [&](float cx, float cy, ButtonTween& tween)
                 {
                     float sw = tween.scale;
                     AEGfxSetColorToMultiply(0.85f, 0.70f, 0.15f, 1.0f);
-                    Mesh_Renderer(bg_mesh, cx, cy, (CONF_BTN_W + BORDER_SIZE * 2) * sw, (CONF_BTN_H + BORDER_SIZE * 2) * sw, 0.0f);
+                    mesh_renderer(bg_mesh, cx, cy, (CONF_BTN_W + BORDER_SIZE * 2) * sw, (CONF_BTN_H + BORDER_SIZE * 2) * sw, 0.0f);
                     AEGfxSetColorToMultiply(0.10f, 0.08f, 0.14f, 1.0f);
-                    Mesh_Renderer(bg_mesh, cx, cy, CONF_BTN_W * sw, CONF_BTN_H * sw, 0.0f);
+                    mesh_renderer(bg_mesh, cx, cy, CONF_BTN_W * sw, CONF_BTN_H * sw, 0.0f);
                 };
 
             {
@@ -197,12 +197,12 @@ namespace UiPauseMenu
                     wy_c >= (CONF_BTN_Y - CONF_BTN_H * 0.5f) && wy_c <= (CONF_BTN_Y + CONF_BTN_H * 0.5f));
                 bool h_no = (wx_c >= (NO_X - CONF_BTN_W * 0.5f) && wx_c <= (NO_X + CONF_BTN_W * 0.5f) &&
                     wy_c >= (CONF_BTN_Y - CONF_BTN_H * 0.5f) && wy_c <= (CONF_BTN_Y + CONF_BTN_H * 0.5f));
-                ButtonTween_Update(s_tween_yes, h_yes, h_yes && click_conf, dt_conf);
-                ButtonTween_Update(s_tween_no, h_no, h_no && click_conf, dt_conf);
+                button_tween_update(s_tween_yes, h_yes, h_yes && click_conf, dt_conf);
+                button_tween_update(s_tween_no, h_no, h_no && click_conf, dt_conf);
             }
 
-            DrawConfButton(YES_X, CONF_BTN_Y, s_tween_yes);
-            DrawConfButton(NO_X, CONF_BTN_Y, s_tween_no);
+            draw_conf_button(YES_X, CONF_BTN_Y, s_tween_yes);
+            draw_conf_button(NO_X, CONF_BTN_Y, s_tween_no);
 
             const char* prompt_text = "EXIT TO MAIN MENU?";
             if (s_current_popup_action == POPUP_RESTART)
@@ -233,7 +233,7 @@ namespace UiPauseMenu
             }
             else if (AEInputCheckTriggered(AEVK_ESCAPE))
             {
-                SoundManager::PlayClickBtnSfx();
+                SoundManager::play_click_btn_sfx();
                 s_in_confirm_exit = false;
                 s_ignore_next_click = true;
             }
@@ -250,7 +250,7 @@ namespace UiPauseMenu
                 if (wx >= (YES_X - half_conf_w) && wx <= (YES_X + half_conf_w) &&
                     wy >= (CONF_BTN_Y - half_conf_h) && wy <= (CONF_BTN_Y + half_conf_h))
                 {
-                    SoundManager::PlayClickBtnSfx();
+                    SoundManager::play_click_btn_sfx();
                     is_paused = false;
                     if (s_current_popup_action == POPUP_RESTART)
                     {
@@ -259,7 +259,7 @@ namespace UiPauseMenu
                     else
                     {
                         std::string temp_name = "";
-                        ResetPlayerName(temp_name);
+                        reset_player_name(temp_name);
                         g_game_state_next = GS_MAIN_MENU;
                     }
                     s_in_confirm_exit = false;
@@ -267,7 +267,7 @@ namespace UiPauseMenu
                 else if (wx >= (NO_X - half_conf_w) && wx <= (NO_X + half_conf_w) &&
                     wy >= (CONF_BTN_Y - half_conf_h) && wy <= (CONF_BTN_Y + half_conf_h))
                 {
-                    SoundManager::PlayClickBtnSfx();
+                    SoundManager::play_click_btn_sfx();
                     s_in_confirm_exit = false;
                     s_ignore_next_click = true;
                 }
@@ -295,34 +295,34 @@ namespace UiPauseMenu
             if (wx >= (BTN_X - half_w) && wx <= (BTN_X + half_w) &&
                 wy >= ((RESUME_Y * screen_half_h) - half_h) && wy <= ((RESUME_Y * screen_half_h) + half_h))
             {
-                SoundManager::PlayClickBtnSfx();
+                SoundManager::play_click_btn_sfx();
                 is_paused = false;
             }
 
             if (wx >= (BTN_X - half_w) && wx <= (BTN_X + half_w) &&
                 wy >= ((RESTART_Y * screen_half_h) - half_h) && wy <= ((RESTART_Y * screen_half_h) + half_h))
             {
-                SoundManager::PlayClickBtnSfx();
-                OpenPopup(POPUP_RESTART);
+                SoundManager::play_click_btn_sfx();
+                open_popup(POPUP_RESTART);
             }
 
             if (wx >= (BTN_X - half_w) && wx <= (BTN_X + half_w) &&
                 wy >= ((SETTINGS_Y * screen_half_h) - half_h) && wy <= ((SETTINGS_Y * screen_half_h) + half_h))
             {
-                SoundManager::PlayClickBtnSfx();
+                SoundManager::play_click_btn_sfx();
                 s_in_settings = true;
             }
 
             if (wx >= (BTN_X - half_w) && wx <= (BTN_X + half_w) &&
                 wy >= ((MENU_Y * screen_half_h) - half_h) && wy <= ((MENU_Y * screen_half_h) + half_h))
             {
-                SoundManager::PlayClickBtnSfx();
-                OpenPopup(POPUP_MAIN_MENU);
+                SoundManager::play_click_btn_sfx();
+                open_popup(POPUP_MAIN_MENU);
             }
         }
     }
 
-    void Ui_DrawConfirmationPopup(AEGfxVertexList* bg_mesh, bool* p_is_paused)
+    void ui_draw_confirmation_popup(AEGfxVertexList* bg_mesh, bool* p_is_paused)
     {
         if (!s_in_confirm_exit) return;
 
@@ -336,13 +336,13 @@ namespace UiPauseMenu
         AEGfxSetBlendMode(AE_GFX_BM_BLEND);
         AEGfxSetTransparency(0.85f);
         AEGfxSetColorToMultiply(0.02f, 0.01f, 0.04f, 1.0f);
-        Mesh_Renderer(bg_mesh, 0.0f, 0.0f, win_w, win_h, 0.0f);
+        mesh_renderer(bg_mesh, 0.0f, 0.0f, win_w, win_h, 0.0f);
 
         AEGfxSetTransparency(1.0f);
         AEGfxSetColorToMultiply(0.85f, 0.70f, 0.15f, 1.0f);
-        Mesh_Renderer(bg_mesh, 0.0f, 0.0f, 610.0f, 310.0f, 0.0f);
+        mesh_renderer(bg_mesh, 0.0f, 0.0f, 610.0f, 310.0f, 0.0f);
         AEGfxSetColorToMultiply(0.07f, 0.05f, 0.10f, 1.0f);
-        Mesh_Renderer(bg_mesh, 0.0f, 0.0f, 600.0f, 300.0f, 0.0f);
+        mesh_renderer(bg_mesh, 0.0f, 0.0f, 600.0f, 300.0f, 0.0f);
 
         constexpr float CONF_BTN_W = 160.0f;
         constexpr float CONF_BTN_H = 65.0f;
@@ -363,20 +363,20 @@ namespace UiPauseMenu
         bool h_no = (wx_c >= (NO_X - CONF_BTN_W * 0.5f) && wx_c <= (NO_X + CONF_BTN_W * 0.5f) &&
             wy_c >= (CONF_BTN_Y - CONF_BTN_H * 0.5f) && wy_c <= (CONF_BTN_Y + CONF_BTN_H * 0.5f));
 
-        ButtonTween_Update(s_tween_yes, h_yes, h_yes && click_conf, dt_conf);
-        ButtonTween_Update(s_tween_no, h_no, h_no && click_conf, dt_conf);
+        button_tween_update(s_tween_yes, h_yes, h_yes && click_conf, dt_conf);
+        button_tween_update(s_tween_no, h_no, h_no && click_conf, dt_conf);
 
-        auto DrawConfButton = [&](float cx, float cy, ButtonTween& tween)
+        auto draw_conf_button = [&](float cx, float cy, ButtonTween& tween)
             {
                 float sw = tween.scale;
                 AEGfxSetColorToMultiply(0.85f, 0.70f, 0.15f, 1.0f);
-                Mesh_Renderer(bg_mesh, cx, cy, (CONF_BTN_W + BORDER_SIZE * 2) * sw, (CONF_BTN_H + BORDER_SIZE * 2) * sw, 0.0f);
+                mesh_renderer(bg_mesh, cx, cy, (CONF_BTN_W + BORDER_SIZE * 2) * sw, (CONF_BTN_H + BORDER_SIZE * 2) * sw, 0.0f);
                 AEGfxSetColorToMultiply(0.10f, 0.08f, 0.14f, 1.0f);
-                Mesh_Renderer(bg_mesh, cx, cy, CONF_BTN_W * sw, CONF_BTN_H * sw, 0.0f);
+                mesh_renderer(bg_mesh, cx, cy, CONF_BTN_W * sw, CONF_BTN_H * sw, 0.0f);
             };
 
-        DrawConfButton(YES_X, CONF_BTN_Y, s_tween_yes);
-        DrawConfButton(NO_X, CONF_BTN_Y, s_tween_no);
+        draw_conf_button(YES_X, CONF_BTN_Y, s_tween_yes);
+        draw_conf_button(NO_X, CONF_BTN_Y, s_tween_no);
 
         const char* prompt_text = "";
         const char* warning_text = "YOU WILL LOSE PROGRESS";
@@ -411,7 +411,7 @@ namespace UiPauseMenu
         }
         else if (AEInputCheckTriggered(AEVK_ESCAPE))
         {
-            SoundManager::PlayClickBtnSfx();
+            SoundManager::play_click_btn_sfx();
             s_in_confirm_exit = false;
             s_ignore_next_click = true;
         }
@@ -419,7 +419,7 @@ namespace UiPauseMenu
         {
             if (h_yes)
             {
-                SoundManager::PlayClickBtnSfx();
+                SoundManager::play_click_btn_sfx();
                 if (p_is_paused) *p_is_paused = false;
 
                 if (s_current_popup_action == POPUP_QUIT)    g_game_state_next = GS_QUIT;
@@ -427,27 +427,27 @@ namespace UiPauseMenu
                 else
                 {
                     std::string temp_name = "";
-                    ResetPlayerName(temp_name);
+                    reset_player_name(temp_name);
                     g_game_state_next = GS_MAIN_MENU;
                 }
                 s_in_confirm_exit = false;
             }
             else if (h_no)
             {
-                SoundManager::PlayClickBtnSfx();
+                SoundManager::play_click_btn_sfx();
                 s_in_confirm_exit = false;
                 s_ignore_next_click = true;
             }
         }
     }
 
-    void Check_Paused(bool& is_paused, bool& is_dead, AEGfxVertexList* bg_mesh)
+    void check_paused(bool& is_paused, bool& is_dead, AEGfxVertexList* bg_mesh)
     {
         if (is_paused && !is_dead)
         {
             if (s_in_settings)
             {
-                if (SysSettings::DisplaySettings() == false)
+                if (SysSettings::display_settings() == false)
                 {
                     s_in_settings = false;
                     s_ignore_next_click = true;
@@ -455,7 +455,7 @@ namespace UiPauseMenu
                 else return;
             }
 
-            Ui_DrawPauseMenu(is_paused, bg_mesh);
+            ui_draw_pause_menu(is_paused, bg_mesh);
         }
     }
 }

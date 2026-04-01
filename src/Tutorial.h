@@ -1,10 +1,10 @@
 #pragma once
 
 // initialises all tutorial subsystems from a clean slate 
-void Tutorial_Init();
+void tutorial_init();
 
 // runs the tutorial game loop each frame
-void Tutorial_Update();
+void tutorial_update();
 
 // shuts down every subsystem initialised by Tutorial_Init
-void Tutorial_Exit();
+void tutorial_exit();

@@ -1,4 +1,4 @@
-﻿#include "pch.h"
+#include "pch.h"
 #include "Particles.h"
 
 //  Internal constants
@@ -140,7 +140,7 @@ namespace
 
     // scans the sprite effect pool for the first free slot, returns its index or -1 if the pool is full,
     // caller should always check for -1 before using the returned index
-    int AllocSpriteEffect()
+    int alloc_sprite_effect()
     {
         for (int i = 0; i < MAX_SPRITE_EFFECTS; ++i)
             if (!s_sprite_effects[i].active) return i;
@@ -154,20 +154,20 @@ namespace
     // ===========================================================
 
     // returns a random float between 0.0 and 1.0, used as a base for all randomised particle values
-    float Rand01()
+    float rand01()
     {
         return (float)std::rand() / (float)RAND_MAX;
     }
 
     // returns a random float between a and b, used to scatter particle position, speed, size, and lifespan
-    float RandRange(float a, float b)
+    float rand_range(float a, float b)
     {
-        return a + (b - a) * Rand01();
+        return a + (b - a) * rand01();
     }
 
     // scans the particle pool for the first free slot, returns its index or -1 if the pool is full,
     // using a pool avoids dynamic allocation - particles are reused in-place when they die
-    int AllocParticle()
+    int alloc_particle()
     {
         for (int i = 0; i < MAX_PARTICLES; ++i)
             if (!s_particles[i].active) return i; // return first free slot
@@ -175,7 +175,7 @@ namespace
     }
 
     // scans the impact line pool for the first free slot, returns its index or -1 if the pool is full
-    int AllocLine()
+    int alloc_line()
     {
         for (int i = 0; i < MAX_IMPACT_LINES; ++i)
             if (!s_lines[i].active) return i; // return first free slot
@@ -185,7 +185,7 @@ namespace
     // maps an enemy word length (3-8) to an RGB burst colour for the kill impact effect,
     // colours match the enemy sprite colour coding so the burst feels tied to the enemy type,
     // outputs via the r, g, b reference params - defaults to white for any out-of-range value
-    void WordLengthToColor(int word_length, float& r, float& g, float& b)
+    void word_length_to_color(int word_length, float& r, float& g, float& b)
     {
         switch (word_length)
         {
@@ -201,7 +201,7 @@ namespace
 
     // draws a solid colour square at the given world position using the shared unit mesh,
     // params are world x/y centre, size in pixels, rgb colour, and alpha for fade-out
-    void DrawQuad(float x, float y, float size, float r, float g, float b, float alpha)
+    void draw_quad(float x, float y, float size, float r, float g, float b, float alpha)
     {
         if (!s_quad_mesh) return; // safety check
 
@@ -223,7 +223,7 @@ namespace
 
     // draws a 3px thick line between two world positions by scaling and rotating the shared unit mesh,
     // params are the start and end world positions, rgb colour, and alpha for fade-out
-    void DrawLine(float x1, float y1, float x2, float y2,
+    void draw_line(float x1, float y1, float x2, float y2,
         float r, float g, float b, float alpha)
     {
         if (!s_quad_mesh) return; // safety check
@@ -263,7 +263,7 @@ namespace
 
 // builds the shared unit quad mesh used by all particle and line draws, clears all pool slots,
 // loads the shield break and friendly heal sprite sheet textures, safe to call on restart
-void Particles_Init()
+void particles_init()
 {
     if (s_quad_mesh)
     {
@@ -299,8 +299,8 @@ void Particles_Init()
     s_tex_friendly_heal = AEGfxTextureLoad("Assets/friendlyeffect.png");
 }
 
-// frees the shared quad mesh and both sprite sheet textures, call this in Game_Exit() to avoid memory leaks
-void Particles_Free()
+// frees the shared quad mesh and both sprite sheet textures, call this in game_exit() to avoid memory leaks
+void particles_free()
 {
     // free shared quad mesh if it exists
     if (s_quad_mesh)
@@ -324,7 +324,7 @@ void Particles_Free()
 // advances all active particles, impact lines, sprite effects, screen shake and flash each frame,
 // param is dt in seconds (should already be time-scaled from the caller if TimeSlow is active),
 // also applies the camera shake offset via AEGfxSetCamPosition and resets it when shake ends
-void Particles_Update(float dt)
+void particles_update(float dt)
 {
     // --- Particles ---
     for (int i = 0; i < MAX_PARTICLES; ++i)
@@ -383,8 +383,8 @@ void Particles_Update(float dt)
         s_shake.timer -= dt;
         float t = s_shake.timer / s_shake.duration;          // 1(js start) to 0(end) as shake fades
         float intensity = s_shake.intensity * t;             // shake weakens over time
-        s_shake.offset_x = RandRange(-intensity, intensity); // random x offset this frame
-        s_shake.offset_y = RandRange(-intensity * 0.5f, intensity * 0.5f); // smaller y offset
+        s_shake.offset_x = rand_range(-intensity, intensity); // random x offset this frame
+        s_shake.offset_y = rand_range(-intensity * 0.5f, intensity * 0.5f); // smaller y offset
 
         if (s_shake.timer <= 0.0f)
         {
@@ -414,7 +414,7 @@ void Particles_Update(float dt)
 // renders all active impact lines, particles, sprite sheet effects, and the screen flash overlay,
 // drawn in that order so lines are behind particles, particles are behind sprites, flash is on top,
 // call this after drawing enemies and before drawing UI so effects sit between them
-void Particles_Draw()
+void particles_draw()
 {
     if (!s_quad_mesh) return; // safety check, mesh must be initialised
 
@@ -423,7 +423,7 @@ void Particles_Draw()
     {
         ImpactLine& l = s_lines[i];
         if (!l.active) continue;
-        DrawLine(l.x1, l.y1, l.x2, l.y2, l.r, l.g, l.b, l.life); // life used as alpha
+        draw_line(l.x1, l.y1, l.x2, l.y2, l.r, l.g, l.b, l.life); // life used as alpha
     }
 
     // --- Particles ---
@@ -431,7 +431,7 @@ void Particles_Draw()
     {
         Particle& p = s_particles[i];
         if (!p.active) continue;
-        DrawQuad(p.x, p.y, p.size, p.r, p.g, p.b, p.life); // life used as alpha
+        draw_quad(p.x, p.y, p.size, p.r, p.g, p.b, p.life); // life used as alpha
     }
 
     // --- Sprite effects (on-kill sheet animations) ---
@@ -496,7 +496,7 @@ void Particles_Draw()
 // spawns the full damage combo effect at the given world position - grey/white dust particles,
 // radiating yellow impact lines, a brief white screen flash, and a camera shake,
 // call this when an enemy lands and deals damage to the player
-void Particles_SpawnDamageImpact(float x, float y)
+void particles_spawn_damage_impact(float x, float y)
 {
     // --- Dust particles ---
     // three shades of grey/white, cycled across all dust particles
@@ -508,18 +508,18 @@ void Particles_SpawnDamageImpact(float x, float y)
 
     for (int i = 0; i < DAMAGE_DUST_COUNT; ++i)
     {
-        int slot = AllocParticle();  // find a free slot in the pool
+        int slot = alloc_particle();  // find a free slot in the pool
         if (slot < 0) break;         // pool full, stop spawning
 
         Particle& p = s_particles[slot];
         p.active = true;
-        p.x = x + RandRange(-12.0f, 12.0f);            // scatter spawn pos around impact point
-        p.y = y + RandRange(-4.0f, 4.0f);
-        p.vx = RandRange(-DAMAGE_DUST_SPEED, DAMAGE_DUST_SPEED); // random horizontal direction
-        p.vy = RandRange(0.0f, DAMAGE_DUST_UPSPEED);             // always upward, random strength
-        p.size = RandRange(DAMAGE_PARTICLE_SIZE_MIN, DAMAGE_PARTICLE_SIZE_MAX); // random size
+        p.x = x + rand_range(-12.0f, 12.0f);            // scatter spawn pos around impact point
+        p.y = y + rand_range(-4.0f, 4.0f);
+        p.vx = rand_range(-DAMAGE_DUST_SPEED, DAMAGE_DUST_SPEED); // random horizontal direction
+        p.vy = rand_range(0.0f, DAMAGE_DUST_UPSPEED);             // always upward, random strength
+        p.size = rand_range(DAMAGE_PARTICLE_SIZE_MIN, DAMAGE_PARTICLE_SIZE_MAX); // random size
         p.life = 1.0f;                                           // start fully alive
-        p.decay = 1.0f / (DAMAGE_PARTICLE_LIFE * RandRange(0.7f, 1.3f)); // randomise lifespan slightly
+        p.decay = 1.0f / (DAMAGE_PARTICLE_LIFE * rand_range(0.7f, 1.3f)); // randomise lifespan slightly
 
         int ci = i % 3;              // cycle through the 3 dust colors
         p.r = dust_colors[ci][0];
@@ -530,16 +530,16 @@ void Particles_SpawnDamageImpact(float x, float y)
     // --- Impact lines (yellow, radiate outward horizontally) ---
     for (int i = 0; i < DAMAGE_LINE_COUNT; ++i)
     {
-        int slot = AllocLine(); // find a free slot in the pool
+        int slot = alloc_line(); // find a free slot in the pool
         if (slot < 0) break;    // pool full, stop spawning
 
         ImpactLine& l = s_lines[slot];
         l.active = true;
 
-        float angle = RandRange(-0.4f, 0.4f);  // near horizontal angle with slight random variation
+        float angle = rand_range(-0.4f, 0.4f);  // near horizontal angle with slight random variation
         if (i % 2 == 0) angle += 3.14159f;     // alternate sides: even = right, odd = left
 
-        float length = RandRange(DAMAGE_LINE_LENGTH_MIN, DAMAGE_LINE_LENGTH_MAX); // random line length
+        float length = rand_range(DAMAGE_LINE_LENGTH_MIN, DAMAGE_LINE_LENGTH_MAX); // random line length
         float near_dist = 10.0f;               // gap between impact center and line start
 
         // calculate start and end points along the angle
@@ -568,11 +568,11 @@ void Particles_SpawnDamageImpact(float x, float y)
 // spawns a coloured burst of particles at the given world position when the player kills an enemy,
 // colour is chosen by word_length (3=blue, 4=green, 5=yellow, 6=orange, 7=red, 8=purple),
 // no shake or flash since this is a positive reward event, not a punishment
-void Particles_SpawnKillImpact(float x, float y, int word_length)
+void particles_spawn_kill_impact(float x, float y, int word_length)
 {
     // get primary burst color based on word length (3=blue, 4=green ... 8=purple)
     float cr, cg, cb;
-    WordLengthToColor(word_length, cr, cg, cb);
+    word_length_to_color(word_length, cr, cg, cb);
 
     // slightly lighter secondary color for variety, alternated with primary
     float cr2 = cr * 0.6f + 0.4f;
@@ -581,23 +581,23 @@ void Particles_SpawnKillImpact(float x, float y, int word_length)
 
     for (int i = 0; i < KILL_BURST_COUNT; ++i)
     {
-        int slot = AllocParticle(); // find a free slot in the pool
+        int slot = alloc_particle(); // find a free slot in the pool
         if (slot < 0) break;        // pool full, stop spawning
 
         Particle& p = s_particles[slot];
         p.active = true;
-        p.x = x + RandRange(-10.0f, 10.0f); // scatter spawn pos around impact point
-        p.y = y + RandRange(-4.0f, 4.0f);
+        p.x = x + rand_range(-10.0f, 10.0f); // scatter spawn pos around impact point
+        p.y = y + rand_range(-4.0f, 4.0f);
 
         // full 360 degree burst with upward bias
-        float angle = RandRange(-3.14159f, 3.14159f);           // random direction in full circle
-        float speed = RandRange(KILL_BURST_SPEED * 0.4f, KILL_BURST_SPEED); // random speed
+        float angle = rand_range(-3.14159f, 3.14159f);           // random direction in full circle
+        float speed = rand_range(KILL_BURST_SPEED * 0.4f, KILL_BURST_SPEED); // random speed
         p.vx = cosf(angle) * speed;                              // horizontal component
-        p.vy = fabsf(sinf(angle)) * KILL_BURST_UPSPEED + RandRange(30.0f, 80.0f); // always upward
+        p.vy = fabsf(sinf(angle)) * KILL_BURST_UPSPEED + rand_range(30.0f, 80.0f); // always upward
 
-        p.size = RandRange(KILL_PARTICLE_SIZE_MIN, KILL_PARTICLE_SIZE_MAX); // random size
+        p.size = rand_range(KILL_PARTICLE_SIZE_MIN, KILL_PARTICLE_SIZE_MAX); // random size
         p.life = 1.0f;                                           // start fully alive
-        p.decay = 1.0f / (KILL_PARTICLE_LIFE * RandRange(0.7f, 1.3f)); // randomise lifespan slightly
+        p.decay = 1.0f / (KILL_PARTICLE_LIFE * rand_range(0.7f, 1.3f)); // randomise lifespan slightly
 
         // alternate between primary and lighter secondary color for visual variety
         if (i % 2 == 0) { p.r = cr;  p.g = cg;  p.b = cb; }
@@ -609,7 +609,7 @@ void Particles_SpawnKillImpact(float x, float y, int word_length)
 // starts a screen shake with the given duration in seconds and max pixel intensity,
 // overwrites any currently running shake - safe to call at any time,
 // used directly by lightning powerup and other systems that need custom shake strength
-void Particles_TriggerShake(float duration, float intensity)
+void particles_trigger_shake(float duration, float intensity)
 {
     // overwrite any ongoing shake with new values
     s_shake.timer = duration;
@@ -620,9 +620,9 @@ void Particles_TriggerShake(float duration, float intensity)
 // plays the shield break sprite sheet animation centred on the enemy position,
 // call this when a shielded enemy's shield is broken by the player typing the first word,
 // silently skips if the sprite effect pool is full
-void Particles_SpawnShieldBreak(float x, float y)
+void particles_spawn_shield_break(float x, float y)
 {
-    int slot = AllocSpriteEffect();
+    int slot = alloc_sprite_effect();
     if (slot < 0) return;                              // pool full, skip silently
 
     SpriteEffect& se = s_sprite_effects[slot];
@@ -640,9 +640,9 @@ void Particles_SpawnShieldBreak(float x, float y)
 // plays the friendly heal sprite sheet animation centred on the enemy position,
 // call this when a friendly enemy is typed and flies away, giving the player health,
 // silently skips if the sprite effect pool is full
-void Particles_SpawnFriendlyHeal(float x, float y)
+void particles_spawn_friendly_heal(float x, float y)
 {
-    int slot = AllocSpriteEffect();
+    int slot = alloc_sprite_effect();
     if (slot < 0) return;                              // pool full, skip silently
 
     SpriteEffect& se = s_sprite_effects[slot];

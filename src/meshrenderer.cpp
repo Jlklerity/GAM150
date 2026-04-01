@@ -1,7 +1,7 @@
 #include "pch.h"
 #include "Meshrenderer.h"
 
-void Mesh_Renderer(AEGfxVertexList* pMesh, float x, float y, float scaleX, 
+void mesh_renderer(AEGfxVertexList* pMesh, float x, float y, float scaleX, 
 					float scaleY, float rotation) {
 	
     AEMtx33 scale, rot, trans, transform;

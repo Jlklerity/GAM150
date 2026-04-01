@@ -92,7 +92,7 @@ namespace
     // ----------------------------------------------------------------
     // Spawn an explosion at a world position
     // ----------------------------------------------------------------
-    static void SpawnExplosion(float x, float y)
+    static void spawn_explosion(float x, float y)
     {
         for (int i = 0; i < MAX_EXPLOSIONS; ++i)
         {
@@ -108,7 +108,7 @@ namespace
     // Draw a textured quad centered at (cx,cy) with given size & angle.
     // uv_x/uv_y are the UV offsets into the sprite sheet.
     // ----------------------------------------------------------------
-    static void DrawSprite(AEGfxVertexList* mesh, AEGfxTexture* tex,
+    static void draw_sprite(AEGfxVertexList* mesh, AEGfxTexture* tex,
         float cx, float cy,
         float w, float h, float angle,
         float uv_x, float uv_y,
@@ -139,7 +139,7 @@ namespace
 // ================================================================
 // Lifecycle
 // ================================================================
-void LaserBeam_Init()
+void laser_beam_init()
 {
     // Reset pools
     for (int i = 0; i < MAX_BEAMS; ++i)       s_beams[i].active = false;
@@ -163,7 +163,7 @@ void LaserBeam_Init()
     s_explosion_tex = AEGfxTextureLoad("Assets/explosion.png");
 }
 
-void LaserBeam_Free()
+void laser_beam_free()
 {
     if (s_laser_mesh) { AEGfxMeshFree(s_laser_mesh);          s_laser_mesh = nullptr; }
     if (s_explosion_mesh) { AEGfxMeshFree(s_explosion_mesh);      s_explosion_mesh = nullptr; }
@@ -177,7 +177,7 @@ void LaserBeam_Free()
 // ================================================================
 // Configuration
 // ================================================================
-void LaserBeam_SetOrigin(float x, float y)
+void laser_beam_set_origin(float x, float y)
 {
     s_origin_x = x;
     s_origin_y = y;
@@ -186,7 +186,7 @@ void LaserBeam_SetOrigin(float x, float y)
 // ================================================================
 // Event: fire a beam toward (to_x, to_y)
 // ================================================================
-void LaserBeam_Fire(float to_x, float to_y)
+void laser_beam_fire(float to_x, float to_y)
 {
     for (int i = 0; i < MAX_BEAMS; ++i)
     {
@@ -208,7 +208,7 @@ void LaserBeam_Fire(float to_x, float to_y)
 // ================================================================
 // Per-frame update
 // ================================================================
-void LaserBeam_Update(float dt)
+void laser_beam_update(float dt)
 {
     // -- Beams --
     for (int i = 0; i < MAX_BEAMS; ++i)
@@ -229,7 +229,7 @@ void LaserBeam_Update(float dt)
         // When beam finishes travelling, spawn explosion then enter fade
         if (b.timer >= TRAVEL_TIME && b.timer - dt < TRAVEL_TIME)
         {
-            SpawnExplosion(b.to_x, b.to_y);
+            spawn_explosion(b.to_x, b.to_y);
         }
 
         // Deactivate after travel + fade
@@ -262,7 +262,7 @@ void LaserBeam_Update(float dt)
 // ================================================================
 // Per-frame draw
 // ================================================================
-void LaserBeam_Draw()
+void laser_beam_draw()
 {
     // -- Draw beams --
     for (int i = 0; i < MAX_BEAMS; ++i)
@@ -305,7 +305,7 @@ void LaserBeam_Draw()
         // UV offset for current animation frame
         float uv_x = b.frame * LASER_UV_W;
 
-        DrawSprite(s_laser_mesh, s_laser_tex,
+        draw_sprite(s_laser_mesh, s_laser_tex,
             cx, cy,
             draw_len, LASER_HEIGHT,
             angle,
@@ -325,7 +325,7 @@ void LaserBeam_Draw()
 
         float uv_x = e.frame * EXPLOSION_UV_W;
 
-        DrawSprite(s_explosion_mesh, s_explosion_tex,
+        draw_sprite(s_explosion_mesh, s_explosion_tex,
             e.x, e.y,
             size, size,
             0.0f,

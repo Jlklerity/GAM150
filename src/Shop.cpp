@@ -71,7 +71,7 @@ namespace
 }
 
 
-void DisplayScore()
+void display_score()
 {
     if (Graphics::g_font_id < 0) return;
 
@@ -89,11 +89,11 @@ void DisplayScore()
     AEGfxPrint(Graphics::g_font_id, score_buf, s_text_x + s_shop_ui_offset_x, s_text_y, 1.0f, 1, 1, 1, 1);
 }
 
-void Shop_Init()
+void shop_init()
 {
     s_is_transitioning_in = true;
     s_shop_ui_offset_x = (float)AEGfxGetWindowWidth();
-    ScreenTransitions::ScreenTransition_Init();
+    ScreenTransitions::screen_transition_init();
 
     s_win_w = (float)AEGfxGetWindowWidth();
     s_win_h = (float)AEGfxGetWindowHeight();
@@ -152,24 +152,24 @@ void Shop_Init()
     s_mesh_skin_item = Sprite_Mesh(1.0f, 1.0f);
     s_mesh_back = Spritesheet_Mesh(1.0f, 1.0f, 0.0f, 0.0f, 0.5f, 0.5f);
 
-    s_score_amount = LeaderboardSystem::GetHighestScore();
+    s_score_amount = LeaderboardSystem::get_highest_score();
 
-    ButtonTween_Reset(s_tween_back);
+    button_tween_reset(s_tween_back);
     for (int i = 0; i < 3; i++)
     {
-        ButtonTween_Reset(s_tween_bg_item[i]);
-        ButtonTween_Reset(s_tween_skin_item[i]);
+        button_tween_reset(s_tween_bg_item[i]);
+        button_tween_reset(s_tween_skin_item[i]);
     }
 }
 
-void Shop_Update()
+void shop_update()
 {
     AEGfxSetCamPosition(0.0f, 0.0f);
     AEGfxSetBackgroundColor(0.53f, 0.81f, 0.92f);
 
     float dt = (float)AEFrameRateControllerGetFrameTime();
     if (dt > 0.1f) dt = 0.01667f;
-    BackgroundParallax::MenuParallax_Update(dt);
+    BackgroundParallax::menu_parallax_update(dt);
 
     s32 mouse_x, mouse_y;
     AEInputGetCursorPosition(&mouse_x, &mouse_y);
@@ -191,7 +191,7 @@ void Shop_Update()
             s_world_x <= s_back_btn_x + (s_back_btn_width * 0.5f) &&
             s_world_y >= s_back_btn_y - (s_back_btn_height * 0.5f) &&
             s_world_y <= s_back_btn_y + (s_back_btn_height * 0.5f));
-        ButtonTween_Update(s_tween_back, h_back, h_back && click, dt_tween);
+        button_tween_update(s_tween_back, h_back, h_back && click, dt_tween);
 
         for (int i = 0; i < 3; i++)
         {
@@ -199,7 +199,7 @@ void Shop_Update()
                 s_world_x <= s_bg_item_x[i] + (s_bg_item_width * 0.5f) &&
                 s_world_y >= s_bg_item_y - (s_bg_item_height * 0.5f) &&
                 s_world_y <= s_bg_item_y + (s_bg_item_height * 0.5f));
-            ButtonTween_Update(s_tween_bg_item[i], h_bg, h_bg && click, dt_tween);
+            button_tween_update(s_tween_bg_item[i], h_bg, h_bg && click, dt_tween);
 
             float hit_box_w = s_skin_item_width * 0.65f;
             float hit_box_h = s_skin_item_height * 0.65f;
@@ -209,31 +209,31 @@ void Shop_Update()
                 s_world_x <= hit_box_x + (hit_box_w * 0.5f) &&
                 s_world_y >= hit_box_y - (hit_box_h * 0.5f) &&
                 s_world_y <= hit_box_y + (hit_box_h * 0.5f));
-            ButtonTween_Update(s_tween_skin_item[i], h_skin, h_skin && click, dt_tween);
+            button_tween_update(s_tween_skin_item[i], h_skin, h_skin && click, dt_tween);
         }
     }
 
     if (s_is_transitioning_in)
     {
-        ScreenTransitions::ScreenTransition_Update(dt);
-        float smooth_pan = ScreenTransitions::EaseOutExpo(ScreenTransitions::result);
+        ScreenTransitions::screen_transition_update(dt);
+        float smooth_pan = ScreenTransitions::ease_out_expo(ScreenTransitions::result);
 
         s_shop_ui_offset_x = s_win_w * (1.0f - smooth_pan);
-        BackgroundParallax::MenuParallax_SetPanOffset(-0.2f - (0.2f * smooth_pan));
+        BackgroundParallax::menu_parallax_set_pan_offset(-0.2f - (0.2f * smooth_pan));
 
         if (ScreenTransitions::result >= 0.3f)
         {
             s_shop_ui_offset_x = 0.0f;
             s_is_transitioning_in = false;
-            BackgroundParallax::MenuParallax_SetPanOffset(-0.4f);
+            BackgroundParallax::menu_parallax_set_pan_offset(-0.4f);
         }
     }
-    BackgroundParallax::MenuParallax_Draw(0.0f);
+    BackgroundParallax::menu_parallax_draw(0.0f);
 
     if (!s_is_transitioning_in && AEInputCheckTriggered(AEVK_ESCAPE))
     {
         s_is_transitioning_out = true;
-        ScreenTransitions::ScreenTransition_Init();
+        ScreenTransitions::screen_transition_init();
     }
 
     if (!s_is_transitioning_in && AEInputCheckTriggered(AEVK_LBUTTON))
@@ -244,9 +244,9 @@ void Shop_Update()
             s_world_y >= s_back_btn_y - (s_back_btn_height * 0.5f) &&
             s_world_y <= s_back_btn_y + (s_back_btn_height * 0.5f))
         {
-            SoundManager::PlayClickBtnSfx();
+            SoundManager::play_click_btn_sfx();
             s_is_transitioning_out = true;
-            ScreenTransitions::ScreenTransition_Init();
+            ScreenTransitions::screen_transition_init();
         }
 
         // --- CHECK BACKGROUND SELECTION ---
@@ -257,7 +257,7 @@ void Shop_Update()
                 s_world_y >= s_bg_item_y - (s_bg_item_height * 0.5f) &&
                 s_world_y <= s_bg_item_y + (s_bg_item_height * 0.5f))
             {
-                SoundManager::PlayClickBtnSfx();
+                SoundManager::play_click_btn_sfx();
                 if (s_score_amount >= BG_UNLOCK[i])
                     g_shop_bg_id = i;
             }
@@ -276,7 +276,7 @@ void Shop_Update()
                 s_world_y >= hit_box_y - (hit_box_h * 0.5f) &&
                 s_world_y <= hit_box_y + (hit_box_h * 0.5f))
             {
-                SoundManager::PlayClickBtnSfx();
+                SoundManager::play_click_btn_sfx();
                 if (s_score_amount >= SKIN_UNLOCK[i])
                     g_shop_skin_id = i;
             }
@@ -285,16 +285,16 @@ void Shop_Update()
 
     if (s_is_transitioning_out)
     {
-        ScreenTransitions::ScreenTransition_Update(dt);
-        float smooth_pan = ScreenTransitions::EaseOutExpo(ScreenTransitions::result);
+        ScreenTransitions::screen_transition_update(dt);
+        float smooth_pan = ScreenTransitions::ease_out_expo(ScreenTransitions::result);
 
         s_shop_ui_offset_x = s_win_w * smooth_pan;
-        BackgroundParallax::MenuParallax_SetPanOffset(-0.4f + (0.2f * smooth_pan));
+        BackgroundParallax::menu_parallax_set_pan_offset(-0.4f + (0.2f * smooth_pan));
 
         if (ScreenTransitions::result >= 0.3f)
         {
             s_is_transitioning_out = false;
-            BackgroundParallax::MenuParallax_SetPanOffset(0.2f);
+            BackgroundParallax::menu_parallax_set_pan_offset(0.2f);
             g_game_state_next = GS_MAIN_MENU;
         }
     }
@@ -306,7 +306,7 @@ void Shop_Update()
         AEGfxSetTransparency(1.0f);
         AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);
         AEGfxTextureSet(s_tex_shop_bg, 0.0f, 0.0f);
-        Mesh_Renderer(s_mesh_shop, SHOP_BG_X + s_shop_ui_offset_x, SHOP_BG_Y, s_shop_bg_width, s_shop_bg_height, 0.0f);
+        mesh_renderer(s_mesh_shop, SHOP_BG_X + s_shop_ui_offset_x, SHOP_BG_Y, s_shop_bg_width, s_shop_bg_height, 0.0f);
     }
 
     // Draw the 3 Background Options
@@ -320,7 +320,7 @@ void Shop_Update()
                 AEGfxSetColorToMultiply(0.3f, 0.3f, 0.3f, 1.0f); // Dark (Locked)
 
             AEGfxTextureSet(s_tex_bg_options[i], 0.0f, 0.0f);
-            Mesh_Renderer(s_mesh_bg_item,
+            mesh_renderer(s_mesh_bg_item,
                 s_bg_item_x[i] + s_shop_ui_offset_x, s_bg_item_y,
                 s_bg_item_width * 0.7f * s_tween_bg_item[i].scale,
                 s_bg_item_height * 0.7f * s_tween_bg_item[i].scale, 0.0f);
@@ -329,7 +329,7 @@ void Shop_Update()
             {
                 AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);
                 AEGfxTextureSet(s_tex_bg_frame, 0.0f, 0.0f);
-                Mesh_Renderer(s_mesh_bg_item,
+                mesh_renderer(s_mesh_bg_item,
                     s_bg_item_x[i] + s_shop_ui_offset_x, s_bg_item_y,
                     s_bg_item_width * 0.7f * s_tween_bg_item[i].scale,
                     s_bg_item_height * 0.7f * s_tween_bg_item[i].scale, 0.0f);
@@ -365,7 +365,7 @@ void Shop_Update()
                 AEGfxSetColorToMultiply(0.3f, 0.3f, 0.3f, 1.0f); // Dark (Locked)
 
             AEGfxTextureSet(s_tex_skin_options[i], 0.0f, 0.0f);
-            Mesh_Renderer(s_mesh_skin_item,
+            mesh_renderer(s_mesh_skin_item,
                 s_skin_item_x[i] + s_shop_ui_offset_x, s_skin_item_y,
                 s_skin_item_width * s_tween_skin_item[i].scale,
                 s_skin_item_height * s_tween_skin_item[i].scale, 0.0f);
@@ -375,7 +375,7 @@ void Shop_Update()
                 AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);
                 AEGfxTextureSet(s_tex_item_frame, 0.0f, 0.0f);
                 constexpr float FRAME_SCALE = 0.65f;
-                Mesh_Renderer(s_mesh_skin_item,
+                mesh_renderer(s_mesh_skin_item,
                     s_skin_item_x[i] - 10.0f + s_shop_ui_offset_x, s_skin_item_y + 60.0f,
                     s_skin_item_width * FRAME_SCALE * s_tween_skin_item[i].scale,
                     s_skin_item_height * FRAME_SCALE * s_tween_skin_item[i].scale, 0.0f);
@@ -406,16 +406,16 @@ void Shop_Update()
         AEGfxSetBlendMode(AE_GFX_BM_BLEND);
         AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);
         AEGfxTextureSet(s_tex_back, 0.0f, 0.0f);
-        Mesh_Renderer(s_mesh_back,
+        mesh_renderer(s_mesh_back,
             s_back_btn_x + s_shop_ui_offset_x, s_back_btn_y,
             s_back_btn_width * s_tween_back.scale,
             s_back_btn_height * s_tween_back.scale, 0.0f);
     }
 
-    DisplayScore();
+    display_score();
 }
 
-const char* Shop_GetActiveSkinPath()
+const char* shop_get_active_skin_path()
 {
     if (g_shop_skin_id == 0) return "Assets/characterSheet.png";
     if (g_shop_skin_id == 1) return "Assets/character2Sheet.png";
@@ -423,10 +423,10 @@ const char* Shop_GetActiveSkinPath()
     return "Assets/characterSheet.png"; // Safe fallback
 }
 
-void Shop_Exit()
+void shop_exit()
 {
     if (g_game_state_next != GS_MAIN_MENU)
-        BackgroundParallax::MenuParallax_Exit();
+        BackgroundParallax::menu_parallax_exit();
 
     if (s_tex_shop_bg) { AEGfxTextureUnload(s_tex_shop_bg);  s_tex_shop_bg = nullptr; }
     if (s_tex_item_frame) { AEGfxTextureUnload(s_tex_item_frame); s_tex_item_frame = nullptr; }

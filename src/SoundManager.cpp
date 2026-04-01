@@ -29,7 +29,7 @@ namespace
     static float s_sfx_volume = 1.0f;
     static float s_ambient_volume = 1.0f;
 
-    static void UpdateVolumes()
+    static void update_volumes()
     {
         AEAudioSetGroupVolume(s_bgm_group, s_bgm_volume * s_master_volume);
         AEAudioSetGroupVolume(s_sfx_group, s_sfx_volume * s_master_volume);
@@ -41,7 +41,7 @@ namespace
 
 namespace SoundManager
 {
-    void Init()
+    void init()
     {
         static bool s_is_first_boot = false;
 
@@ -84,7 +84,7 @@ namespace SoundManager
         if (g_game_state_curr == GS_GAME || g_game_state_curr == GS_GAME_TIMEMODE || g_game_state_curr == GS_TUTORIAL)
         {
             AEAudioStopGroup(s_bgm_group);
-            PlayBackgroundMusic();
+            play_background_music();
         }
         else
         {
@@ -92,18 +92,18 @@ namespace SoundManager
                 g_game_state_prev == GS_TUTORIAL || s_is_first_boot)
             {
                 AEAudioStopGroup(s_bgm_group);
-                PlayBackgroundMusic();
+                play_background_music();
             }
         }
 
-        UpdateVolumes();
+        update_volumes();
     }
 
-    float GetBGMVolume() { return s_bgm_volume; }
-    float GetSFXVolume() { return s_sfx_volume; }
-    float GetAmbientVolume() { return s_ambient_volume; }
+    float get_bgm_volume() { return s_bgm_volume; }
+    float get_sfx_volume() { return s_sfx_volume; }
+    float get_ambient_volume() { return s_ambient_volume; }
 
-    void Exit()
+    void cleanup()
     {
         if (g_game_state_next == GS_QUIT)
         {
@@ -132,38 +132,38 @@ namespace SoundManager
         }
     }
 
-    void PlayBackgroundMusic() { AEAudioPlay(s_bgm_track, s_bgm_group, 1.0f, 1.0f, -1); }
-    void PlayRainAmbient() { AEAudioPlay(s_rain_track, s_ambient_group, 1.0f, 1.0f, -1); }
-    void StopRainAmbient() { AEAudioStopGroup(s_ambient_group); }
-    void PlaySnowAmbient() { AEAudioPlay(s_snow_track, s_ambient_group, 1.0f, 1.0f, -1); }
-    void StopSnowAmbient() { AEAudioStopGroup(s_ambient_group); }
-    void PlayGameOverSfx() { AEAudioPlay(s_gameover_sfx, s_sfx_group, 1.0f, 1.0f, 0); }
-    void PlayPlayerHitSfx() { AEAudioPlay(s_player_hit_sfx, s_sfx_group, 1.0f, 1.0f, 0); }
-    void PlayEnemyDeathSfx() { AEAudioPlay(s_enemy_death_sfx, s_sfx_group, 1.0f, 1.0f, 0); }
-    void PlayClickBtnSfx() { AEAudioPlay(s_click_btn_sfx, s_ui_group, 1.0f, 1.0f, 0); }
-    void PlayTypingSfx() { AEAudioPlay(s_typing_sfx, s_sfx_group, 1.0f, 1.0f, 0); }
-    void PlayBossSfx() { AEAudioPlay(s_boss_sfx, s_boss_alarm_group, 1.0f, 1.0f, -1); }
-    void StopBossSfx() { AEAudioStopGroup(s_boss_alarm_group); }
-    void PlayLightningSfx() { AEAudioPlay(s_lightning_sfx, s_sfx_group, 1.0f, 1.0f, 0); }
-    void PlayShieldSfx() { AEAudioPlay(s_shield_sfx, s_sfx_group, 1.0f, 1.0f, 0); }
-    void PlaySlowSfx() { AEAudioPlay(s_slow_sfx, s_sfx_group, 1.0f, 1.0f, 0); }
+    void play_background_music() { AEAudioPlay(s_bgm_track, s_bgm_group, 1.0f, 1.0f, -1); }
+    void play_rain_ambient() { AEAudioPlay(s_rain_track, s_ambient_group, 1.0f, 1.0f, -1); }
+    void stop_rain_ambient() { AEAudioStopGroup(s_ambient_group); }
+    void play_snow_ambient() { AEAudioPlay(s_snow_track, s_ambient_group, 1.0f, 1.0f, -1); }
+    void stop_snow_ambient() { AEAudioStopGroup(s_ambient_group); }
+    void play_game_over_sfx() { AEAudioPlay(s_gameover_sfx, s_sfx_group, 1.0f, 1.0f, 0); }
+    void play_player_hit_sfx() { AEAudioPlay(s_player_hit_sfx, s_sfx_group, 1.0f, 1.0f, 0); }
+    void play_enemy_death_sfx() { AEAudioPlay(s_enemy_death_sfx, s_sfx_group, 1.0f, 1.0f, 0); }
+    void play_click_btn_sfx() { AEAudioPlay(s_click_btn_sfx, s_ui_group, 1.0f, 1.0f, 0); }
+    void play_typing_sfx() { AEAudioPlay(s_typing_sfx, s_sfx_group, 1.0f, 1.0f, 0); }
+    void play_boss_sfx() { AEAudioPlay(s_boss_sfx, s_boss_alarm_group, 1.0f, 1.0f, -1); }
+    void stop_boss_sfx() { AEAudioStopGroup(s_boss_alarm_group); }
+    void play_lightning_sfx() { AEAudioPlay(s_lightning_sfx, s_sfx_group, 1.0f, 1.0f, 0); }
+    void play_shield_sfx() { AEAudioPlay(s_shield_sfx, s_sfx_group, 1.0f, 1.0f, 0); }
+    void play_slow_sfx() { AEAudioPlay(s_slow_sfx, s_sfx_group, 1.0f, 1.0f, 0); }
 
-    void PauseGameplaySounds()
+    void pause_gameplay_sounds()
     {
         AEAudioPauseGroup(s_ambient_group);
         AEAudioPauseGroup(s_sfx_group);
         AEAudioPauseGroup(s_boss_alarm_group);
     }
 
-    void ResumeGameplaySounds()
+    void resume_gameplay_sounds()
     {
         AEAudioResumeGroup(s_ambient_group);
         AEAudioResumeGroup(s_sfx_group);
         AEAudioResumeGroup(s_boss_alarm_group);
     }
 
-    void SetMasterVolume(float volume) { s_master_volume = volume; UpdateVolumes(); }
-    void SetBGMVolume(float volume) { s_bgm_volume = volume; UpdateVolumes(); }
-    void SetSFXVolume(float volume) { s_sfx_volume = volume; UpdateVolumes(); }
-    void SetAmbientVolume(float volume) { s_ambient_volume = volume; UpdateVolumes(); }
+    void set_master_volume(float volume) { s_master_volume = volume; update_volumes(); }
+    void set_bgm_volume(float volume) { s_bgm_volume = volume; update_volumes(); }
+    void set_sfx_volume(float volume) { s_sfx_volume = volume; update_volumes(); }
+    void set_ambient_volume(float volume) { s_ambient_volume = volume; update_volumes(); }
 }

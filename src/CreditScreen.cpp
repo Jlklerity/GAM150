@@ -67,7 +67,7 @@ namespace
     const int NUM_CREDIT_LINES = sizeof(s_credit_lines) / sizeof(s_credit_lines[0]);
 }
 
-void CreditScreen_Init()
+void credit_screen_init()
 {
     if (Graphics::g_font_id < 0)
         Graphics::g_font_id = AEGfxCreateFont("Assets/Pixel-Game.otf", 48);
@@ -77,7 +77,7 @@ void CreditScreen_Init()
     s_scroll_y = -1.2f;
 }
 
-void CreditScreen_Update()
+void credit_screen_update()
 {
     float dt = (float)AEFrameRateControllerGetFrameTime();
     if (dt > 0.1f) dt = 0.01667f;
@@ -87,7 +87,7 @@ void CreditScreen_Update()
     // ---------------------------------------------------------
     if (AEInputCheckTriggered(AEVK_ESCAPE) || AEInputCheckTriggered(AEVK_LBUTTON))
     {
-        SoundManager::PlayClickBtnSfx();
+        SoundManager::play_click_btn_sfx();
         g_game_state_next = GS_MAIN_MENU;
     }
 
@@ -118,7 +118,7 @@ void CreditScreen_Update()
         AEGfxSetBlendMode(AE_GFX_BM_BLEND);
         AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);
         AEGfxTextureSet(s_tex_credits_logo, 0.0f, 0.0f);
-        Mesh_Renderer(s_mesh_credits_logo, logo_world_x, logo_world_y, LOGO_WIDTH, LOGO_HEIGHT, 0.0f);
+        mesh_renderer(s_mesh_credits_logo, logo_world_x, logo_world_y, LOGO_WIDTH, LOGO_HEIGHT, 0.0f);
 
         AEGfxSetRenderMode(AE_GFX_RM_COLOR);
     }
@@ -158,7 +158,7 @@ void CreditScreen_Update()
     }
 }
 
-void CreditScreen_Exit()
+void credit_screen_exit()
 {
     if (Graphics::g_font_id >= 0)
     {

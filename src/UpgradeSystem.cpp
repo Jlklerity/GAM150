@@ -88,7 +88,7 @@ namespace
     @params         slot_index (int)
     @brief          Returns the world X center for a given card slot.
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
-    float Slot_CenterX(int slot_index)
+    float slot_center_x(int slot_index)
     {
         float total_w = (float)CARD_COUNT * UpgradeConfig::UPGRADE_CARD_W
             + (float)(CARD_COUNT - 1) * UpgradeConfig::UPGRADE_CARD_SPACING;                                                // total width of the three-card row
@@ -104,9 +104,9 @@ namespace
     The hit-test always uses the base card size so the clickable area does not change when the
     card is scaled up by the hover effect.
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
-    bool IsMouseOverCard(int slot_index, float world_mouse_x, float world_mouse_y)
+    bool is_mouse_over_card(int slot_index, float world_mouse_x, float world_mouse_y)
     {
-        float cx = Slot_CenterX(slot_index);
+        float cx = slot_center_x(slot_index);
         float cy = UpgradeConfig::UPGRADE_CARD_CENTER_Y;
         float hw = UpgradeConfig::UPGRADE_CARD_W * 0.5f;
         float hh = UpgradeConfig::UPGRADE_CARD_H * 0.5f;
@@ -120,7 +120,7 @@ namespace
     @params         type (UpgradeType), health (Data::Health&)
     @brief          Immediately applies the effect of the chosen upgrade.
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
-    void ApplyUpgrade(UpgradeType type, Data::Health& health)
+    void apply_upgrade(UpgradeType type, Data::Health& health)
     {
         switch (type)
         {
@@ -159,10 +159,10 @@ namespace UpgradeSystem
     @function       Upgrade_Init
     @brief          Loads all three card textures and builds meshes. Resets all state and bonuses.
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
-    void Upgrade_Init()
+    void upgrade_init()
     {
-        Upgrade_Free();                                                                                                     // free any previous resources before reloading
-        Upgrade_Reset();                                                                                                    // reset bonuses so they do not carry over between sessions
+        upgrade_free();                                                                                                     // free any previous resources before reloading
+        upgrade_reset();                                                                                                    // reset bonuses so they do not carry over between sessions
 
         // Load one 2-column, 1-row sprite sheet per upgrade type
         for (int i = 0; i < CARD_COUNT; ++i)
@@ -186,7 +186,7 @@ namespace UpgradeSystem
     @function       Upgrade_Free
     @brief          Unloads all three card textures and frees meshes. Safe to call if Init never ran.
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
-    void Upgrade_Free()
+    void upgrade_free()
     {
         for (int i = 0; i < CARD_COUNT; ++i)
         {
@@ -214,7 +214,7 @@ namespace UpgradeSystem
     @function       Upgrade_TriggerScreen
     @brief          Opens the upgrade screen, resets animation, and shuffles card slots.
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
-    void Upgrade_TriggerScreen()
+    void upgrade_trigger_screen()
     {
         if (s_upgrade_screen_open) return;                                                                                    // already open, do nothing
 
@@ -225,7 +225,7 @@ namespace UpgradeSystem
 
         for (int i = CARD_COUNT - 1; i > 0; --i)
         {
-            int j = Utility::Utility_RandInt(0, i);
+            int j = Utility::utility_rand_int(0, i);
             UpgradeType tmp = s_slot_upgrade_type[i];
             s_slot_upgrade_type[i] = s_slot_upgrade_type[j];
             s_slot_upgrade_type[j] = tmp;
@@ -241,7 +241,7 @@ namespace UpgradeSystem
     @function       Upgrade_IsScreenOpen
     @brief          Returns true while the upgrade screen is blocking normal gameplay.
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
-    bool Upgrade_IsScreenOpen()
+    bool upgrade_is_screen_open()
     {
         return s_upgrade_screen_open;
     }
@@ -251,7 +251,7 @@ namespace UpgradeSystem
     @params         health (Data::Health&)
     @brief          Advances animation, updates hover state, and applies a clicked upgrade.
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
-    void Upgrade_Update(Data::Health& health)
+    void upgrade_update(Data::Health& health)
     {
         if (!s_upgrade_screen_open) return;
 
@@ -264,7 +264,7 @@ namespace UpgradeSystem
 
         // Update hover flag for each slot
         for (int i = 0; i < CARD_COUNT; ++i)
-            s_card_is_hovered[i] = IsMouseOverCard(i, wx, wy);
+            s_card_is_hovered[i] = is_mouse_over_card(i, wx, wy);
 
         // Check for a left-click to select a card
         if (AEInputCheckTriggered(AEVK_LBUTTON))
@@ -273,7 +273,7 @@ namespace UpgradeSystem
             {
                 if (s_card_is_hovered[i])
                 {
-                    ApplyUpgrade(s_slot_upgrade_type[i], health);                                                             // apply the chosen upgrade immediately
+                    apply_upgrade(s_slot_upgrade_type[i], health);                                                             // apply the chosen upgrade immediately
                     s_upgrade_screen_open = false;                                                                            // close the screen
                     return;
                 }
@@ -289,7 +289,7 @@ namespace UpgradeSystem
     single full images with no animation. Idle cards are drawn first; the hovered card is drawn
     last so it appears on top when enlarged.
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
-    void Upgrade_Draw()
+    void upgrade_draw()
     {
         if (!s_upgrade_screen_open) return;
         if (!s_card_mesh || !s_overlay_mesh) return;                                                                            // mesh missing, skip to avoid null dereference
@@ -301,7 +301,7 @@ namespace UpgradeSystem
         AEGfxSetColorToMultiply(0.0f, 0.0f, 0.0f, 1.0f);
         AEGfxSetColorToAdd(0.0f, 0.0f, 0.0f, 0.0f);
 
-        Graphics::Draw_DrawMeshAt(s_overlay_mesh, 0.0f, 0.0f, 1600.0f, 900.0f, 0.0f);
+        Graphics::draw_mesh_at(s_overlay_mesh, 0.0f, 0.0f, 1600.0f, 900.0f, 0.0f);
 
         // --- Cards (2-pass: idle first, hovered on top) ---
         for (int pass = 0; pass < 2; ++pass)
@@ -318,31 +318,31 @@ namespace UpgradeSystem
                 if (type_idx < 0 || type_idx >= CARD_COUNT) continue;                                                       // guard against invalid enum cast
                 if (!s_card_textures[type_idx]) continue;                                                                     // skip if this card's texture failed to load
 
-                Graphics::Graphics_SetSpriteState();
+                Graphics::graphics_set_sprite_state();
 
                 // Bind this card's own texture at UV origin (full single image)
                 AEGfxTextureSet(s_card_textures[type_idx], 0.0f, 0.0f);
 
-                float cx = Slot_CenterX(i);
+                float cx = slot_center_x(i);
                 float cy = UpgradeConfig::UPGRADE_CARD_CENTER_Y;
                 float scale = hovered ? UpgradeConfig::UPGRADE_CARD_HOVER_SCALE : 1.0f;                                     // 1.3x when hovered, 1.0x otherwise
                 float draw_w = UpgradeConfig::UPGRADE_CARD_W * scale;
                 float draw_h = UpgradeConfig::UPGRADE_CARD_H * scale;
 
-                Graphics::Draw_DrawMeshAt(s_card_mesh, cx, cy, draw_w, draw_h, 0.0f);
+                Graphics::draw_mesh_at(s_card_mesh, cx, cy, draw_w, draw_h, 0.0f);
             }
         }
 
     }
 
-    float Upgrade_GetPowerUpDurationMultiplier() { return s_accumulated_duration_multiplier; }
-    float Upgrade_GetPowerUpSpawnIntervalReduction() { return s_accumulated_spawn_reduction; }
+    float upgrade_get_power_up_duration_multiplier() { return s_accumulated_duration_multiplier; }
+    float upgrade_get_power_up_spawn_interval_reduction() { return s_accumulated_spawn_reduction; }
 
     /*
     @function       Upgrade_Reset
     @brief          Clears all accumulated bonuses and resets screen/animation state.
     *//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
-    void Upgrade_Reset()
+    void upgrade_reset()
     {
         s_accumulated_duration_multiplier = 1.0f;
         s_accumulated_spawn_reduction = 0.0f;

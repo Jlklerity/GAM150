@@ -24,7 +24,7 @@ namespace
 
 namespace LeaderboardSystem
 {
-    void Init()
+    void init()
     {
         if (s_overlay_mesh)
         {
@@ -34,7 +34,7 @@ namespace LeaderboardSystem
         s_overlay_mesh = Rect_Mesh(1.0f, 1.0f, 0xFFFFFFFF);
     }
 
-    void Free()
+    void free()
     {
         if (s_overlay_mesh)
         {
@@ -47,25 +47,25 @@ namespace LeaderboardSystem
         s_timed_board.shrink_to_fit();
     }
 
-    int GetHighestScore()
+    int get_highest_score()
     {
-        ReadZenLeaderboard();
-        ReadTimeLeaderboard();
+        read_zen_leaderboard();
+        read_time_leaderboard();
         s_highest_score = (s_highest_time_score > s_highest_zen_score) ? s_highest_time_score : s_highest_zen_score;
         return s_highest_score;
     }
 
-    static bool CompareZenScores(const LeaderboardData::ZenEntry& a, const LeaderboardData::ZenEntry& b)
+    static bool compare_zen_scores(const LeaderboardData::ZenEntry& a, const LeaderboardData::ZenEntry& b)
     {
         return a.player_score > b.player_score;
     }
 
-    static bool CompareTimedScores(const LeaderboardData::TimedEntry& a, const LeaderboardData::TimedEntry& b)
+    static bool compare_timed_scores(const LeaderboardData::TimedEntry& a, const LeaderboardData::TimedEntry& b)
     {
         return a.player_score > b.player_score;
     }
 
-    void ReadZenLeaderboard()
+    void read_zen_leaderboard()
     {
         s_leaderboard_list.clear();
         const char* leaderboard_filepath = "Assets/leaderboard.txt";
@@ -88,7 +88,7 @@ namespace LeaderboardSystem
         file_stream.close();
     }
 
-    void ReadTimeLeaderboard()
+    void read_time_leaderboard()
     {
         s_timed_board.clear();
         s_lb_scroll = 0.0f;
@@ -107,14 +107,14 @@ namespace LeaderboardSystem
         f.close();
     }
 
-    void WriteZenLeaderboard(const std::string& player_name, const int& player_score)
+    void write_zen_leaderboard(const std::string& player_name, const int& player_score)
     {
-        ReadZenLeaderboard();
+        read_zen_leaderboard();
         LeaderboardData::ZenEntry new_entry{ player_name, player_score };
         std::cout << "\n";
 
         s_leaderboard_list.push_back(new_entry);
-        std::sort(s_leaderboard_list.begin(), s_leaderboard_list.end(), CompareZenScores);
+        std::sort(s_leaderboard_list.begin(), s_leaderboard_list.end(), compare_zen_scores);
 
         const char* leaderboard_filepath = "Assets/leaderboard.txt";
         std::ofstream file_stream(leaderboard_filepath);
@@ -130,11 +130,11 @@ namespace LeaderboardSystem
         file_stream.close();
     }
 
-    void WriteTimeLeaderboard(const std::string& player_name, const int& player_score)
+    void write_time_leaderboard(const std::string& player_name, const int& player_score)
     {
-        ReadTimeLeaderboard();
+        read_time_leaderboard();
         s_timed_board.push_back({ player_name, player_score });
-        std::sort(s_timed_board.begin(), s_timed_board.end(), CompareTimedScores);
+        std::sort(s_timed_board.begin(), s_timed_board.end(), compare_timed_scores);
 
         const char* TIMED_LB_PATH = "Assets/leaderboard_timed.txt";
         std::ofstream f(TIMED_LB_PATH);
@@ -146,13 +146,13 @@ namespace LeaderboardSystem
         f.close();
     }
 
-    void DisplayZenLeaderboard(bool& open_leaderboard)
+    void display_zen_leaderboard(bool& open_leaderboard)
     {
         AEGfxSetRenderMode(AE_GFX_RM_COLOR);
         AEGfxSetBlendMode(AE_GFX_BM_BLEND);
         AEGfxSetTransparency(0.85f);
         AEGfxSetColorToMultiply(0.0f, 0.0f, 0.0f, 1.0f);
-        Mesh_Renderer(s_overlay_mesh, 0.0f, 0.0f, 1600.0f, 900.0f, 0.0f);
+        mesh_renderer(s_overlay_mesh, 0.0f, 0.0f, 1600.0f, 900.0f, 0.0f);
         AEGfxSetTransparency(1.0f);
 
         if (Graphics::g_font_id < 0) return;
@@ -230,13 +230,13 @@ namespace LeaderboardSystem
         }
     }
 
-    void DisplayTimeLeaderboard(bool& open_leaderboard)
+    void display_time_leaderboard(bool& open_leaderboard)
     {
         AEGfxSetRenderMode(AE_GFX_RM_COLOR);
         AEGfxSetBlendMode(AE_GFX_BM_BLEND);
         AEGfxSetTransparency(0.85f);
         AEGfxSetColorToMultiply(0.0f, 0.0f, 0.0f, 1.0f);
-        Mesh_Renderer(s_overlay_mesh, 0.0f, 0.0f, 1600.0f, 900.0f, 0.0f);
+        mesh_renderer(s_overlay_mesh, 0.0f, 0.0f, 1600.0f, 900.0f, 0.0f);
         AEGfxSetTransparency(1.0f);
 
         if (Graphics::g_font_id < 0) return;

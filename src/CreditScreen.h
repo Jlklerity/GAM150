@@ -1,5 +1,5 @@
 #pragma once
 
-void CreditScreen_Init();
-void CreditScreen_Update();
-void CreditScreen_Exit();
+void credit_screen_init();
+void credit_screen_update();
+void credit_screen_exit();
