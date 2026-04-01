@@ -84,24 +84,7 @@
     <ClInclude Include="src\Weather.h" />
   </ItemGroup>
   <ItemGroup>
-    <Image Include="Assets\bossEnemy.png" />
-    <Image Include="Assets\characterSheet.png" />
-  </ItemGroup>
-  <ItemGroup>
     <None Include=".gitignore" />
-  </ItemGroup>
-  <ItemGroup>
-    <Text Include="Assets\leaderboard.txt">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-      </ExcludedFromBuild>
-      <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-      </DeploymentContent>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-      </ExcludedFromBuild>
-      <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-      </DeploymentContent>
-    </Text>
-    <Text Include="Assets\leaderboard_timed.txt" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>

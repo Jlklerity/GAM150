@@ -1,83 +1,276 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <ClCompile Include="src\Enemy.cpp" />
-    <ClCompile Include="src\Game.cpp" />
-    <ClCompile Include="src\GameStateManager.cpp" />
-    <ClCompile Include="src\Main.cpp" />
-    <ClCompile Include="src\MainMenu.cpp" />
-    <ClCompile Include="src\MeshRenderer.cpp" />
-    <ClCompile Include="src\PowerUp.cpp" />
-    <ClCompile Include="src\Shop.cpp" />
-    <ClCompile Include="src\Typing.cpp" />
-    <ClCompile Include="src\Leaderboard.cpp" />
-    <ClCompile Include="src\MeshTemplates.cpp" />
-    <ClCompile Include="src\DebugConsole.cpp" />
-    <ClCompile Include="src\GameOver.cpp" />
-    <ClCompile Include="src\Pause.cpp" />
-    <ClCompile Include="src\TimeGame.cpp" />
-    <ClCompile Include="src\Settings.cpp" />
-    <ClCompile Include="src\Particles.cpp" />
-    <ClCompile Include="src\Weather.cpp" />
-    <ClCompile Include="src\ScreenTransition.cpp" />
-    <ClCompile Include="src\Boss.cpp" />
-    <ClCompile Include="src\BackgroundParallex.cpp" />
-    <ClCompile Include="src\LaserBeam.cpp" />
-    <ClCompile Include="src\GameEnemyBoss.cpp" />
-    <ClCompile Include="src\ParallaxZoom.cpp" />
-    <ClCompile Include="src\DeathTransition.cpp" />
-    <ClCompile Include="src\GameClouds.cpp" />
-    <ClCompile Include="src\StreakSystem.cpp" />
-    <ClCompile Include="src\Tutorial.cpp" />
-    <ClCompile Include="src\SoundManager.cpp" />
-    <ClCompile Include="src\CreditScreen.cpp" />
-    <ClCompile Include="src\UpgradeSystem.cpp" />
-    <ClCompile Include="src\DayCycle.cpp" />
-    <ClCompile Include="src\pch.cpp" />
+    <ClCompile Include="src\Game.cpp">
+      <Filter>Source\GameStateManager</Filter>
+    </ClCompile>
+    <ClCompile Include="src\GameOver.cpp">
+      <Filter>Source\GameStateManager</Filter>
+    </ClCompile>
+    <ClCompile Include="src\GameStateManager.cpp">
+      <Filter>Source\GameStateManager</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Pause.cpp">
+      <Filter>Source\GameStateManager</Filter>
+    </ClCompile>
+    <ClCompile Include="src\pch.cpp">
+      <Filter>Source\GameStateManager</Filter>
+    </ClCompile>
+    <ClCompile Include="src\TimeGame.cpp">
+      <Filter>Source\GameStateManager</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Tutorial.cpp">
+      <Filter>Source\GameStateManager</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Boss.cpp">
+      <Filter>Source\Enemy</Filter>
+    </ClCompile>
+    <ClCompile Include="src\GameEnemyBoss.cpp">
+      <Filter>Source\Enemy</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Enemy.cpp">
+      <Filter>Source\Enemy</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Leaderboard.cpp">
+      <Filter>Source\MainMenu</Filter>
+    </ClCompile>
+    <ClCompile Include="src\MainMenu.cpp">
+      <Filter>Source\MainMenu</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Shop.cpp">
+      <Filter>Source\MainMenu</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Settings.cpp">
+      <Filter>Source\MainMenu</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Main.cpp">
+      <Filter>Source\GameStateManager</Filter>
+    </ClCompile>
+    <ClCompile Include="src\SoundManager.cpp">
+      <Filter>Source\Audio</Filter>
+    </ClCompile>
+    <ClCompile Include="src\CreditScreen.cpp">
+      <Filter>Source\Credits</Filter>
+    </ClCompile>
+    <ClCompile Include="src\DebugConsole.cpp">
+      <Filter>Source\Debug</Filter>
+    </ClCompile>
+    <ClCompile Include="src\PowerUp.cpp">
+      <Filter>Source\PowerUp</Filter>
+    </ClCompile>
+    <ClCompile Include="src\UpgradeSystem.cpp">
+      <Filter>Source\PowerUp</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Weather.cpp">
+      <Filter>Source\Weather</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Typing.cpp">
+      <Filter>Source\Typing</Filter>
+    </ClCompile>
+    <ClCompile Include="src\StreakSystem.cpp">
+      <Filter>Source\Typing</Filter>
+    </ClCompile>
+    <ClCompile Include="src\BackgroundParallex.cpp">
+      <Filter>Source\VFX</Filter>
+    </ClCompile>
+    <ClCompile Include="src\DayCycle.cpp">
+      <Filter>Source\VFX</Filter>
+    </ClCompile>
+    <ClCompile Include="src\DeathTransition.cpp">
+      <Filter>Source\VFX</Filter>
+    </ClCompile>
+    <ClCompile Include="src\GameClouds.cpp">
+      <Filter>Source\VFX</Filter>
+    </ClCompile>
+    <ClCompile Include="src\LaserBeam.cpp">
+      <Filter>Source\VFX</Filter>
+    </ClCompile>
+    <ClCompile Include="src\MeshRenderer.cpp">
+      <Filter>Source\VFX</Filter>
+    </ClCompile>
+    <ClCompile Include="src\MeshTemplates.cpp">
+      <Filter>Source\VFX</Filter>
+    </ClCompile>
+    <ClCompile Include="src\ParallaxZoom.cpp">
+      <Filter>Source\VFX</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Particles.cpp">
+      <Filter>Source\VFX</Filter>
+    </ClCompile>
+    <ClCompile Include="src\ScreenTransition.cpp">
+      <Filter>Source\VFX</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="src\Enemy.h" />
-    <ClInclude Include="src\Game.h" />
-    <ClInclude Include="src\GameStateManager.h" />
-    <ClInclude Include="src\MainMenu.h" />
-    <ClInclude Include="src\MeshRenderer.h" />
-    <ClInclude Include="src\PowerUp.h" />
-    <ClInclude Include="src\Shop.h" />
-    <ClInclude Include="src\Typing.h" />
-    <ClInclude Include="src\Leaderboard.h" />
-    <ClInclude Include="src\MeshTemplates.h" />
-    <ClInclude Include="src\DebugConsole.h" />
-    <ClInclude Include="src\GameOver.h" />
-    <ClInclude Include="src\Pause.h" />
-    <ClInclude Include="src\TimeGame.h" />
-    <ClInclude Include="src\Settings.h" />
-    <ClInclude Include="src\Particles.h" />
-    <ClInclude Include="src\Weather.h" />
-    <ClInclude Include="src\ScreenTransition.h" />
-    <ClInclude Include="src\Boss.h" />
-    <ClInclude Include="src\BackgroundParallex.h" />
-    <ClInclude Include="src\LaserBeam.h" />
-    <ClInclude Include="src\GameEnemyBoss.h" />
-    <ClInclude Include="src\ParallaxZoom.h" />
-    <ClInclude Include="src\DeathTransition.h" />
-    <ClInclude Include="src\GameClouds.h" />
-    <ClInclude Include="src\StreakSystem.h" />
-    <ClInclude Include="src\Tutorial.h" />
-    <ClInclude Include="src\SoundManager.h" />
-    <ClInclude Include="src\CreditScreen.h" />
-    <ClInclude Include="src\UpgradeSystem.h" />
-    <ClInclude Include="src\DayCycle.h" />
-    <ClInclude Include="src\pch.h" />
-  </ItemGroup>
-  <ItemGroup>
-    <Image Include="Assets\characterSheet.png" />
-    <Image Include="Assets\bossEnemy.png" />
+    <ClInclude Include="src\ButtonTween.h">
+      <Filter>Headers\VFX</Filter>
+    </ClInclude>
+    <ClInclude Include="src\CreditScreen.h">
+      <Filter>Headers\Credits</Filter>
+    </ClInclude>
+    <ClInclude Include="src\DayCycle.h">
+      <Filter>Headers\VFX</Filter>
+    </ClInclude>
+    <ClInclude Include="src\DeathTransition.h">
+      <Filter>Headers\VFX</Filter>
+    </ClInclude>
+    <ClInclude Include="src\DebugConsole.h">
+      <Filter>Headers\Debug</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Enemy.h">
+      <Filter>Headers\Enemy</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Boss.h">
+      <Filter>Headers\Enemy</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Game.h">
+      <Filter>Headers\GameStateManager</Filter>
+    </ClInclude>
+    <ClInclude Include="src\GameClouds.h">
+      <Filter>Headers\VFX</Filter>
+    </ClInclude>
+    <ClInclude Include="src\GameEnemyBoss.h">
+      <Filter>Headers\Enemy</Filter>
+    </ClInclude>
+    <ClInclude Include="src\GameOver.h">
+      <Filter>Headers\GameStateManager</Filter>
+    </ClInclude>
+    <ClInclude Include="src\GameStateManager.h">
+      <Filter>Headers\GameStateManager</Filter>
+    </ClInclude>
+    <ClInclude Include="src\LaserBeam.h">
+      <Filter>Headers\VFX</Filter>
+    </ClInclude>
+    <ClInclude Include="src\MainMenu.h">
+      <Filter>Headers\MainMenu</Filter>
+    </ClInclude>
+    <ClInclude Include="src\MeshRenderer.h">
+      <Filter>Headers\VFX</Filter>
+    </ClInclude>
+    <ClInclude Include="src\MeshTemplates.h">
+      <Filter>Headers\VFX</Filter>
+    </ClInclude>
+    <ClInclude Include="src\ParallaxZoom.h">
+      <Filter>Headers\VFX</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Particles.h">
+      <Filter>Headers\VFX</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Pause.h">
+      <Filter>Headers\GameStateManager</Filter>
+    </ClInclude>
+    <ClInclude Include="src\pch.h">
+      <Filter>Headers\GameStateManager</Filter>
+    </ClInclude>
+    <ClInclude Include="src\PowerUp.h">
+      <Filter>Headers\PowerUp</Filter>
+    </ClInclude>
+    <ClInclude Include="src\ScreenTransition.h">
+      <Filter>Headers\VFX</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Settings.h">
+      <Filter>Headers\MainMenu</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Shop.h">
+      <Filter>Headers\MainMenu</Filter>
+    </ClInclude>
+    <ClInclude Include="src\SoundManager.h">
+      <Filter>Headers\Audio</Filter>
+    </ClInclude>
+    <ClInclude Include="src\TimeGame.h">
+      <Filter>Headers\GameStateManager</Filter>
+    </ClInclude>
+    <ClInclude Include="src\StreakSystem.h">
+      <Filter>Headers\Typing</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Tutorial.h">
+      <Filter>Headers\GameStateManager</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Typing.h">
+      <Filter>Headers\Typing</Filter>
+    </ClInclude>
+    <ClInclude Include="src\UpgradeSystem.h">
+      <Filter>Headers\PowerUp</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Weather.h">
+      <Filter>Headers\Weather</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Leaderboard.h">
+      <Filter>Headers\MainMenu</Filter>
+    </ClInclude>
+    <ClInclude Include="src\BackgroundParallex.h">
+      <Filter>Headers\VFX</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include=".gitignore" />
   </ItemGroup>
   <ItemGroup>
-    <Text Include="Assets\leaderboard.txt" />
-    <Text Include="Assets\leaderboard_timed.txt" />
+    <Filter Include="Headers">
+      <UniqueIdentifier>{1f9f79e4-1a3f-40a5-a5cd-d48937489482}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Headers\GameStateManager">
+      <UniqueIdentifier>{10af4dde-809c-494d-b389-bfbb1916eabe}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Headers\Typing">
+      <UniqueIdentifier>{08b9e4ad-a754-4325-8cdd-a146a42df5f6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Headers\Enemy">
+      <UniqueIdentifier>{2f52d1db-2e32-4adb-ae73-fdda002157da}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Headers\Weather">
+      <UniqueIdentifier>{ba93df11-2edd-42dc-ba4b-8082cae63091}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Headers\PowerUp">
+      <UniqueIdentifier>{5ba36eec-c355-4880-90c2-59e6a54c9a34}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Headers\MainMenu">
+      <UniqueIdentifier>{32fc84ca-0d1f-46a1-9b13-bb63801b1007}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Headers\VFX">
+      <UniqueIdentifier>{7f889086-3d37-4e3f-ad24-b0d7f4cb70f8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Headers\Audio">
+      <UniqueIdentifier>{8b640a78-230d-4f11-8e82-60f44ef6574c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Headers\Credits">
+      <UniqueIdentifier>{cc3d9781-8f9a-4535-8e76-cb48a71d13b7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Headers\Debug">
+      <UniqueIdentifier>{fe34d529-0e97-435a-975c-cd9172e8efe3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source">
+      <UniqueIdentifier>{08060f64-6965-4e0a-b495-2298b2dfb3d4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\GameStateManager">
+      <UniqueIdentifier>{f7e17cd5-5abd-4e9b-ae67-e3ed17454e19}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\Enemy">
+      <UniqueIdentifier>{2830008d-15d7-4e36-a84d-d3073ce628ab}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\MainMenu">
+      <UniqueIdentifier>{1510c382-67c3-45fe-8726-d6cd73f88965}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\Audio">
+      <UniqueIdentifier>{c6489817-e670-4bb1-b298-d24256353a76}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\Credits">
+      <UniqueIdentifier>{332c2459-b384-4728-b07f-6416db342562}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\Debug">
+      <UniqueIdentifier>{f5dabec6-038a-44be-8686-b35822f15f46}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\PowerUp">
+      <UniqueIdentifier>{4150fd96-41da-4ae3-8f8e-f195cc48dd2d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\Weather">
+      <UniqueIdentifier>{09a31c3a-4cfa-45df-8d21-4de04571c1fd}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\Typing">
+      <UniqueIdentifier>{aa2b25bf-04ce-4ea6-968e-43e79f71dcfd}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\VFX">
+      <UniqueIdentifier>{13b139cd-7f8a-4cfd-94d5-9f425f744fb9}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
 </Project>
