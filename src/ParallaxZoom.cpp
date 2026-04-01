@@ -1,3 +1,5 @@
+// File: ParallaxZoom.cpp
+// Author: Pengfei
 #include "pch.h"
 #include "ParallaxZoom.h"
 

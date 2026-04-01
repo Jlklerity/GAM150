@@ -1,3 +1,6 @@
+// File: DebugConsole.cpp
+// Author: Pengfei
+
 #pragma warning(disable: 26426)
 #define NOMINMAX
 #include "pch.h"

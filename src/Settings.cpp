@@ -1,3 +1,5 @@
+// File: Settings.cpp
+// Author: Jeremy
 #include "pch.h"
 #include "Settings.h"
 #include "ButtonTween.h"

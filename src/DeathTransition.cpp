@@ -1,3 +1,5 @@
+// File: DeathTransition.cpp
+// Author: Pengfei
 #include "pch.h"
 #include "DeathTransition.h"
 

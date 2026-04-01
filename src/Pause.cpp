@@ -1,3 +1,6 @@
+// File: Pause.cpp
+// Author: Jeremy
+
 #include "pch.h"
 #include "Pause.h"
 #include "ButtonTween.h"

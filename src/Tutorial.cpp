@@ -1,8 +1,5 @@
-/*
-@file           Tutorial.cpp
-@author         YOU
-@brief          Tutorial game state implementation.
-*/
+// File: Tutorial.cpp
+// Author: Pengfei
 #include "pch.h"
 #include "Tutorial.h"
 

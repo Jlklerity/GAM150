@@ -12,7 +12,7 @@
             Ambient snowflakes (pool of AMBIENT_COUNT) always fall in IDLE/FREEZING/FROZEN/THAWING.
             During FREEZING and FROZEN an extra blizzard overlay and heavier particle burst appear.
 
-@author     (your name)
+@author     Azfar
 */
 #include "pch.h"
 #include "Weather.h"

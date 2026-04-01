@@ -1,3 +1,5 @@
+// File: ScreenTransitions.cpp
+// Author: Jeremy
 #include "pch.h"
 #include "ScreenTransition.h"
 

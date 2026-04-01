@@ -1,5 +1,5 @@
-// ---------------------------------------------------------------------------
-// includes
+// File: Main.cpp
+// Author: Pengfei, Jeremy, Azfar, Zi Yuan
 
 #include "pch.h"
 #include "game.h"
