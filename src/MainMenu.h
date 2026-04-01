@@ -1,6 +1,13 @@
 #pragma once
 #include <string>
 
+/*!
+@file           MainMenu.cpp
+@author         Jeremy Lim
+@brief          Handles the main menu state, UI rendering, sub-state transitions, and name entry.
+*//*_________________________________________________________________________________________________________________________________________________________________________________________________*/
+
+
 std::string main_menu_get_player_name();
 void reset_player_name(std::string& reset_name);
 void draw_main_menu(float text_ndc_offset);

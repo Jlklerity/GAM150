@@ -2,6 +2,14 @@
 #include <string>
 #include "Enemy.h"
 
+/*!
+@file           Leaderboard.h
+@author         Jeremy Lim
+@brief          Manages reading, writing, and rendering the Zen and Timed mode leaderboards.
+*//*_________________________________________________________________________________________________________________________________________________________________________________________________*/
+
+
+
 namespace LeaderboardData
 {
     struct ZenEntry

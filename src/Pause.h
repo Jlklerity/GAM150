@@ -2,6 +2,11 @@
 #include "Enemy.h"
 #include <AEEngine.h>
 
+/*!
+@file           Pause.h
+@author         Jeremy Lim
+@brief          Manages the pause menu UI, popup logic, and handles user interactions while the game is paused.
+*//*_________________________________________________________________________________________________________________________________________________________________________________________________*/
 namespace UiPauseMenu
 {
     enum PopupAction

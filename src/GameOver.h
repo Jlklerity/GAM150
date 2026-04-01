@@ -2,6 +2,12 @@
 #include "Enemy.h"
 #include <AEEngine.h>
 
+/*!
+@file           GameOver.cpp
+@authors        Peng Fei, Jeremy Lim
+@brief          Handles the game over screen UI, including displaying options, writing to the leaderboard, and menu navigation.
+*//*_________________________________________________________________________________________________________________________________________________________________________________________________*/
+
 namespace UiGameOver
 {
     void cleanup();

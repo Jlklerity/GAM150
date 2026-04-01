@@ -1,5 +1,10 @@
 #pragma once
 
+/*!
+@file           Shop.h
+@author         Jeremy Lim
+@brief          Handles the in-game shop logic, UI rendering, and player transactions.
+*//*_________________________________________________________________________________________________________________________________________________________________________________________________*/
 void display_score();
 void shop_init();
 void shop_update();

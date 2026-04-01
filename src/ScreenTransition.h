@@ -1,5 +1,9 @@
 #pragma once
-
+/*!
+@file           ScreenTransition.h
+@author         Jeremy Lim
+@brief          Handles global screen transition logic and mathematical easing functions for UI animations.
+*//*_________________________________________________________________________________________________________________________________________________________________________________________________*/
 #include "AEEngine.h"
 #include "Enemy.h"
 #include "MainMenu.h"

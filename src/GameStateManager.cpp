@@ -1,5 +1,8 @@
-// File: GameStateManager.cpp
-// Author: Jeremy
+/*!
+@file           GameStateManager.cpp
+@author         Jeremy Lim
+@brief          Controls the flow and transitions between different game states (Menus, Gameplay, Shop, etc.).
+*//*_________________________________________________________________________________________________________________________________________________________________________________________________*/
 
 #include "pch.h"
 #include "GameStateManager.h"
@@ -15,7 +18,11 @@ void (*g_game_state_init)(void) = nullptr;
 void (*g_game_state_update)(void) = nullptr;
 void (*g_game_state_exit)(void) = nullptr;
 
-
+/*!
+@function       gsm_init
+@brief          Initializes the game state manager with the starting state and nullifies function pointers.
+@param          starting_state (int) The enumerator integer of the initial game state.
+*//*_________________________________________________________________________________________________________________________________________________________________________________________________*/
 void gsm_init(int starting_state)
 {
     g_game_state_curr = GS_NONE;
@@ -27,6 +34,10 @@ void gsm_init(int starting_state)
     g_game_state_exit = nullptr;
 }
 
+/*!
+@function       gsm_update
+@brief          Checks for state change requests. If a change occurs, it safely exits the old state, updates pointers, and initializes the new state.
+*//*_________________________________________________________________________________________________________________________________________________________________________________________________*/
 void gsm_update()
 {
     if (g_game_state_curr != g_game_state_next)

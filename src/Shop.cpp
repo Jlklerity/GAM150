@@ -1,5 +1,8 @@
-// File: Shop.cpp
-// Author: Jeremy
+/*!
+@file           Shop.cpp
+@author         Jeremy Lim
+@brief          Handles the in-game shop logic, UI, and transactions.
+*//*_________________________________________________________________________________________________________________________________________________________________________________________________*/
 
 #include "pch.h"
 #include "Shop.h"
@@ -9,6 +12,10 @@
 int g_shop_skin_id = 0;
 int g_shop_bg_id = 0;
 
+/*
+@namespace      Anonymous
+@brief          Private state used only inside Shop.cpp for UI textures, meshes, and layout coordinates.
+*//*_________________________________________________________________________________________________________________________________________________________________________________________________*/
 namespace
 {
     static AEGfxTexture* s_tex_shop_bg = nullptr;
@@ -73,7 +80,13 @@ namespace
     static ButtonTween s_tween_skin_item[3];
 }
 
+/*
+@function       display_score
+@brief          Renders the player's highest score on the shop screen.
 
+Calculates the top-left positioning relative to the shop background and prints the score
+using the globally loaded font via the graphics engine.
+*//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
 void display_score()
 {
     if (Graphics::g_font_id < 0) return;
@@ -92,6 +105,13 @@ void display_score()
     AEGfxPrint(Graphics::g_font_id, score_buf, s_text_x + s_shop_ui_offset_x, s_text_y, 1.0f, 1, 1, 1, 1);
 }
 
+/*
+@function       shop_init
+@brief          Initializes the shop UI, loads textures and meshes, and resets tween states.
+
+This function sets up screen transition states, computes world coordinates for buttons based
+on window dimensions, and loads the necessary assets for skins and backgrounds.
+*//*_____________________________________________________________________________________________________________________________________________________________________________________________*/
 void shop_init()
 {
     s_is_transitioning_in = true;
@@ -165,6 +185,10 @@ void shop_init()
     }
 }
 
+/*!
+@function       shop_update
+@brief          Updates the shop logic every frame. Handles parallax background panning, button tweens, and mouse click collision detection for transactions.
+*//*_________________________________________________________________________________________________________________________________________________________________________________________________*/
 void shop_update()
 {
     AEGfxSetCamPosition(0.0f, 0.0f);
@@ -418,6 +442,11 @@ void shop_update()
     display_score();
 }
 
+/*!
+@function       shop_get_active_skin_path
+@brief          Returns the file path for the currently selected skin.
+@return         const char* pointing to the active sprite sheet asset.
+*//*_________________________________________________________________________________________________________________________________________________________________________________________________*/
 const char* shop_get_active_skin_path()
 {
     if (g_shop_skin_id == 0) return "Assets/characterSheet.png";
@@ -426,6 +455,10 @@ const char* shop_get_active_skin_path()
     return "Assets/characterSheet.png"; // Safe fallback
 }
 
+/*!
+@function       shop_exit
+@brief          Cleans up the shop state by unloading all textures, freeing meshes, and resetting memory to prevent leaks.
+*//*_________________________________________________________________________________________________________________________________________________________________________________________________*/
 void shop_exit()
 {
     if (g_game_state_next != GS_MAIN_MENU)

@@ -1,7 +1,11 @@
 #include "pch.h"
 #include "SoundManager.h"
 
-
+/*!
+@file           SoundManager.cpp
+@author         Jeremy Lim
+@brief          Centralized audio system utilizing FMOD/AlphaEngine to play, pause, and mix BGM, SFX, and Ambient tracks.
+*//*_________________________________________________________________________________________________________________________________________________________________________________________________*/
 namespace
 {
     static AEAudioGroup s_bgm_group;
@@ -41,6 +45,11 @@ namespace
 
 namespace SoundManager
 {
+    
+    /*!
+    @function       init
+    @brief          Initializes audio groups, loads all music and sound effect assets from disk, and sets default volume levels.
+    *//*_________________________________________________________________________________________________________________________________________________________________________________________________*/
     void init()
     {
         static bool s_is_first_boot = false;
@@ -148,6 +157,10 @@ namespace SoundManager
     void play_shield_sfx() { AEAudioPlay(s_shield_sfx, s_sfx_group, 1.0f, 1.0f, 0); }
     void play_slow_sfx() { AEAudioPlay(s_slow_sfx, s_sfx_group, 1.0f, 1.0f, 0); }
 
+    /*!
+    @function       pause_gameplay_sounds
+    @brief          Pauses all audio groups associated with active gameplay (ambient, SFX, boss alarms).
+    *//*_________________________________________________________________________________________________________________________________________________________________________________________________*/
     void pause_gameplay_sounds()
     {
         AEAudioPauseGroup(s_ambient_group);
@@ -162,6 +175,11 @@ namespace SoundManager
         AEAudioResumeGroup(s_boss_alarm_group);
     }
 
+    /*!
+    @function       set_master_volume
+    @brief          Updates the master volume multiplier and immediately applies it across all active audio groups.
+    @param          volume (float) The new volume percentage (0.0f to 1.0f).
+    *//*_________________________________________________________________________________________________________________________________________________________________________________________________*/
     void set_master_volume(float volume) { s_master_volume = volume; update_volumes(); }
     void set_bgm_volume(float volume) { s_bgm_volume = volume; update_volumes(); }
     void set_sfx_volume(float volume) { s_sfx_volume = volume; update_volumes(); }

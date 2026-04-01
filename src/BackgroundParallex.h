@@ -1,6 +1,11 @@
 #pragma once
 #include <AEEngine.h>
 
+/*!
+@file           BackgroundParallex.h
+@author         Jeremy Lim
+@brief          Handles the initialization, updating, and rendering of the multi-layered parallax background for the menus.
+*//*_________________________________________________________________________________________________________________________________________________________________________________________________*/
 namespace BackgroundParallax {
 
     void menu_parallax_set_pan_offset(float offset);

@@ -1,5 +1,8 @@
-// File: BackgroundParallex.cpp
-// Author: Jeremy
+/*!
+@file           BackgroundParallex.cpp
+@author         Jeremy Lim
+@brief          Handles the initialization, updating, and rendering of the multi-layered parallax background for the menus.
+*//*_________________________________________________________________________________________________________________________________________________________________________________________________*/
 #include "pch.h"
 #include "BackgroundParallex.h"
 
@@ -20,14 +23,27 @@ namespace
     static float            s_manual_pan_offset = 0.0f;
 }
 
-
+/*!
+@namespace      BackgroundParallax
+@brief          Encapsulates the variables and functions needed to manage the scrolling background layers to create an illusion of depth.
+*//*_________________________________________________________________________________________________________________________________________________________________________________________________*/
 namespace BackgroundParallax
 {
+
+    /*!
+    @function       menu_parallax_set_pan_offset
+    @brief          Adjusts the horizontal panning offset of the background. Commonly used to sync the background movement with UI screen transitions.
+    @param          offset (float) The target horizontal offset to apply to the parallax layers.
+    *//*_________________________________________________________________________________________________________________________________________________________________________________________________*/
     void menu_parallax_set_pan_offset(float offset)
     {
         s_manual_pan_offset = offset;
     }
 
+    /*!
+    @function       menu_parallax_init
+    @brief          Initializes the meshes and loads the necessary textures for the different layers of the menu parallax background.
+    *//*_________________________________________________________________________________________________________________________________________________________________________________________________*/
     void menu_parallax_init()
     {
         if (s_full_screen_mesh) return;
@@ -73,6 +89,11 @@ namespace BackgroundParallax
         s_bg_layers[4].u_offset = 0.0f;
     }
 
+    /*!
+    @function       menu_parallax_update
+    @brief          Updates the scrolling positions of the background layers based on the delta time to simulate continuous horizontal movement.
+    @param          dt (float) The delta time since the last frame.
+    *//*_________________________________________________________________________________________________________________________________________________________________________________________________*/
     void menu_parallax_update(float dt)
     {
         for (int i = 0; i < NUM_LAYERS; ++i)
@@ -87,6 +108,11 @@ namespace BackgroundParallax
         }
     }
 
+    /*!
+    @function       menu_parallax_draw
+    @brief          Renders the background layers in order, applying different scroll speed multipliers to each layer to achieve the parallax depth effect.
+    @param          cam_y (float) The current Y position of the camera to ensure the background stays vertically aligned during bounce transitions.
+    *//*_________________________________________________________________________________________________________________________________________________________________________________________________*/
     void menu_parallax_draw(float virtual_cam_y)
     {
         float cam_x, cam_y;
@@ -106,6 +132,10 @@ namespace BackgroundParallax
         }
     }
 
+    /*!
+    @function       menu_parallax_exit
+    @brief          Cleans up the parallax system by unloading the background textures and freeing the associated meshes to prevent memory leaks.
+    *//*_________________________________________________________________________________________________________________________________________________________________________________________________*/
     void menu_parallax_exit()
     {
         if (s_full_screen_mesh)

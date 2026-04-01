@@ -1,10 +1,17 @@
-// File: Pause.cpp
-// Author: Jeremy
+/*!
+@file           Pause.cpp
+@author         Jeremy Lim
+@brief          Manages the pause menu UI, popup logic, and handles user interactions while the game is paused.
+*//*_________________________________________________________________________________________________________________________________________________________________________________________________*/
 
 #include "pch.h"
 #include "Pause.h"
 #include "ButtonTween.h"
 
+/*!
+@namespace      UiPauseMenu
+@brief          Contains the internal state for the pause menu overlays, active popups, and button tweens.
+*//*_________________________________________________________________________________________________________________________________________________________________________________________________*/
 namespace UiPauseMenu
 {
     static bool         s_in_settings = false;
@@ -24,6 +31,11 @@ namespace UiPauseMenu
         return s_in_settings;
     }
 
+    /*!
+    @function       open_popup
+    @brief          Triggers a specific confirmation popup (e.g., Restart, Main Menu) and locks background UI interaction.
+    @param          action (PopupAction) The enum specifying which popup to open.
+    *//*_________________________________________________________________________________________________________________________________________________________________________________________________*/
     void open_popup(PopupAction action)
     {
         s_in_confirm_exit = true;
@@ -42,6 +54,12 @@ namespace UiPauseMenu
         return s_in_confirm_exit;
     }
 
+    /*!
+    @function       ui_draw_pause_menu
+    @brief          Renders the main pause menu panel, buttons, and handles hover/click interactions.
+    @param          is_paused (bool&) Reference to the flag determining if the game is paused.
+    @param          bg_mesh (AEGfxVertexList*) Pointer to the quad mesh used for UI backgrounds.
+    *//*_________________________________________________________________________________________________________________________________________________________________________________________________*/
     void ui_draw_pause_menu(bool& is_paused, AEGfxVertexList* bg_mesh)
     {
         if (s_in_confirm_exit)
@@ -325,6 +343,12 @@ namespace UiPauseMenu
         }
     }
 
+    /*!
+    @function       ui_draw_confirmation_popup
+    @brief          Renders the YES/NO confirmation prompt over the pause menu and processes the respective click responses.
+    @param          bg_mesh (AEGfxVertexList*) Pointer to the quad mesh used for UI backgrounds.
+    @param          p_is_paused (bool*) Optional pointer to the paused flag to resume the game upon confirmation.
+    *//*_________________________________________________________________________________________________________________________________________________________________________________________________*/
     void ui_draw_confirmation_popup(AEGfxVertexList* bg_mesh, bool* p_is_paused)
     {
         if (!s_in_confirm_exit) return;

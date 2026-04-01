@@ -1,10 +1,17 @@
-// File: Settings.cpp
-// Author: Jeremy
+/*!
+@file           Settings.cpp
+@author         Jeremy Lim
+@brief          Handles the UI and logic for the in-game audio settings menu, allowing players to adjust various volume levels.
+*//*_________________________________________________________________________________________________________________________________________________________________________________________________*/
 
 #include "pch.h"
 #include "Settings.h"
 #include "ButtonTween.h"
 
+/*!
+@namespace      Anonymous
+@brief          Private internal state for the settings menu, including volume variables, slider UI dimensions, dragging states, and text rendering helper functions.
+*//*_________________________________________________________________________________________________________________________________________________________________________________________________*/
 namespace
 {
     static AEGfxVertexList* s_quad = nullptr;
@@ -45,8 +52,17 @@ namespace
     }
 }
 
+/*!
+@namespace      SysSettings
+@brief          System for managing the settings menu lifecycle, rendering interactive sliders, and processing player input for volume adjustments.
+*//*_________________________________________________________________________________________________________________________________________________________________________________________________*/
 namespace SysSettings
 {
+
+    /*!
+    @function       init
+    @brief          Initializes the settings menu by creating the UI quad mesh and fetching the current volume levels from the SoundManager.
+    *//*_________________________________________________________________________________________________________________________________________________________________________________________________*/
     void init()
     {
         if (!s_quad)
@@ -58,6 +74,11 @@ namespace SysSettings
         button_tween_reset(s_tween_close);
     }
 
+    /*!
+    @function       display_settings
+    @brief          Updates and renders the settings UI overlay. Handles mouse input for dragging volume sliders and updates the respective audio groups in real-time.
+    @return         True if the settings menu should remain open; False if the player clicked the "Close" button or pressed Escape.
+    *//*_________________________________________________________________________________________________________________________________________________________________________________________________*/
     bool display_settings()
     {
         if (!s_quad) init();
@@ -194,6 +215,10 @@ namespace SysSettings
         return true;
     }
 
+    /*!
+    @function       cleanup
+    @brief          Frees the UI quad mesh to prevent memory leaks when the settings system is no longer needed.
+    *//*_________________________________________________________________________________________________________________________________________________________________________________________________*/
     void cleanup()
     {
         if (s_quad) { AEGfxMeshFree(s_quad); s_quad = nullptr; }

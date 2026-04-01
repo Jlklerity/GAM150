@@ -1,6 +1,9 @@
-// File: GameOver.cpp
-// Author: Pengfei, Jeremy
- #include "pch.h"
+/*!
+@file           GameOver.cpp
+@authors        Peng Fei, Jeremy Lim
+@brief          Handles the game over screen UI, including displaying options, writing to the leaderboard, and menu navigation.
+*//*_________________________________________________________________________________________________________________________________________________________________________________________________*/
+#include "pch.h"
 #include "GameOver.h"
 #include "ButtonTween.h"
 
@@ -75,6 +78,10 @@ namespace
     }
 }
 
+/*!
+@namespace      UiGameOver
+@brief          Encapsulates functions related to the game over state, managing the UI overlay, and handling player input for restarting or returning to the main menu.
+*//*_________________________________________________________________________________________________________________________________________________________________________________________________*/
 namespace UiGameOver
 {
     void cleanup()
@@ -91,6 +98,16 @@ namespace UiGameOver
         button_tween_reset(s_tween_menu);
     }
 
+    /*!
+    @function       check_if_dead
+    @brief          Checks if the player has died. If so, triggers the game over state, writes the final score to the leaderboard, and displays either the Game Over menu or the Leaderboard.
+    @param          isDead (bool&) Reference to the player's death state flag.
+    @param          isGameOver (bool&) Reference to the flag indicating if the game over logic has already been triggered.
+    @param          openLeaderboard (bool&) Reference to the flag controlling the visibility of the leaderboard overlay.
+    @param          bgMesh (AEGfxVertexList*) Pointer to the quad mesh used for rendering UI panels.
+    @param          temp_name (std::string) The name of the player to associate with the final score.
+    @param          score (const Data::Score&) The final score data achieved by the player.
+    *//*_________________________________________________________________________________________________________________________________________________________________________________________________*/
     void check_if_dead(bool& is_dead, bool& is_game_over, bool& open_leaderboard,
         AEGfxVertexList* bg_mesh, std::string temp_name, const Data::Score& score)
     {
@@ -111,6 +128,15 @@ namespace UiGameOver
             LeaderboardSystem::display_zen_leaderboard(open_leaderboard);
     }
 
+    /*!
+    @function       ui_game_over_menu
+    @brief          Renders the Game Over menu UI, including the text and buttons for Restart, Leaderboard, and Main Menu. Handles mouse input collisions for these buttons.
+    @param          isGameOver (bool&) Reference to the game over flag, ensuring the score is only saved to the leaderboard once.
+    @param          score (const Data::Score&) The player's final score data.
+    @param          openLeaderboard (bool&) Reference to the flag that opens the leaderboard view when the corresponding button is clicked.
+    @param          bgMesh (AEGfxVertexList*) Pointer to the background mesh used for rendering the buttons.
+    @param          isDead (bool&) Reference to the player's death state, used to reset the game state if restarting or returning to the main menu.
+    *//*_________________________________________________________________________________________________________________________________________________________________________________________________*/
     void ui_game_over_menu(bool& is_game_over, const Data::Score& score,
         bool& open_leaderboard, AEGfxVertexList* bg_mesh, bool& is_dead)
     {

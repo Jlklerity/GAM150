@@ -1,5 +1,11 @@
 #pragma once
 
+/*!
+@file           GameStateManager.h
+@author         Jeremy Lim
+@brief          Controls the flow and transitions between different game states (Menus, Gameplay, Shop, etc.).
+*//*_________________________________________________________________________________________________________________________________________________________________________________________________*/
+
 // Enum for all possible states
 enum GameState
 {

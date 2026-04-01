@@ -1,11 +1,10 @@
 /*!
-    @file           MainMenu.cpp
-    @author         Jeremy Lim
-    @course         GAM150
-    @brief          Handles the main menu state, UI rendering, sub-state transitions, and name entry.
+@file           MainMenu.cpp
+@author         Jeremy Lim
+@brief          Handles the main menu state, UI rendering, sub-state transitions, and name entry.
 
-    This file contains the logic for navigating the main menu, selecting game modes, handling
-    the screen dropping transition effect, and capturing keyboard input for the player's name.
+This file contains the logic for navigating the main menu, selecting game modes, handling
+the screen dropping transition effect, and capturing keyboard input for the player's name.
 *//*_________________________________________________________________________________________________________________________________________________________________________________________________*/
 
 #include "pch.h"
@@ -173,6 +172,11 @@ std::string main_menu_get_player_name()
     return s_player_name;
 }
 
+/*!
+@function       draw_main_menu
+@brief          Renders the background, title logo, and main navigation buttons.
+@param          text_ndc_offset (float) A vertical offset used during screen transition animations.
+*//*_________________________________________________________________________________________________________________________________________________________________________________________________*/
 void draw_main_menu(float text_ndc_offset)
 {
     AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
@@ -267,6 +271,10 @@ void draw_main_menu(float text_ndc_offset)
     }
 }
 
+/*!
+@function       main_menu_input
+@brief          Detects mouse collision and click triggers for all main menu buttons. Updates state variables to trigger transitions based on clicks.
+*//*_________________________________________________________________________________________________________________________________________________________________________________________________*/
 void main_menu_input()
 {
     s32 mouse_x, mouse_y;
@@ -395,6 +403,13 @@ void reset_player_name(std::string& reset_name)
     s_player_name = reset_name;
 }
 
+/*!
+@function       main_menu_enter_name
+@brief          Renders the name entry UI and captures raw keyboard inputs to construct the player's name string.
+@param          world_y_offset (float) The world coordinate Y-offset for UI rendering.
+@param          ndc_y_offset (float) The normalized device coordinate Y-offset for font printing.
+@param          allow_input (bool) Flag determining if keyboard inputs should currently be read.
+*//*_________________________________________________________________________________________________________________________________________________________________________________________________*/
 void main_menu_enter_name(float world_y_offset, float ndc_y_offset, bool allow_input)
 {
     s32 mouse_x, mouse_y;

@@ -1,5 +1,10 @@
 #pragma once
 
+/*!
+@file           SoundManager.cpp
+@author         Jeremy Lim
+@brief          Centralized audio system utilizing FMOD/AlphaEngine to play, pause, and mix BGM, SFX, and Ambient tracks.
+*//*_________________________________________________________________________________________________________________________________________________________________________________________________*/
 namespace SoundManager
 {
     void init();

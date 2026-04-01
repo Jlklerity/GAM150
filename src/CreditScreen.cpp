@@ -1,7 +1,15 @@
+/*!
+@file           CreditScreen.cpp
+@author         Jeremy Lim
+@brief          Handles the initialization, updating, and rendering of the scrolling credits screen.
+*//*_________________________________________________________________________________________________________________________________________________________________________________________________*/
 #include "pch.h"
 #include "CreditScreen.h"
 
-
+/*!
+@namespace      Anonymous
+@brief          Contains the internal state for the credits screen, including scroll tracking variables, UI textures, and the array of text lines to display.
+*//*_________________________________________________________________________________________________________________________________________________________________________________________________*/
 namespace
 {
     static float              s_scroll_y = 0.0f;
@@ -67,6 +75,10 @@ namespace
     const int NUM_CREDIT_LINES = sizeof(s_credit_lines) / sizeof(s_credit_lines[0]);
 }
 
+/*!
+@function       credit_screen_init
+@brief          Initializes the credits screen by loading the necessary font and logo textures, creating the sprite meshes, and resetting the scroll position.
+*//*_________________________________________________________________________________________________________________________________________________________________________________________________*/
 void credit_screen_init()
 {
     if (Graphics::g_font_id < 0)
@@ -77,6 +89,10 @@ void credit_screen_init()
     s_scroll_y = -1.2f;
 }
 
+/*!
+@function       credit_screen_update
+@brief          Updates the scrolling logic for the credits text and logo, handles player input (click/escape) to skip, and renders all active text lines to the screen.
+*//*_________________________________________________________________________________________________________________________________________________________________________________________________*/
 void credit_screen_update()
 {
     float dt = (float)AEFrameRateControllerGetFrameTime();
@@ -158,6 +174,10 @@ void credit_screen_update()
     }
 }
 
+/*!
+@function       credit_screen_exit
+@brief          Cleans up the credits screen state by destroying the loaded font, freeing the logo mesh, and unloading textures to prevent memory leaks.
+*//*_________________________________________________________________________________________________________________________________________________________________________________________________*/
 void credit_screen_exit()
 {
     if (Graphics::g_font_id >= 0)
