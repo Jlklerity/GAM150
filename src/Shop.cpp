@@ -152,7 +152,7 @@ void Shop_Init()
     s_mesh_skin_item = Sprite_Mesh(1.0f, 1.0f);
     s_mesh_back = Spritesheet_Mesh(1.0f, 1.0f, 0.0f, 0.0f, 0.5f, 0.5f);
 
-    s_score_amount = Leaderboard_System::GetHighestScore();
+    s_score_amount = LeaderboardSystem::GetHighestScore();
 
     ButtonTween_Reset(s_tween_back);
     for (int i = 0; i < 3; i++)

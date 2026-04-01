@@ -41,7 +41,7 @@ namespace
 
     //  Data structures
 
-    // single particle, lives in g_particles pool
+    // single particle, lives in s_particles pool
     struct Particle
     {
         float x, y;          // world position
@@ -53,7 +53,7 @@ namespace
         bool  active = false;// false = slot is free for reuse
     };
 
-    // single impact line, lives in g_lines pool
+    // single impact line, lives in s_lines pool
     struct ImpactLine
     {
         float x1, y1;        // start point (near impact)
@@ -104,10 +104,10 @@ namespace
         bool  active = false;        // false = free slot
     };
 
-    SpriteEffect g_sprite_effects[MAX_SPRITE_EFFECTS]{};
+    SpriteEffect s_sprite_effects[MAX_SPRITE_EFFECTS]{};
 
-    AEGfxTexture* g_tex_shield_break = nullptr;   // shieldbreaksheet.png
-    AEGfxTexture* g_tex_friendly_heal = nullptr;  // friendlyeffect.png
+    AEGfxTexture* s_tex_shield_break = nullptr;   // shieldbreaksheet.png
+    AEGfxTexture* s_tex_friendly_heal = nullptr;  // friendlyeffect.png
 
     // builds a quad mesh whose UVs cover exactly one frame of a horizontal sprite sheet,
     // params u0 and u1 are the left and right UV edges of the frame (e.g. frame 2 of 4 = u0=0.5, u1=0.75),
@@ -126,24 +126,24 @@ namespace
         return AEGfxMeshEnd();
     }
 
-    AEGfxVertexList* g_uv_quad_mesh = nullptr;   // kept for safe Free(), not used for drawing
+    AEGfxVertexList* s_uv_quad_mesh = nullptr;   // kept for safe Free(), not used for drawing
 
     // ==============================================================
     //  State
     // ==============================================================
-    Particle     g_particles[MAX_PARTICLES]{};   // fixed pool, no dynamic allocation
-    ImpactLine   g_lines[MAX_IMPACT_LINES]{};    // fixed pool, no dynamic allocation
-    ScreenShake  g_shake{};                      // single shared shake state
-    FlashState   g_flash{};                      // single shared flash state
+    Particle     s_particles[MAX_PARTICLES]{};   // fixed pool, no dynamic allocation
+    ImpactLine   s_lines[MAX_IMPACT_LINES]{};    // fixed pool, no dynamic allocation
+    ScreenShake  s_shake{};                      // single shared shake state
+    FlashState   s_flash{};                      // single shared flash state
 
-    AEGfxVertexList* g_quad_mesh = nullptr;      // 1x1 unit rect, reused for all particles and lines
+    AEGfxVertexList* s_quad_mesh = nullptr;      // 1x1 unit rect, reused for all particles and lines
 
     // scans the sprite effect pool for the first free slot, returns its index or -1 if the pool is full,
     // caller should always check for -1 before using the returned index
     int AllocSpriteEffect()
     {
         for (int i = 0; i < MAX_SPRITE_EFFECTS; ++i)
-            if (!g_sprite_effects[i].active) return i;
+            if (!s_sprite_effects[i].active) return i;
         return -1;
     }
 
@@ -170,7 +170,7 @@ namespace
     int AllocParticle()
     {
         for (int i = 0; i < MAX_PARTICLES; ++i)
-            if (!g_particles[i].active) return i; // return first free slot
+            if (!s_particles[i].active) return i; // return first free slot
         return -1; // pool full, caller should check for -1 before using
     }
 
@@ -178,7 +178,7 @@ namespace
     int AllocLine()
     {
         for (int i = 0; i < MAX_IMPACT_LINES; ++i)
-            if (!g_lines[i].active) return i; // return first free slot
+            if (!s_lines[i].active) return i; // return first free slot
         return -1; // pool full, caller should check for -1 before using
     }
 
@@ -203,7 +203,7 @@ namespace
     // params are world x/y centre, size in pixels, rgb colour, and alpha for fade-out
     void DrawQuad(float x, float y, float size, float r, float g, float b, float alpha)
     {
-        if (!g_quad_mesh) return; // safety check
+        if (!s_quad_mesh) return; // safety check
 
         AEGfxSetRenderMode(AE_GFX_RM_COLOR);
         AEGfxSetBlendMode(AE_GFX_BM_BLEND);        // enable alpha blending
@@ -218,7 +218,7 @@ namespace
         AEMtx33Concat(&transform_m, &trans_m, &scale_m); // combine: scale first, then translate
 
         AEGfxSetTransform(transform_m.m);
-        AEGfxMeshDraw(g_quad_mesh, AE_GFX_MDM_TRIANGLES);
+        AEGfxMeshDraw(s_quad_mesh, AE_GFX_MDM_TRIANGLES);
     }
 
     // draws a 3px thick line between two world positions by scaling and rotating the shared unit mesh,
@@ -226,7 +226,7 @@ namespace
     void DrawLine(float x1, float y1, float x2, float y2,
         float r, float g, float b, float alpha)
     {
-        if (!g_quad_mesh) return; // safety check
+        if (!s_quad_mesh) return; // safety check
 
         float dx = x2 - x1;
         float dy = y2 - y1;
@@ -252,7 +252,7 @@ namespace
         AEMtx33Concat(&transform_m, &trans_m, &temp_m);  // combine: then translate
 
         AEGfxSetTransform(transform_m.m);
-        AEGfxMeshDraw(g_quad_mesh, AE_GFX_MDM_TRIANGLES);
+        AEGfxMeshDraw(s_quad_mesh, AE_GFX_MDM_TRIANGLES);
     }
 
 } // anonymous namespace
@@ -265,10 +265,10 @@ namespace
 // loads the shield break and friendly heal sprite sheet textures, safe to call on restart
 void Particles_Init()
 {
-    if (g_quad_mesh)
+    if (s_quad_mesh)
     {
-        AEGfxMeshFree(g_quad_mesh); // release old mesh from GPU memory
-        g_quad_mesh = nullptr;   // clear pointer before rebuilding
+        AEGfxMeshFree(s_quad_mesh); // release old mesh from GPU memory
+        s_quad_mesh = nullptr;   // clear pointer before rebuilding
     }
 
     // build a simple 1x1 unit rectangle mesh (centered at origin), reused for all draws
@@ -285,40 +285,40 @@ void Particles_Init()
         0.5f, 0.5f, 0xFFFFFFFF, 1.0f, 1.0f,
         -0.5f, 0.5f, 0xFFFFFFFF, 0.0f, 1.0f);
 
-    g_quad_mesh = AEGfxMeshEnd();
+    s_quad_mesh = AEGfxMeshEnd();
 
     // clear all pool slots and reset shared state
-    for (int i = 0; i < MAX_PARTICLES; ++i) g_particles[i].active = false;
-    for (int i = 0; i < MAX_IMPACT_LINES; ++i) g_lines[i].active = false;
-    for (int i = 0; i < MAX_SPRITE_EFFECTS; ++i) g_sprite_effects[i].active = false;
-    g_shake = {};
-    g_flash = {};
+    for (int i = 0; i < MAX_PARTICLES; ++i) s_particles[i].active = false;
+    for (int i = 0; i < MAX_IMPACT_LINES; ++i) s_lines[i].active = false;
+    for (int i = 0; i < MAX_SPRITE_EFFECTS; ++i) s_sprite_effects[i].active = false;
+    s_shake = {};
+    s_flash = {};
 
     // load on-kill sprite sheet textures
-    g_tex_shield_break = AEGfxTextureLoad("Assets/shieldbreaksheet.png");
-    g_tex_friendly_heal = AEGfxTextureLoad("Assets/friendlyeffect.png");
+    s_tex_shield_break = AEGfxTextureLoad("Assets/shieldbreaksheet.png");
+    s_tex_friendly_heal = AEGfxTextureLoad("Assets/friendlyeffect.png");
 }
 
 // frees the shared quad mesh and both sprite sheet textures, call this in Game_Exit() to avoid memory leaks
 void Particles_Free()
 {
     // free shared quad mesh if it exists
-    if (g_quad_mesh)
+    if (s_quad_mesh)
     {
-        AEGfxMeshFree(g_quad_mesh);
-        g_quad_mesh = nullptr;
+        AEGfxMeshFree(s_quad_mesh);
+        s_quad_mesh = nullptr;
     }
 
     // free UV quad mesh used by sprite effects
-    if (g_uv_quad_mesh)
+    if (s_uv_quad_mesh)
     {
-        AEGfxMeshFree(g_uv_quad_mesh);
-        g_uv_quad_mesh = nullptr;
+        AEGfxMeshFree(s_uv_quad_mesh);
+        s_uv_quad_mesh = nullptr;
     }
 
     // free on-kill sprite sheet textures
-    if (g_tex_shield_break) { AEGfxTextureUnload(g_tex_shield_break);  g_tex_shield_break = nullptr; }
-    if (g_tex_friendly_heal) { AEGfxTextureUnload(g_tex_friendly_heal); g_tex_friendly_heal = nullptr; }
+    if (s_tex_shield_break) { AEGfxTextureUnload(s_tex_shield_break);  s_tex_shield_break = nullptr; }
+    if (s_tex_friendly_heal) { AEGfxTextureUnload(s_tex_friendly_heal); s_tex_friendly_heal = nullptr; }
 }
 
 // advances all active particles, impact lines, sprite effects, screen shake and flash each frame,
@@ -329,7 +329,7 @@ void Particles_Update(float dt)
     // --- Particles ---
     for (int i = 0; i < MAX_PARTICLES; ++i)
     {
-        Particle& p = g_particles[i];
+        Particle& p = s_particles[i];
         if (!p.active) continue; // skip free slots
 
         p.life -= p.decay * dt;                  // fade out over time
@@ -347,7 +347,7 @@ void Particles_Update(float dt)
     // --- Sprite effects (on-kill sheet animations) ---
     for (int i = 0; i < MAX_SPRITE_EFFECTS; ++i)
     {
-        SpriteEffect& se = g_sprite_effects[i];
+        SpriteEffect& se = s_sprite_effects[i];
         if (!se.active) continue;                        // skip free slots
 
         se.timer += dt;
@@ -370,7 +370,7 @@ void Particles_Update(float dt)
     // --- Impact lines ---
     for (int i = 0; i < MAX_IMPACT_LINES; ++i)
     {
-        ImpactLine& l = g_lines[i];
+        ImpactLine& l = s_lines[i];
         if (!l.active) continue; // skip free slots
 
         l.life -= l.decay * dt;              // fade out over time
@@ -378,22 +378,22 @@ void Particles_Update(float dt)
     }
 
     // --- Screen shake ---
-    if (g_shake.timer > 0.0f)
+    if (s_shake.timer > 0.0f)
     {
-        g_shake.timer -= dt;
-        float t = g_shake.timer / g_shake.duration;          // 1(js start) to 0(end) as shake fades
-        float intensity = g_shake.intensity * t;             // shake weakens over time
-        g_shake.offset_x = RandRange(-intensity, intensity); // random x offset this frame
-        g_shake.offset_y = RandRange(-intensity * 0.5f, intensity * 0.5f); // smaller y offset
+        s_shake.timer -= dt;
+        float t = s_shake.timer / s_shake.duration;          // 1(js start) to 0(end) as shake fades
+        float intensity = s_shake.intensity * t;             // shake weakens over time
+        s_shake.offset_x = RandRange(-intensity, intensity); // random x offset this frame
+        s_shake.offset_y = RandRange(-intensity * 0.5f, intensity * 0.5f); // smaller y offset
 
-        if (g_shake.timer <= 0.0f)
+        if (s_shake.timer <= 0.0f)
         {
             // shake finished, reset offsets
-            g_shake.timer = 0.0f;
-            g_shake.offset_x = 0.0f;
-            g_shake.offset_y = 0.0f;
+            s_shake.timer = 0.0f;
+            s_shake.offset_x = 0.0f;
+            s_shake.offset_y = 0.0f;
         }
-        AEGfxSetCamPosition(g_shake.offset_x, g_shake.offset_y); // move camera to create shake
+        AEGfxSetCamPosition(s_shake.offset_x, s_shake.offset_y); // move camera to create shake
     }
     else
     {
@@ -401,13 +401,13 @@ void Particles_Update(float dt)
     }
 
     // --- Flash ---
-    if (g_flash.timer > 0.0f)
+    if (s_flash.timer > 0.0f)
     {
-        g_flash.timer -= dt;
-        if (g_flash.timer < 0.0f) g_flash.timer = 0.0f;   // clamp so it doesn't go negative
+        s_flash.timer -= dt;
+        if (s_flash.timer < 0.0f) s_flash.timer = 0.0f;   // clamp so it doesn't go negative
 
-        float t = g_flash.timer / g_flash.duration;        // 1..0 as flash fades
-        g_flash.alpha = DAMAGE_FLASH_PEAK_ALPHA * t;       // fade alpha toward 0 (flash in draw)
+        float t = s_flash.timer / s_flash.duration;        // 1..0 as flash fades
+        s_flash.alpha = DAMAGE_FLASH_PEAK_ALPHA * t;       // fade alpha toward 0 (flash in draw)
     }
 }
 
@@ -416,12 +416,12 @@ void Particles_Update(float dt)
 // call this after drawing enemies and before drawing UI so effects sit between them
 void Particles_Draw()
 {
-    if (!g_quad_mesh) return; // safety check, mesh must be initialised
+    if (!s_quad_mesh) return; // safety check, mesh must be initialised
 
     // --- Impact lines (drawn first so particles on top) ---
     for (int i = 0; i < MAX_IMPACT_LINES; ++i)
     {
-        ImpactLine& l = g_lines[i];
+        ImpactLine& l = s_lines[i];
         if (!l.active) continue;
         DrawLine(l.x1, l.y1, l.x2, l.y2, l.r, l.g, l.b, l.life); // life used as alpha
     }
@@ -429,7 +429,7 @@ void Particles_Draw()
     // --- Particles ---
     for (int i = 0; i < MAX_PARTICLES; ++i)
     {
-        Particle& p = g_particles[i];
+        Particle& p = s_particles[i];
         if (!p.active) continue;
         DrawQuad(p.x, p.y, p.size, p.r, p.g, p.b, p.life); // life used as alpha
     }
@@ -437,12 +437,12 @@ void Particles_Draw()
     // --- Sprite effects (on-kill sheet animations) ---
     for (int i = 0; i < MAX_SPRITE_EFFECTS; ++i)
     {
-        SpriteEffect& se = g_sprite_effects[i];
+        SpriteEffect& se = s_sprite_effects[i];
         if (!se.active) continue;
 
         AEGfxTexture* tex = (se.type == SpriteEffectType::SHIELD_BREAK)
-            ? g_tex_shield_break
-            : g_tex_friendly_heal;
+            ? s_tex_shield_break
+            : s_tex_friendly_heal;
         if (!tex) continue;                              // texture failed to load, skip silently
 
         // calculate UV range for the current frame only
@@ -472,19 +472,19 @@ void Particles_Draw()
     }
 
     // --- Screen flash (drawn last so it overlays everything) ---
-    if (g_flash.alpha > 0.0f && g_quad_mesh)
+    if (s_flash.alpha > 0.0f && s_quad_mesh)
     {
         AEGfxSetRenderMode(AE_GFX_RM_COLOR);
         AEGfxSetBlendMode(AE_GFX_BM_BLEND);
         AEGfxSetTransparency(1.0f);
-        AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, g_flash.alpha); // white overlay with fading alpha
+        AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, s_flash.alpha); // white overlay with fading alpha
         AEGfxSetColorToAdd(0.0f, 0.0f, 0.0f, 0.0f);
 
         AEMtx33 transform_m;
         AEMtx33Scale(&transform_m, 1600.0f, 900.0f); // scale quad to full screen size
 
         AEGfxSetTransform(transform_m.m);
-        AEGfxMeshDraw(g_quad_mesh, AE_GFX_MDM_TRIANGLES);
+        AEGfxMeshDraw(s_quad_mesh, AE_GFX_MDM_TRIANGLES);
     }
 
     // reset render state cleanly so subsequent draw calls aren't affected
@@ -511,7 +511,7 @@ void Particles_SpawnDamageImpact(float x, float y)
         int slot = AllocParticle();  // find a free slot in the pool
         if (slot < 0) break;         // pool full, stop spawning
 
-        Particle& p = g_particles[slot];
+        Particle& p = s_particles[slot];
         p.active = true;
         p.x = x + RandRange(-12.0f, 12.0f);            // scatter spawn pos around impact point
         p.y = y + RandRange(-4.0f, 4.0f);
@@ -533,7 +533,7 @@ void Particles_SpawnDamageImpact(float x, float y)
         int slot = AllocLine(); // find a free slot in the pool
         if (slot < 0) break;    // pool full, stop spawning
 
-        ImpactLine& l = g_lines[slot];
+        ImpactLine& l = s_lines[slot];
         l.active = true;
 
         float angle = RandRange(-0.4f, 0.4f);  // near horizontal angle with slight random variation
@@ -555,14 +555,14 @@ void Particles_SpawnDamageImpact(float x, float y)
     }
 
     // --- Screen flash ---
-    g_flash.timer = DAMAGE_FLASH_DURATION;    // start flash countdown
-    g_flash.duration = DAMAGE_FLASH_DURATION; // store for fade calculation
-    g_flash.alpha = DAMAGE_FLASH_PEAK_ALPHA;  // start at max opacity
+    s_flash.timer = DAMAGE_FLASH_DURATION;    // start flash countdown
+    s_flash.duration = DAMAGE_FLASH_DURATION; // store for fade calculation
+    s_flash.alpha = DAMAGE_FLASH_PEAK_ALPHA;  // start at max opacity
 
     // --- Screen shake ---
-    g_shake.timer = DAMAGE_SHAKE_DURATION;    // start shake countdown
-    g_shake.duration = DAMAGE_SHAKE_DURATION; // store for fade calculation
-    g_shake.intensity = DAMAGE_SHAKE_INTENSITY; // max camera offset
+    s_shake.timer = DAMAGE_SHAKE_DURATION;    // start shake countdown
+    s_shake.duration = DAMAGE_SHAKE_DURATION; // store for fade calculation
+    s_shake.intensity = DAMAGE_SHAKE_INTENSITY; // max camera offset
 }
 
 // spawns a coloured burst of particles at the given world position when the player kills an enemy,
@@ -584,7 +584,7 @@ void Particles_SpawnKillImpact(float x, float y, int word_length)
         int slot = AllocParticle(); // find a free slot in the pool
         if (slot < 0) break;        // pool full, stop spawning
 
-        Particle& p = g_particles[slot];
+        Particle& p = s_particles[slot];
         p.active = true;
         p.x = x + RandRange(-10.0f, 10.0f); // scatter spawn pos around impact point
         p.y = y + RandRange(-4.0f, 4.0f);
@@ -612,9 +612,9 @@ void Particles_SpawnKillImpact(float x, float y, int word_length)
 void Particles_TriggerShake(float duration, float intensity)
 {
     // overwrite any ongoing shake with new values
-    g_shake.timer = duration;
-    g_shake.duration = duration;
-    g_shake.intensity = intensity;
+    s_shake.timer = duration;
+    s_shake.duration = duration;
+    s_shake.intensity = intensity;
 }
 
 // plays the shield break sprite sheet animation centred on the enemy position,
@@ -625,7 +625,7 @@ void Particles_SpawnShieldBreak(float x, float y)
     int slot = AllocSpriteEffect();
     if (slot < 0) return;                              // pool full, skip silently
 
-    SpriteEffect& se = g_sprite_effects[slot];
+    SpriteEffect& se = s_sprite_effects[slot];
     se.active = true;
     se.x = x;
     se.y = y;
@@ -645,7 +645,7 @@ void Particles_SpawnFriendlyHeal(float x, float y)
     int slot = AllocSpriteEffect();
     if (slot < 0) return;                              // pool full, skip silently
 
-    SpriteEffect& se = g_sprite_effects[slot];
+    SpriteEffect& se = s_sprite_effects[slot];
     se.active = true;
     se.x = x;
     se.y = y;
@@ -656,4 +656,3 @@ void Particles_SpawnFriendlyHeal(float x, float y)
     se.alpha = 1.0f;
     se.type = SpriteEffectType::FRIENDLY_HEAL;
 }
-#pragma warning(pop)

@@ -97,8 +97,8 @@ namespace UiGameOver
 
         if (!is_game_over)
         {
-            temp_name = Main_Menu_GetPlayerName();
-            Leaderboard_System::Write_ZenLeaderboard(temp_name, score.score_value);
+            temp_name = MainMenuGetPlayerName();
+            LeaderboardSystem::WriteZenLeaderboard(temp_name, score.score_value);
             is_game_over = true;
             s_fade_in_timer = 0.0f;
         }
@@ -106,7 +106,7 @@ namespace UiGameOver
         if (!open_leaderboard)
             Ui_GameOverMenu(is_game_over, score, open_leaderboard, bg_mesh, is_dead);
         else
-            Leaderboard_System::Display_ZenLeaderboard(open_leaderboard);
+            LeaderboardSystem::DisplayZenLeaderboard(open_leaderboard);
     }
 
     void Ui_GameOverMenu(bool& is_game_over, const Data::Score& score,
@@ -236,7 +236,7 @@ namespace UiGameOver
 
         if (DrawButton("LEADERBOARD", BTN_X, leader_y, BTN_W, BTN_H, 0.2f, 0.5f, 1.0f, s_tween_leaderboard))
         {
-            Leaderboard_System::Read_TimeLeaderboard();
+            LeaderboardSystem::ReadTimeLeaderboard();
             open_leaderboard = true;
         }
 

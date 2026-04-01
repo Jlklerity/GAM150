@@ -91,32 +91,32 @@ namespace
     // ---------------------------------------------------------------------------
     // UI POSITIONS (DYNAMIC)
     // ---------------------------------------------------------------------------
-    static float LOGO_Y = 0.0f;
-    static float PLAY_BTN_Y = 0.0f;
-    static float SHOP_BTN_Y = 0.0f;
-    static float EXIT_BTN_Y = 0.0f;
-    static float EXITNAME_BTN_Y = 0.0f;
-    static float EXITNAME_BTN_X = 0.0f;
-    static float ENTERGAME_BTN_Y = 0.0f;
-    static float ENTERGAME_BTN_X = 0.0f;
-    static float ZENMODE_BTN_X = 0.0f;
-    static float ZENMODE_BTN_Y = 0.0f;
-    static float TIMEMODE_BTN_X = 0.0f;
-    static float TIMEMODE_BTN_Y = 0.0f;
-    static float SETTINGS_BTN_X = 0.0f;
-    static float SETTINGS_BTN_Y = 0.0f;
-    static float LEFTARROW_BTN_X = 0.0f;
-    static float LEFTARROW_BTN_Y = 0.0f;
-    static float RIGHTARROW_BTN_X = 0.0f;
-    static float RIGHTARROW_BTN_Y = 0.0f;
-    static float LEADERBOARD_BTN_X = 0.0f;
-    static float LEADERBOARD_BTN_Y = 0.0f;
-    static float TUTORIAL_BTN_Y = 0.0f;
-    static float CREDITS_BTN_X = 0.0f;
-    static float CREDITS_BTN_Y = 0.0f;
-    static float EMPTY_NAME_WARNING_TIMER = 0.0f;
-    static float EMPTY_NAME_WARNING_X = 0.0f;
-    static float EMPTY_NAME_WARNING_Y = 0.0f;
+    static float s_logo_y = 0.0f;
+    static float s_play_btn_y = 0.0f;
+    static float s_shop_btn_y = 0.0f;
+    static float s_exit_btn_y = 0.0f;
+    static float s_exitname_btn_y = 0.0f;
+    static float s_exitname_btn_x = 0.0f;
+    static float s_entergame_btn_y = 0.0f;
+    static float s_entergame_btn_x = 0.0f;
+    static float s_zenmode_btn_x = 0.0f;
+    static float s_zenmode_btn_y = 0.0f;
+    static float s_timemode_btn_x = 0.0f;
+    static float s_timemode_btn_y = 0.0f;
+    static float s_settings_btn_x = 0.0f;
+    static float s_settings_btn_y = 0.0f;
+    static float s_leftarrow_btn_x = 0.0f;
+    static float s_leftarrow_btn_y = 0.0f;
+    static float s_rightarrow_btn_x = 0.0f;
+    static float s_rightarrow_btn_y = 0.0f;
+    static float s_leaderboard_btn_x = 0.0f;
+    static float s_leaderboard_btn_y = 0.0f;
+    static float s_tutorial_btn_y = 0.0f;
+    static float s_credits_btn_x = 0.0f;
+    static float s_credits_btn_y = 0.0f;
+    static float s_empty_name_warning_timer = 0.0f;
+    static float s_empty_name_warning_x = 0.0f;
+    static float s_empty_name_warning_y = 0.0f;
 
     // ---------------------------------------------------------------------------
     // STATE & LOGIC VARIABLES
@@ -168,12 +168,12 @@ namespace
     static bool  s_splash_active = false;
 }
 
-std::string Main_Menu_GetPlayerName()
+std::string MainMenuGetPlayerName()
 {
     return s_player_name;
 }
 
-void Draw_Main_Menu(float text_ndc_offset)
+void DrawMainMenu(float text_ndc_offset)
 {
     AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
     AEGfxSetBlendMode(AE_GFX_BM_BLEND);
@@ -185,16 +185,16 @@ void Draw_Main_Menu(float text_ndc_offset)
     {
         AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
         AEGfxTextureSet(s_tex_logo, 0.0f, 0.0f);
-        Mesh_Renderer(s_mesh_logo, 0.0f + s_ui_offset_x, LOGO_Y, LOGO_WIDTH, LOGO_HEIGHT, 0.0f);
+        Mesh_Renderer(s_mesh_logo, 0.0f + s_ui_offset_x, s_logo_y, LOGO_WIDTH, LOGO_HEIGHT, 0.0f);
     }
 
     if (s_tex_arrows)
     {
         AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
         AEGfxTextureSet(s_tex_arrows, 0.0f, 0.0f);
-        Mesh_Renderer(s_mesh_left_arrow, LEFTARROW_BTN_X + s_ui_offset_x, LEFTARROW_BTN_Y,
+        Mesh_Renderer(s_mesh_left_arrow, s_leftarrow_btn_x + s_ui_offset_x, s_leftarrow_btn_y,
             LEFTARROW_WIDTH * s_tween_left_arrow.scale, LEFTARROW_HEIGHT * s_tween_left_arrow.scale, 0.0f);
-        Mesh_Renderer(s_mesh_right_arrow, RIGHTARROW_BTN_X + s_ui_offset_x, RIGHTARROW_BTN_Y,
+        Mesh_Renderer(s_mesh_right_arrow, s_rightarrow_btn_x + s_ui_offset_x, s_rightarrow_btn_y,
             RIGHTARROW_WIDTH * s_tween_right_arrow.scale, RIGHTARROW_HEIGHT * s_tween_right_arrow.scale, 0.0f);
     }
 
@@ -203,7 +203,7 @@ void Draw_Main_Menu(float text_ndc_offset)
         float text_w = 0.0f, text_h = 0.0f;
         AEGfxGetPrintSize(Graphics::g_font_id, s_selected_mode.c_str(), 1.0f, &text_w, &text_h);
         float text_ndc_x = 0.0f - (text_w * 0.5f) + s_ui_offset_x;
-        float text_ndc_y = RIGHTARROW_BTN_Y / (s_win_h * 0.5f) - 0.025f + text_ndc_offset;
+        float text_ndc_y = s_rightarrow_btn_y / (s_win_h * 0.5f) - 0.025f + text_ndc_offset;
         AEGfxPrint(Graphics::g_font_id, s_selected_mode.c_str(), text_ndc_x, text_ndc_y, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f);
     }
 
@@ -211,14 +211,14 @@ void Draw_Main_Menu(float text_ndc_offset)
     {
         AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
         AEGfxTextureSet(s_tex_play, 0.0f, 0.0f);
-        Mesh_Renderer(s_mesh_btn, 0.0f + s_ui_offset_x, PLAY_BTN_Y,
+        Mesh_Renderer(s_mesh_btn, 0.0f + s_ui_offset_x, s_play_btn_y,
             PLAY_WIDTH * s_tween_play.scale, PLAY_HEIGHT * s_tween_play.scale, 0.0f);
     }
 
     if (s_tex_shop)
     {
         AEGfxTextureSet(s_tex_shop, 0.0f, 0.0f);
-        Mesh_Renderer(s_mesh_btn, 0.0f + s_ui_offset_x, SHOP_BTN_Y,
+        Mesh_Renderer(s_mesh_btn, 0.0f + s_ui_offset_x, s_shop_btn_y,
             SHOP_WIDTH * s_tween_shop.scale, SHOP_HEIGHT * s_tween_shop.scale, 0.0f);
     }
 
@@ -228,7 +228,7 @@ void Draw_Main_Menu(float text_ndc_offset)
         AEGfxSetBlendMode(AE_GFX_BM_BLEND);
         AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);
         AEGfxTextureSet(s_tex_tutorial, 0.0f, 0.0f);
-        Mesh_Renderer(s_mesh_btn, 0.0f + s_ui_offset_x, TUTORIAL_BTN_Y,
+        Mesh_Renderer(s_mesh_btn, 0.0f + s_ui_offset_x, s_tutorial_btn_y,
             TUTORIAL_WIDTH * s_tween_tutorial.scale, TUTORIAL_HEIGHT * s_tween_tutorial.scale, 0.0f);
     }
 
@@ -236,7 +236,7 @@ void Draw_Main_Menu(float text_ndc_offset)
     {
         AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
         AEGfxTextureSet(s_tex_leaderboard, 0.0f, 0.0f);
-        Mesh_Renderer(s_mesh_leaderboard_btn, LEADERBOARD_BTN_X + s_ui_offset_x, LEADERBOARD_BTN_Y,
+        Mesh_Renderer(s_mesh_leaderboard_btn, s_leaderboard_btn_x + s_ui_offset_x, s_leaderboard_btn_y,
             LEADERBOARD_WIDTH * s_tween_leaderboard.scale, LEADERBOARD_HEIGHT * s_tween_leaderboard.scale, 0.0f);
     }
 
@@ -244,7 +244,7 @@ void Draw_Main_Menu(float text_ndc_offset)
     {
         AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
         AEGfxTextureSet(s_tex_settings, 0.0f, 0.0f);
-        Mesh_Renderer(s_mesh_settings_btn, SETTINGS_BTN_X + s_ui_offset_x, SETTINGS_BTN_Y,
+        Mesh_Renderer(s_mesh_settings_btn, s_settings_btn_x + s_ui_offset_x, s_settings_btn_y,
             SETTINGS_WIDTH * s_tween_settings.scale, SETTINGS_HEIGHT * s_tween_settings.scale, 0.0f);
     }
 
@@ -252,7 +252,7 @@ void Draw_Main_Menu(float text_ndc_offset)
     {
         AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
         AEGfxTextureSet(s_tex_credits, 0.0f, 0.0f);
-        Mesh_Renderer(s_mesh_credits_btn, CREDITS_BTN_X + s_ui_offset_x, CREDITS_BTN_Y,
+        Mesh_Renderer(s_mesh_credits_btn, s_credits_btn_x + s_ui_offset_x, s_credits_btn_y,
             CREDITS_WIDTH * s_tween_credits.scale, CREDITS_HEIGHT * s_tween_credits.scale, 0.0f);
     }
 
@@ -262,7 +262,7 @@ void Draw_Main_Menu(float text_ndc_offset)
         AEGfxSetBlendMode(AE_GFX_BM_BLEND);
         AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);
         AEGfxTextureSet(s_tex_exit, 0.0f, 0.0f);
-        Mesh_Renderer(s_mesh_exit_btn, 0.0f + s_ui_offset_x, EXIT_BTN_Y,
+        Mesh_Renderer(s_mesh_exit_btn, 0.0f + s_ui_offset_x, s_exit_btn_y,
             EXIT_WIDTH * s_tween_exit.scale, EXIT_HEIGHT * s_tween_exit.scale, 0.0f);
     }
 }
@@ -285,23 +285,23 @@ void Main_Menu_Input()
         bool click = AEInputCheckTriggered(AEVK_LBUTTON);
 
         bool h_play = (s_world_x >= -(PLAY_HITBOX_WIDTH * 0.5f) && s_world_x <= (PLAY_HITBOX_WIDTH * 0.5f) &&
-            s_world_y >= PLAY_BTN_Y - (PLAY_HITBOX_HEIGHT * 0.5f) && s_world_y <= PLAY_BTN_Y + (PLAY_HITBOX_HEIGHT * 0.5f));
+            s_world_y >= s_play_btn_y - (PLAY_HITBOX_HEIGHT * 0.5f) && s_world_y <= s_play_btn_y + (PLAY_HITBOX_HEIGHT * 0.5f));
         bool h_shop = (s_world_x >= -(SHOP_HITBOX_WIDTH * 0.5f) && s_world_x <= (SHOP_HITBOX_WIDTH * 0.5f) &&
-            s_world_y >= SHOP_BTN_Y - (SHOP_HITBOX_HEIGHT * 0.5f) && s_world_y <= SHOP_BTN_Y + (SHOP_HITBOX_HEIGHT * 0.5f));
+            s_world_y >= s_shop_btn_y - (SHOP_HITBOX_HEIGHT * 0.5f) && s_world_y <= s_shop_btn_y + (SHOP_HITBOX_HEIGHT * 0.5f));
         bool h_tut = (s_world_x >= -(TUTORIAL_HITBOX_WIDTH * 0.5f) && s_world_x <= (TUTORIAL_HITBOX_WIDTH * 0.5f) &&
-            s_world_y >= TUTORIAL_BTN_Y - (TUTORIAL_HITBOX_HEIGHT * 0.5f) && s_world_y <= TUTORIAL_BTN_Y + (TUTORIAL_HITBOX_HEIGHT * 0.5f));
+            s_world_y >= s_tutorial_btn_y - (TUTORIAL_HITBOX_HEIGHT * 0.5f) && s_world_y <= s_tutorial_btn_y + (TUTORIAL_HITBOX_HEIGHT * 0.5f));
         bool h_exit = (s_world_x >= -(EXIT_WIDTH * 0.5f) && s_world_x <= (EXIT_WIDTH * 0.5f) &&
-            s_world_y >= EXIT_BTN_Y - (EXIT_HEIGHT * 0.5f) && s_world_y <= EXIT_BTN_Y + (EXIT_HEIGHT * 0.5f));
-        bool h_set = (s_world_x >= SETTINGS_BTN_X - (SETTINGS_WIDTH * 0.5f) && s_world_x <= SETTINGS_BTN_X + (SETTINGS_WIDTH * 0.5f) &&
-            s_world_y >= SETTINGS_BTN_Y - (SETTINGS_HEIGHT * 0.5f) && s_world_y <= SETTINGS_BTN_Y + (SETTINGS_HEIGHT * 0.5f));
-        bool h_ldr = (s_world_x >= LEADERBOARD_BTN_X - (LEADERBOARD_WIDTH * 0.5f) && s_world_x <= LEADERBOARD_BTN_X + (LEADERBOARD_WIDTH * 0.5f) &&
-            s_world_y >= LEADERBOARD_BTN_Y - (LEADERBOARD_HEIGHT * 0.5f) && s_world_y <= LEADERBOARD_BTN_Y + (LEADERBOARD_HEIGHT * 0.5f));
-        bool h_l_arr = (s_world_x >= LEFTARROW_BTN_X - (LEFTARROW_WIDTH * 0.5f) && s_world_x <= LEFTARROW_BTN_X + (LEFTARROW_WIDTH * 0.5f) &&
-            s_world_y >= LEFTARROW_BTN_Y - (LEFTARROW_HEIGHT * 0.5f) && s_world_y <= LEFTARROW_BTN_Y + (LEFTARROW_HEIGHT * 0.5f));
-        bool h_r_arr = (s_world_x >= RIGHTARROW_BTN_X - (RIGHTARROW_WIDTH * 0.5f) && s_world_x <= RIGHTARROW_BTN_X + (RIGHTARROW_WIDTH * 0.5f) &&
-            s_world_y >= RIGHTARROW_BTN_Y - (RIGHTARROW_HEIGHT * 0.5f) && s_world_y <= RIGHTARROW_BTN_Y + (RIGHTARROW_HEIGHT * 0.5f));
-        bool h_cred = (s_world_x >= CREDITS_BTN_X - (CREDITS_WIDTH * 0.5f) && s_world_x <= CREDITS_BTN_X + (CREDITS_WIDTH * 0.5f) &&
-            s_world_y >= CREDITS_BTN_Y - (CREDITS_HEIGHT * 0.5f) && s_world_y <= CREDITS_BTN_Y + (CREDITS_HEIGHT * 0.5f));
+            s_world_y >= s_exit_btn_y - (EXIT_HEIGHT * 0.5f) && s_world_y <= s_exit_btn_y + (EXIT_HEIGHT * 0.5f));
+        bool h_set = (s_world_x >= s_settings_btn_x - (SETTINGS_WIDTH * 0.5f) && s_world_x <= s_settings_btn_x + (SETTINGS_WIDTH * 0.5f) &&
+            s_world_y >= s_settings_btn_y - (SETTINGS_HEIGHT * 0.5f) && s_world_y <= s_settings_btn_y + (SETTINGS_HEIGHT * 0.5f));
+        bool h_ldr = (s_world_x >= s_leaderboard_btn_x - (LEADERBOARD_WIDTH * 0.5f) && s_world_x <= s_leaderboard_btn_x + (LEADERBOARD_WIDTH * 0.5f) &&
+            s_world_y >= s_leaderboard_btn_y - (LEADERBOARD_HEIGHT * 0.5f) && s_world_y <= s_leaderboard_btn_y + (LEADERBOARD_HEIGHT * 0.5f));
+        bool h_l_arr = (s_world_x >= s_leftarrow_btn_x - (LEFTARROW_WIDTH * 0.5f) && s_world_x <= s_leftarrow_btn_x + (LEFTARROW_WIDTH * 0.5f) &&
+            s_world_y >= s_leftarrow_btn_y - (LEFTARROW_HEIGHT * 0.5f) && s_world_y <= s_leftarrow_btn_y + (LEFTARROW_HEIGHT * 0.5f));
+        bool h_r_arr = (s_world_x >= s_rightarrow_btn_x - (RIGHTARROW_WIDTH * 0.5f) && s_world_x <= s_rightarrow_btn_x + (RIGHTARROW_WIDTH * 0.5f) &&
+            s_world_y >= s_rightarrow_btn_y - (RIGHTARROW_HEIGHT * 0.5f) && s_world_y <= s_rightarrow_btn_y + (RIGHTARROW_HEIGHT * 0.5f));
+        bool h_cred = (s_world_x >= s_credits_btn_x - (CREDITS_WIDTH * 0.5f) && s_world_x <= s_credits_btn_x + (CREDITS_WIDTH * 0.5f) &&
+            s_world_y >= s_credits_btn_y - (CREDITS_HEIGHT * 0.5f) && s_world_y <= s_credits_btn_y + (CREDITS_HEIGHT * 0.5f));
 
         if (!s_splash_active)
         {
@@ -330,59 +330,59 @@ void Main_Menu_Input()
         && AEInputCheckTriggered(AEVK_LBUTTON))
     {
         if (s_world_x >= 0.0f - (PLAY_HITBOX_WIDTH * 0.5f) && s_world_x <= 0.0f + (PLAY_HITBOX_WIDTH * 0.5f) &&
-            s_world_y >= PLAY_BTN_Y - (PLAY_HITBOX_HEIGHT * 0.5f) && s_world_y <= PLAY_BTN_Y + (PLAY_HITBOX_HEIGHT * 0.5f))
+            s_world_y >= s_play_btn_y - (PLAY_HITBOX_HEIGHT * 0.5f) && s_world_y <= s_play_btn_y + (PLAY_HITBOX_HEIGHT * 0.5f))
         {
             SoundManager::PlayClickBtnSfx();
             s_is_transitioning_to_name = true;
             ScreenTransitions::ScreenTransition_Init();
         }
         else if (s_world_x >= 0.0f - (SHOP_HITBOX_WIDTH * 0.5f) && s_world_x <= 0.0f + (SHOP_HITBOX_WIDTH * 0.5f) &&
-            s_world_y >= SHOP_BTN_Y - (SHOP_HITBOX_HEIGHT * 0.5f) && s_world_y <= SHOP_BTN_Y + (SHOP_HITBOX_HEIGHT * 0.5f))
+            s_world_y >= s_shop_btn_y - (SHOP_HITBOX_HEIGHT * 0.5f) && s_world_y <= s_shop_btn_y + (SHOP_HITBOX_HEIGHT * 0.5f))
         {
             SoundManager::PlayClickBtnSfx();
             s_transitioning_to_shop = true;
             ScreenTransitions::ScreenTransition_Init();
         }
         else if (s_world_x >= 0.0f - (EXIT_WIDTH * 0.5f) && s_world_x <= 0.0f + (EXIT_WIDTH * 0.5f) &&
-            s_world_y >= EXIT_BTN_Y - (EXIT_HEIGHT * 0.5f) && s_world_y <= EXIT_BTN_Y + (EXIT_HEIGHT * 0.5f))
+            s_world_y >= s_exit_btn_y - (EXIT_HEIGHT * 0.5f) && s_world_y <= s_exit_btn_y + (EXIT_HEIGHT * 0.5f))
         {
             SoundManager::PlayClickBtnSfx();
             UiPauseMenu::OpenPopup(UiPauseMenu::POPUP_QUIT);
         }
-        else if (s_world_x >= SETTINGS_BTN_X - (SETTINGS_WIDTH * 0.5f) && s_world_x <= SETTINGS_BTN_X + (SETTINGS_WIDTH * 0.5f) &&
-            s_world_y >= SETTINGS_BTN_Y - (SETTINGS_HEIGHT * 0.5f) && s_world_y <= SETTINGS_BTN_Y + (SETTINGS_HEIGHT * 0.5f))
+        else if (s_world_x >= s_settings_btn_x - (SETTINGS_WIDTH * 0.5f) && s_world_x <= s_settings_btn_x + (SETTINGS_WIDTH * 0.5f) &&
+            s_world_y >= s_settings_btn_y - (SETTINGS_HEIGHT * 0.5f) && s_world_y <= s_settings_btn_y + (SETTINGS_HEIGHT * 0.5f))
         {
             SoundManager::PlayClickBtnSfx();
             s_in_settings = true;
         }
-        else if (s_world_x >= LEFTARROW_BTN_X - (LEFTARROW_WIDTH * 0.5f) && s_world_x <= LEFTARROW_BTN_X + (LEFTARROW_WIDTH * 0.5f) &&
-            s_world_y >= LEFTARROW_BTN_Y - (LEFTARROW_HEIGHT * 0.5f) && s_world_y <= LEFTARROW_BTN_Y + (LEFTARROW_HEIGHT * 0.5f))
+        else if (s_world_x >= s_leftarrow_btn_x - (LEFTARROW_WIDTH * 0.5f) && s_world_x <= s_leftarrow_btn_x + (LEFTARROW_WIDTH * 0.5f) &&
+            s_world_y >= s_leftarrow_btn_y - (LEFTARROW_HEIGHT * 0.5f) && s_world_y <= s_leftarrow_btn_y + (LEFTARROW_HEIGHT * 0.5f))
         {
             SoundManager::PlayClickBtnSfx();
             s_selected_mode = (s_selected_mode == "ZEN") ? "TIME" : "ZEN";
         }
-        else if (s_world_x >= RIGHTARROW_BTN_X - (RIGHTARROW_WIDTH * 0.5f) && s_world_x <= RIGHTARROW_BTN_X + (RIGHTARROW_WIDTH * 0.5f) &&
-            s_world_y >= RIGHTARROW_BTN_Y - (RIGHTARROW_HEIGHT * 0.5f) && s_world_y <= RIGHTARROW_BTN_Y + (RIGHTARROW_HEIGHT * 0.5f))
+        else if (s_world_x >= s_rightarrow_btn_x - (RIGHTARROW_WIDTH * 0.5f) && s_world_x <= s_rightarrow_btn_x + (RIGHTARROW_WIDTH * 0.5f) &&
+            s_world_y >= s_rightarrow_btn_y - (RIGHTARROW_HEIGHT * 0.5f) && s_world_y <= s_rightarrow_btn_y + (RIGHTARROW_HEIGHT * 0.5f))
         {
             SoundManager::PlayClickBtnSfx();
             s_selected_mode = (s_selected_mode == "ZEN") ? "TIME" : "ZEN";
         }
-        else if (s_world_x >= LEADERBOARD_BTN_X - (LEADERBOARD_WIDTH * 0.5f) && s_world_x <= LEADERBOARD_BTN_X + (LEADERBOARD_WIDTH * 0.5f) &&
-            s_world_y >= LEADERBOARD_BTN_Y - (LEADERBOARD_HEIGHT * 0.5f) && s_world_y <= LEADERBOARD_BTN_Y + (LEADERBOARD_HEIGHT * 0.5f))
+        else if (s_world_x >= s_leaderboard_btn_x - (LEADERBOARD_WIDTH * 0.5f) && s_world_x <= s_leaderboard_btn_x + (LEADERBOARD_WIDTH * 0.5f) &&
+            s_world_y >= s_leaderboard_btn_y - (LEADERBOARD_HEIGHT * 0.5f) && s_world_y <= s_leaderboard_btn_y + (LEADERBOARD_HEIGHT * 0.5f))
         {
             SoundManager::PlayClickBtnSfx();
             s_leaderboard_mode = "ZEN";
             s_in_leaderboard = true;
         }
         else if (s_world_x >= 0.0f - (TUTORIAL_HITBOX_WIDTH * 0.5f) && s_world_x <= 0.0f + (TUTORIAL_HITBOX_WIDTH * 0.5f) &&
-            s_world_y >= TUTORIAL_BTN_Y - (TUTORIAL_HITBOX_HEIGHT * 0.5f) && s_world_y <= TUTORIAL_BTN_Y + (TUTORIAL_HITBOX_HEIGHT * 0.5f))
+            s_world_y >= s_tutorial_btn_y - (TUTORIAL_HITBOX_HEIGHT * 0.5f) && s_world_y <= s_tutorial_btn_y + (TUTORIAL_HITBOX_HEIGHT * 0.5f))
         {
             SoundManager::PlayClickBtnSfx();
             s_is_zooming_to_game = true;
             ParallaxZoom::Start(GS_TUTORIAL);
         }
-        else if (s_world_x >= CREDITS_BTN_X - (CREDITS_WIDTH * 0.5f) && s_world_x <= CREDITS_BTN_X + (CREDITS_WIDTH * 0.5f) &&
-            s_world_y >= CREDITS_BTN_Y - (CREDITS_HEIGHT * 0.5f) && s_world_y <= CREDITS_BTN_Y + (CREDITS_HEIGHT * 0.5f))
+        else if (s_world_x >= s_credits_btn_x - (CREDITS_WIDTH * 0.5f) && s_world_x <= s_credits_btn_x + (CREDITS_WIDTH * 0.5f) &&
+            s_world_y >= s_credits_btn_y - (CREDITS_HEIGHT * 0.5f) && s_world_y <= s_credits_btn_y + (CREDITS_HEIGHT * 0.5f))
         {
             SoundManager::PlayClickBtnSfx();
             g_game_state_next = GS_CREDITS;
@@ -407,18 +407,18 @@ void Main_Menu_EnterName(float world_y_offset, float ndc_y_offset, bool allow_in
     {
         bool enter_pressed = AEInputCheckTriggered(AEVK_RETURN);
         bool enter_clicked = AEInputCheckTriggered(AEVK_LBUTTON) &&
-            (s_world_x >= ENTERGAME_BTN_X - (EXITNAME_WIDTH * 0.5f) && s_world_x <= ENTERGAME_BTN_X + (EXITNAME_WIDTH * 0.5f) &&
-                s_world_y >= ENTERGAME_BTN_Y - (ENTERGAME_HEIGHT * 0.5f) && s_world_y <= ENTERGAME_BTN_Y + (ENTERGAME_HEIGHT * 0.5f));
+            (s_world_x >= s_entergame_btn_x - (EXITNAME_WIDTH * 0.5f) && s_world_x <= s_entergame_btn_x + (EXITNAME_WIDTH * 0.5f) &&
+                s_world_y >= s_entergame_btn_y - (ENTERGAME_HEIGHT * 0.5f) && s_world_y <= s_entergame_btn_y + (ENTERGAME_HEIGHT * 0.5f));
 
         bool exit_clicked = AEInputCheckTriggered(AEVK_LBUTTON) &&
-            (s_world_x >= EXITNAME_BTN_X - (EXITNAME_WIDTH * 0.5f) && s_world_x <= EXITNAME_BTN_X + (EXITNAME_WIDTH * 0.5f) &&
-                s_world_y >= EXITNAME_BTN_Y - (EXITNAME_HEIGHT * 0.5f) && s_world_y <= EXITNAME_BTN_Y + (EXITNAME_HEIGHT * 0.5f));
+            (s_world_x >= s_exitname_btn_x - (EXITNAME_WIDTH * 0.5f) && s_world_x <= s_exitname_btn_x + (EXITNAME_WIDTH * 0.5f) &&
+                s_world_y >= s_exitname_btn_y - (EXITNAME_HEIGHT * 0.5f) && s_world_y <= s_exitname_btn_y + (EXITNAME_HEIGHT * 0.5f));
 
         float dt = (float)AEFrameRateControllerGetFrameTime();
-        bool h_enter = (s_world_x >= ENTERGAME_BTN_X - (EXITNAME_WIDTH * 0.5f) && s_world_x <= ENTERGAME_BTN_X + (EXITNAME_WIDTH * 0.5f) &&
-            s_world_y >= ENTERGAME_BTN_Y - (ENTERGAME_HEIGHT * 0.5f) && s_world_y <= ENTERGAME_BTN_Y + (ENTERGAME_HEIGHT * 0.5f));
-        bool h_back = (s_world_x >= EXITNAME_BTN_X - (EXITNAME_WIDTH * 0.5f) && s_world_x <= EXITNAME_BTN_X + (EXITNAME_WIDTH * 0.5f) &&
-            s_world_y >= EXITNAME_BTN_Y - (EXITNAME_HEIGHT * 0.5f) && s_world_y <= EXITNAME_BTN_Y + (EXITNAME_HEIGHT * 0.5f));
+        bool h_enter = (s_world_x >= s_entergame_btn_x - (EXITNAME_WIDTH * 0.5f) && s_world_x <= s_entergame_btn_x + (EXITNAME_WIDTH * 0.5f) &&
+            s_world_y >= s_entergame_btn_y - (ENTERGAME_HEIGHT * 0.5f) && s_world_y <= s_entergame_btn_y + (ENTERGAME_HEIGHT * 0.5f));
+        bool h_back = (s_world_x >= s_exitname_btn_x - (EXITNAME_WIDTH * 0.5f) && s_world_x <= s_exitname_btn_x + (EXITNAME_WIDTH * 0.5f) &&
+            s_world_y >= s_exitname_btn_y - (EXITNAME_HEIGHT * 0.5f) && s_world_y <= s_exitname_btn_y + (EXITNAME_HEIGHT * 0.5f));
         ButtonTween_Update(s_tween_enter_game, h_enter, enter_clicked, dt);
         ButtonTween_Update(s_tween_back_name, h_back, exit_clicked, dt);
 
@@ -433,9 +433,9 @@ void Main_Menu_EnterName(float world_y_offset, float ndc_y_offset, bool allow_in
         else if ((enter_pressed || enter_clicked) && s_player_name.empty() && s_selected_mode != "")
         {
             SoundManager::PlayClickBtnSfx();
-            EMPTY_NAME_WARNING_TIMER = 1.5f;
-            EMPTY_NAME_WARNING_X = 0.0f;
-            EMPTY_NAME_WARNING_Y = 0.05f;
+            s_empty_name_warning_timer = 1.5f;
+            s_empty_name_warning_x = 0.0f;
+            s_empty_name_warning_y = 0.05f;
         }
         else if (exit_clicked)
         {
@@ -484,7 +484,7 @@ void Main_Menu_EnterName(float world_y_offset, float ndc_y_offset, bool allow_in
         AEGfxSetBlendMode(AE_GFX_BM_BLEND);
         AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);
         AEGfxTextureSet(s_tex_back_name, 0.0f, 0.0f);
-        Mesh_Renderer(s_mesh_back_name, EXITNAME_BTN_X, EXITNAME_BTN_Y + world_y_offset,
+        Mesh_Renderer(s_mesh_back_name, s_exitname_btn_x, s_exitname_btn_y + world_y_offset,
             EXITNAME_WIDTH * s_tween_back_name.scale, EXITNAME_HEIGHT * s_tween_back_name.scale, 0.0f);
     }
 
@@ -494,7 +494,7 @@ void Main_Menu_EnterName(float world_y_offset, float ndc_y_offset, bool allow_in
         AEGfxSetBlendMode(AE_GFX_BM_BLEND);
         AEGfxSetColorToMultiply(1.0f, 1.0f, 0.0f, 1.0f);
         AEGfxTextureSet(s_tex_enter_name, 0.0f, 0.0f);
-        Mesh_Renderer(s_mesh_enter_name, ENTERGAME_BTN_X, ENTERGAME_BTN_Y + world_y_offset,
+        Mesh_Renderer(s_mesh_enter_name, s_entergame_btn_x, s_entergame_btn_y + world_y_offset,
             ENTERGAME_WIDTH * s_tween_enter_game.scale, ENTERGAME_HEIGHT * s_tween_enter_game.scale, 0.0f);
     }
 
@@ -553,9 +553,9 @@ void Main_Menu_EnterName(float world_y_offset, float ndc_y_offset, bool allow_in
             AEGfxPrint(Graphics::g_font_id, s_player_name.c_str(), start_x, text_y, TEXT_SCALE, 0.0f, 0.0f, 0.0f, 1.0f);
         }
 
-        if (EMPTY_NAME_WARNING_TIMER > 0.0f)
+        if (s_empty_name_warning_timer > 0.0f)
         {
-            float alpha = EMPTY_NAME_WARNING_TIMER / 0.5f;
+            float alpha = s_empty_name_warning_timer / 0.5f;
             if (alpha > 1.0f) alpha = 1.0f;
 
             const char* warning_text = "PLEASE ENTER A NAME";
@@ -567,7 +567,7 @@ void Main_Menu_EnterName(float world_y_offset, float ndc_y_offset, bool allow_in
             AEGfxSetTransparency(1.0f);
 
             float ndc_x = 0.0f - (tw * 0.5f);
-            float ndc_y = EMPTY_NAME_WARNING_Y + ndc_y_offset;
+            float ndc_y = s_empty_name_warning_y + ndc_y_offset;
             AEGfxPrint(Graphics::g_font_id, warning_text, ndc_x, ndc_y, WARNING_SCALE, 1.0f, 0.2f, 0.2f, alpha);
         }
 
@@ -611,15 +611,15 @@ void Main_Menu_Init()
     s_transitioning_to_shop = false;
     s_in_leaderboard = false;
     UiPauseMenu::ClosePopup();
-    Leaderboard_System::Init();
-    Leaderboard_System::Read_ZenLeaderboard();
-    Leaderboard_System::Read_TimeLeaderboard();
+    LeaderboardSystem::Init();
+    LeaderboardSystem::ReadZenLeaderboard();
+    LeaderboardSystem::ReadTimeLeaderboard();
     s_is_zooming_to_game = false;
     ParallaxZoom::Reset();
 
-    EMPTY_NAME_WARNING_TIMER = 0.0f;
-    EMPTY_NAME_WARNING_X = 0.0f;
-    EMPTY_NAME_WARNING_Y = 0.0f;
+    s_empty_name_warning_timer = 0.0f;
+    s_empty_name_warning_x = 0.0f;
+    s_empty_name_warning_y = 0.0f;
 
     SoundManager::Init();
     SysSettings::Init();
@@ -702,7 +702,7 @@ void Main_Menu_Init()
     ButtonTween_Reset(s_tween_enter_game);
     ButtonTween_Reset(s_tween_back_name);
 
-    // Splash overlay — only on very first launch
+    // Splash overlay ? only on very first launch
     s_splash_timer = 0.0f;
     s_splash_active = (g_game_state_prev == GS_NONE);
 
@@ -738,8 +738,8 @@ void Main_Menu_Update()
     float dt = (float)AEFrameRateControllerGetFrameTime();
     if (dt > 0.1f) dt = 0.01667f;
 
-    if (EMPTY_NAME_WARNING_TIMER > 0.0f)
-        EMPTY_NAME_WARNING_TIMER -= dt;
+    if (s_empty_name_warning_timer > 0.0f)
+        s_empty_name_warning_timer -= dt;
 
     BackgroundParallax::MenuParallax_Update(dt);
 
@@ -774,34 +774,34 @@ void Main_Menu_Update()
         }
     }
 
-    LOGO_Y = s_win_h * 0.35f;
-    PLAY_BTN_Y = s_win_h * 0.15f;
-    TUTORIAL_BTN_Y = -s_win_h * 0.04f;
-    SHOP_BTN_Y = -s_win_h * 0.23f;
-    EXIT_BTN_Y = -s_win_h * 0.42f;
+    s_logo_y = s_win_h * 0.35f;
+    s_play_btn_y = s_win_h * 0.15f;
+    s_tutorial_btn_y = -s_win_h * 0.04f;
+    s_shop_btn_y = -s_win_h * 0.23f;
+    s_exit_btn_y = -s_win_h * 0.42f;
 
-    EXITNAME_BTN_Y = -s_win_h * 0.35f;
-    EXITNAME_BTN_X = -s_win_w * 0.35f;
-    ENTERGAME_BTN_X = s_win_w * 0.35f;
-    ENTERGAME_BTN_Y = -s_win_h * 0.35f;
+    s_exitname_btn_y = -s_win_h * 0.35f;
+    s_exitname_btn_x = -s_win_w * 0.35f;
+    s_entergame_btn_x = s_win_w * 0.35f;
+    s_entergame_btn_y = -s_win_h * 0.35f;
 
-    ZENMODE_BTN_X = -s_win_w * 0.12f;
-    ZENMODE_BTN_Y = s_win_h * 0.0f;
-    TIMEMODE_BTN_X = s_win_w * 0.12f;
-    TIMEMODE_BTN_Y = s_win_h * 0.0f;
+    s_zenmode_btn_x = -s_win_w * 0.12f;
+    s_zenmode_btn_y = s_win_h * 0.0f;
+    s_timemode_btn_x = s_win_w * 0.12f;
+    s_timemode_btn_y = s_win_h * 0.0f;
 
-    SETTINGS_BTN_X = -s_win_w * 0.35f;
-    SETTINGS_BTN_Y = -s_win_h * 0.4f;
-    LEADERBOARD_BTN_X = -s_win_w * 0.23f;
-    LEADERBOARD_BTN_Y = -s_win_h * 0.4f;
+    s_settings_btn_x = -s_win_w * 0.35f;
+    s_settings_btn_y = -s_win_h * 0.4f;
+    s_leaderboard_btn_x = -s_win_w * 0.23f;
+    s_leaderboard_btn_y = -s_win_h * 0.4f;
 
-    LEFTARROW_BTN_X = -s_win_h * 0.12f;
-    LEFTARROW_BTN_Y = PLAY_BTN_Y + 85.0f;
-    RIGHTARROW_BTN_X = s_win_h * 0.12f;
-    RIGHTARROW_BTN_Y = PLAY_BTN_Y + 85.0f;
+    s_leftarrow_btn_x = -s_win_h * 0.12f;
+    s_leftarrow_btn_y = s_play_btn_y + 85.0f;
+    s_rightarrow_btn_x = s_win_h * 0.12f;
+    s_rightarrow_btn_y = s_play_btn_y + 85.0f;
 
-    CREDITS_BTN_X = s_win_w * 0.23f;
-    CREDITS_BTN_Y = -s_win_h * 0.4f;
+    s_credits_btn_x = s_win_w * 0.23f;
+    s_credits_btn_y = -s_win_h * 0.4f;
 
     AEGfxSetCamPosition(0.0f, 0.0f);
     if (s_is_zooming_to_game || ParallaxZoom::IsActive())
@@ -868,10 +868,10 @@ void Main_Menu_Update()
 
     if (s_in_leaderboard)
     {
-        Draw_Main_Menu(0.0f);
+        DrawMainMenu(0.0f);
 
-        if (s_leaderboard_mode == "ZEN")  Leaderboard_System::Display_ZenLeaderboard(s_in_leaderboard);
-        else if (s_leaderboard_mode == "TIME") Leaderboard_System::Display_TimeLeaderboard(s_in_leaderboard);
+        if (s_leaderboard_mode == "ZEN")  LeaderboardSystem::DisplayZenLeaderboard(s_in_leaderboard);
+        else if (s_leaderboard_mode == "TIME") LeaderboardSystem::DisplayTimeLeaderboard(s_in_leaderboard);
 
         s32 mouse_x, mouse_y;
         AEInputGetCursorPosition(&mouse_x, &mouse_y);
@@ -948,14 +948,14 @@ void Main_Menu_Update()
     }
     else if (s_is_transitioning_to_name || s_is_transitioning_back)
     {
-        Draw_Main_Menu(text_ndc_offset);
+        DrawMainMenu(text_ndc_offset);
         float name_world_y = s_win_h;
         float name_ndc_y = 2.0f + text_ndc_offset;
         Main_Menu_EnterName(name_world_y, name_ndc_y, false);
     }
     else
     {
-        Draw_Main_Menu(0.0f);
+        DrawMainMenu(0.0f);
         Main_Menu_Input();
         UiPauseMenu::Ui_DrawConfirmationPopup(s_mesh_btn, nullptr);
     }
@@ -1068,5 +1068,5 @@ void Main_Menu_Exit()
 
     ParallaxZoom::Reset();
     s_is_zooming_to_game = false;
-    Leaderboard_System::Free();
+    LeaderboardSystem::Free();
 }

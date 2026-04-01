@@ -18,11 +18,11 @@ namespace
 
     static AEGfxVertexList* s_overlay_mesh = nullptr;
 
-    static std::vector<Leaderboard_Data::ZenEntry>   s_leaderboard_list;
-    static std::vector<Leaderboard_Data::TimedEntry> s_timed_board;
+    static std::vector<LeaderboardData::ZenEntry>   s_leaderboard_list;
+    static std::vector<LeaderboardData::TimedEntry> s_timed_board;
 }
 
-namespace Leaderboard_System
+namespace LeaderboardSystem
 {
     void Init()
     {
@@ -49,23 +49,23 @@ namespace Leaderboard_System
 
     int GetHighestScore()
     {
-        Read_ZenLeaderboard();
-        Read_TimeLeaderboard();
+        ReadZenLeaderboard();
+        ReadTimeLeaderboard();
         s_highest_score = (s_highest_time_score > s_highest_zen_score) ? s_highest_time_score : s_highest_zen_score;
         return s_highest_score;
     }
 
-    static bool CompareZenScores(const Leaderboard_Data::ZenEntry& a, const Leaderboard_Data::ZenEntry& b)
+    static bool CompareZenScores(const LeaderboardData::ZenEntry& a, const LeaderboardData::ZenEntry& b)
     {
         return a.player_score > b.player_score;
     }
 
-    static bool CompareTimedScores(const Leaderboard_Data::TimedEntry& a, const Leaderboard_Data::TimedEntry& b)
+    static bool CompareTimedScores(const LeaderboardData::TimedEntry& a, const LeaderboardData::TimedEntry& b)
     {
         return a.player_score > b.player_score;
     }
 
-    void Read_ZenLeaderboard()
+    void ReadZenLeaderboard()
     {
         s_leaderboard_list.clear();
         const char* leaderboard_filepath = "Assets/leaderboard.txt";
@@ -80,7 +80,7 @@ namespace Leaderboard_System
         int player_score;
         while (file_stream >> player_name >> player_score)
         {
-            Leaderboard_Data::ZenEntry new_entry{ player_name, player_score };
+            LeaderboardData::ZenEntry new_entry{ player_name, player_score };
             if (player_score > s_highest_zen_score) s_highest_zen_score = player_score;
             s_leaderboard_list.push_back(new_entry);
             std::cout << new_entry.player_name << new_entry.player_score << "\n";
@@ -88,7 +88,7 @@ namespace Leaderboard_System
         file_stream.close();
     }
 
-    void Read_TimeLeaderboard()
+    void ReadTimeLeaderboard()
     {
         s_timed_board.clear();
         s_lb_scroll = 0.0f;
@@ -107,10 +107,10 @@ namespace Leaderboard_System
         f.close();
     }
 
-    void Write_ZenLeaderboard(const std::string& player_name, const int& player_score)
+    void WriteZenLeaderboard(const std::string& player_name, const int& player_score)
     {
-        Read_ZenLeaderboard();
-        Leaderboard_Data::ZenEntry new_entry{ player_name, player_score };
+        ReadZenLeaderboard();
+        LeaderboardData::ZenEntry new_entry{ player_name, player_score };
         std::cout << "\n";
 
         s_leaderboard_list.push_back(new_entry);
@@ -130,9 +130,9 @@ namespace Leaderboard_System
         file_stream.close();
     }
 
-    void Write_TimeLeaderboard(const std::string& player_name, const int& player_score)
+    void WriteTimeLeaderboard(const std::string& player_name, const int& player_score)
     {
-        Read_TimeLeaderboard();
+        ReadTimeLeaderboard();
         s_timed_board.push_back({ player_name, player_score });
         std::sort(s_timed_board.begin(), s_timed_board.end(), CompareTimedScores);
 
@@ -146,7 +146,7 @@ namespace Leaderboard_System
         f.close();
     }
 
-    void Display_ZenLeaderboard(bool& open_leaderboard)
+    void DisplayZenLeaderboard(bool& open_leaderboard)
     {
         AEGfxSetRenderMode(AE_GFX_RM_COLOR);
         AEGfxSetBlendMode(AE_GFX_BM_BLEND);
@@ -230,7 +230,7 @@ namespace Leaderboard_System
         }
     }
 
-    void Display_TimeLeaderboard(bool& open_leaderboard)
+    void DisplayTimeLeaderboard(bool& open_leaderboard)
     {
         AEGfxSetRenderMode(AE_GFX_RM_COLOR);
         AEGfxSetBlendMode(AE_GFX_BM_BLEND);

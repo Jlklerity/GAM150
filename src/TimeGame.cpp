@@ -164,7 +164,7 @@ void GameTimeMode_Init()
     }
 
     Typing_Init();
-    Leaderboard_System::Init();
+    LeaderboardSystem::Init();
     PowerUpSystem::Init();
     DebugConsole::Init(is_enemy_area_box_visible, is_random_spawning_enabled,
         is_difficulty_debug_visible, health, enemy_pool, free_slot_queue, enemy_area, word_bank);
@@ -311,8 +311,8 @@ void GameTimeMode_Update()
 
     if (is_timed_out && !score_written)
     {
-        std::string name = Main_Menu_GetPlayerName();
-        Leaderboard_System::Write_TimeLeaderboard(name, score.score_value);
+        std::string name = MainMenuGetPlayerName();
+        LeaderboardSystem::WriteTimeLeaderboard(name, score.score_value);
         score_written = true;
     }
 
@@ -396,7 +396,7 @@ render_only:
             if (!open_leaderboard)
                 UiGameOver::DrawTimeoutScreen(score, bg_mesh, open_leaderboard);
             else
-                Leaderboard_System::Display_TimeLeaderboard(open_leaderboard);
+                LeaderboardSystem::DisplayTimeLeaderboard(open_leaderboard);
         }
     }
 
@@ -414,7 +414,7 @@ void GameTimeMode_Exit()
     LaserBeam_Free();
     StreakSystem::Exit();
     DeathTransition::Reset();
-    Leaderboard_System::Free();
+    LeaderboardSystem::Free();
     PowerUpSystem::Free();
     Particles_Free();
     Weather_Exit();
