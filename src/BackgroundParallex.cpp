@@ -1,3 +1,5 @@
+// File: BackgroundParallex.cpp
+// Author: Pengfei
 #include "pch.h"
 #include "BackgroundParallex.h"
 

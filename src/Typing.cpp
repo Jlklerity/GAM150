@@ -1,3 +1,5 @@
+// File: Typing.cpp
+// Author: Pengfei, Zi Yuan, Azfar
 #include "pch.h"
 #include "Typing.h"
 

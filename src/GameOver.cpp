@@ -1,5 +1,5 @@
 // File: GameOver.cpp
-// Author: Pengfei
+// Author: Pengfei, Jeremy
  #include "pch.h"
 #include "GameOver.h"
 #include "ButtonTween.h"

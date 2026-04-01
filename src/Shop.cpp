@@ -1,3 +1,6 @@
+// File: Shop.cpp
+// Author: Jeremy
+
 #include "pch.h"
 #include "Shop.h"
 #include "ButtonTween.h"

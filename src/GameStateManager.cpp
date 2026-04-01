@@ -1,3 +1,6 @@
+// File: GameStateManager.cpp
+// Author: Jeremy
+
 #include "pch.h"
 #include "GameStateManager.h"
 

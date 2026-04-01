@@ -307,7 +307,7 @@ void game_time_mode_update()
             anim_timer = 0.0f;
             current_frame_index = (current_frame_index + 1) % SPRITE_COLS;
             uv_offset_x = (current_frame_index % SPRITE_COLS) * SPRITE_UV_WIDTH;
-            uv_offset_y = (current_frame_index / SPRITE_COLS) * SPRITE_UV_HEIGHT;
+            uv_offset_y = (static_cast<float>(current_frame_index) / SPRITE_COLS) * SPRITE_UV_HEIGHT;
         }
     }
 
