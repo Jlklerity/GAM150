@@ -161,7 +161,8 @@ void shop_init()
     AE_ASSERT_MESG(s_tex_bg_options, "Failed to load Background1.png");
     s_tex_bg_options[1] = AEGfxTextureLoad("Assets/floorground2.png");
     AE_ASSERT_MESG(s_tex_bg_options[1], "Failed to load floorground2shop.png");
-    s_tex_bg_options[2] = s_tex_bg_options[0]; // TODO: Change to bg2.png later
+    s_tex_bg_options[2] = AEGfxTextureLoad("Assets/floorground3.png");
+    AE_ASSERT_MESG(s_tex_bg_options[2], "Failed to load floorground3.png");
 
     s_tex_skin_options[0] = AEGfxTextureLoad("Assets/skin1.png");
     AE_ASSERT_MESG(s_tex_skin_options, "Failed to load skin1.png");
@@ -470,7 +471,6 @@ void shop_exit()
 
     // Null out aliases BEFORE unloading to prevent double-free
     if (s_tex_bg_options[1] == s_tex_bg_options[0]) s_tex_bg_options[1] = nullptr;
-    if (s_tex_bg_options[2] == s_tex_bg_options[0]) s_tex_bg_options[2] = nullptr;
     if (s_tex_bg_options[0]) { AEGfxTextureUnload(s_tex_bg_options[0]); s_tex_bg_options[0] = nullptr; }
     if (s_tex_bg_options[1]) { AEGfxTextureUnload(s_tex_bg_options[1]); s_tex_bg_options[1] = nullptr; }
     if (s_tex_bg_options[2]) { AEGfxTextureUnload(s_tex_bg_options[2]); s_tex_bg_options[2] = nullptr; }

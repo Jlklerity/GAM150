@@ -19,7 +19,7 @@ static const int   DEATH_ANIM_COLS = 8;
 static const int   DEATH_ANIM_ROWS = 1;
 static const float DEATH_FRAME_UV_W = 1.0f / DEATH_ANIM_COLS;
 static const float DEATH_FRAME_UV_H = 1.0f / DEATH_ANIM_ROWS;
-static const float DEATH_ANIM_FRAME_DURATION = 0.5f; 
+static const float DEATH_ANIM_FRAME_DURATION = 0.5f;
 
 namespace
 {
@@ -129,9 +129,14 @@ namespace DeathTransition
         if (!s_black_mesh)
             s_black_mesh = Rect_Mesh(1.0f, 1.0f, 0xFFFFFFFF);
 
-        // Load the death animation sprite sheet
+        // Load the death animation sprite sheet that matches the active skin
         if (!s_death_texture)
-            s_death_texture = AEGfxTextureLoad("Assets/death1.png");
+        {
+            const char* death_path = "Assets/death1.png";
+            if (g_shop_skin_id == 1) death_path = "Assets/player2death.png";
+            else if (g_shop_skin_id == 2) death_path = "Assets/catdeath.png";
+            s_death_texture = AEGfxTextureLoad(death_path);
+        }
 
         // Build a UV-mapped mesh for one death frame
         if (!s_death_mesh)

@@ -11,7 +11,8 @@ namespace {
 
     //background mesh and texture
     AEGfxTexture* s_bg_texture_1 = nullptr; // Default BG
-    AEGfxTexture* s_bg_texture_2 = nullptr; // Alternate BG
+    AEGfxTexture* s_bg_texture_2 = nullptr; // Alternate BG (floorground2)
+    AEGfxTexture* s_bg_texture_3 = nullptr; // Alternate BG (floorground3)
     AEGfxVertexList* s_bg_mesh = nullptr;
 
     const float SPRITE_X = -700.0f;
@@ -96,6 +97,7 @@ void game_init()
 
     if (s_bg_texture_1) { AEGfxTextureUnload(s_bg_texture_1); s_bg_texture_1 = nullptr; }
     if (s_bg_texture_2) { AEGfxTextureUnload(s_bg_texture_2); s_bg_texture_2 = nullptr; }
+    if (s_bg_texture_3) { AEGfxTextureUnload(s_bg_texture_3); s_bg_texture_3 = nullptr; }
     if (s_bg_mesh) { AEGfxMeshFree(s_bg_mesh);           s_bg_mesh = nullptr; }
 
     GameClouds::cleanup();
@@ -123,6 +125,8 @@ void game_init()
     AE_ASSERT_MESG(s_bg_texture_1, "Failed to load background!");
     s_bg_texture_2 = AEGfxTextureLoad("Assets/floorground2.png"); //for ltr when we have more bg skins
     AE_ASSERT_MESG(s_bg_texture_2, "Failed to load background!");
+    s_bg_texture_3 = AEGfxTextureLoad("Assets/floorground3.png");
+    AE_ASSERT_MESG(s_bg_texture_3, "Failed to load floorground3.png!");
 
     /*
     @overview   Enemy and Boss
@@ -315,7 +319,9 @@ render_only:
 
     // Only draw world if not in death transition
 
-    AEGfxTexture* activeBg = (g_shop_bg_id == 0) ? s_bg_texture_1 : s_bg_texture_2;
+    AEGfxTexture* activeBg = (g_shop_bg_id == 0) ? s_bg_texture_1
+        : (g_shop_bg_id == 1) ? s_bg_texture_2
+        : s_bg_texture_3;
     AEGfxTextureSet(activeBg, 0.0f, 0.0f);
     DayCycle::draw();
     GameClouds::draw();
@@ -445,6 +451,11 @@ void game_exit()
     {
         AEGfxTextureUnload(s_bg_texture_2);
         s_bg_texture_2 = nullptr;
+    }
+    if (s_bg_texture_3)
+    {
+        AEGfxTextureUnload(s_bg_texture_3);
+        s_bg_texture_3 = nullptr;
     }
 
     if (s_player_texture)
